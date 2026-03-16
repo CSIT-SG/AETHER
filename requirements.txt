@@ -1,0 +1,7 @@
+# Main AETHER stuff
+mcp
+openai
+psutil
+
+pydantic>=2.11.7
+python-dotenv>=1.1.1

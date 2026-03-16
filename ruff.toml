@@ -1,0 +1,9 @@
+line-length = 150
+
+[lint]
+extend-select = [
+    "E501", # line-too-long
+    "C901", # too-complex
+    "I001", # unsorted-imports
+    "I002", # missing-required-import
+]

@@ -1,0 +1,79 @@
+### OPTIONS INFORMATION START
+Read these toggles and settings completely before acting. information starts from "OPTIONS INFORMATION START" to "OPTIONS INFORMATION END"
+For the comment at the start of a function, a function's comment, generate a block in the following style:
+
+Arguments:<NEWLINE>[Type] [Name] - [Explanation]<NEWLINE><NEWLINE>Return Value:<NEWLINE>[Type] - [Explanation]<NEWLINE><NEWLINE>[Function Name] performs [Summary of logic up to 5 lines].<NEWLINE>
+
+Rules for this block:
+- Use <NEWLINE> for all line breaks.
+- Use the actual variable names and types discovered during analysis.
+
+**DYNAMIC CONSTRAINTS (OVERRIDE BASE PROMPT)**
+
+1. **USE_DESC: {desc_state}**
+* **IF ENABLED:** You MUST include a function summary (Arguments, Return Value, Logic) at the function's entry address in the **commenting block**. Style: `Arguments:<NEWLINE>...<NEWLINE>Return Value:<NEWLINE>...<NEWLINE>[Name] performs...`
+* **IF DISABLED:** Do not generate the root function summary.
+
+2. **USE_COMMENTS: {comm_state}**
+* **IF ENABLED:** Include line-by-line logic entries in the **commenting block**.
+* **IF DISABLED:** Skip all line-by-line logic.
+* *Combo Rule:* If DESC is ENABLED but COMMENTS is DISABLED, the **commenting block** must contain ONLY the entry for each function summary. If both are DISABLED, leave the block empty.
+
+3. **RENAME_VARS: {vars_state}**
+* **IF ENABLED:** Perform local variable renames in the **variable block**.
+* **IF DISABLED:** Provide the **variable block** but leave it empty.
+
+4. **RENAME_FUNCS: {funcs_state}**
+* **IF ENABLED:** Perform function renames in the **function rename block**.
+* **IF DISABLED:** Provide the **function rename block** but leave it empty.
+
+5. **COMMENT_EVERY_LINE: {line_state}**
+* **IF DISABLED:** Do not give comments at every address. Instead, identify a "pivot address" for a logical block (e.g., the start of a sequence of prints or a calculation). Use <NEWLINE> to combine multiple descriptive steps into one single comment at that pivot address.
+    * **STRICT LIMIT:** If lines of code perform one "action" (like printing a tree), you must output exactly one address entry for that whole block, using <NEWLINE> to separate the internal details.
+      Example:
+      ```pseudocode
+      v27 = 0;
+      kill(pid, 9);
+      ```
+      If COMMENT_EVERY_LINE is ENABLED:
+      0x8050aaf| Clear listener flag
+      0x8050ac4| Kill TCP listener process with SIGKILL
+
+      If COMMENT_EVERY_LINE is DISABLED:
+      0x8050aaf| Clear listener flag and kill TCP listener process with SIGKILL
+    * Each comment should not be describing only 1 line and only have 1 sentence. Make use of <NEWLINE> for newline. It should be as specific as possible. E.g. NOT "Kills process", DO "Kills process with SIGKILL 'stop'".
+      Example (of bad result):
+        inserted_root = aire_insert_bst_node(0, 0x32u);
+        // Insert value 30 into left subtree of 50
+        node_after_30_insert = aire_insert_bst_node(inserted_root, 0x1Eu);
+        // Insert value 20 into left subtree of 30
+        node_after_20_insert = aire_insert_bst_node(node_after_30_insert, 0x14u);
+        // Insert value 40 into right subtree of 30
+        node_after_40_insert = aire_insert_bst_node(node_after_20_insert, 0x28u);
+        // Insert value 70 into right subtree of 50
+        node_after_70_insert = aire_insert_bst_node(node_after_40_insert, 0x46u);
+        // Insert value 60 into left subtree of 70
+        node_after_60_insert = aire_insert_bst_node(node_after_70_insert, 0x3Cu);
+        // Insert value 80 into right subtree of 70
+      Example (of good result):
+        // Insert value 30 into left subtree of 50
+        // Insert value 20 into left subtree of 30
+        // Insert value 40 into right subtree of 30
+        // Insert value 70 into right subtree of 50
+        // Insert value 60 into left subtree of 70
+        // Insert value 80 into right subtree of 70
+        node_after_30_insert = aire_insert_bst_node(inserted_root, 0x1Eu);
+        node_after_20_insert = aire_insert_bst_node(node_after_30_insert, 0x14u);
+        node_after_40_insert = aire_insert_bst_node(node_after_20_insert, 0x28u);
+        node_after_70_insert = aire_insert_bst_node(node_after_40_insert, 0x46u);
+        node_after_60_insert = aire_insert_bst_node(node_after_70_insert, 0x3Cu);
+    * The comment should add value to the pseudocode. It should not state the obvious, like commenting the contents of an unobfuscated print statement. 
+      Bad Example:
+        // --- Current Tree (In-order Traversal) ---
+        puts("\n--- Current Tree (In-order Traversal) ---");
+   Exception to COMMENT_EVERY_LINE is comment at start of function. It will follow the tyle: Arguments:<NEWLINE>[Type] [Name] - [Explanation]<NEWLINE><NEWLINE>Return Value:<NEWLINE>[Type] - [Explanation]<NEWLINE><NEWLINE>[Function Name] performs [Summary of logic up to 5 lines].<NEWLINE> 
+   **DO NOT** Echo out any print statements or literal strings that are obvious. DO NOT use ellipsis.
+
+**Note:** Use the block identifiers and delimiters (pipes, headers, or brackets) established in the preceding instructions. All `<NEWLINE>` markers within the summary must be preserved.
+
+**OPTIONS INFORMATION END**

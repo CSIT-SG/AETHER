@@ -1,0 +1,120 @@
+=====
+2026.1 - FIRST RELEASE
+=====
+
+- Struct Creator v2
+- Chatbot
+  - Improved tool calling and output
+  - Added context function selection
+  - QoL changes
+- Annotations
+  - Updated undo last annotation to work with both single and function tree annotation
+- Tested using qwen/qwen3-next-80b-a3b-instruct model
+- Unlinked ai decompilation (deprecated) feature
+
+=====
+ALPHA 12 - STRUCTS & CHATBOT
+=====
+
+- Struct Creator v1
+  - activate by right-clicking on a global variable
+- Chatbot v1
+  - access from right-click menu
+  - send free-form questions to the chatbot (e.g. "analysing from sub_80501F8, find me the c2 command tree")
+- QoL fixes
+- please set struct analysis model to qwen3 coder
+
+=====
+ALPHA 11.1 PATCH
+=====
+
+- (Windows hosts) fix config and ctx.txt path for Advanced Options > Auto-gatherer
+- set default checkbox in Advanced Options to only rename sub_*
+
+Recommended:
+
+```
+"GATHERER_MODEL": "qwen3-235b-a22b-instruct-2507",
+"SINGLE_ANALYSIS_MODEL": "qwen3-235b-a22b-instruct-2507", OR "gpt-oss-120b"
+"ANNOTATOR_MODEL": "qwen3-235b-a22b",
+"AI_DECOMP_MODEL": "qwen3-coder-480b-a35b-instruct",
+```
+
+=====
+ALPHA 11
+=====
+
+- improve versioning backend
+- add User-Agent (to have User-Agent sent, you must create "intranet.txt" in the ainalyse/ folder if it's not in your release)
+- (Windows hosts) store config and verbose logs in AppData/Local/
+
+=====
+ALPHA 10
+=====
+
+- don't select aire_ renamed functions by default
+- button to add them to selection
+- test with gpt-oss-120b
+
+=====
+ALPHA 9
+=====
+
+- single function analysis mode
+  - shortcut added to toolbar - use this for faster, more focused results (but callees are not annotated at the same time)
+
+=====
+ALPHA 8
+=====
+
+- plugin no longer seizes control of the psueodocode view when analysing
+
+- added ability to annotate only current function
+  - still uses function's call tree for context
+  - focuses only on current open function for better, faster results
+  - TESTED AND WORKS WELL WITH:
+    Qwen3 235B Instruct 2507 (non-thinking)
+    Qwen3 Coder 480B Instruct (non-thinking)
+
+- new re-annotate with custom prompt functionality
+  - strips out comments and renames from current function to avoid influencing LLM's re-analysis
+  - you can guide LLM's re-analysis with a custom prompt + context from the current function
+  - focuses only on current open function
+  - "manual thinking" allows greater control over AI's thinking process
+  - TESTED AND WORKS WELL WITH:
+    Qwen3 235B Instruct 2507 (non-thinking)
+    Qwen3 Coder 480B Instruct (non-thinking)
+
+=====
+ALPHA 7
+=====
+
+- added What's New changelog
+- new confirmation dialog when using LLM-based auto-gatherer
+  - you can Cancel, Retry gathering, or Continue to annotations
+- fixed faulty undo functionality
+- added retry option
+- code improvements
+
+=====
+ALPHA 6
+=====
+
+- added deselect all button
+- added AI rewrite - prompt B option
+- need to update configs with separate models:
+
+{
+  "OPENAI_API_KEY": "...",
+  "OPENAI_MODEL": "accounts/fireworks/models/deepseek-r1-0528",
+  "OPENAI_BASE_URL": "https://api.fireworks.ai/inference/v1/",
+  "MCP_SERVER_URL": "http://127.0.0.1:8744/sse",
+  "MAX_ITERATIONS": 5,
+  "GATHERER_MODEL": "accounts/fireworks/models/deepseek-r1-0528", // individual models need to be set
+  "ANNOTATOR_MODEL": "accounts/fireworks/models/deepseek-r1-0528",
+  "AI_DECOMP_MODEL": "accounts/fireworks/models/deepseek-r1-0528"
+}
+
+- mild verbosity and function depth improvements
+- fixed syntax highlighting
+- synchronised scrolling for AI rewritten pseudocode view (disabled by default as it is buggy and is unlikely to be fully fixable due to IDA API restrictions)
