@@ -1,4 +1,14 @@
 =====
+2026.1.1 - PATCH
+=====
+
+- Compatibility update for IDA 9.2
+  - fixed plugin crashing previously caused by a threading issue
+- Annotations
+  - Added automatic refreshing of functions after annotation
+  - variable and function names are now updated immediately in the view
+
+=====
 2026.1 - FIRST RELEASE
 =====
 

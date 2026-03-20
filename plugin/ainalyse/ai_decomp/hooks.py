@@ -9,12 +9,17 @@ class AIDecompHexraysHooks(ida_hexrays.Hexrays_Hooks):
     
     def switch_pseudocode(self, vdui):
         """Called when a pseudocode view is open or the user switches functions."""
-        func_ea = vdui.cfunc.entry_ea
-        func_addr = hex(func_ea)
+        try:
+            if not vdui or not getattr(vdui, "cfunc", None):
+                return 0
+            func_ea = vdui.cfunc.entry_ea
+            func_addr = hex(func_ea)
 
-        # Only update if our AI decomp viewer tab actually exists
-        if AI_DECOMP_VIEW_TITLE in g_ai_decomp_viewers:
-            show_or_update_ai_decomp_tab(func_addr)
+            # Only update if our AI decomp viewer tab actually exists
+            if AI_DECOMP_VIEW_TITLE in g_ai_decomp_viewers:
+                show_or_update_ai_decomp_tab(func_addr)
+        except Exception as e:
+            print(f"[AETHER] [AI Decomp] switch_pseudocode hook error: {e}")
         return 0
 
 # --- Global hooks instance ---

@@ -1,6 +1,7 @@
 import os
-from typing import Any, Iterable
+from typing import Any, Iterable, Callable
 
+import ida_funcs
 import idaapi
 import ida_kernwin
 import ida_hexrays
@@ -117,3 +118,39 @@ def refresh_functions(functions: Iterable[Any] | None = None, fallback_func_addr
     ida_kernwin.execute_sync(_refresh_sync, ida_kernwin.MFF_WRITE)
     print(f"{log_prefix} Refreshed {refreshed_count} function(s) in IDA/Hex-Rays.")
     return refreshed_count
+
+def prepare_activate_context(
+    load_config_fn: Callable,
+    validate_basic_config_fn: Callable,
+    config_updater: Callable | None = None,
+):
+    """
+    Shared activate() setup for handlers that need validated config and current function context.
+
+    Returns:
+        tuple[dict | None, str | None, str | None]:
+            (config, current_func_addr_hex, current_func_name). Any None means setup failed.
+    """
+    config = load_config_fn()
+    is_valid, error_msg = validate_basic_config_fn(config)
+    if not is_valid:
+        ida_kernwin.warning(error_msg)
+        return None, None, None
+
+    config = load_config_fn()
+    if config_updater:
+        config_updater(config)
+
+    try:
+        ea = ida_kernwin.get_screen_ea()
+        func = idaapi.get_func(ea)
+        if not func:
+            ida_kernwin.warning("No function found at current location.")
+            return None, None, None
+
+        current_func_addr = hex(func.start_ea)
+        current_func_name = ida_funcs.get_func_name(func.start_ea)
+        return config, current_func_addr, current_func_name
+    except Exception as e:
+        ida_kernwin.warning(f"Unable to get current function information: {e}")
+        return None, None, None

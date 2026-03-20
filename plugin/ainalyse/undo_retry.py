@@ -8,6 +8,35 @@ from mcp.client.sse import sse_client
 
 from ainalyse.annotator import parse_llm_annotations
 from ainalyse.custom_set_cmt import scmt  # Import custom set_comment implementation
+from ainalyse.utils import refresh_functions
+
+
+def _extract_tool_text(result) -> str | None:
+    """Extract plain text payload from an MCP tool call result."""
+    try:
+        if result and getattr(result, "content", None):
+            first = result.content[0]
+            if first and hasattr(first, "text"):
+                return first.text
+    except Exception:
+        pass
+    return None
+
+
+async def _resolve_function_address(session: ClientSession, function_name: str) -> str | None:
+    """Resolve function address by name through MCP."""
+    if not function_name:
+        return None
+    try:
+        result = await session.call_tool("get_function_by_name", {"name": function_name})
+        text = _extract_tool_text(result)
+        if not text:
+            return None
+        data = json.loads(text)
+        address = data.get("address")
+        return address if isinstance(address, str) and address.strip() else None
+    except Exception:
+        return None
 
 
 async def undo_analysis_annotations(analysis_entry: Dict[str, Any], config: dict) -> bool:
@@ -26,26 +55,58 @@ async def undo_analysis_annotations(analysis_entry: Dict[str, Any], config: dict
                 # Path 1, annotate single undo
                 structured = analysis_entry.get("commands")
                 if structured:
+                    starting_function_addr = analysis_entry.get("starting_function_addr")
+                    if not starting_function_addr:
+                        starting_function_addr = await _resolve_function_address(session, analysis_entry.get("starting_function", ""))
+
+                    success_count = 0
+
                     # 1. Undo Comments
                     for cmd in structured.get("comments", []):
-                        def _clear(): scmt(cmd["address"], "")
-                        ida_kernwin.execute_sync(_clear, ida_kernwin.MFF_WRITE)
+                        if not cmd.get("address"):
+                            continue
+
+                        def _clear_comment_sync():
+                            try:
+                                scmt(cmd["address"], "")
+                                return True
+                            except Exception:
+                                return False
+
+                        if ida_kernwin.execute_sync(_clear_comment_sync, ida_kernwin.MFF_WRITE):
+                            success_count += 1
                     
                     # 2. Undo Variable Renames (Swap new_name and old_name)
                     for var in structured.get("local_variables", []):
+                        if not starting_function_addr:
+                            continue
+                        old_name = var.get("new_name")
+                        new_name = var.get("old_name")
+                        if not old_name or not new_name:
+                            continue
                         await session.call_tool("rename_local_variable", {
-                            "function_address": analysis_entry.get("starting_function_addr"),
-                            "old_name": var["new_name"], 
-                            "new_name": var["old_name"]
+                            "function_address": starting_function_addr,
+                            "old_name": old_name,
+                            "new_name": new_name
                         })
+                        success_count += 1
                         
                     # 3. Undo Function Renames
                     for fn in structured.get("function_renames", []):
+                        function_address = fn.get("address")
+                        if not function_address:
+                            function_address = await _resolve_function_address(session, fn.get("old_name", ""))
+                        if not function_address:
+                            continue
                         await session.call_tool("rename_function", {
-                            "function_address": fn.get("address"), # Ensure address was stored!
-                            "new_name": "" # Restore to IDA default
+                            "function_address": function_address,
+                            "new_name": ""
                         })
-                    return True
+                        success_count += 1
+
+                    refresh_functions(fallback_func_addr=starting_function_addr, log_prefix="[AETHER] [Undo]")
+                    print(f"[AETHER] [Undo] Successfully undid {success_count} structured annotation change(s).")
+                    return success_count > 0
 
                 # Path 2, annotator tree undo
                 annotator_output = analysis_entry.get("annotator_output", "")
@@ -125,6 +186,7 @@ async def undo_analysis_annotations(analysis_entry: Dict[str, Any], config: dict
                         print(f"[AETHER] [Undo] Failed to undo command {command}: {e}")
                         # Remove sleep delay
 
+                    refresh_functions(fallback_func_addr=analysis_entry.get("starting_function_addr"), log_prefix="[AETHER] [Undo]")
                 print(f"[AETHER] [Undo] Successfully undid {success_count}/{len(processed_commands)} unique annotations.")
                 return success_count > 0
                 

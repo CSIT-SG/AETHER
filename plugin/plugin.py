@@ -2,6 +2,7 @@ import os
 import time
 import traceback
 import socket
+from copy import deepcopy
 
 import ida_funcs
 import ida_hexrays
@@ -37,7 +38,7 @@ from ainalyse.ai_decomp import (
     remove_ai_decomp_hooks,
 )
 from ainalyse.annotator import run_annotator_agent
-from ainalyse.async_manager import ASYNC_WORKER, run_async_in_ida, run_in_background
+from ainalyse.async_manager import ensure_async_pool, get_primary_worker, run_async_in_ida, run_in_background
 from ainalyse.chatbot.viewer import show_chatbot_viewer
 
 # --- Dialog imports ---
@@ -52,6 +53,7 @@ from ainalyse.manual_gatherer import run_manual_gatherer_agent
 from ainalyse.quick_analyse import QuickAnalyseHandler
 from ainalyse.realtime.handlers import CustomPromptReAnnotateHandler, FastLookHandler, StripAIAnnotationsHandler
 from ainalyse.undo_retry import undo_analysis_annotations
+from ainalyse.utils import refresh_functions
 
 from ainalyse.struct_creator.handler import StructCreationHandler as StructRefactorHandler
 
@@ -109,11 +111,14 @@ class AdvancedAnalyseHandler(ida_kernwin.action_handler_t):
             results = dlg.get_results()
 
             # Use custom config for this analysis only
-            config = base_config
+            config = deepcopy(base_config)
             config["OPENAI_MODEL"] = results["OPENAI_MODEL"]
             gatherer_context = results["gatherer_context"].strip()
             annotator_context = results["annotator_context"].strip()
-            config["rename_filter_enabled"] = results["RENAME_FILTER_ENABLED"]
+            rename_filter_enabled = results.get("RENAME_FILTER_ENABLED", results.get("rename_filter_enabled", True))
+            # Keep both keys for backward compatibility across existing call sites.
+            config["RENAME_FILTER_ENABLED"] = rename_filter_enabled
+            config["rename_filter_enabled"] = rename_filter_enabled
             config["fast_mode"] = results["fast_mode"]
             config["custom_user_prompt"] = annotator_context
             manual_mode = results["manual_mode"]
@@ -308,6 +313,7 @@ class RetryAnnotationHandler(ida_kernwin.action_handler_t):
                 undo_success = run_async_in_ida(undo_analysis_annotations(latest_entry, config))
 
                 if undo_success:
+                    refresh_functions(fallback_func_addr=starting_func_addr, log_prefix="[AETHER] [Retry]")
                     print("[AETHER] [Retry] Undo completed. Starting fresh analysis with manual gatherer using default selection...")
                     time.sleep(1)  # Brief pause after undo
 
@@ -349,6 +355,7 @@ class RetryAnnotationHandler(ida_kernwin.action_handler_t):
                         time.sleep(3)
                         annotator_result, annotator_llm_output = run_async_in_ida(run_annotator_agent(config))
                         if annotator_result:
+                            refresh_functions(selected_functions, starting_func_addr, log_prefix="[AETHER] [Retry]")
                             # Use execute_sync to safely update history from main thread
                             def update_history():
                                 history = read_analysis_history()
@@ -572,6 +579,10 @@ class AETHERPlugin(ida_idaapi.plugin_t):
 
     def __init__(self):
         self.ui_hooks = None
+        self._toolbar_action_name = "aether:fast_look2"
+
+    def _register_toolbar_action(self):
+        """Register and attach the toolbar action after IDA UI is initialized."""
         icon_path = os.path.join(os.path.dirname(__file__), "ainalyse/brain.png")
 
         # Load custom icon
@@ -582,7 +593,7 @@ class AETHERPlugin(ida_idaapi.plugin_t):
             icon_data = idaapi.load_custom_icon("ainalyse/brain.png")
 
         action_desc2 = idaapi.action_desc_t(
-            "aether:fast_look2",
+            self._toolbar_action_name,
             'AETHER AI-RE: Focus and annotate just this function (takes ~25s)',
             FastLookHandler(),
             '',
@@ -595,12 +606,17 @@ class AETHERPlugin(ida_idaapi.plugin_t):
             print("Failed to register action.")
 
         # Attach the action to the toolbar
-        idaapi.attach_action_to_toolbar("AnalysisToolBar", "aether:fast_look2")
+        idaapi.attach_action_to_toolbar("AnalysisToolBar", self._toolbar_action_name)
 
     def init(self):
         if not ida_hexrays.init_hexrays_plugin():
             print("[AETHER] Hex-Rays is not available.")
             return ida_idaapi.PLUGIN_SKIP
+
+        try:
+            self._register_toolbar_action()
+        except Exception as e:
+            print(f"[AETHER] Failed to register toolbar action: {e}")
 
         # Create default config if it doesn't exist
         create_default_config()
@@ -609,9 +625,12 @@ class AETHERPlugin(ida_idaapi.plugin_t):
         config = load_config()
         print(f"[AETHER] Plugin initialized with models: OPENAI_MODEL='{config.get('OPENAI_MODEL', '')}', GATHERER_MODEL='{config.get('GATHERER_MODEL', '')}', ANNOTATOR_MODEL='{config.get('ANNOTATOR_MODEL', '')}', AI_DECOMP_MODEL='{config.get('AI_DECOMP_MODEL', '')}', SINGLE_ANALYSIS_MODEL='{config.get('SINGLE_ANALYSIS_MODEL', '')}'")
 
-        if not ASYNC_WORKER.is_alive():
+        # Initialize async worker pool after plugin startup to avoid import-time thread side effects.
+        ensure_async_pool()
+        primary_worker = get_primary_worker()
+        if not primary_worker.is_alive():
             print("[AETHER] [Async Manager] Initializing asyncio background thread...")
-            ASYNC_WORKER.start()
+            primary_worker.start()
 
         self.ui_hooks = AETHERUIHooks()
         self.ui_hooks.hook()
@@ -621,10 +640,20 @@ class AETHERPlugin(ida_idaapi.plugin_t):
 
         # Start MCP Plugin
         def start_mcp():
-            ida_loader.load_and_run_plugin("mcp-plugin", 0)
-            if is_mcp_running():
-                return -1
-            return 1000
+            try:
+                # Avoid repeated plugin load attempts if MCP is already running.
+                if is_mcp_running():
+                    return -1
+
+                ida_loader.load_and_run_plugin("mcp-plugin", 0)
+                if is_mcp_running():
+                    return -1
+
+                return 1000
+            except Exception as e:
+                print(f"[AETHER] [MCP] Failed to auto-start mcp-plugin: {e}")
+                # Keep retrying in case startup ordering is transient.
+                return 2000
 
         def is_mcp_running(port=13337):
             """Checks if the MCP port (13337 by default in mcp-plugin.py) is already occupied."""
@@ -652,6 +681,7 @@ class AETHERPlugin(ida_idaapi.plugin_t):
 
         # Unregister all actions
         actions = [
+            self._toolbar_action_name,
             "aether:whats_new",
             "aether:fast_look",
             "aether:quick",

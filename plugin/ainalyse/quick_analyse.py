@@ -6,7 +6,7 @@ import ida_kernwin
 import idaapi
 
 from ainalyse.async_manager import use_async_worker, start_pipeline
-from ainalyse.utils import refresh_functions
+from ainalyse.utils import prepare_activate_context, refresh_functions
 
 class QuickAnalyseHandler(ida_kernwin.action_handler_t):
     is_running = False
@@ -23,7 +23,6 @@ class QuickAnalyseHandler(ida_kernwin.action_handler_t):
             from . import (
                 add_analysis_entry,
                 load_config,
-                run_async_in_ida,
                 validate_analysis_config,
                 validate_basic_config,
             )
@@ -32,34 +31,21 @@ class QuickAnalyseHandler(ida_kernwin.action_handler_t):
             from .gatherer import run_gatherer_agent
             from .manual_gatherer import run_manual_gatherer_agent
 
-            config = load_config()
-            
-            # Use basic validation first
-            is_valid, error_msg = validate_basic_config(config)
-            if not is_valid:
-                ida_kernwin.warning(error_msg)
-                return 1
-            
-            config = load_config()
-            config["ANNOTATOR_MODEL"] = config.get("ANNOTATOR_MODEL") or config.get("OPENAI_MODEL")
-            
-            # GET ALL IDA INFORMATION ON MAIN THREAD BEFORE STARTING BACKGROUND THREAD
-            try:
-                ea = ida_kernwin.get_screen_ea()
-                func = idaapi.get_func(ea)
-                if not func:
-                    ida_kernwin.warning("No function found at current location.")
-                    return 1
-                
-                current_func_addr = hex(func.start_ea)
-                current_func_name = ida_funcs.get_func_name(func.start_ea)
-            except Exception as e:
-                ida_kernwin.warning(f"Unable to get current function information: {e}")
+            def _update_quick_config(config):
+                config["ANNOTATOR_MODEL"] = config.get("ANNOTATOR_MODEL") or config.get("OPENAI_MODEL")
+                config["custom_user_prompt"] = ""
+                config["fast_mode"] = True  # Enable fast mode by default for quick analysis
+
+            config, current_func_addr, current_func_name = prepare_activate_context(
+                load_config,
+                validate_basic_config,
+                _update_quick_config,
+            )
+            if not config:
+                QuickAnalyseHandler.is_running = False
                 return 1
             
             print("[AETHER] Starting quick analysis with default selection...")
-            config["custom_user_prompt"] = ""
-            config["fast_mode"] = True  # Enable fast mode by default for quick analysis
 
             @use_async_worker("QuickAnalysis")
             async def quick_analysis_thread(config, current_func_addr, current_func_name):

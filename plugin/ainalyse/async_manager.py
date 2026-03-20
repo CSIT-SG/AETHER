@@ -91,13 +91,9 @@ class AsyncThreadPool:
             worker.stop()
 
 
-# Create a thread pool with 2 workers:
-# - Worker 0: Dedicated to long-running pipelines (struct creation, analysis, etc.)
-# - Worker 1: Available for quick tasks (UI interactions, testing, etc.)
-print("[AETHER] [Async Manager] Creating shared asyncio thread pool...")
-ASYNC_POOL = AsyncThreadPool(num_workers=2)
-
-ASYNC_WORKER = ASYNC_POOL.workers[0]
+# Lazily create the thread pool to avoid import-time side effects during plugin load.
+ASYNC_POOL = None
+ASYNC_WORKER = None
 
 # Pipeline worker IDs for clarity
 PIPELINE_WORKER = 0
@@ -107,6 +103,22 @@ PIPELINE_STATE = {
     "is_running": False,
     "current_task_future": None
 }
+
+
+def ensure_async_pool() -> AsyncThreadPool:
+    """Create the shared async worker pool on first use."""
+    global ASYNC_POOL, ASYNC_WORKER
+    if ASYNC_POOL is None:
+        print("[AETHER] [Async Manager] Creating shared asyncio thread pool...")
+        ASYNC_POOL = AsyncThreadPool(num_workers=2)
+        ASYNC_WORKER = ASYNC_POOL.workers[PIPELINE_WORKER]
+    return ASYNC_POOL
+
+
+def get_primary_worker() -> AsyncioThread:
+    """Return the dedicated pipeline worker thread."""
+    pool = ensure_async_pool()
+    return pool.workers[PIPELINE_WORKER]
 
 def use_async_worker(name: Optional[str] = None):
     """
@@ -154,7 +166,8 @@ def start_pipeline(pipeline_coroutine: Coroutine):
     print("[Async Manager] Scheduling pipeline to run on dedicated worker thread.")
     
     # Schedule on the pipeline worker (worker 0)
-    future_handle = ASYNC_POOL.schedule_task(pipeline_coroutine, worker_id=PIPELINE_WORKER)
+    pool = ensure_async_pool()
+    future_handle = pool.schedule_task(pipeline_coroutine, worker_id=PIPELINE_WORKER)
     
     if future_handle:
         PIPELINE_STATE["current_task_future"] = future_handle
@@ -188,7 +201,8 @@ def schedule_ui_task(coro: Coroutine) -> Optional[Future]:
     Returns:
         Future object for the scheduled task, or None if scheduling failed
     """
-    return ASYNC_POOL.schedule_task(coro, worker_id=UI_WORKER)
+    pool = ensure_async_pool()
+    return pool.schedule_task(coro, worker_id=UI_WORKER)
 
 
 def run_async_in_ida(coro: Coroutine):

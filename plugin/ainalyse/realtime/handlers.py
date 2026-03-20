@@ -7,6 +7,7 @@ from .. import add_analysis_entry
 
 from ainalyse import load_config, validate_basic_config
 from ainalyse.async_manager import use_async_worker, start_pipeline
+from ainalyse.utils import prepare_activate_context
 
 from .dialog import CustomPromptDialog
 from .realtime import run_custom_prompt_analysis, run_fast_look_analysis
@@ -22,30 +23,16 @@ class FastLookHandler(ida_kernwin.action_handler_t):
             return 1
         
         try:
-            config = load_config()
-            
-            # Use basic validation first
-            is_valid, error_msg = validate_basic_config(config)
-            if not is_valid:
-                ida_kernwin.warning(error_msg)
-                return 1
-            
-            config = load_config()
-            config["SINGLE_ANALYSIS_MODEL"] = config.get("SINGLE_ANALYSIS_MODEL") or config.get("OPENAI_MODEL")
-            config["rename_filter_enabled"] = True
+            def _update_fast_look_config(config):
+                config["SINGLE_ANALYSIS_MODEL"] = config.get("SINGLE_ANALYSIS_MODEL") or config.get("OPENAI_MODEL")
+                config["rename_filter_enabled"] = True
 
-            # GET ALL IDA INFORMATION ON MAIN THREAD BEFORE STARTING BACKGROUND THREAD
-            try:
-                ea = ida_kernwin.get_screen_ea()
-                func = idaapi.get_func(ea)
-                if not func:
-                    ida_kernwin.warning("No function found at current location.")
-                    return 1
-                
-                current_func_addr = hex(func.start_ea)
-                current_func_name = ida_funcs.get_func_name(func.start_ea)
-            except Exception as e:
-                ida_kernwin.warning(f"Unable to get current function information: {e}")
+            config, current_func_addr, current_func_name = prepare_activate_context(
+                load_config,
+                validate_basic_config,
+                _update_fast_look_config,
+            )
+            if not config:
                 return 1
             
             print("[AETHER] [Fast Look] Generating fast look results...")
