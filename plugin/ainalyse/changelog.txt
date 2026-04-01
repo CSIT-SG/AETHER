@@ -2,6 +2,13 @@
 2026.1.1 - PATCH
 =====
 
+- Fixed bug for annotator
+  - Annotator previously locks up permenantly if asked to run at same time
+
+=====
+2026.1.1 - PATCH
+=====
+
 - Compatibility update for IDA 9.2
   - fixed plugin crashing previously caused by a threading issue
 - Annotations

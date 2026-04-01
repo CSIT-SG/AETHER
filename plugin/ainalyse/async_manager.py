@@ -161,7 +161,7 @@ def start_pipeline(pipeline_coroutine: Coroutine):
     """
     if PIPELINE_STATE["is_running"]:
         print("[Async Manager] Cannot start: a pipeline is already running.")
-        return
+        return False
 
     print("[Async Manager] Scheduling pipeline to run on dedicated worker thread.")
     

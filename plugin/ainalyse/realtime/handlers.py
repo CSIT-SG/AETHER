@@ -57,7 +57,9 @@ class FastLookHandler(ida_kernwin.action_handler_t):
                 finally:
                     FastLookHandler.is_running = False
             FastLookHandler.is_running = True
-            start_pipeline(fast_look_thread(config, current_func_name, current_func_addr))
+            if start_pipeline(fast_look_thread(config, current_func_name, current_func_addr)) is False:
+                print(f"[AETHER] [Fast Look] Error running fast look: Other function currently being executed")
+                FastLookHandler.is_running = False
         except Exception as e:
             print(f"[AETHER] [Fast Look] Error running fast look: {e}")
             FastLookHandler.is_running = False

@@ -15,6 +15,7 @@ class QuickAnalyseHandler(ida_kernwin.action_handler_t):
 
     def activate(self, ctx):
         if QuickAnalyseHandler.is_running:
+            print("[AETHER] [Quick] Quick analysis is already running...")
             return 1
         QuickAnalyseHandler.is_running = True
 
@@ -106,8 +107,9 @@ class QuickAnalyseHandler(ida_kernwin.action_handler_t):
                 finally:
                     QuickAnalyseHandler.is_running = False
                 print("[AETHER] Done.")
-
-            start_pipeline(quick_analysis_thread(config, current_func_addr, current_func_name))
+            if start_pipeline(quick_analysis_thread(config, current_func_addr, current_func_name)) is False:
+                print(f"[AETHER] Error running Quick Analysis: Other function currently being executed")
+                QuickAnalyseHandler.is_running = False
         except Exception as e:
             print(f"[AETHER] Error running AETHER: {e}")
             import traceback
