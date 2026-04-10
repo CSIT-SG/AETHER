@@ -1,0 +1,44 @@
+# Phase 1 – Structural Analysis
+1. Construct the Control Flow Graph (CFG) of both codes.
+2. Identify:
+- Variable initialization
+- Basic blocks
+- Branch conditions
+- Loop structures
+- Exit points
+- Indirect jumps (if any)
+3. Compare CFG topology between the two.
+
+# Phase 2 – Symbolic Execution
+4. Perform symbolic execution on all feasible execution paths of the obfuscated code.
+5. Track:
+- Variable states
+- Register/memory state
+- State transitions per block
+- Jumps caused by goto Labels
+6. Do the same for the deobfuscated code.
+
+Phase 3 – Path Mapping
+7. Map each obfuscated basic block to its corresponding deobfuscated block.
+8. For every branch condition:
+- Prove logical equivalence
+- Simplify conditions algebraically if needed
+9. Confirm that:
+- All reachable paths in obfuscated code exist in deobfuscated code
+- No extra paths exist in deobfuscated code
+
+Phase 4 – Edge Case & Counterexample Testing
+10. Identify edge-case inputs.
+11. Attempt to construct counterexamples where outputs differ.
+12. If none exist, justify why equivalence holds.
+
+Phase 5 – Final Determination
+13. Conclude whether the deobfuscated code is:
+- Fully equivalent
+- Partially equivalent
+- Missing control flow
+- Semantically different
+14. If not fully equivalent, print "Deobfuscated code is not fully equivalent to obfuscated code". Else, DO NOT PRINT THIS LINE
+
+Provide justification for every claim. Do not assume equivalence without proof
+

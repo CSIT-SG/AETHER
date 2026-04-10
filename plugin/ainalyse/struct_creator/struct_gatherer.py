@@ -14,7 +14,6 @@ from openai import OpenAI
 from mcp.client.session import ClientSession
 from mcp.client.sse import sse_client
 from ainalyse.ssl_helper import create_openai_client_with_custom_ca
-from ainalyse.utils import check_and_add_intranet_headers
 
 from ainalyse.custom_set_cmt import custom_get_pseudocode
 
@@ -134,9 +133,6 @@ def call_openai_llm_gatherer(prompt_content: str, api_key: str, model: str, base
         # Add extra_body if provided
         if extra_body:
             request_params["extra_body"] = extra_body
-        
-        # Check for intranet.txt and add headers if needed
-        check_and_add_intranet_headers(request_params)
         
         response = client.chat.completions.create(**request_params)
         return response.choices[0].message.content.strip()

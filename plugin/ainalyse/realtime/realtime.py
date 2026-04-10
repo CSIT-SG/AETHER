@@ -1,5 +1,6 @@
 import os
 import re
+from datetime import datetime
 import time
 import textwrap
 from typing import Dict, List, Optional, Tuple
@@ -9,13 +10,14 @@ import ida_kernwin
 import idaapi
 from mcp.client.session import ClientSession
 from mcp.client.sse import sse_client
+import tiktoken
 
 from ainalyse import finalize_prompt, load_config
 from ainalyse.custom_set_cmt import scmt
 from ainalyse.function_selection import collect_functions_with_default_criteria
 from ainalyse.manual_gatherer import Node, format_call_tree_ascii
 from ainalyse.ssl_helper import create_openai_client_with_custom_ca
-from ainalyse.utils import check_and_add_intranet_headers, refresh_functions
+from ainalyse.utils import refresh_functions
 
 # File paths
 REALTIME_PROMPT_FILE = os.path.join(os.path.dirname(__file__), "..", "prompts", "realtime-annotator-fast.txt")
@@ -31,8 +33,17 @@ async def mcp_get_tool_text_content(session: ClientSession, tool_name: str, para
         print(f"[AETHER] [Fast Look] Error calling MCP tool {tool_name}: {e}")
     return None
 
-def call_openai_llm_realtime(system_prompt: str, user_prompt: str, api_key: str, model: str, base_url: str, extra_body: dict = None, custom_ca_cert_path: str = "", client_cert_path: str = "", client_key_path: str = "") -> str:
+def call_openai_llm_realtime(system_prompt: str, user_prompt: str, api_key: str, model: str, base_url: str, system_prompt_at_bottom: bool, prompt_token_warning: int, extra_body: dict = None, custom_ca_cert_path: str = "", client_cert_path: str = "", client_key_path: str = "", debug: bool = False, task: str = "") -> str:
     """Call OpenAI API for realtime analysis."""
+    try:
+        # Estimate tokens generated for user prompt
+        os.environ["TIKTOKEN_CACHE_DIR"] = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "\encodings"
+        enc = tiktoken.get_encoding("r50k_base")
+        print("[AETHER] [LLM] Estimated Tokens Generated: "+str(len(enc.encode(user_prompt + system_prompt))))
+        if len(enc.encode(user_prompt + system_prompt)) > prompt_token_warning:
+            print(f"[AETHER] [LLM] Pseudo Code sent may be cut due to being too long.")
+    except Exception as e:
+        print(f"[AETHER] [LLM] Error estimating tokens generated: {e}")
     try:
         config = load_config()
         max_tokens = config.get("ANNOTATOR_MAX_TOKENS", 30000)
@@ -41,28 +52,42 @@ def call_openai_llm_realtime(system_prompt: str, user_prompt: str, api_key: str,
         
         # Append "/no_think" to user message
         user_message_content = user_prompt + "/no_think"
+        if system_prompt_at_bottom:
+            messages =[{"role": "user", "content": user_message_content}, {"role": "system", "content": system_prompt}]
+        else:
+            messages =[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_message_content}]
         request_params = {
-            "model": model,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message_content}
-            ],
-            "max_tokens": max_tokens,
-            "temperature": 0.7
-        }
+                "model": model,
+                "messages": messages,
+                "max_tokens": max_tokens,
+                "temperature": 0.7,
+            }
         
         if extra_body:
             request_params["extra_body"] = extra_body
+
         
-        # Check for intranet.txt and add headers if needed
-        check_and_add_intranet_headers(request_params)
-        
+        current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        if debug:
+            with open(f"{task}_{current_time}.txt", "w", encoding='utf-8') as outputfile:
+                outputfile.write("SYSTEM PROMPT:\n" + system_prompt)
+                outputfile.write("\n\nUSER PROMPT:\n" + user_prompt)
+                outputfile.write("\n\nRESPONSE:\n")
         response = client.chat.completions.create(**request_params)
         if (response.choices[0].message.content):
+            if debug:
+                with open(f"{task}_{current_time}.txt", "a", encoding='utf-8') as outputfile:
+                    outputfile.write(response.choices[0].message.content.strip())
             return response.choices[0].message.content.strip()
         else:
-            return "No content"
+            if debug:
+                with open(f"{task}_{current_time}.txt", "a", encoding='utf-8') as outputfile:
+                    outputfile.write("No response")
+            return
     except Exception as e:
+        if debug:
+            with open(f"{task}_{current_time}.txt", "a", encoding='utf-8') as outputfile:
+                outputfile.write(f"{e}")
         print(f"[AETHER] [Fast Look] Error calling OpenAI API: {e}")
         return ""
 
@@ -224,7 +249,7 @@ def format_pseudocode_listing_for_realtime(pseudocode_store: Dict[str, str]) -> 
         listing += f"\n=====\n{func_name}(...)\n=====\n\n{formatted_code.strip()}\n"
     return listing
 
-async def run_realtime_analysis_common(config: dict, current_func_name: str, current_func_addr: str, prompt_file: str, prompt_replacements: dict = None) -> bool:
+async def run_realtime_analysis_common(config: dict, current_func_name: str, current_func_addr: str, prompt_file: str, smart_select: bool, prompt_replacements: dict = None) -> bool:
     """Common function for running realtime analysis with different prompts."""
     start_time = time.time()
     
@@ -233,10 +258,13 @@ async def run_realtime_analysis_common(config: dict, current_func_name: str, cur
     # Use SINGLE_ANALYSIS_MODEL for realtime analysis, fall back to OPENAI_MODEL if not set
     model = config.get("SINGLE_ANALYSIS_MODEL") or config["OPENAI_MODEL"]
     base_url = config["OPENAI_BASE_URL"]
-    extra_body = config.get("OPENAI_EXTRA_BODY", {}) #"reasoning": {"effort": "low","exclude": True}
+    system_prompt_at_bottom = config.get("SYSTEM_PROMPT_AT_BOTTOM", False)
+    prompt_token_warning = config.get("PROMPT_TOKEN_WARNING", 64000)
+    extra_body = config.get("OPENAI_EXTRA_BODY", {})
     custom_ca_cert_path = config.get("CUSTOM_CA_CERT_PATH", "")
     client_cert_path = config.get("CLIENT_CERT_PATH", "")
     client_key_path = config.get("CLIENT_KEY_PATH", "")
+    debug = config.get("DEBUG", False)
 
     if urlparse(server_url).scheme not in ("http", "https"):
         print("[AETHER] [Realtime] Error: MCP_SERVER_URL must start with http:// or https://")
@@ -416,14 +444,77 @@ async def run_realtime_analysis_common(config: dict, current_func_name: str, cur
                 final_tree_str = format_call_tree_ascii(call_tree_root)
                 final_pseudocode_listing_str = format_pseudocode_listing_for_realtime(pseudocode_store)
                 context = f"CALL TREE:\n{final_tree_str}\n\n{final_pseudocode_listing_str}"
-                
+                if smart_select:
+                    task = "Smart_Selection"
+                    # If smart selection is enabled, filter important functions to send for analysis
+                    default_selected = [i["name"] for i in selected_functions]
+
+                    print("[AETHER] [Realtime] Requesting smart select from LLM...")
+                    # Call LLM to identify important functions
+                    llm_response = call_openai_llm_realtime(
+                        f"""
+                        You are performing deterministic function classification.
+
+                        Analyze the following set of functions:
+                        {default_selected}
+
+                        For EACH function in the set, you MUST follow this decision procedure in order:
+
+                        Step 1: If the function contains meaningful internal logic OR calls at least one IMPORTANT function, label it IMPORTANT.
+                        Step 2: Else if the function adds no meaningful logic AND ALL functions it calls are UNIMPORTANT or system functions, label it UNIMPORTANT.
+                        Step 3: Else if the function adds no meaningful logic AND calls functions not included or not yet provided, label it WRAPPER.
+
+                        Label precedence is IMPORTANT > UNIMPORTANT > WRAPPER. Only one label is allowed.
+
+                        Reasoning requirements:
+                        - Output EXACTLY three sentences per function.
+                        - Sentence 1: Describe the function’s internal logic.
+                        - Sentence 2: Describe the functions it calls and their classifications.
+                        - Sentence 3: Justify the final label using the rules above.
+                        - Do NOT use hedging language (e.g., “appears”, “likely”, “possibly”).
+
+                        Output format rules (STRICT):
+                        - One function per line.
+                        - No extra text, headers, or blank lines.
+                        - Use exactly this format:
+
+                        function_name (LABEL) Sentence one. Sentence two. Sentence three.
+                        """, context, api_key, model, base_url, system_prompt_at_bottom, prompt_token_warning,
+                        extra_body, custom_ca_cert_path, client_cert_path, client_key_path, debug, task
+                    )
+                    if not llm_response:
+                        print("[AETHER] [Realtime] No response from LLM.")
+                        return False
+                    print(f"\n```Smart Function Analysis\n[AETHER] [Realtime] LLM Response:\n{llm_response}\n```\n")
+                    # Keep only important functions
+                    smart_selected = []
+                    for func in llm_response.split("\n"):
+                        try:
+                            func_name = func.split(" ")[0]
+                            func_label = func.split(" ")[1]
+                            smart_selected.append(func_name)
+                        except IndexError as e:
+                            continue
+                        try:
+                            if func_label == "(UNIMPORTANT)":
+                                pseudocode_store.pop(func_name)
+                        except KeyError as e:
+                            continue
+                    print("Missed functions: "+ str(set(default_selected)-set(smart_selected)))
+                    print("Hallucinated functions: "+ str(set(smart_selected)-set(default_selected)))
+                    final_pseudocode_listing_str = format_pseudocode_listing_for_realtime(pseudocode_store)
+                    context = f"CALL TREE:\n{final_tree_str}\n\n{final_pseudocode_listing_str}"
+                    print(f"[AETHER] [Realtime] Collected {len(pseudocode_store)} functions for analysis with Smart Select")
+
                 print("[AETHER] [Realtime] Requesting analysis from LLM...")
+
+                task = "Annotation"
                 # Call LLM with the prepared system prompt and context
                 llm_response = call_openai_llm_realtime(
-                    system_prompt, context, api_key, model, base_url, 
-                    extra_body, custom_ca_cert_path, client_cert_path, client_key_path
+                    system_prompt, context, api_key, model, base_url, system_prompt_at_bottom, prompt_token_warning,
+                    extra_body, custom_ca_cert_path, client_cert_path, client_key_path, debug, task
                 )
-                
+
                 if not llm_response:
                     print("[AETHER] [Realtime] No response from LLM.")
                     return False, None, None, None
@@ -501,7 +592,12 @@ async def run_realtime_analysis_common(config: dict, current_func_name: str, cur
 async def run_fast_look_analysis(config: dict, current_func_name: str, current_func_addr: str):
     """Run fast look analysis on current function."""
     print(f"[AETHER] [Fast Look] Starting fast look analysis for function: {current_func_name}")
-    return await run_realtime_analysis_common(config, current_func_name, current_func_addr, REALTIME_PROMPT_FILE)
+    return await run_realtime_analysis_common(config, current_func_name, current_func_addr, REALTIME_PROMPT_FILE, False)
+
+async def run_smart_look_analysis(config: dict, current_func_name: str, current_func_addr: str) -> bool:
+    """Run smart look analysis on current function."""
+    print(f"[AETHER] [Smart Look] Starting fast look analysis for function: {current_func_name}")
+    return await run_realtime_analysis_common(config, current_func_name, current_func_addr, REALTIME_PROMPT_FILE, True)
 
 async def run_custom_prompt_analysis(config: dict, current_func_name: str, current_func_addr: str, user_advice: str) -> bool:
     """Run custom prompt correction analysis on current function."""
@@ -509,4 +605,4 @@ async def run_custom_prompt_analysis(config: dict, current_func_name: str, curre
     print(f"[AETHER] [Custom Re-annotate] User advice: {user_advice}")
     
     prompt_replacements = {"INSERT_USER_ADVICE": user_advice}
-    return await run_realtime_analysis_common(config, current_func_name, current_func_addr, CORRECTION_PROMPT_FILE, prompt_replacements)
+    return await run_realtime_analysis_common(config, current_func_name, current_func_addr, CORRECTION_PROMPT_FILE, False, prompt_replacements)

@@ -6,31 +6,6 @@ import idaapi
 import ida_kernwin
 import ida_hexrays
 
-def check_and_add_intranet_headers(request_params: dict) -> None:
-    """
-    Check if intranet.txt exists in ainalyse/ directory and add User-Agent header if it does.
-    
-    Args:
-        request_params: Dictionary of request parameters to modify in-place
-    """
-    intranet_file = os.path.join(os.path.dirname(__file__), "intranet.txt")
-    
-    if os.path.exists(intranet_file):
-        # Read version from version.txt
-        version_file = os.path.join(os.path.dirname(__file__), "version.txt")
-        version = "unknown"
-        try:
-            with open(version_file, "r") as ver_file:
-                version = ver_file.read().strip()
-        except Exception as e:
-            print(f"[AETHER] Warning: Could not read version file: {e}")
-        
-        # Add extra_headers to request_params
-        if "extra_headers" not in request_params:
-            request_params["extra_headers"] = {}
-        
-        request_params["extra_headers"]["User-Agent"] = f"AETHER (IDA)/alpha{version}"
-        print(f"[AETHER] Added intranet User-Agent header: AETHER (IDA)/alpha{version}")
 
 def _extract_function_eas(functions: Iterable[Any] | None) -> list[int]:
     """Extract function addresses from a list of dicts/strings/ints."""
@@ -134,23 +109,41 @@ def prepare_activate_context(
     config = load_config_fn()
     is_valid, error_msg = validate_basic_config_fn(config)
     if not is_valid:
-        ida_kernwin.warning(error_msg)
+        def _show_config_error_sync():
+            ida_kernwin.warning(error_msg)
+            return 1
+
+        ida_kernwin.execute_sync(_show_config_error_sync, ida_kernwin.MFF_WRITE)
         return None, None, None
 
     config = load_config_fn()
     if config_updater:
         config_updater(config)
 
-    try:
-        ea = ida_kernwin.get_screen_ea()
-        func = idaapi.get_func(ea)
-        if not func:
-            ida_kernwin.warning("No function found at current location.")
-            return None, None, None
+    context = {"addr": None, "name": None, "error": None}
 
-        current_func_addr = hex(func.start_ea)
-        current_func_name = ida_funcs.get_func_name(func.start_ea)
-        return config, current_func_addr, current_func_name
-    except Exception as e:
-        ida_kernwin.warning(f"Unable to get current function information: {e}")
-        return None, None, None
+    def _resolve_current_function_sync():
+        try:
+            ea = ida_kernwin.get_screen_ea()
+            func = idaapi.get_func(ea)
+            if not func:
+                context["error"] = "No function found at current location."
+                return 0
+
+            context["addr"] = hex(func.start_ea)
+            context["name"] = ida_funcs.get_func_name(func.start_ea)
+            return 1
+        except Exception as e:
+            context["error"] = f"Unable to get current function information: {e}"
+            return 0
+
+    ida_kernwin.execute_sync(_resolve_current_function_sync, ida_kernwin.MFF_READ)
+
+    if context["error"]:
+        def _show_context_error_sync():
+            ida_kernwin.warning(context["error"])
+            return 1
+
+        ida_kernwin.execute_sync(_show_context_error_sync, ida_kernwin.MFF_WRITE)
+        None, None, None
+    return config, context["addr"], context["name"]

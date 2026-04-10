@@ -1,4 +1,4 @@
-import os
+﻿import os
 import time
 import traceback
 import socket
@@ -39,9 +39,10 @@ from ainalyse.ai_decomp import (
 )
 from ainalyse.annotator import run_annotator_agent
 from ainalyse.async_manager import ensure_async_pool, get_primary_worker, run_async_in_ida, run_in_background
-from ainalyse.chatbot.viewer import show_chatbot_viewer
+from ainalyse.chatbot.ui.viewer import CHATBOT_VIEW_TITLE, show_chatbot_viewer
 
 # --- Dialog imports ---
+from ainalyse.dialogs_ida import AdvancedOptionsDialog, AnalysisHistoryDialog, PluginSettingsDialog
 from ainalyse.function_selection import (
     FunctionSelectionDialog,  # Use shared dialog instead of ManualGathererDialog
     collect_functions_with_default_criteria,
@@ -51,11 +52,14 @@ from ainalyse.gatherer import call_openai_llm_gatherer, run_gatherer_agent
 # --- AETHER specific imports ---
 from ainalyse.manual_gatherer import run_manual_gatherer_agent
 from ainalyse.quick_analyse import QuickAnalyseHandler
-from ainalyse.realtime.handlers import CustomPromptReAnnotateHandler, FastLookHandler, StripAIAnnotationsHandler
+from ainalyse.realtime.handlers import CustomPromptReAnnotateHandler, FastLookHandler, SmartLookHandler, StripAIAnnotationsHandler, GenerateReportHandler
+from ainalyse.unflattener.handlers import UnflattenerHandler
+from ainalyse.unflattener.viewer import AI_DEOBFS_VIEW_TITLE, remove_scroll_hooks as remove_unflatten_scroll_hooks
 from ainalyse.undo_retry import undo_analysis_annotations
 from ainalyse.utils import refresh_functions
 
 from ainalyse.struct_creator.handler import StructCreationHandler as StructRefactorHandler
+from ainalyse.indexing import FunctionIndexer, FunctionIndexManager, ImportanceLevel, get_program_identifier, get_index_filepath
 
 from PyQt5 import QtCore, QtWidgets
 
@@ -69,8 +73,7 @@ class ChatbotHandler(ida_kernwin.action_handler_t):
         ida_kernwin.action_handler_t.__init__(self)
 
     def activate(self, ctx):
-        widget_title = ida_kernwin.get_widget_title(ctx.widget)
-        show_chatbot_viewer(dock_target=widget_title)
+        show_chatbot_viewer()
         return 1
 
     def update(self, ctx):
@@ -105,7 +108,6 @@ class AdvancedAnalyseHandler(ida_kernwin.action_handler_t):
 
         gatherer_prompt, annotator_prompt = load_custom_prompts()
 
-        from ainalyse.dialogs_ida import AdvancedOptionsDialog
         dlg = AdvancedOptionsDialog(current_func, base_config, gatherer_prompt, annotator_prompt)
         if dlg.exec_():
             results = dlg.get_results()
@@ -123,7 +125,7 @@ class AdvancedAnalyseHandler(ida_kernwin.action_handler_t):
             config["custom_user_prompt"] = annotator_context
             manual_mode = results["manual_mode"]
             manual_functions = results["manual_functions"]
-            extra_option = ["USE_DESC", "USE_COMMENTS", "RENAME_VARS", "RENAME_FUNCS"]
+            extra_option = ["USE_DESC", "USE_COMMENTS", "USE_RENAME_VARS", "USE_RENAME_FUNCS"]
             config.update({k: results[k] for k in extra_option if k in results})
 
             if manual_mode and not manual_functions:
@@ -259,7 +261,6 @@ class PluginSettingsHandler(ida_kernwin.action_handler_t):
 
     def activate(self, ctx):
         config = load_config()
-        from ainalyse.dialogs_ida import PluginSettingsDialog
         dlg = PluginSettingsDialog(config)
         if dlg.exec_():
             new_config = dlg.get_config()
@@ -438,7 +439,7 @@ class AnalysisHistoryHandler(ida_kernwin.action_handler_t):
         if not history:
             print("[AETHER] (No analysis history stored yet)")
             return 1
-        from ainalyse.dialogs_ida import AnalysisHistoryDialog
+
         dlg = AnalysisHistoryDialog(history)
         dlg.exec_()
         return 1
@@ -501,22 +502,272 @@ class WhatsNewHandler(ida_kernwin.action_handler_t):
     def update(self, ctx):
         return ida_kernwin.AST_ENABLE_ALWAYS
 
+# --- Indexing Action Handlers ---
+
+class IndexBinaryHandler(ida_kernwin.action_handler_t):
+    def __init__(self):
+        ida_kernwin.action_handler_t.__init__(self)
+
+    def activate(self, ctx):
+        config = load_config()
+        if not check_config_and_show_error_if_invalid(config):
+            return 1
+
+        if FunctionIndexManager.is_binary_indexed():
+            choice = ida_kernwin.ask_yn(
+                ida_kernwin.ASKBTN_NO,
+                "Binary is already indexed. Re-index?"
+            )
+            if choice != ida_kernwin.ASKBTN_YES:
+                return 1
+
+        if FunctionIndexer.is_indexing_in_progress():
+            ida_kernwin.warning("Indexing is already in progress.")
+            return 1
+
+        def on_success(index):
+            ida_kernwin.execute_sync(
+                lambda: ida_kernwin.info(
+                    f"Indexing complete: {index.size()} functions classified"
+                ),
+                ida_kernwin.MFF_FAST,
+            )
+
+        def on_failure(msg):
+            ida_kernwin.execute_sync(
+                lambda: ida_kernwin.warning(f"Indexing failed: {msg}"),
+                ida_kernwin.MFF_FAST,
+            )
+
+        run_in_background(lambda: FunctionIndexer.index_binary(on_success, on_failure))
+        return 1
+
+    def update(self, ctx):
+        return ida_kernwin.AST_ENABLE_ALWAYS
+
+
+class ResumeIndexingHandler(ida_kernwin.action_handler_t):
+    def __init__(self):
+        ida_kernwin.action_handler_t.__init__(self)
+
+    def activate(self, ctx):
+        config = load_config()
+        if not check_config_and_show_error_if_invalid(config):
+            return 1
+
+        if FunctionIndexer.is_indexing_in_progress():
+            ida_kernwin.warning("Indexing is already in progress.")
+            return 1
+
+        if not FunctionIndexManager.can_resume_indexing():
+            ida_kernwin.warning("No resumable index found for this binary.")
+            return 1
+
+        def on_success(index):
+            ida_kernwin.execute_sync(
+                lambda: ida_kernwin.info(
+                    f"Indexing resumed and complete: {index.size()} functions classified"
+                ),
+                ida_kernwin.MFF_FAST,
+            )
+
+        def on_failure(msg):
+            ida_kernwin.execute_sync(
+                lambda: ida_kernwin.warning(f"Resume indexing failed: {msg}"),
+                ida_kernwin.MFF_FAST,
+            )
+
+        run_in_background(lambda: FunctionIndexer.resume_indexing(on_success, on_failure))
+        return 1
+
+    def update(self, ctx):
+        if FunctionIndexManager.can_resume_indexing():
+            return ida_kernwin.AST_ENABLE_ALWAYS
+        return ida_kernwin.AST_DISABLE
+
+
+class CancelIndexingHandler(ida_kernwin.action_handler_t):
+    def __init__(self):
+        ida_kernwin.action_handler_t.__init__(self)
+
+    def activate(self, ctx):
+        if FunctionIndexer.is_indexing_in_progress():
+            cancelled = FunctionIndexer.request_cancellation()
+            if cancelled:
+                print("[AETHER] Indexing cancellation requested.")
+            else:
+                ida_kernwin.warning("Failed to request cancellation.")
+        else:
+            ida_kernwin.warning("No indexing operation is currently running.")
+        return 1
+
+    def update(self, ctx):
+        if FunctionIndexer.is_indexing_in_progress():
+            return ida_kernwin.AST_ENABLE_ALWAYS
+        return ida_kernwin.AST_DISABLE
+
+
+class ReindexBinaryHandler(ida_kernwin.action_handler_t):
+    def __init__(self):
+        ida_kernwin.action_handler_t.__init__(self)
+
+    def activate(self, ctx):
+        config = load_config()
+        if not check_config_and_show_error_if_invalid(config):
+            return 1
+
+        if FunctionIndexer.is_indexing_in_progress():
+            ida_kernwin.warning("Indexing is already in progress.")
+            return 1
+
+        choice = ida_kernwin.ask_yn(
+            ida_kernwin.ASKBTN_NO,
+            "This will delete the existing index and re-index the entire binary. Continue?"
+        )
+        if choice != ida_kernwin.ASKBTN_YES:
+            return 1
+
+        # Clear existing index first
+        FunctionIndexManager.clear_index_completely()
+
+        def on_success(index):
+            ida_kernwin.execute_sync(
+                lambda: ida_kernwin.info(
+                    f"Re-indexing complete: {index.size()} functions classified"
+                ),
+                ida_kernwin.MFF_FAST,
+            )
+
+        def on_failure(msg):
+            ida_kernwin.execute_sync(
+                lambda: ida_kernwin.warning(f"Re-indexing failed: {msg}"),
+                ida_kernwin.MFF_FAST,
+            )
+
+        run_in_background(lambda: FunctionIndexer.index_binary(on_success, on_failure))
+        return 1
+
+    def update(self, ctx):
+        return ida_kernwin.AST_ENABLE_ALWAYS
+
+
+class IndexStatsHandler(ida_kernwin.action_handler_t):
+    def __init__(self):
+        ida_kernwin.action_handler_t.__init__(self)
+
+    def activate(self, ctx):
+        idx = FunctionIndexManager.get_index()
+
+        if idx.is_empty():
+            ida_kernwin.info("No index exists for this binary yet.\nUse 'Index Binary' to create one.")
+            return 1
+
+        # Collect importance counts
+        importance_counts = {}
+        for entry in idx.entries_by_address.values():
+            level = entry.get_importance_level() or "UNKNOWN"
+            importance_counts[level] = importance_counts.get(level, 0) + 1
+
+        # Collect category counts
+        category_counts = {}
+        for entry in idx.entries_by_address.values():
+            for cat in entry.get_functional_categories():
+                category_counts[cat] = category_counts.get(cat, 0) + 1
+
+        # Build stats text
+        lines = []
+        lines.append(f"Program: {idx.program_name or 'unknown'}")
+        lines.append(f"State: {idx.indexing_state}")
+        lines.append(f"Total indexed: {idx.size()} / {idx.total_function_count} functions")
+        lines.append(f"Tokens used: {idx.total_tokens_used:,}")
+        lines.append("")
+
+        bm = idx.batch_metadata
+        lines.append(f"Batches: {bm.completed_batches} / {bm.total_batches}")
+        lines.append("")
+
+        lines.append("--- Importance ---")
+        for level_name in ("CRITICAL", "HIGH", "MEDIUM", "LOW", "MINIMAL"):
+            count = importance_counts.get(level_name, 0)
+            if count:
+                lines.append(f"  {level_name}: {count}")
+        unknown_imp = importance_counts.get("UNKNOWN", 0)
+        if unknown_imp:
+            lines.append(f"  UNKNOWN: {unknown_imp}")
+        lines.append("")
+
+        lines.append("--- Categories (top 15) ---")
+        sorted_cats = sorted(category_counts.items(), key=lambda x: x[1], reverse=True)[:15]
+        for cat, cnt in sorted_cats:
+            lines.append(f"  {cat}: {cnt}")
+
+        # Footnote with file location
+        lines.append("")
+        lines.append("─" * 40)
+        try:
+            identifier = get_program_identifier()
+            index_path = get_index_filepath(identifier)
+            lines.append(f"Index file: {index_path}")
+        except Exception:
+            lines.append("Index file: (could not determine path)")
+
+        stats_text = "\n".join(lines)
+
+        class IndexStatsDialog(QtWidgets.QDialog):
+            def __init__(self, text, parent=None):
+                super().__init__(parent)
+                self.setWindowTitle("Function Index Statistics")
+                self.setMinimumSize(500, 450)
+
+                layout = QtWidgets.QVBoxLayout()
+
+                header = QtWidgets.QLabel("Function Index Statistics")
+                header.setStyleSheet("font-weight: bold; font-size: 14px; margin-bottom: 10px;")
+                layout.addWidget(header)
+
+                text_area = QtWidgets.QTextEdit()
+                text_area.setPlainText(text)
+                text_area.setReadOnly(True)
+                text_area.setStyleSheet("font-family: Consolas, monospace;")
+                layout.addWidget(text_area)
+
+                btn_layout = QtWidgets.QHBoxLayout()
+                btn_layout.addStretch()
+                close_btn = QtWidgets.QPushButton("Close")
+                close_btn.clicked.connect(self.accept)
+                btn_layout.addWidget(close_btn)
+                layout.addLayout(btn_layout)
+
+                self.setLayout(layout)
+
+        dlg = IndexStatsDialog(stats_text)
+        dlg.exec_()
+        return 1
+
+    def update(self, ctx):
+        return ida_kernwin.AST_ENABLE_ALWAYS
+
+
 # --- UI Hooks for Submenu ---
-class AETHERUIHooks(ida_kernwin.UI_Hooks):
+class AetherUIHooks(ida_kernwin.UI_Hooks):
     def finish_populating_widget_popup(self, widget, popup):
         if ida_kernwin.get_widget_type(widget) != ida_kernwin.BWN_PSEUDOCODE:
             return
 
         menu_path = "AETHER AI-RE/"
         ai_decomp_submenu_path = "AETHER AI-RE/AI Rewrite Decompilation/"
-        undo_retry_submenu_path = "AETHER AI-RE/Undo or Retry.../"        
+        undo_retry_submenu_path = "AETHER AI-RE/Undo or Retry.../"
+        indexing_submenu_path = "AETHER AI-RE/Indexing/"
 
         ver_file = open(os.path.join(os.path.dirname(__file__), "ainalyse/version.txt"), "r")
 
         actions = [
             ("aether:whats_new", f"What's new in release {ver_file.read()} (changelog)", WhatsNewHandler(), "", ""),
             ("aether:fast_look", "Annotate only this function", FastLookHandler(), "Ctrl+Alt+F", ""),
+            ("aether:smart_look", "Annotate only this function with Smart Select", SmartLookHandler(), "Ctrl+Alt+S", ""),
             ("aether:quick", "Annotate function tree with default selection", QuickAnalyseHandler(), "Ctrl+Alt+Q", ""),
+            ("aether:generate_report", "Generate Report on this function", GenerateReportHandler(), "Ctrl+Alt+G", ""),
+            ("aether:unflatten", "AI Unflatten", UnflattenerHandler(), "", ""),
             ("aether:struct_creator", "Create struct for highlighted variable", StructRefactorHandler(), "Ctrl+Alt+V", ""),
             ("aether:chatbot", "Open AI Chatbot", ChatbotHandler(), "", ""),
             ("aether:manual", "Manually select functions to analyse", ManualAnalyseHandler(), "", ""),
@@ -529,10 +780,10 @@ class AETHERUIHooks(ida_kernwin.UI_Hooks):
 
         # AI Decompilation submenu actions
         ai_decomp_actions = [
-        #     ("ainalyse:ai_decomp", "AI rewrite decompilation (prompt A)", AIDecompHandler(), "", ""),
-        #     ("ainalyse:ai_decomp_b", "AI rewrite decompilation (prompt B)", AIDecompHandlerB(), "", ""),
-        #     ("ainalyse:ai_decomp_selector", "Select functions for AI rewrite...", AIDecompSelectorHandler(), "", ""),
-        #     ("ainalyse:ai_decomp_clear", "Clear all AI rewrites", ClearAIDecompHandler(), "", "")
+        #     ("aether:ai_decomp", "AI rewrite decompilation (prompt A)", AIDecompHandler(), "", ""),
+        #     ("aether:ai_decomp_b", "AI rewrite decompilation (prompt B)", AIDecompHandlerB(), "", ""),
+        #     ("aether:ai_decomp_selector", "Select functions for AI rewrite...", AIDecompSelectorHandler(), "", ""),
+        #     ("aether:ai_decomp_clear", "Clear all AI rewrites", ClearAIDecompHandler(), "", "")
         ]
 
         # Undo / Retry submenu actions
@@ -570,6 +821,24 @@ class AETHERUIHooks(ida_kernwin.UI_Hooks):
                 ida_kernwin.register_action(action_desc)
             ida_kernwin.attach_action_to_popup(widget, popup, action_name, undo_retry_submenu_path)
 
+        # Indexing submenu actions
+        indexing_actions = [
+            ("aether:index_binary", "Index Binary", IndexBinaryHandler(), "", ""),
+            ("aether:resume_indexing", "Resume Indexing", ResumeIndexingHandler(), "", ""),
+            ("aether:cancel_indexing", "Cancel Indexing", CancelIndexingHandler(), "", ""),
+            ("aether:reindex_binary", "Re-index Binary", ReindexBinaryHandler(), "", ""),
+            ("aether:index_stats", "Index Statistics", IndexStatsHandler(), "", ""),
+        ]
+
+        # Register indexing actions and add to submenu
+        for action_name, label, handler, hotkey, tooltip in indexing_actions:
+            if not ida_kernwin.get_action_state(action_name)[0]:
+                action_desc = ida_kernwin.action_desc_t(
+                    action_name, label, handler, hotkey, tooltip, -1
+                )
+                ida_kernwin.register_action(action_desc)
+            ida_kernwin.attach_action_to_popup(widget, popup, action_name, indexing_submenu_path)
+
 class AETHERPlugin(ida_idaapi.plugin_t):
     flags = ida_idaapi.PLUGIN_PROC | ida_idaapi.PLUGIN_HIDE
     comment = "AETHER AI-RE: AI Engine To Help The Engineer Reverse"
@@ -580,6 +849,8 @@ class AETHERPlugin(ida_idaapi.plugin_t):
     def __init__(self):
         self.ui_hooks = None
         self._toolbar_action_name = "aether:fast_look2"
+        self._toolbar_icon_id = None
+        self._mcp_timer = None
 
     def _register_toolbar_action(self):
         """Register and attach the toolbar action after IDA UI is initialized."""
@@ -591,6 +862,7 @@ class AETHERPlugin(ida_idaapi.plugin_t):
             print(f"Failed to load icon from {icon_path}")
             # Use a default icon if loading fails
             icon_data = idaapi.load_custom_icon("ainalyse/brain.png")
+        self._toolbar_icon_id = icon_data
 
         action_desc2 = idaapi.action_desc_t(
             self._toolbar_action_name,
@@ -632,7 +904,7 @@ class AETHERPlugin(ida_idaapi.plugin_t):
             print("[AETHER] [Async Manager] Initializing asyncio background thread...")
             primary_worker.start()
 
-        self.ui_hooks = AETHERUIHooks()
+        self.ui_hooks = AetherUIHooks()
         self.ui_hooks.hook()
 
         # Install AI decompilation hooks
@@ -664,7 +936,7 @@ class AETHERPlugin(ida_idaapi.plugin_t):
                 except OSError:
                     return True
 
-        ida_kernwin.register_timer(1000, start_mcp)
+        self._mcp_timer = ida_kernwin.register_timer(1000, start_mcp)
 
         print("[AETHER] Plugin initialized. Right-click in Pseudocode view.")
         return ida_idaapi.PLUGIN_KEEP
@@ -673,23 +945,40 @@ class AETHERPlugin(ida_idaapi.plugin_t):
         print("[AETHER] Use the context menu in Pseudocode view.")
 
     def term(self):
+        # Stop timer callbacks on unload to avoid stale callbacks after plugin reload.
+        if self._mcp_timer and hasattr(ida_kernwin, "unregister_timer"):
+            try:
+                ida_kernwin.unregister_timer(self._mcp_timer)
+            except Exception:
+                pass
+            self._mcp_timer = None
+
         if self.ui_hooks:
             self.ui_hooks.unhook()
 
         # Remove AI decompilation hooks
         remove_ai_decomp_hooks()
+        remove_unflatten_scroll_hooks()
+
+        try:
+            idaapi.detach_action_from_toolbar("AnalysisToolBar", self._toolbar_action_name)
+        except Exception:
+            pass
 
         # Unregister all actions
         actions = [
             self._toolbar_action_name,
             "aether:whats_new",
             "aether:fast_look",
+            "aether:smart_look",
             "aether:quick",
             "aether:struct_creator",
             "aether:advanced",
             "aether:manual",
             "aether:ai_decomp",
             "aether:ai_decomp_b",
+            "aether:generate_report",
+            "aether:unflatten",
             "aether:retry",
             "aether:undo",
             "aether:history",
@@ -697,7 +986,12 @@ class AETHERPlugin(ida_idaapi.plugin_t):
             "aether:ai_decomp_selector",
             "aether:ai_decomp_clear",
             "aether:custom_reannotate",
-            "aether:strip_annotations"
+            "aether:strip_annotations",
+            "aether:index_binary",
+            "aether:resume_indexing",
+            "aether:cancel_indexing",
+            "aether:reindex_binary",
+            "aether:index_stats",
         ]
         for action_name in actions:
             ida_kernwin.unregister_action(action_name)
@@ -706,6 +1000,23 @@ class AETHERPlugin(ida_idaapi.plugin_t):
         widget = ida_kernwin.find_widget(AI_DECOMP_VIEW_TITLE)
         if widget:
             ida_kernwin.close_widget(widget, 0)
+
+        # Close AI unflatten viewer if open
+        widget = ida_kernwin.find_widget(AI_DEOBFS_VIEW_TITLE)
+        if widget:
+            ida_kernwin.close_widget(widget, 0)
+
+        # Close chatbot viewer if open so OnClose can remove theme event filter.
+        widget = ida_kernwin.find_widget(CHATBOT_VIEW_TITLE)
+        if widget:
+            ida_kernwin.close_widget(widget, 0)
+
+        if self._toolbar_icon_id and hasattr(idaapi, "free_custom_icon"):
+            try:
+                idaapi.free_custom_icon(self._toolbar_icon_id)
+            except Exception:
+                pass
+            self._toolbar_icon_id = None
 
         print("[AETHER] Plugin terminated.")
 

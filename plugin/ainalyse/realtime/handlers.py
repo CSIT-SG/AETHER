@@ -10,7 +10,8 @@ from ainalyse.async_manager import use_async_worker, start_pipeline
 from ainalyse.utils import prepare_activate_context
 
 from .dialog import CustomPromptDialog
-from .realtime import run_custom_prompt_analysis, run_fast_look_analysis
+from .realtime import run_custom_prompt_analysis, run_fast_look_analysis, run_smart_look_analysis
+from .generate_report import run_generate_report
 
 class FastLookHandler(ida_kernwin.action_handler_t):
     is_running = False
@@ -58,7 +59,7 @@ class FastLookHandler(ida_kernwin.action_handler_t):
                     FastLookHandler.is_running = False
             FastLookHandler.is_running = True
             if start_pipeline(fast_look_thread(config, current_func_name, current_func_addr)) is False:
-                print(f"[AETHER] [Fast Look] Error running fast look: Other function currently being executed")
+                print(f"[AETHER] [Fast Look] Error running fast look: Another function is currently being executed")
                 FastLookHandler.is_running = False
         except Exception as e:
             print(f"[AETHER] [Fast Look] Error running fast look: {e}")
@@ -69,6 +70,117 @@ class FastLookHandler(ida_kernwin.action_handler_t):
 
     def update(self, ctx):
         return ida_kernwin.AST_ENABLE_FOR_WIDGET if ctx.widget_type == ida_kernwin.BWN_PSEUDOCODE else ida_kernwin.AST_DISABLE_FOR_WIDGET
+
+
+class SmartLookHandler(ida_kernwin.action_handler_t):
+    is_running = False
+    def __init__(self):
+        ida_kernwin.action_handler_t.__init__(self)
+
+    def activate(self, ctx):
+        if SmartLookHandler.is_running:
+            print("[AETHER] [Smart Look] Smart look analysis is already running...")
+            return 1
+        
+        try:
+            def _update_smart_look_config(config):
+                config["SINGLE_ANALYSIS_MODEL"] = config.get("SINGLE_ANALYSIS_MODEL") or config.get("OPENAI_MODEL")
+                config["rename_filter_enabled"] = True
+
+            config, current_func_addr, current_func_name = prepare_activate_context(
+                load_config,
+                validate_basic_config,
+                _update_smart_look_config,
+            )
+            if not config:
+                return 1
+            
+            print("[AETHER] [Smart Look] Generating smart look results...")
+
+            @use_async_worker("SmartLook")
+            async def smart_look_thread(config, current_func_name, current_func_addr):
+                try:
+                    success, gatherer_out, annotator_out, structured_commands = await run_smart_look_analysis(config, current_func_name, current_func_addr)
+                    if not success:
+                        print("[AETHER] [Smart Look] Smart look analysis failed.")
+                    else:
+                        add_analysis_entry(
+                            gatherer_output=gatherer_out, 
+                            annotator_output=annotator_out, 
+                            starting_function=current_func_name,
+                            structured_data=structured_commands
+                        )
+                except Exception as e:
+                    print(f"[AETHER] [Smart Look] Error running smart look: {e}")
+                    import traceback
+                    traceback.print_exc()
+                finally:
+                    SmartLookHandler.is_running = False
+            SmartLookHandler.is_running = True
+            if start_pipeline(smart_look_thread(config, current_func_name, current_func_addr)) is False:
+                print(f"[AETHER] [Smart Look] Error running smart look: Another function is currently being executed")
+                SmartLookHandler.is_running = False
+        except Exception as e:
+            print(f"[AETHER] [Smart Look] Error running smart look: {e}")
+            SmartLookHandler.is_running = False
+            import traceback
+            traceback.print_exc()
+        return 1
+
+    def update(self, ctx):
+        return ida_kernwin.AST_ENABLE_FOR_WIDGET if ctx.widget_type == ida_kernwin.BWN_PSEUDOCODE else ida_kernwin.AST_DISABLE_FOR_WIDGET
+
+
+class GenerateReportHandler(ida_kernwin.action_handler_t):
+    is_running = False
+    def __init__(self):
+        ida_kernwin.action_handler_t.__init__(self)
+
+    def activate(self, ctx):
+        if GenerateReportHandler.is_running:
+            print("[AETHER] [Generate Report] Report is being generated...")
+            return 1
+        try:
+            def _generate_report_config(config):
+                config["SINGLE_ANALYSIS_MODEL"] = config.get("SINGLE_ANALYSIS_MODEL") or config.get("OPENAI_MODEL")
+
+            config, current_func_addr, current_func_name = prepare_activate_context(
+                load_config,
+                validate_basic_config,
+                _generate_report_config,
+            )
+            if not config:
+                return 1
+
+            print("[AETHER] [Generate Report] Generating report...")
+
+            @use_async_worker("GenerateReport")
+            async def generate_report_thread(config, current_func_name, current_func_addr, binary_name):
+                try:
+                    success = await run_generate_report(config, current_func_name, current_func_addr, binary_name)
+                    if not success:
+                        print("[AETHER] [Generate Report] Generate Report failed.")
+                except Exception as e:
+                    print(f"[AETHER] [Generate Report] Error running Generate Report: {e}")
+                    import traceback
+                    traceback.print_exc()
+                finally:
+                    GenerateReportHandler.is_running = False
+            binary_name = idaapi.get_input_file_path().split("/")[-1]
+            GenerateReportHandler.is_running = True
+            if start_pipeline(generate_report_thread(config, current_func_name, current_func_addr, binary_name)) is False:
+                print(f"[AETHER] [Generate Report] Error running generate report: Another function is currently being executed")
+                GenerateReportHandler.is_running = False
+        except Exception as e:
+            print(f"[AETHER] [Generate Report] Error running Generate Report: {e}")
+            GenerateReportHandler.is_running = False
+            import traceback
+            traceback.print_exc()
+        return 1
+
+    def update(self, ctx):
+        return ida_kernwin.AST_ENABLE_FOR_WIDGET if ctx.widget_type == ida_kernwin.BWN_PSEUDOCODE else ida_kernwin.AST_DISABLE_FOR_WIDGET
+
 
 def strip_ai_annotations_from_current_function(current_func_addr: str, current_func_name: str) -> tuple[list, bool]:
     """

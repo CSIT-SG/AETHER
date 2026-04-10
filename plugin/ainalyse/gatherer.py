@@ -3,6 +3,7 @@ import json
 import os
 import re
 import traceback
+import logging
 from typing import Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
@@ -12,7 +13,6 @@ from mcp.client.sse import sse_client
 from PyQt5 import QtCore, QtWidgets
 
 from ainalyse.ssl_helper import create_openai_client_with_custom_ca
-from ainalyse.utils import check_and_add_intranet_headers
 
 from .custom_set_cmt import custom_get_pseudocode
 
@@ -131,9 +131,6 @@ def call_openai_llm_gatherer(prompt_content: str, api_key: str, model: str, base
         # Add extra_body if provided
         if extra_body:
             request_params["extra_body"] = extra_body
-        
-        # Check for intranet.txt and add headers if needed
-        check_and_add_intranet_headers(request_params)
         
         response = client.chat.completions.create(**request_params)
         return response.choices[0].message.content.strip()
@@ -407,6 +404,7 @@ async def run_gatherer_agent(config: dict):
                                     continue
                                     
                                 func_details = await mcp_get_tool_json_content(session, "get_function_by_name", {"name": func_to_add_name_llm})
+                                # func_details is not retrieving the correct current function names
                                 if not func_details or "address" not in func_details:
                                     print(f"[AETHER] [Gatherer] Could not get details for '{func_to_add_name_llm}'. Skipping.")
                                     continue

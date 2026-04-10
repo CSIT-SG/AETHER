@@ -9,6 +9,7 @@ import ida_kernwin
 import ida_lines
 import idaapi
 import idc
+import re
 
 
 def custom_get_pseudocode(function_name_or_address):
@@ -46,6 +47,35 @@ def custom_get_pseudocode(function_name_or_address):
         pseudocode = ""
         sv = cfunc.get_pseudocode()
 
+        switch_case_dict = {}
+        if_list = []
+        class SwitchVisitor(ida_hexrays.ctree_visitor_t):
+            def __init__(self):
+                super().__init__(ida_hexrays.CV_FAST)
+
+            def visit_insn(self, insn):
+                if insn.op == ida_hexrays.cit_switch:
+                    self.handle_switch(insn)
+                if insn.op == ida_hexrays.cit_if:
+                    if_list.append(insn.ea)
+                return 0
+            def handle_switch(self, insn):
+                sw = insn.cswitch
+                for case in sw.cases:
+                    values = list(case.values)
+                    target_ea = case.ea
+                    for value in values:
+                        if value not in switch_case_dict:
+                            switch_case_dict[value] = []
+                        if target_ea != idaapi.BADADDR:
+                            switch_case_dict[value].append(target_ea)
+                        else:
+                            switch_case_dict[value].append(None)
+        v = SwitchVisitor()
+        v.apply_to(cfunc.body, None)
+        next_addr = None
+        label = None
+        if_count = 0
         for i, sl in enumerate(sv):
             sl: ida_kernwin.simpleline_t
             item = ida_hexrays.ctree_item_t()
@@ -58,6 +88,45 @@ def custom_get_pseudocode(function_name_or_address):
                     except ValueError:
                         pass
             line = ida_lines.tag_remove(sl.line)
+            # Label both case and first line of case with address
+            if next_addr:
+                addr = next_addr
+                next_addr = None
+
+            # Get address for case
+            if re.search("case .+", line):
+                # Find case number
+                case_value = re.findall("[ABCDEF\d]+", line)[-1]
+                if case_value.isnumeric():
+                    case_value = int(case_value)
+                else:
+                    new_case_value = int(case_value, 16)
+                    if case_value.startswith("F"):
+                        case_value = (new_case_value - 2**(len(case_value)*4)) % 2**64
+
+                if switch_case_dict[case_value] != None:
+                    if isinstance(switch_case_dict[case_value], list):
+                        # If multiple switch case, pop address
+                        next_addr = switch_case_dict[case_value].pop(0)
+                    else:
+                        next_addr = switch_case_dict[case_value]
+                    addr = next_addr
+            if label:
+                # Add label along with address
+                pseudocode += "\n"
+                if not addr:
+                    pseudocode += f"/* line: {i-1} */ {label}"
+                else:
+                    pseudocode += f"/* line: {i-1}, address: {hex(addr)} */ {label}"
+                label = None
+            if line.lstrip().startswith("LABEL_"):
+                # Store label till next line to get address
+                label = line
+                continue
+            if line.lstrip().startswith("if"):
+                # Add address for if statements
+                addr = if_list[if_count]
+                if_count += 1
             if len(pseudocode) > 0:
                 pseudocode += "\n"
             if not addr:

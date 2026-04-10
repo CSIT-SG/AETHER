@@ -13,7 +13,7 @@ from mcp.client.sse import sse_client
 from ainalyse import finalize_prompt
 from ainalyse.custom_set_cmt import scmt  # Import custom set_comment implementation
 from ainalyse.ssl_helper import create_openai_client_with_custom_ca
-from ainalyse.utils import check_and_add_intranet_headers
+import tiktoken
 
 # --- File Paths (relative to this file's location in 'ainalyse' directory) ---
 PROMPT_ANNOTATOR = os.path.join(os.path.dirname(__file__), "prompts/annotator-prompt.txt")
@@ -44,28 +44,34 @@ async def _mcp_get_tool_text_content(session: ClientSession, tool_name: str, par
         print(f"[AETHER] [Annotator] Error calling MCP tool {tool_name} for text: {e}")
     return None
 
-def call_openai_llm_annotator(system_prompt: str, user_prompt: str, api_key: str, model: str, base_url: str, max_tokens: int = 8192, extra_body: dict = None, custom_ca_cert_path: str = "", client_cert_path: str = "", client_key_path: str = "") -> str:
+def call_openai_llm_annotator(system_prompt: str, user_prompt: str, api_key: str, model: str, base_url: str, system_prompt_at_bottom: bool, prompt_token_warning: int, max_tokens: int = 8192, extra_body: dict = None, custom_ca_cert_path: str = "", client_cert_path: str = "", client_key_path: str = "") -> str:
+    try:
+        # Estimate tokens generated for user prompt
+        os.environ["TIKTOKEN_CACHE_DIR"] = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "\encodings"
+        enc = tiktoken.get_encoding("r50k_base")
+        print("[AETHER] [Annotator] Estimated Tokens Generated: "+str(len(enc.encode(user_prompt + system_prompt))))
+        if len(enc.encode(user_prompt + system_prompt)) > prompt_token_warning:
+            print(f"[AETHER] [Annotator] Pseudo Code sent may be cut due to being too long.")
+    except Exception as e:
+        print(f"[AETHER] [Annotator] Error estimating tokens generated: {e}")
     try:
         feature = "annotation"
         client = create_openai_client_with_custom_ca(api_key, base_url, custom_ca_cert_path, client_cert_path, client_key_path,feature)
         
         # Prepare request parameters
+        if system_prompt_at_bottom:
+            messages =[{"role": "user", "content": user_prompt}, {"role": "system", "content": system_prompt}]
+        else:
+            messages =[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}]
         request_params = {
-            "model": model,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            "max_tokens": max_tokens,
-            "temperature": 0.7
-        }
-        
+                "model": model,
+                "messages": messages,
+                "max_tokens": max_tokens,
+                "temperature": 0.7
+            }
         # Add extra_body if provided
         if extra_body:
             request_params["extra_body"] = extra_body
-        
-        # Check for intranet.txt and add headers if needed
-        check_and_add_intranet_headers(request_params)
         
         response = client.chat.completions.create(**request_params)
         return response.choices[0].message.content.strip()
@@ -267,6 +273,71 @@ def extract_root_function_name(ctx_content: str) -> Optional[str]:
         return match.group(1).strip()
     return None
 
+
+def _is_rename_filter_enabled(config: dict) -> bool:
+    """Support both legacy and current config keys for rename filtering."""
+    if "RENAME_FILTER_ENABLED" in config:
+        return bool(config.get("RENAME_FILTER_ENABLED"))
+    if "rename_filter_enabled" in config:
+        return bool(config.get("rename_filter_enabled"))
+    return True
+
+
+def _filter_commands_by_config(all_commands: List[Dict[str, Any]], config: dict) -> List[Dict[str, Any]]:
+    """Apply user toggles consistently before preview/apply."""
+    use_comments = config.get("USE_DESC", True) or config.get("USE_COMMENTS", True)
+    use_rename_vars = config.get("RENAME_VARS", True)
+    use_rename_funcs = config.get("RENAME_FUNCS", True)
+
+    filtered_commands: List[Dict[str, Any]] = []
+    for command_data in all_commands:
+        cmd_type = command_data.get("type")
+        if cmd_type == "set_comment" and not use_comments:
+            continue
+        if cmd_type == "rename_local_variable" and not use_rename_vars:
+            continue
+        if cmd_type == "rename_function" and not use_rename_funcs:
+            continue
+        filtered_commands.append(command_data)
+    return filtered_commands
+
+
+async def _apply_annotation_commands(session: ClientSession, commands: List[Dict[str, Any]]) -> None:
+    """Apply parsed annotation commands with identical behavior across all paths."""
+    for command_data in commands:
+        cmd_type = command_data["type"]
+        success = False
+
+        if cmd_type == "set_comment":
+            address = command_data["address"]
+            comment_text = command_data["comment"].replace("<NEWLINE>", "\n")
+            wrapped_lines = []
+            for paragraph in comment_text.split("\n"):
+                wrapped = textwrap.fill(paragraph, width=80, break_long_words=False)
+                wrapped_lines.append(wrapped)
+            final_comment = "\n".join(wrapped_lines)
+            success = await mcp_execute_tool(session, "set_comment", {
+                "address": address,
+                "comment": final_comment,
+            })
+        elif cmd_type == "rename_local_variable":
+            success = await mcp_execute_tool(session, "rename_local_variable", {
+                "function_address": command_data["function_address"],
+                "old_name": command_data["old_name"],
+                "new_name": command_data["new_name"],
+            })
+        elif cmd_type == "rename_function":
+            new_name = command_data["new_name"]
+            if not new_name.startswith("aire_"):
+                new_name = "aire_" + new_name
+            success = await mcp_execute_tool(session, "rename_function", {
+                "function_address": command_data["function_address"],
+                "new_name": new_name,
+            })
+
+        if not success:
+            print(f"[AETHER] [Annotator] Failed to apply: {command_data}")
+
 async def run_annotator_agent(config: dict):
     _init_paths()  # Initialize file paths lazily to avoid circular imports
     
@@ -274,9 +345,11 @@ async def run_annotator_agent(config: dict):
     api_key = config["OPENAI_API_KEY"]
     model = config["ANNOTATOR_MODEL"]
     base_url = config["OPENAI_BASE_URL"]
-    rename_filter_enabled = config.get("RENAME_FILTER_ENABLED", True)
+    rename_filter_enabled = _is_rename_filter_enabled(config)
     fast_mode = config.get("fast_mode", False)
     custom_user_prompt = config.get("custom_user_prompt", "").strip()
+    system_prompt_at_bottom = config.get("SYSTEM_PROMPT_AT_BOTTOM", False)
+    prompt_token_warning = config.get("PROMPT_TOKEN_WARNING", 64000)
     max_tokens = config.get("ANNOTATOR_MAX_TOKENS", 8192)
     extra_body = config.get("OPENAI_EXTRA_BODY", {})
     custom_ca_cert_path = config.get("CUSTOM_CA_CERT_PATH", "")
@@ -362,18 +435,27 @@ async def run_annotator_agent(config: dict):
             async with ClientSession(streams[0], streams[1]) as session:
                 await session.initialize()
                 print("[AETHER] [Annotator] Connected to MCP server for parsing and applying annotations.")
-
+                try:
+                    # Estimate tokens generated for user prompt
+                    os.environ["TIKTOKEN_CACHE_DIR"] = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "\encodings"
+                    enc = tiktoken.get_encoding("r50k_base")
+                    print("[AETHER] [Annotator] Estimated Tokens Generated: "+str(len(enc.encode(ctx_content + annotator_system_prompt))))
+                    if len(enc.encode(ctx_content + annotator_system_prompt)) > prompt_token_warning:
+                        print(f"[AETHER] [Annotator] Pseudo Code sent may be cut due to being too long.")
+                except Exception as e:
+                    print(f"[AETHER] [Annotator] Error estimating tokens generated: {e}")
                 try:
                     feature = "annotation"
                     client = create_openai_client_with_custom_ca(api_key, base_url, custom_ca_cert_path, client_cert_path, client_key_path,feature)
                     
                     # Prepare streaming request parameters
+                    if system_prompt_at_bottom:
+                        messages =[{"role": "user", "content": ctx_content}, {"role": "system", "content": annotator_system_prompt}]
+                    else:
+                        messages =[{"role": "system", "content": annotator_system_prompt}, {"role": "user", "content": ctx_content}]
                     request_params = {
                         "model": model,
-                        "messages": [
-                            {"role": "system", "content": annotator_system_prompt},
-                            {"role": "user", "content": ctx_content}
-                        ],
+                        "messages": messages,
                         "max_tokens": max_tokens,
                         "temperature": 0.7,
                         "stream": True,
@@ -385,9 +467,6 @@ async def run_annotator_agent(config: dict):
                     # Add extra_body if provided
                     if extra_body:
                         request_params["extra_body"] = extra_body
-                    
-                    # Check for intranet.txt and add headers if needed
-                    check_and_add_intranet_headers(request_params)
                     
                     try:
                         with client.chat.completions.create(**request_params) as stream:
@@ -428,21 +507,11 @@ async def run_annotator_agent(config: dict):
                         llm_full_response, {}, rename_filter_enabled, session, fast_mode  # Add fast_mode parameter
                     )
 
-                    use_comments = config.get("USE_DESC", True) or config.get("USE_COMMENTS", True)
-                    use_rename_vars = config.get("RENAME_FUNCS", True)
-                    use_rename_funcs = config.get("RENAME_FUNCS", True)
-                    
-                    # Display what will be done
-                    for command_data in all_commands:
-                        cmd_type = command_data["type"]
+                    filtered_commands = _filter_commands_by_config(all_commands, config)
 
-                        # Filtering logic
-                        if cmd_type == "set_comment" and not use_comments:
-                            continue
-                        if cmd_type == "rename_local_variable" and not use_rename_vars:
-                            continue
-                        if cmd_type == "rename_function" and not use_rename_funcs:
-                            continue
+                    # Display what will be done
+                    for command_data in filtered_commands:
+                        cmd_type = command_data["type"]
 
                         if cmd_type == "set_comment":
                             print(f"[AETHER] [Annotator] Will set comment at {command_data['address']}: {command_data['comment']}")
@@ -452,46 +521,14 @@ async def run_annotator_agent(config: dict):
                             print(f"[AETHER] [Annotator] Will rename function at {command_data['function_address']} to {command_data['new_name']}")
                     
                     # Apply all collected commands at once
-                    if all_commands:
+                    if filtered_commands:
                         print("[AETHER] [Annotator] Applying analyst's suggestions...")
-                        for command_data in all_commands:
-                            cmd_type = command_data["type"]
-                            success = False
-                            if cmd_type == "set_comment":
-                                address = command_data["address"]
-                                comment_text = command_data["comment"]
-                                comment_text = comment_text.replace("<NEWLINE>", "\n")
-                                wrapped_lines = []
-                                for paragraph in comment_text.split('\n'):
-                                    # wrap the text. width=80 is roughly 15-18 words.
-                                    wrapped = textwrap.fill(paragraph, width=80, break_long_words=False)
-                                    wrapped_lines.append(wrapped)
-                                final_comment = "\n".join(wrapped_lines)
-                                success = await mcp_execute_tool(session, "set_comment", {
-                                    "address": address,
-                                    "comment": final_comment
-                                })
-                            elif cmd_type == "rename_local_variable":
-                                success = await mcp_execute_tool(session, "rename_local_variable", {
-                                    "function_address": command_data["function_address"],
-                                    "old_name": command_data["old_name"],
-                                    "new_name": command_data["new_name"]
-                                })
-                            elif cmd_type == "rename_function":
-                                new_name = command_data["new_name"]
-                                if not command_data["new_name"].startswith("aire_"): new_name = "aire_" + new_name
-                                success = await mcp_execute_tool(session, "rename_function", {
-                                    "function_address": command_data["function_address"],
-                                    "new_name": new_name
-                                })
-                            if not success:
-                                print(f"[AETHER] [Annotator] Failed to apply: {command_data}")
-                            # Remove the sleep delay - no longer needed with custom implementation
+                        await _apply_annotation_commands(session, filtered_commands)
                         
                 except Exception as e:
                     print(f"[AETHER] [Annotator] Streaming failed or not supported, falling back to batch mode: {e}")
                     # Fallback: batch mode
-                    llm_response_text = call_openai_llm_annotator(annotator_system_prompt, ctx_content, api_key, model, base_url, max_tokens, extra_body, custom_ca_cert_path, client_cert_path, client_key_path)
+                    llm_response_text = call_openai_llm_annotator(annotator_system_prompt, ctx_content, api_key, model, base_url, system_prompt_at_bottom, prompt_token_warning, max_tokens, extra_body, custom_ca_cert_path, client_cert_path, client_key_path)
                     llm_full_response = llm_response_text  # For logging
                     # --- VERBOSE LOGGING for Annotator Response ---
                     try:
@@ -513,13 +550,15 @@ async def run_annotator_agent(config: dict):
                         session,
                         fast_mode  # Add fast_mode parameter
                     )
-                    
-                    if not all_commands:
+
+                    filtered_commands = _filter_commands_by_config(all_commands, config)
+
+                    if not filtered_commands:
                         print("[AETHER] [Annotator] No valid annotation commands parsed or all filtered out.")
                         return True, llm_response_text
 
                     # Display what will be done
-                    for command_data in all_commands:
+                    for command_data in filtered_commands:
                         cmd_type = command_data["type"]
                         if cmd_type == "set_comment":
                             print(f"[AETHER] [Annotator] Will set comment at {command_data['address']}: {command_data['comment']}")
@@ -530,28 +569,7 @@ async def run_annotator_agent(config: dict):
                     
                     # Apply all commands at once
                     print("[AETHER] [Annotator] Applying analyst's suggestions...")
-                    for command_data in all_commands:
-                        cmd_type = command_data["type"]
-                        success = False
-                        if cmd_type == "set_comment":
-                            success = await mcp_execute_tool(session, "set_comment", {
-                                "address": command_data["address"],
-                                "comment": command_data["comment"]
-                            })
-                        elif cmd_type == "rename_local_variable":
-                            success = await mcp_execute_tool(session, "rename_local_variable", {
-                                "function_address": command_data["function_address"],
-                                "old_name": command_data["old_name"],
-                                "new_name": command_data["new_name"]
-                            })
-                        elif cmd_type == "rename_function":
-                            success = await mcp_execute_tool(session, "rename_function", {
-                                "function_address": command_data["function_address"],
-                                "new_name": command_data["new_name"]
-                            })
-                        if not success:
-                            print(f"[AETHER] [Annotator] Failed to apply: {command_data}")
-                        # Remove the sleep delay - no longer needed with custom implementation
+                    await _apply_annotation_commands(session, filtered_commands)
                     print("[AETHER] Changes applied successfully. You may need to refresh (F5) to see updated variable names and comments.")
 
                 # --- Always log the full LLM response after annotation ---

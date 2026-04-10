@@ -9,6 +9,7 @@ import sys
 import time
 from copy import deepcopy
 from urllib.parse import urlparse
+import warnings
 
 import ida_kernwin
 import idaapi
@@ -21,11 +22,16 @@ from .async_manager import run_async_in_ida  # Re-export for backward compatibil
 from .ssl_helper import create_openai_client_with_custom_ca
 
 # Extra options prompt
-PROMPT_ANNOTATOR_OPTIONS = os.path.join(os.path.dirname(__file__), "prompts/annotator-comment-options.txt")
+PROMPT_ANNOTATOR_OPTIONS = os.path.join(os.path.dirname(__file__), "prompts/annotator-comment-options.json")
 
 # Re-export run_async_in_ida for backward compatibility
 __all__ = ['run_async_in_ida']
 
+warnings.filterwarnings(
+    "ignore",
+    category=RuntimeWarning,
+    message="coroutine .* was never awaited"
+)
 
 # --- Config ---
 def get_config_file_path():
@@ -59,12 +65,17 @@ DEFAULT_CONFIG = {
     "AI_DECOMP_MODEL": "",  # Falls back to OPENAI_MODEL if empty
     "SINGLE_ANALYSIS_MODEL": "",  # Falls back to OPENAI_MODEL if empty
     "STRUCT_CREATOR_MODEL": "",  # Falls back to OPENAI_MODEL if empty
+    "SYSTEM_PROMPT_AT_BOTTOM": False,
+    "PROMPT_TOKEN_WARNING": 64000,
     "ANNOTATOR_MAX_TOKENS": 30000,
+    "DEOBFUSCATOR_MAX_TOKENS" : 16384,
     "CHATBOT_MAX_TOKENS": 65536,
     "OPENAI_EXTRA_BODY": {},
     "CUSTOM_CA_CERT_PATH": "",
     "CLIENT_CERT_PATH": "",
     "CLIENT_KEY_PATH": "",
+    "DEBUG": "",
+    "ALWAYS_PROMPT_MODEL": True,
     "MODEL_LIST": {
         "Qwen: Qwen3 Coder 480B A35B": "qwen/qwen3-coder",
         "OpenAI: gpt-oss-120b": "openai/gpt-oss-120b",
@@ -75,7 +86,8 @@ DEFAULT_CONFIG = {
     "RENAME_VARS": True,
     "RENAME_FUNCS": True,
     "RENAME_FILTER_ENABLED": True,
-    "COMMENT_EVERY_LINE": False
+    "COMMENT_EVERY_LINE": False,
+    "DEBUG": False
 }
 
 MODEL_CONFIG_KEYS = (
@@ -531,31 +543,66 @@ def get_model_for_component(config: dict, component: str) -> str:
 def finalize_prompt(base_prompt, config = None):
     """
     Combines the base RE prompt with dynamic constraints derived from config.
-    Swaps STATE placeholders with ENABLED or DISABLED.
+    Dynamically builds the prompt from a JSON file based on enabled options.
     """
     if not config:
         config = load_config()
 
-    def get_status(key):
-        return "ENABLED" if config.get(key, True) else "DISABLED"
+    # Helper to check if a setting is enabled (defaults to True to match original behavior)
+    def is_enabled(key):
+        return bool(config.get(key, True))
     
-    extra_prompt = ""
-    with open(PROMPT_ANNOTATOR_OPTIONS, "r", encoding="utf-8") as f:
-        extra_prompt = f.read()
-    
-    if not extra_prompt:
-        print("FAIL")
+    # Load the JSON file
+    try:
+        with open(PROMPT_ANNOTATOR_OPTIONS, "r", encoding="utf-8") as f:
+            prompt_data = json.load(f)
+    except Exception as e:
+        print(f"FAIL: Could not load JSON options. Error: {e}")
         return base_prompt
 
-    formatted_extra = extra_prompt.format(
-        desc_state=get_status('USE_DESC'),
-        comm_state=get_status('USE_COMMENTS'),
-        vars_state=get_status('RENAME_VARS'),
-        funcs_state=get_status('RENAME_FUNCS'),
-        line_state=get_status('COMMENT_EVERY_LINE')
-    )
+    if not prompt_data:
+        print("FAIL: JSON data is empty.")
+        return base_prompt
 
-    return f"{base_prompt}\n{formatted_extra}"
+    # Helper to extract the string array from JSON and join it with real newlines
+    def get_block(key):
+        return "\n".join(prompt_data.get(key, []))
+
+    # Build the prompt dynamically
+    prompt_parts = []
+    
+    # 1. Always append the Header
+    prompt_parts.append(get_block("base_header"))
+
+    # 2. Append specific blocks only if they are ENABLED in the config
+    if is_enabled("USE_DESC"):
+        prompt_parts.append(get_block("use_desc"))
+        
+    if is_enabled("USE_COMMENTS"):
+        prompt_parts.append(get_block("use_comments"))
+        
+        # Sub-rule: Comment density instructions only matter if comments are enabled
+        if is_enabled("COMMENT_EVERY_LINE"):
+            prompt_parts.append(get_block("comment_every_line_true"))
+        else:
+            prompt_parts.append(get_block("comment_every_line_false"))
+
+    if is_enabled("RENAME_VARS"):
+        prompt_parts.append(get_block("rename_vars"))
+
+    if is_enabled("RENAME_FUNCS"):
+        prompt_parts.append(get_block("rename_funcs"))
+
+    # 3. Always append the Footer
+    prompt_parts.append(get_block("base_footer"))
+
+    # Filter out any empty strings just in case a key was missing
+    prompt_parts = [p for p in prompt_parts if p.strip()]
+
+    # Join the individual blocks together with a double newline for readability
+    formatted_extra = "\n\n".join(prompt_parts)
+
+    return f"{base_prompt}\n\n{formatted_extra}"
 
 def check_config_and_show_error_if_invalid(config: dict) -> bool:
     """Common function to check config and show error dialog if invalid."""

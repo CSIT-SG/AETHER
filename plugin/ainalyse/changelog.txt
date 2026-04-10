@@ -1,5 +1,18 @@
 =====
-2026.1.1 - PATCH
+2026.2 - SECOND RELEASE
+=====
+- Report generator
+- Chatbot
+  - Fastlook annotation and custom annotation from Chatbot
+  - Updated and patched Stop Prompt feature
+- Annotations
+  - Annotation feature with smart select
+- AI Unflatten
+- Generation of Python deobfuscation script
+- Indexing feature
+
+=====
+2026.1.2 - PATCH
 =====
 
 - Fixed bug for annotator

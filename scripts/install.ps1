@@ -98,6 +98,21 @@ if (-not (Test-Path $REQUIREMENTS_FILE)) {
     exit 1
 }
 
+# Get Python Scripts directory
+$pyScripts = python -c "import sysconfig, os; print(os.path.join(sysconfig.get_path('scripts')))"
+
+if (($env:PATH -split ';') -notcontains $pyScripts) {
+    # Update current session
+    $env:PATH += ";$pyScripts"
+
+    # Append to user PATH
+    [System.Environment]::SetEnvironmentVariable(
+        "PATH",
+        ([System.Environment]::GetEnvironmentVariable("PATH", "User") + ";$pyScripts"),
+        "User"
+    )
+}
+
 if ($VERBOSE) {
     & $python -m pip install -r $REQUIREMENTS_FILE
 } else {

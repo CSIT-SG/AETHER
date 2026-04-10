@@ -1,4 +1,5 @@
 import asyncio
+import os
 import sys
 import threading
 from concurrent.futures import Future
@@ -42,12 +43,20 @@ class AsyncThreadPool:
     Manages multiple asyncio worker threads for concurrent async operations.
     """
     def __init__(self, num_workers: int = 2):
+        """
+        Create and start a pool of asyncio worker threads.
+
+        Args:
+            num_workers: Number of worker threads to create.
+                Values < 1 are coerced to 1 to keep the pool usable.
+        """
+        normalized_worker_count = max(1, int(num_workers))
         self.workers = []
         self.next_worker_idx = 0
         self._lock = threading.Lock()
         
-        print(f"[AsyncThreadPool] Creating pool with {num_workers} worker threads...")
-        for i in range(num_workers):
+        print(f"[AsyncThreadPool] Creating pool with {normalized_worker_count} worker threads...")
+        for i in range(normalized_worker_count):
             worker = AsyncioThread(name=f"AsyncWorker-{i}")
             worker.start()
             self.workers.append(worker)
@@ -90,14 +99,23 @@ class AsyncThreadPool:
         for worker in self.workers:
             worker.stop()
 
+    def worker_count(self) -> int:
+        """Return the current number of worker threads in the pool."""
+        return len(self.workers)
+
 
 # Lazily create the thread pool to avoid import-time side effects during plugin load.
 ASYNC_POOL = None
 ASYNC_WORKER = None
+# Backward-compatible alias: exposes all workers for new call sites.
+ASYNC_WORKERS = []
 
 # Pipeline worker IDs for clarity
 PIPELINE_WORKER = 0
 UI_WORKER = 1
+
+# Keep a default >= 2 so dedicated pipeline/UI workers can run concurrently.
+DEFAULT_ASYNC_WORKER_COUNT = 2
 
 PIPELINE_STATE = {
     "is_running": False,
@@ -106,19 +124,82 @@ PIPELINE_STATE = {
 
 
 def ensure_async_pool() -> AsyncThreadPool:
-    """Create the shared async worker pool on first use."""
-    global ASYNC_POOL, ASYNC_WORKER
+    """
+    Create (if needed) and return the shared async worker pool.
+
+    Backward compatibility:
+        Existing call sites can continue using `ensure_async_pool()` with no
+        arguments and get the same behavior.
+
+    Configuration:
+        Worker count can be customized before first initialization via
+        `AETHER_ASYNC_WORKERS` environment variable.
+        Example: set `AETHER_ASYNC_WORKERS=4` to create 4 workers.
+    """
+    global ASYNC_POOL, ASYNC_WORKER, ASYNC_WORKERS
     if ASYNC_POOL is None:
+        configured_worker_count = _get_configured_worker_count()
         print("[AETHER] [Async Manager] Creating shared asyncio thread pool...")
-        ASYNC_POOL = AsyncThreadPool(num_workers=2)
+        ASYNC_POOL = AsyncThreadPool(num_workers=configured_worker_count)
         ASYNC_WORKER = ASYNC_POOL.workers[PIPELINE_WORKER]
+        ASYNC_WORKERS = ASYNC_POOL.workers
     return ASYNC_POOL
 
 
+def _get_configured_worker_count() -> int:
+    """
+    Resolve worker count from environment with safe fallbacks.
+
+    Returns:
+        A positive worker count. Falls back to DEFAULT_ASYNC_WORKER_COUNT
+        when the environment variable is missing or invalid.
+    """
+    raw_value = os.getenv("AETHER_ASYNC_WORKERS", str(DEFAULT_ASYNC_WORKER_COUNT)).strip()
+    try:
+        value = int(raw_value)
+        if value < 1:
+            raise ValueError("worker count must be >= 1")
+        return value
+    except (TypeError, ValueError):
+        print(
+            "[AETHER] [Async Manager] Invalid AETHER_ASYNC_WORKERS="
+            f"'{raw_value}', falling back to {DEFAULT_ASYNC_WORKER_COUNT}."
+        )
+        return DEFAULT_ASYNC_WORKER_COUNT
+
+
+def _resolve_ui_worker_id(pool: AsyncThreadPool) -> int:
+    """
+    Return the worker index used for UI tasks.
+
+    If the pool has only one worker, UI tasks gracefully fall back to the
+    pipeline worker to preserve behavior instead of failing.
+    """
+    if pool.worker_count() > UI_WORKER:
+        return UI_WORKER
+    return PIPELINE_WORKER
+
+
 def get_primary_worker() -> AsyncioThread:
-    """Return the dedicated pipeline worker thread."""
+    """
+    Return the dedicated pipeline worker thread.
+
+    This function is intentionally preserved for backward compatibility with
+    existing plugin startup code.
+    """
     pool = ensure_async_pool()
     return pool.workers[PIPELINE_WORKER]
+
+
+def get_worker(worker_id: Optional[int] = None) -> AsyncioThread:
+    """
+    Return a specific worker by index or a round-robin selected worker.
+
+    Args:
+        worker_id: Worker index (0-based). If None, uses round-robin.
+    """
+    pool = ensure_async_pool()
+    return pool.get_worker(worker_id)
 
 def use_async_worker(name: Optional[str] = None):
     """

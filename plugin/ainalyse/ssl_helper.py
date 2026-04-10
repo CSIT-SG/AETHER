@@ -41,13 +41,16 @@ def create_openai_client_with_custom_ca(api_key: str, base_url: str, custom_ca_c
         print(f"[AETHER] Warning: Error creating httpx client: {e}. Using basic client.")
         httpx_client = httpx.Client(verify=False, timeout=600)
     
-    # Create User Agent if key feature
+    # Create User Agent
     custom_headers = {}
+    
     version = get_version()
     if feature:
         custom_headers = { "User-Agent": f"AETHER (IDA)/alpha{version}-{feature}"}
     else:
         custom_headers = { "User-Agent": f"AETHER (IDA)/alpha{version}"}
+    print(f"[AETHER] Added User-Agent header: {custom_headers['User-Agent']}")
+
     client = OpenAI(
         api_key=api_key,
         base_url=base_url,

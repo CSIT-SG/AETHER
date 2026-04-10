@@ -223,9 +223,15 @@ For developers or advanced users who prefer manual setup:
 
 In IDA Pro, navigate to the Pseudocode View (Tab key) and right-click to access AETHER features:
 
-- **Annotate Function**: Add AI-generated comments and variable names
-- **Fast Analysis**: Quick real-time analysis of current function
-- **Batch Analysis**: Analyze multiple functions at once
+- **Fast Analysis**: Quickly annotate only the current function for rapid triage
+- **Batch Analysis**: Analyze a function tree or manually selected function set, and annotate selected functions
+- **Smart Select Analysis**: Let AI pick out more important functions to analyze that are related to current function for annotation
+- **Struct Creator**: Infer and create a struct for the highlighted variable, then apply it in IDA
+- **Report Generator**: Generate a report on the current function
+- **AI Unflatten**: Deobfuscate flattened control flow and present cleaner pseudocode for review
+- **Indexing Binary**: Build a searchable function index with categories and importance levels for faster context retrieval
+- **Chatbot**: Use natural-language queries with tool-assisted lookups and indexed context for interactive analysis (for index, index binary before running chatbot for best effect)
+- **Python Script Generation**: Chatbot can call upon tool `generate_python_script` to create scripts for deobfuscation or other purposes
 - **Settings**: Configure API keys and analysis parameters
 
 ---
@@ -247,7 +253,27 @@ In IDA Pro, navigate to the Pseudocode View (Tab key) and right-click to access 
 
 1. Right-click on a function in Pseudocode View
 2. Use `AETHER AI-RE > Annotate function tree with default selection` to build call tree
+3. Select functions within the call tree that should be excluded/included
 4. AETHER processes the entire call chain with intelligent context management
+
+### Indexing a Binary and Reviewing Results
+
+1. Right-click in Pseudocode View and open `AETHER AI-RE > Indexing > Index Binary`
+2. Wait for indexing to complete. A completion popup will show how many functions were classified.
+3. Open `AETHER AI-RE > Indexing > Index Statistics` to review:
+   - Total indexed functions
+   - Batch progress and token usage
+   - Importance/category breakdown
+   - The exact `Index file:` path at the bottom of the statistics dialog
+4. To find the index file on disk:
+   - Copy the path shown in `Index Statistics` and open it with your file manager/editor, or
+   - Go to the default index directory:
+     - Windows: `%LOCALAPPDATA%\\AETHER-IDA\\indexes\\`
+     - Linux/macOS: `~/.idapro/ainalyse-indexes/`
+   - The file is stored as `<program_identifier>.json`.
+5. If the binary changes significantly or tags look outdated, run `AETHER AI-RE > Indexing > Re-index Binary`.
+   - This clears the previous index and rebuilds it from scratch.
+6. If indexing is interrupted, use `Resume Indexing` to continue from saved progress.
 
 ### Custom Prompt Analysis
 
@@ -430,6 +456,6 @@ AETHER is made possible through the dedication of Cyber Specialists under the Di
 
 ---
 
-**Last Updated**: 02/03/2026
+**Last Updated**: 10/04/2026
 
-**Version**: 2026.1
+**Version**: 2026.2

@@ -452,7 +452,7 @@ async def run_ai_decomp_for_functions(config: dict, selected_functions: List[Dic
                 return await stream_and_save_ai_decompilation(config, ai_decomp_prompt, context, functions_list_str)
 
     except Exception as e:
-        print(f"[AETHER] [AI Decomp] Unexpected error in multi-function AI decompilation: {e}")
+        print(f"[AInalyse] [AI Decomp] Unexpected error in multi-function AI decompilation: {e}")
         import traceback
         traceback.print_exc()
         return False

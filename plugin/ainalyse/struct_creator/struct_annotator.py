@@ -11,7 +11,6 @@ from mcp.client.session import ClientSession
 from mcp.client.sse import sse_client
 from ainalyse.ssl_helper import create_openai_client_with_custom_ca
 from ainalyse.custom_set_cmt import scmt  # Import custom set_comment implementation
-from ainalyse.utils import check_and_add_intranet_headers
 
 from .tools import declare_c_struct, set_variable_type
 from .util import extract_pseudocode
@@ -65,9 +64,6 @@ def call_openai_llm_annotator(system_prompt: str, user_prompt: str, api_key: str
         # Add extra_body if provided
         if extra_body:
             request_params["extra_body"] = extra_body
-        
-        # Check for intranet.txt and add headers if needed
-        check_and_add_intranet_headers(request_params)
         
         response = client.chat.completions.create(**request_params)
         return response.choices[0].message.content.strip()
@@ -292,9 +288,6 @@ async def run_annotator_agent(config: dict, struct_name:str, func_graph:dict, st
                     # Add extra_body if provided
                     if extra_body:
                         request_params["extra_body"] = extra_body
-                    
-                    # Check for intranet.txt and add headers if needed
-                    check_and_add_intranet_headers(request_params)
                     
                     stream = client.chat.completions.create(**request_params)
                     print("[AETHER] [Annotator] Streaming LLM response and collecting suggestions...")

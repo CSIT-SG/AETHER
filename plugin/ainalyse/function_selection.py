@@ -104,7 +104,7 @@ def get_function_callees(func_addr_str: str, parent_func_name: Optional[str] = N
                     'address': hex(func_ea)
                 })
         
-        return callees[:20]  # Limit to 20 callees to avoid overwhelming UI
+        return callees[:50]  # Limit to 50 callees to avoid overwhelming UI
         
     except Exception as e:
         print(f"[AETHER] Error getting callees for {func_addr_str}: {e}")
@@ -146,6 +146,63 @@ def collect_functions_with_default_criteria(starting_func_addr: str, starting_fu
                     
                     # Recursively process this function's callees
                     collect_recursive(callee_addr, callee_name, current_depth + 1)
+    
+    # Add the starting function
+    selected_functions.append({
+        'name': starting_func_name,
+        'address': starting_func_addr
+    })
+    
+    # Collect functions recursively
+    collect_recursive(starting_func_addr, starting_func_name, depth)
+    
+    return selected_functions
+
+def collect_functions_for_generate_report(starting_func_addr: str, starting_func_name: str, 
+                                          depth: int = 0, max_depth: int = 5, 
+                                          processed: Optional[Set[str]] = None) -> List[Dict[str, str]]:
+    """Collect functions using default selection criteria. Must be called from main thread."""
+    imports = []
+
+    def callback(ea, func_name, ordinal):
+        imports.append(func_name.lstrip("_").split("@")[0])
+        return True
+
+    for i in range(idaapi.get_import_module_qty()):
+        idaapi.enum_import_names(i, callback)
+
+    if processed is None:
+        processed = set()
+    
+    selected_functions = []
+    
+    def collect_recursive(func_addr, func_name, current_depth):
+        if current_depth >= max_depth or func_addr in processed:
+            return
+        
+        processed.add(func_addr)
+        
+        # Get callees for this function
+        callees = get_function_callees(func_addr, func_name)
+        
+        # Apply default selection logic
+        
+        for callee_info in callees:
+            callee_name = callee_info['name']
+            callee_addr = callee_info['address']
+            
+            # Check if not already in selected functions
+            if not any(f['name'] == callee_name for f in selected_functions):
+                # Check if not default
+                if not (callee_name.startswith("sub_") or callee_name.lstrip("_") in imports):
+                    selected_functions.append({
+                        'name': callee_name,
+                        'address': callee_addr
+                    })
+                    print(f"[AInalyse] Auto-selected function: {callee_name}")
+                
+                # Recursively process this function's callees
+                collect_recursive(callee_addr, callee_name, current_depth + 1)
     
     # Add the starting function
     selected_functions.append({
@@ -384,8 +441,13 @@ class FunctionSelectionDialog(QtWidgets.QDialog):
                 for i in range(item.childCount()):
                     deselect_recursive(item.child(i))
         
-        for i in range(self.tree_widget.topLevelItemCount()):
-            deselect_recursive(self.tree_widget.topLevelItem(i))
+        # Batch updates for better rendering performance
+        self.tree_widget.blockSignals(True)
+        try:
+            for i in range(self.tree_widget.topLevelItemCount()):
+                deselect_recursive(self.tree_widget.topLevelItem(i))
+        finally:
+            self.tree_widget.blockSignals(False)
     
     def get_selected_functions(self):
         """Get list of selected functions."""
@@ -423,7 +485,7 @@ class FunctionSelectionDialog(QtWidgets.QDialog):
         if not file_path:
             return  # User cancelled
         
-        try:   
+        try:
             # Find the root function (should be the first one in our selected list)
             root_function = selected_functions[0]
             root_func_name = root_function["name"]
@@ -531,6 +593,7 @@ class FunctionSelectionDialog(QtWidgets.QDialog):
                                             f"Successfully saved the exact LLM input format to {file_path}")
         
         except Exception as e:
+            import logging
             traceback.print_exc()
             QtWidgets.QMessageBox.critical(self, "Error", 
                                         f"An error occurred while saving to file: {str(e)}")
