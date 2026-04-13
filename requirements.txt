@@ -5,6 +5,7 @@ psutil
 tiktoken
 PyQt5
 yara-python
+scikit-learn
 
 pydantic>=2.11.7
 python-dotenv>=1.1.1

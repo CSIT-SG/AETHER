@@ -119,6 +119,32 @@ if ($VERBOSE) {
     & $python -m pip install -r $REQUIREMENTS_FILE -q
 }
 
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Dependency installation failed while processing $REQUIREMENTS_FILE" -ForegroundColor Red
+    exit 1
+}
+
+# Verify key runtime dependencies are installed for plugin startup.
+$requiredPackages = @(
+    "mcp",
+    "openai",
+    "psutil",
+    "tiktoken",
+    "PyQt5",
+    "yara-python",
+    "pydantic",
+    "python-dotenv",
+    "scikit-learn"
+)
+
+foreach ($pkg in $requiredPackages) {
+    $pkgInfo = & $python -m pip show $pkg 2>$null
+    if (-not $pkgInfo) {
+        Write-Host "Required package '$pkg' is missing after installation." -ForegroundColor Red
+        exit 1
+    }
+}
+
 # --- RESTORED ORIGINAL DETAILED MCP WHEEL INSTALL ---
 $pluginPackage = & $python -m pip show "ida-pro-mcp" 2>$null
 if ($pluginPackage) {
