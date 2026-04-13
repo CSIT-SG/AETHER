@@ -107,7 +107,10 @@ def custom_get_pseudocode(function_name_or_address):
                 if switch_case_dict[case_value] != None:
                     if isinstance(switch_case_dict[case_value], list):
                         # If multiple switch case, pop address
-                        next_addr = switch_case_dict[case_value].pop(0)
+                        try:
+                            next_addr = switch_case_dict[case_value].pop(0)
+                        except IndexError:
+                            next_addr = None
                     else:
                         next_addr = switch_case_dict[case_value]
                     addr = next_addr

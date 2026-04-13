@@ -344,9 +344,12 @@ class ChatbotController:
             return    
 
         self.is_thinking = True
-        self._add_message("AETHER", "<i>Thinking...</i>", True)
         
-        start_pipeline(self._process_message_thread())
+        if start_pipeline(self._process_message_thread()) is False:
+            self._add_message("AETHER", "<i>Prompt failed: Another function is currently being executed. Please resend prompt after other function has completed...</i>", True)
+            self.is_thinking = False
+        else:
+            self._add_message("AETHER", "<i>Thinking...</i>", True)
 
     def _flush_message_queue(self):
         while True:

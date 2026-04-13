@@ -1,4 +1,11 @@
 =====
+2026.2.1 - PATCH
+=====
+
+- Fixed error in file format for plugin.py
+- Minor changes to some functions
+
+=====
 2026.2 - SECOND RELEASE
 =====
 - Report generator
