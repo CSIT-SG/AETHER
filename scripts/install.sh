@@ -115,6 +115,31 @@ else
     "$PYTHON_BIN" -m pip install -r "$REQUIREMENTS_FILE" -q --break-system-packages
 fi
 
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Dependency installation failed while processing $REQUIREMENTS_FILE${NC}"
+    exit 1
+fi
+
+# Verify key runtime dependencies are installed for plugin startup.
+REQUIRED_PACKAGES=(
+    "mcp"
+    "openai"
+    "psutil"
+    "tiktoken"
+    "PyQt5"
+    "yara-python"
+    "pydantic"
+    "python-dotenv"
+    "scikit-learn"
+)
+
+for pkg in "${REQUIRED_PACKAGES[@]}"; do
+    if ! "$PYTHON_BIN" -m pip show "$pkg" > /dev/null 2>&1; then
+        echo -e "${RED}Required package '$pkg' is missing after installation.${NC}"
+        exit 1
+    fi
+done
+
 # MCP Wheel check
 if ! "$PYTHON_BIN" -m pip show ida-pro-mcp > /dev/null 2>&1; then
     if [ -f "$MCP_LOCAL_PATH" ]; then
