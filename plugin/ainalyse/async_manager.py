@@ -174,6 +174,7 @@ def start_pipeline(pipeline_coroutine: Coroutine):
         PIPELINE_STATE["is_running"] = True
     else:
         print("[Async Manager] Failed to schedule pipeline.")
+        return False
 
 
 def cancel_pipeline():
