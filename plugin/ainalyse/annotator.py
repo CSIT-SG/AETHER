@@ -135,11 +135,9 @@ async def parse_llm_annotations(
     # ARM/Other Architecture Registers (R0-R15, X0-X31, W0-W31)
     r'^_?(_.*_)?([RXW]\d{1,2}|LR|PC|SP|FP|SL|SB)$|'
     # Floating Point / SIMD (XMM0-15, YMM0-15, ZMM0-31, ST0-7, Q0-31, D0-31)
-    r'^_?(_.*_)?([XYZ]MM\d{1,5}|ST\d|Q\d{1,2}|D\d{1,2})$'
+    r'^_?(_.*_)?([XYZ]MM\d{1,5}|ST\d|Q\d{1,2}|D\d{1,2})$|'
     # Common Generic Short-hands
-    r'^(s|n|i|j|k|fd|pid|name|flags|src|dest|buf|ptr|len|res|ret|status|val)$|'
-    # Result and Stack Metadata
-    r'^result$|^savedregs$|^anonymous_\d+$|',
+    r'^(s|n|i|j|k|fd|pid|name|flags|src|dest|buf|ptr|len|res|ret|status|val)$',
     re.IGNORECASE
     )
     rename_var_pattern = re.compile(r'```rename_local_variable\s*\n(.*?)(?=\n```|$)', re.DOTALL | re.IGNORECASE)
@@ -401,7 +399,7 @@ async def run_annotator_agent(config: dict):
                                 received_tokens += 1 # each chunk roughly 1 token. Need Tiktoken for better estimation
                                 print(f"\r[AETHER] [Annotator] Estimated Received Tokens: {received_tokens}", end="", flush=True) 
 
-                                if hasattr(chunk, "usage") and chunk.usage: # Final chunk with usage info
+                                if hasattr(chunk, "usage") and chunk.usage:  # Usage may arrive on every chunk, not just the final one
                                     prompt_tokens = chunk.usage.prompt_tokens
                                     completion_tokens = chunk.usage.completion_tokens
                                     total_tokens = chunk.usage.total_tokens
@@ -409,8 +407,7 @@ async def run_annotator_agent(config: dict):
                                     print(f"[AETHER] [Annotator] Prompt tokens: {prompt_tokens}")
                                     print(f"[AETHER] [Annotator] Completion tokens: {completion_tokens}")
                                     print(f"[AETHER] [Annotator] Total tokens: {total_tokens}")
-                                    continue  # skip further processing for final chunk
-                                    
+
                                 if not hasattr(chunk, "choices") or len(chunk.choices) == 0:
                                     continue
 
@@ -429,7 +426,7 @@ async def run_annotator_agent(config: dict):
                     )
 
                     use_comments = config.get("USE_DESC", True) or config.get("USE_COMMENTS", True)
-                    use_rename_vars = config.get("RENAME_FUNCS", True)
+                    use_rename_vars = config.get("RENAME_VARS", True)
                     use_rename_funcs = config.get("RENAME_FUNCS", True)
                     
                     # Display what will be done
