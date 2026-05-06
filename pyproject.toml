@@ -1,0 +1,55 @@
+[tool.uv.workspace]
+members = ["apps/*", "packages/*"]
+
+[tool.uv.sources]
+aether_core = { workspace = true }
+aether_cli = { workspace = true }
+aether_gui = { workspace = true }
+aether_dev = { workspace = true }
+aether_ui = { workspace = true }
+aether_utils = { workspace = true }
+
+[project]
+name = "aether-next"
+version = "0.1.0"
+description = "AETHER - AI-powered Next Generation Framework"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.15.12",
+]
+
+# Dev dependencies are managed at workspace level
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = [".venv", "venv", "dist", "build"]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+    "C4",     # flake8-comprehensions
+    "B",      # flake8-bugbear
+    "UP",     # pyupgrade
+    "ARG",    # flake8-unused-arguments
+    "SIM",    # flake8-simplify
+]
+ignore = [
+    "E501",   # line too long (handled by line-length)
+    "B008",   # do not perform function calls in argument defaults
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["aether"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]

@@ -1,0 +1,11 @@
+[project]
+name = "aether_gui"
+version = "0.1.0"
+description = "AETHER GUI application"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "aether_core",
+    "aether_utils",
+]
+
