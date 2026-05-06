@@ -98,10 +98,48 @@ if (-not (Test-Path $REQUIREMENTS_FILE)) {
     exit 1
 }
 
+# Get Python Scripts directory
+$pyScripts = python -c "import sysconfig, os; print(os.path.join(sysconfig.get_path('scripts')))"
+
+if (($env:PATH -split ';') -notcontains $pyScripts) {
+    # Update current session
+    $env:PATH += ";$pyScripts"
+
+    # Append to user PATH
+    [System.Environment]::SetEnvironmentVariable(
+        "PATH",
+        ([System.Environment]::GetEnvironmentVariable("PATH", "User") + ";$pyScripts"),
+        "User"
+    )
+}
+
 if ($VERBOSE) {
     & $python -m pip install -r $REQUIREMENTS_FILE
 } else {
     & $python -m pip install -r $REQUIREMENTS_FILE -q
+}
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Dependency installation failed while processing $REQUIREMENTS_FILE" -ForegroundColor Red
+    exit 1
+}
+
+# Verify key runtime dependencies are installed for plugin startup.
+$requiredPackages = @(
+    "mcp",
+    "openai",
+    "psutil",
+    "PyQt5",
+    "pydantic",
+    "python-dotenv"
+)
+
+foreach ($pkg in $requiredPackages) {
+    $pkgInfo = & $python -m pip show $pkg 2>$null
+    if (-not $pkgInfo) {
+        Write-Host "Required package '$pkg' is missing after installation." -ForegroundColor Red
+        exit 1
+    }
 }
 
 # --- RESTORED ORIGINAL DETAILED MCP WHEEL INSTALL ---
@@ -132,10 +170,12 @@ if (-not (Test-Path $WINDOWS_IDA_PLUGIN_PATH)) {
 }
 
 # 2. Clean target directory except for mcp-plugin.py
-Write-Host "Cleaning target plugins directory (preserving mcp-plugin.py)..." -ForegroundColor Gray
-Get-ChildItem -Path $WINDOWS_IDA_PLUGIN_PATH | Where-Object {
-    $_.Name -ne "mcp-plugin.py"
-} | Remove-Item -Recurse -Force
+Write-Host "Cleaning target plugins directory..." -ForegroundColor Gray
+Get-ChildItem -Path "$WINDOWS_IDA_PLUGIN_PATH\ainalyse" -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force
+Remove-Item -Force "$WINDOWS_IDA_PLUGIN_PATH\aether.py" -ErrorAction SilentlyContinue
+if ((Test-Path "$WINDOWS_IDA_PLUGIN_PATH\plugin.py") -and (Select-String -Path "$WINDOWS_IDA_PLUGIN_PATH\plugin.py" -Pattern "aether" -Quiet)){
+    Remove-Item -Force "$WINDOWS_IDA_PLUGIN_PATH\plugin.py" -ErrorAction SilentlyContinue
+}
 
 # 3. Copy from 'plugin' to 'plugins'
 if (Test-Path $SOURCE_PLUGIN_DIR) {
@@ -153,6 +193,44 @@ Write-Host "========================================"
 
 # Install ida_pro_mcp
 ida-pro-mcp --install
+
+# Enable PyQt5 shim in IDA cfg to support plugin UI compatibility.
+Write-Host "`n"
+Write-Host "========================================"
+Write-Host "Patching IDA cfg to enable ..."
+Write-Host "========================================"
+
+$idaCfgDir = Join-Path $idaExe.DirectoryName "cfg"
+if (-not (Test-Path $idaCfgDir)) {
+    Write-Host "IDA cfg directory not found at '$idaCfgDir'. Skipping cfg patch." -ForegroundColor Yellow
+} else {
+    $cfgTargets = Get-ChildItem -Path $idaCfgDir -Filter "*.cfg" -File -ErrorAction SilentlyContinue
+    $patched = $false
+
+    foreach ($cfgFile in $cfgTargets) {
+        $rawContent = Get-Content -Path $cfgFile.FullName -Raw -ErrorAction SilentlyContinue
+        if (-not $rawContent) {
+            continue
+        }
+
+        if ($rawContent -match "IDAPYTHON_USE_PYQT5_SHIM") {
+            $updatedContent = $rawContent
+            $updatedContent = $updatedContent -replace '(?m)^\s*//\s*IDAPYTHON_USE_PYQT5_SHIM\s*=\s*0\s*$', 'IDAPYTHON_USE_PYQT5_SHIM = 1'
+            $updatedContent = $updatedContent -replace '(?m)^\s*IDAPYTHON_USE_PYQT5_SHIM\s*=\s*0\s*$', 'IDAPYTHON_USE_PYQT5_SHIM = 1'
+
+            if ($updatedContent -ne $rawContent) {
+                Set-Content -Path $cfgFile.FullName -Value $updatedContent -Encoding UTF8
+                Write-Host "Updated '$($cfgFile.Name)': IDAPYTHON_USE_PYQT5_SHIM = 1" -ForegroundColor Green
+                $patched = $true
+                break
+            }
+        }
+    }
+
+    if (-not $patched) {
+        Write-Host "No matching 'IDAPYTHON_USE_PYQT5_SHIM = 0' line found in '$idaCfgDir'." -ForegroundColor Yellow
+    }
+}
 
 Write-Host "`n"
 Write-Host "Installation Complete!" -ForegroundColor Cyan

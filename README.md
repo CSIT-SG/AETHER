@@ -168,7 +168,7 @@ chmod +x install.sh
 
 After running the installation script:
 
-1. **Start the MCP Server** in a new terminal/console and run: ida-pro-mcp --transport http://127.0.0.1:8744/sse
+1. **Start the MCP Server** in a new terminal/console and run: `ida-pro-mcp --transport http://127.0.0.1:8744/sse`
 2. **Open IDA Pro** and load any binary file 
 3. **Open Pseudocode View** (Press `Tab`)
 4. **Right-click** and select `AETHER AI-RE > Plugin settings`

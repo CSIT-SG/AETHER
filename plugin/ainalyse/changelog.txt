@@ -1,5 +1,12 @@
 =====
-2026.1.1 - PATCH
+2026.1.3 - PATCH
+=====
+
+- Improved install script functionality
+- Fix streaming issues, regex filter, config key, and scheduling 
+
+=====
+2026.1.2 - PATCH
 =====
 
 - Fixed bug for annotator
