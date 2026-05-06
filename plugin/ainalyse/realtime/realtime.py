@@ -110,11 +110,9 @@ def parse_realtime_response(response_text: str) -> Tuple[List[Dict], List[Dict],
     # ARM/Other Architecture Registers (R0-R15, X0-X31, W0-W31)
     r'^_?(_.*_)?([RXW]\d{1,2}|LR|PC|SP|FP|SL|SB)$|'
     # Floating Point / SIMD (XMM0-15, YMM0-15, ZMM0-31, ST0-7, Q0-31, D0-31)
-    r'^_?(_.*_)?([XYZ]MM\d{1,5}|ST\d|Q\d{1,2}|D\d{1,2})$'
+    r'^_?(_.*_)?([XYZ]MM\d{1,5}|ST\d|Q\d{1,2}|D\d{1,2})$|'
     # Common Generic Short-hands
-    r'^(s|n|i|j|k|fd|pid|name|flags|src|dest|buf|ptr|len|res|ret|status|val)$|'
-    # Result and Stack Metadata
-    r'^result$|^savedregs$|^anonymous_\d+$|',
+    r'^(s|n|i|j|k|fd|pid|name|flags|src|dest|buf|ptr|len|res|ret|status|val)$',
     re.IGNORECASE
     )
     variables_pattern = re.compile(r'```local_variables\s*\n(.*?)(?:\n```|$)', re.DOTALL | re.IGNORECASE)

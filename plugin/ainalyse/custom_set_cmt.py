@@ -4,6 +4,7 @@ This module provides a robust way to set and clear comments in the decompiler vi
 """
 
 import ida_bytes
+import ida_funcs
 import ida_hexrays
 import ida_kernwin
 import ida_lines

@@ -309,7 +309,7 @@ async def run_identifier_agent(config: dict, variable_name:str):
 
                     # Collect full response first, then parse all at once
                     for chunk in stream:
-                        if hasattr(chunk, "usage") and chunk.usage: # Final chunk with usage info
+                        if hasattr(chunk, "usage") and chunk.usage:  # Usage may arrive on every chunk, not just the final one
                             prompt_tokens = chunk.usage.prompt_tokens
                             completion_tokens = chunk.usage.completion_tokens
                             total_tokens = chunk.usage.total_tokens
@@ -317,7 +317,9 @@ async def run_identifier_agent(config: dict, variable_name:str):
                             print(f"[AETHER] [Annotator] Prompt tokens: {prompt_tokens}")
                             print(f"[AETHER] [Annotator] Completion tokens: {completion_tokens}")
                             print(f"[AETHER] [Annotator] Total tokens: {total_tokens}")
-                            continue  # skip further processing for final chunk
+
+                        if not hasattr(chunk, "choices") or len(chunk.choices) == 0:
+                            continue
 
                         content = getattr(chunk.choices[0].delta, "content", None)
                         if content is None:
