@@ -1,6 +1,11 @@
 [tool.uv.workspace]
 members = ["apps/*", "packages/*"]
 
+[tool.uv]
+required-environments = [
+    "sys_platform == 'win32' and platform_machine == 'AMD64'",
+]
+
 [tool.uv.sources]
 aether_core = { workspace = true }
 aether_cli = { workspace = true }
