@@ -1,33 +1,11 @@
 # AETHER Next
 
-AETHER Next is a Python monorepo managed with uv workspaces.
 
-## Project Structure
+# Development
 
-```text
-AETHER-next/
-├── apps/
-│   ├── cli/                 # CLI app
-│   ├── gui/                 # GUI app
-│   └── docs/                # Docs app/content area
-├── packages/
-│   ├── core/                # Core shared package
-│   │   ├── chatbot/
-│   │   ├── flattener/
-│   │   ├── function-gatherer/
-│   │   ├── memory/
-│   │   ├── skills/
-│   │   └── src/
-│   ├── ui/                  # Shared UI package
-│   └── utils/               # Shared utilities package
-├── dist/                    # Build artifacts
-├── pyproject.toml           # Workspace + tool configuration
-└── uv.lock                  # Locked dependency resolution
-```
+Requires:
+    - `python>=3.12`
+    - `ida>=9.2`
 
-## Build and Validation
+Set your language server's option `Extra Paths` to `C:\Program Files\IDA Professional 9.x\python` (replace as needed). Then run `uv sync --all-packages`
 
-- Build all workspace packages: `uv build --all-packages --out-dir dist --clear`
-- Lint: `./lint.sh`
-- Format: `./format.sh`
-- Test: `./test.sh`

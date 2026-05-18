@@ -1,6 +1,10 @@
+import json
+
+from aether_core.config import load_config
 from aether_utils.logger import get_logger
-from aether_core.chatbot import Config
+
 
 def main() -> None:
     logger = get_logger("gui")
-    logger.info("GUI startdddddeddsdsdfgddDDDDDDdFFFDFddFfd")
+    cfg = load_config()
+    logger.info("Config loaded: %s", json.dumps(cfg.model_dump(), indent=2))

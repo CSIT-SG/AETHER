@@ -1,8 +1,9 @@
+from os import path
+
+import httpx
 from aether_utils.find_root import get_version
 from aether_utils.logger import get_logger
-import httpx
 from openai import AsyncOpenAI
-from os import path
 
 VERSION = get_version()
 logger = get_logger("aether_core.api_client")
@@ -13,12 +14,6 @@ def _build_client_cert_key(client_cert_path: str, client_key_path: str) -> tuple
     if not client_cert_path and not client_key_path:
         logger.warning(
             "CLIENT_CERT_PATH and CLIENT_KEY_PATH not provided. Proceeding without client certificate."
-        )
-        return None
-
-    if (client_cert_path and not client_key_path) or (client_key_path and not client_cert_path):
-        logger.warning(
-            "Both CLIENT_CERT_PATH and CLIENT_KEY_PATH must be provided for mTLS. Proceeding without client certificate."
         )
         return None
 

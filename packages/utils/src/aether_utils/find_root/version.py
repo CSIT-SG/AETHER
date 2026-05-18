@@ -1,5 +1,6 @@
 from aether_utils.find_root import find_repo_root
 
+
 def get_version() -> str:
     """
     Get the version of the repo by reading the VERSION file at the root.

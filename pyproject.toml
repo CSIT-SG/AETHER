@@ -1,11 +1,6 @@
 [tool.uv.workspace]
 members = ["apps/*", "packages/*"]
 
-[tool.uv]
-required-environments = [
-    "sys_platform == 'win32' and platform_machine == 'AMD64'",
-]
-
 [tool.uv.sources]
 aether_core = { workspace = true }
 aether_cli = { workspace = true }
@@ -27,6 +22,7 @@ dev = [
     "pytest>=9.0.3",
     "pytest-cov>=7.1.0",
     "ruff>=0.15.12",
+    "mypy>=2.1.0",
 ]
 
 # Dev dependencies are managed at workspace level
