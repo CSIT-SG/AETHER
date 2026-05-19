@@ -4,6 +4,7 @@ from pathlib import Path
 # We can't import the find_repo_root function from aether_utils because it relies on workspace imports, which wont work until we add the necessary paths to sys.path.
 # Instead, we re-implement the logic here to find the repo root and add the necessary paths to sys.path.
 
+
 def _find_repo_root(start: Path | None = None) -> Path:
     """Find repo root by walking up from start"""
     start = start.resolve() if start else Path(__file__).resolve()
@@ -38,24 +39,8 @@ def _add_workspace_package_paths() -> None:
 
 _add_workspace_package_paths()
 
-import idaapi  # noqa: E402
-from aether_gui import main as aether_gui_main  # noqa: E402
-from aether_utils.logger import get_logger  # noqa: E402
+from aether_gui import PLUGIN_ENTRY as _REMOTE_PLUGIN_ENTRY  # noqa: E402
 
 
-class _Aether(idaapi.plugin_t):
-    flags = idaapi.PLUGIN_HIDE
-    comment = wanted_name = "Aether"
-    help = wanted_hotkey = ""
-
-    def init(self) -> None:
-        self._logger = get_logger("ida_plugin")
-        self._logger.info("IDA plugin initialized")
-        aether_gui_main()
-
-    def run(self, arg) -> None:
-        pass
-
-
-def PLUGIN_ENTRY() -> _Aether:
-    return _Aether()
+def PLUGIN_ENTRY():
+    return _REMOTE_PLUGIN_ENTRY()

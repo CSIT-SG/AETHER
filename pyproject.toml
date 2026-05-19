@@ -5,7 +5,6 @@ members = ["apps/*", "packages/*"]
 aether_core = { workspace = true }
 aether_cli = { workspace = true }
 aether_gui = { workspace = true }
-aether_dev = { workspace = true }
 aether_ui = { workspace = true }
 aether_utils = { workspace = true }
 
@@ -14,7 +13,7 @@ name = "aether-next"
 version = "0.1.0"
 description = "AETHER - AI-powered Next Generation Framework"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = []
 
 [dependency-groups]
@@ -29,7 +28,7 @@ dev = [
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py312"
 extend-exclude = [".venv", "venv", "dist", "build"]
 
 [tool.ruff.lint]
@@ -47,6 +46,7 @@ select = [
 ignore = [
     "E501",   # line too long (handled by line-length)
     "B008",   # do not perform function calls in argument defaults
+    "ARG002", # unused arg
 ]
 
 [tool.ruff.lint.isort]
