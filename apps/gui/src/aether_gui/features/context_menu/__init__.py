@@ -1,3 +1,3 @@
-from .menu import hook, unhook
+from .menu import AetherUIHooks
 
-__all__ = ["hook", "unhook"]
+__all__ = ["AetherUIHooks"]
