@@ -5,11 +5,12 @@ import idaapi
 from aether_gui.features.chatbot.ui.main_window import MainWindow
 from aether_utils.logger import get_logger
 
+CHATBOT_LOGGER = get_logger("chatbot_handler")
+
 class ChatbotHandler(ida_kernwin.action_handler_t):
     def __init__(self) -> None:
         ida_kernwin.action_handler_t.__init__(self)
         self.panel_title = "AETHER ChatBot"
-        self.logger = get_logger("chatbot_handler")
 
     def activate(self, ctx: ida_kernwin.action_ctx_base_t) -> Literal[0]:
         curr_form = idaapi.get_current_widget()
@@ -17,7 +18,7 @@ class ChatbotHandler(ida_kernwin.action_handler_t):
         target_widget = ida_kernwin.find_widget(target_title)
 
         if not target_widget:
-            self.logger.error(f"Error: Cleanly attach failed. Make sure '{target_title}' is open.")
+            CHATBOT_LOGGER.error(f"Error: Cleanly attach failed. Make sure '{target_title}' is open.")
             return 0
 
         panel = MainWindow()

@@ -1,0 +1,41 @@
+/* formatting.qss.jinja */
+{% include "themes.qss.jinja" %}
+
+/* ================================================================= */
+/* STRUCTURAL QWIDGET FORMATTING                                    */
+/* ================================================================= */
+
+#ChatHistoryView {
+    background-color: {{ c.bg_main }};
+    color: {{ c.text_main }};
+    border: none;
+}
+
+QScrollBar:vertical {
+    border: none;
+    background: {{ c.bg_input }};
+    width: 10px;
+    margin: 0px;
+}
+
+QScrollBar::handle:vertical {
+    background: {{ c.border }};
+    min-height: 20px;
+    border-radius: 5px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: {{ c.accent }};
+}
+
+QScrollBar::add-line:vertical, 
+QScrollBar::sub-line:vertical {
+    border: none;
+    background: none;
+    height: 0px;
+}
+
+QScrollBar::add-page:vertical, 
+QScrollBar::sub-page:vertical {
+    background: none;
+}

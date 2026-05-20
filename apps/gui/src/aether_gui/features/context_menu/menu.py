@@ -21,6 +21,13 @@ class DummyHandler(ida_kernwin.action_handler_t):
 
 
 class AetherUIHooks(ida_kernwin.UI_Hooks):
+    def __init__(self) -> None:
+        super().__init__()
+        self.items = [
+            ContextMenuItem("aether:chatbot", "Open AI Chatbot", ChatbotHandler()),
+            ContextMenuItem("aether:whats_new", "What's new", DummyHandler()),
+        ]
+
     def finish_populating_widget_popup(self, widget: object, popup_handle: object, *args: object, ctx: ida_kernwin.action_ctx_base_t | None =None, **kwargs: object) -> None:
         if ctx is None and args:
             ctx = cast(ida_kernwin.action_ctx_base_t, args[0])
@@ -29,14 +36,21 @@ class AetherUIHooks(ida_kernwin.UI_Hooks):
             return
 
         menu_path = "aether-next/"
-        items = [
-            ContextMenuItem("aether:chatbot", "Open AI Chatbot", ChatbotHandler()),
-            ContextMenuItem("aether:whats_new", "What's new", DummyHandler()),
-        ]
 
-        for item in items:
+        for item in self.items:
             try:
                 item.register()
             except Exception as e:
                 logger.warning("Failed to register context menu item: %s", e)
             item.attach_to_popup(widget, popup_handle, default_menu_path=menu_path)
+
+    def unregister(self) -> None:
+        for item in self.items:
+            try:
+                item.unregister()
+                item.handler = None
+                
+            except Exception as e:
+                logger.warning("Failed to unregister context menu item: %s", e)
+
+        self.items.clear()

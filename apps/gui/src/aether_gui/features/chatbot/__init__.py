@@ -1,3 +1,3 @@
-from .chatbot_handler import ChatbotHandler
+from .chatbot_handler import CHATBOT_LOGGER, ChatbotHandler
 
-__all__ = ["ChatbotHandler"]
+__all__ = ["ChatbotHandler", "CHATBOT_LOGGER"]

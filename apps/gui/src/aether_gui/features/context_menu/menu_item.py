@@ -7,7 +7,7 @@ import ida_kernwin
 class ContextMenuItem:
     action_name: str
     label: str
-    handler: ida_kernwin.action_handler_t
+    handler: ida_kernwin.action_handler_t | None
     hotkey: str = ""
     tooltip: str = ""
     submenu: str | None = None
@@ -24,3 +24,6 @@ class ContextMenuItem:
     def attach_to_popup(self, widget, popup, default_menu_path: str = "aether-next/") -> None:
         path = self.submenu or default_menu_path
         ida_kernwin.attach_action_to_popup(widget, popup, self.action_name, path)
+
+    def unregister(self) -> None:
+        ida_kernwin.unregister_action(self.action_name)
