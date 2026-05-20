@@ -1,0 +1,76 @@
+{
+    "base_header": [
+        "### OPTIONS INFORMATION START",
+        "Read these instructions completely before acting."
+    ],
+    
+    "use_desc": [
+        "**Function Summary Requirement:**",
+        "Generate a summary block at the function's entry address in the following style:",
+        "Arguments:<NEWLINE>[Type] [Name] - [Explanation]<NEWLINE><NEWLINE>Return Value:<NEWLINE>[Type] - [Explanation]<NEWLINE><NEWLINE>[Function Name] performs [Summary of logic up to 5 lines].<NEWLINE>",
+        "",
+        "Rules for this block:",
+        "- Use <NEWLINE> for all line breaks.",
+        "- Use the actual variable names and types discovered during analysis."
+    ],
+    
+    "use_comments": [
+        "**Inline Comments Requirement:**",
+        "Include line-by-line logic entries in the commenting block."
+    ],
+    
+    "rename_vars": [
+        "**Variable Renaming:**",
+        "Perform local variable renames in the variable block."
+    ],
+    
+    "rename_funcs": [
+        "**Function Renaming:**",
+        "Perform function renames in the function rename block."
+    ],
+    
+    "comment_every_line_true": [
+        "**Comment Density:**",
+        "Comment relevant lines individually.",
+        "Example:",
+        "```pseudocode",
+        "v27 = 0;",
+        "kill(pid, 9);",
+        "```",
+        "0x8050aaf| Clear listener flag",
+        "0x8050ac4| Kill TCP listener process with SIGKILL"
+    ],
+    
+    "comment_every_line_false": [
+        "**Comment Density Strategy (Pivot Addressing):**",
+        "Do not give comments at every address. Instead, identify a \"pivot address\" for a logical block (e.g., the start of a sequence of prints or a calculation). Use <NEWLINE> to combine multiple descriptive steps into one single comment at that pivot address.",
+        "",
+        "* STRICT LIMIT: If lines of code perform one \"action\", output exactly one address entry for that whole block, using <NEWLINE> to separate internal details.",
+        "* It should be as specific as possible. E.g. NOT \"Kills process\", DO \"Kills process with SIGKILL 'stop'\".",
+        "",
+        "Example (Bad result):",
+        "  inserted_root = aire_insert_bst_node(0, 0x32u);",
+        "  // Insert value 30 into left subtree of 50",
+        "  node_after_30_insert = aire_insert_bst_node(inserted_root, 0x1Eu);",
+        "  // Insert value 20 into left subtree of 30",
+        "",
+        "Example (Good result):",
+        "  // Insert value 30 into left subtree of 50<NEWLINE>Insert value 20 into left subtree of 30",
+        "  node_after_30_insert = aire_insert_bst_node(inserted_root, 0x1Eu);",
+        "  node_after_20_insert = aire_insert_bst_node(node_after_30_insert, 0x14u);",
+        "",
+        "* The comment should add value. Do not state the obvious, like commenting the contents of an unobfuscated print statement.",
+        "Bad Example:",
+        "  // --- Current Tree (In-order Traversal) ---",
+        "  puts(\"\\n--- Current Tree (In-order Traversal) ---\");"
+    ],
+    
+    "base_footer": [
+        "**General Formatting Rules:**",
+        "- DO NOT Echo out any print statements or literal strings that are obvious.",
+        "- DO NOT use ellipsis.",
+        "- Use the block identifiers and delimiters (pipes, headers, or brackets) established in the preceding instructions.",
+        "- All `<NEWLINE>` markers within the summary must be preserved.",
+        "### OPTIONS INFORMATION END"
+    ]
+}

@@ -1,0 +1,15 @@
+Without touching the deobfuscated code, label the deobfuscated code with address with reference to obfuscated code.
+Follow the format as shown below:
+```c
+0x14001000 | int example_function(int limit) {{
+0x14001008 |     int total = 0;
+           |
+0x14001100 |     for (int i = 0; i < limit; i++) {{
+0x14001124 |         if (i % 2 == 0) {{
+0x14001150 |             total += i;
+           |         }}
+           |     }}
+           |   
+0x14001200 |     return total;
+           | }}
+```
