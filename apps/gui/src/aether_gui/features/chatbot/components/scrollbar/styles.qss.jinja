@@ -1,0 +1,61 @@
+#ScrollBar {
+    background: {{ theme.base }};
+}
+
+#ScrollBar QScrollBar:vertical {
+    border: none;
+    background: {{ theme.base }};
+    width: 10px;
+    margin: 0px;
+}
+
+#ScrollBar QScrollBar::handle:vertical {
+    background: {{ theme.mid }};
+    min-height: 20px;
+    border-radius: 5px;
+}
+
+#ScrollBar QScrollBar::handle:vertical:hover {
+    background: {{ theme.highlight }};
+}
+
+#ScrollBar QScrollBar::add-line:vertical,
+#ScrollBar QScrollBar::sub-line:vertical {
+    border: none;
+    background: none;
+    height: 0px;
+}
+
+#ScrollBar QScrollBar::add-page:vertical,
+#ScrollBar QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+#ScrollBar QScrollBar:horizontal {
+    border: none;
+    background: {{ theme.base }};
+    height: 10px;
+    margin: 0px;
+}
+
+#ScrollBar QScrollBar::handle:horizontal {
+    background: {{ theme.mid }};
+    min-width: 20px;
+    border-radius: 5px;
+}
+
+#ScrollBar QScrollBar::handle:horizontal:hover {
+    background: {{ theme.highlight }};
+}
+
+#ScrollBar QScrollBar::add-line:horizontal,
+#ScrollBar QScrollBar::sub-line:horizontal {
+    border: none;
+    background: none;
+    width: 0px;
+}
+
+#ScrollBar QScrollBar::add-page:horizontal,
+#ScrollBar QScrollBar::sub-page:horizontal {
+    background: none;
+}

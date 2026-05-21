@@ -1,0 +1,15 @@
+#ChatHistoryView {
+    background-color: {{ theme.base }};
+}
+
+#ChatHistoryView QTextEdit {
+    background-color: {{ theme.base }};
+    color: {{ theme.text }};
+    border: 1px solid {{ theme.mid }};
+    border-radius: 6px;
+    padding: 6px;
+}
+
+#ChatHistoryView QTextEdit:focus {
+    border: 1px solid {{ theme.highlight }};
+}

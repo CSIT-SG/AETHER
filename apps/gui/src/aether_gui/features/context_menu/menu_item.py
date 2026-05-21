@@ -27,3 +27,4 @@ class ContextMenuItem:
 
     def unregister(self) -> None:
         ida_kernwin.unregister_action(self.action_name)
+        self.handler = None
