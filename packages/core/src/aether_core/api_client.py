@@ -1,8 +1,8 @@
 from os import path
 
 import httpx
-from aether_utils.find_root import get_version # type: ignore[import-untyped]
-from aether_utils.logger import get_logger # type: ignore[import-untyped]
+from aether_utils.find_root import get_version
+from aether_utils.logger import get_logger
 from openai import AsyncOpenAI
 
 VERSION = get_version()
