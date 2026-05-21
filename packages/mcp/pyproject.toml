@@ -1,0 +1,12 @@
+[project]
+name = "aether_mcp"
+version = "0.1.0"
+description = "AETHER mcp library"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp",
+]
+
+[tool.mypy]
+plugins = ["pydantic.mypy"]
