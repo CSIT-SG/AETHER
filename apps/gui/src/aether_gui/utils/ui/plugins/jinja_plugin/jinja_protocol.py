@@ -1,0 +1,13 @@
+from pathlib import Path
+from typing import Protocol, runtime_checkable
+
+
+@runtime_checkable
+class JinjaPluginProtocol(Protocol):
+    def styles(self) -> str | None: ...
+
+    def style_file(self) -> Path | None: ...
+
+    def template(self) -> str | None: ...
+
+    def template_file(self) -> Path | None: ...

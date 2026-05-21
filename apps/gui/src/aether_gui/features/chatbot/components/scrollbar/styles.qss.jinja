@@ -1,22 +1,22 @@
 #ScrollBar {
-    background: {{ theme.base }};
+    background: {{ colors.base }};
 }
 
 #ScrollBar QScrollBar:vertical {
     border: none;
-    background: {{ theme.base }};
+    background: {{ colors.base }};
     width: 10px;
     margin: 0px;
 }
 
 #ScrollBar QScrollBar::handle:vertical {
-    background: {{ theme.mid }};
+    background: {{ colors.mid }};
     min-height: 20px;
     border-radius: 5px;
 }
 
 #ScrollBar QScrollBar::handle:vertical:hover {
-    background: {{ theme.highlight }};
+    background: {{ colors.highlight }};
 }
 
 #ScrollBar QScrollBar::add-line:vertical,
@@ -33,19 +33,19 @@
 
 #ScrollBar QScrollBar:horizontal {
     border: none;
-    background: {{ theme.base }};
+    background: {{ colors.base }};
     height: 10px;
     margin: 0px;
 }
 
 #ScrollBar QScrollBar::handle:horizontal {
-    background: {{ theme.mid }};
+    background: {{ colors.mid }};
     min-width: 20px;
     border-radius: 5px;
 }
 
 #ScrollBar QScrollBar::handle:horizontal:hover {
-    background: {{ theme.highlight }};
+    background: {{ colors.highlight }};
 }
 
 #ScrollBar QScrollBar::add-line:horizontal,

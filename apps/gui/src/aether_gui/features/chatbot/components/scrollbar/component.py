@@ -14,24 +14,30 @@ class ScrollBar(StyledComponent):
     ) -> None:
         """Configure orientation and set up sync state."""
         self._orientation = orientation
+        super().__init__(parent)
+
+    def setup(self) -> None:
         self._scrollbar: QtWidgets.QScrollBar | None = None
         self._target_scrollbar: QtWidgets.QScrollBar | None = None
         self._syncing = False
-        super().__init__(parent)
 
     def init_ui(self) -> None:
         """Build the scrollbar widget and apply size constraints."""
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground, True)
+
+        # Layout
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
+        # Scrollbar widget
         scrollbar = QtWidgets.QScrollBar(self._orientation, self)
         scrollbar.setObjectName("ScrollBarHandle")
         scrollbar.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground, True)
         layout.addWidget(scrollbar)
         self._scrollbar = scrollbar
 
+        # Size constraints
         if self._orientation == QtCore.Qt.Orientation.Vertical:
             # Match the styled width for the vertical rail.
             self.setFixedWidth(10)
@@ -100,3 +106,10 @@ class ScrollBar(StyledComponent):
     def style_file(self) -> Path | None:
         """Return the QSS template that paints the scrollbar."""
         return Path(__file__).resolve().parent / "styles.qss.jinja"
+
+
+def create_scrollbar(
+    orientation: QtCore.Qt.Orientation = QtCore.Qt.Orientation.Vertical,
+    parent: QtWidgets.QWidget | None = None,
+) -> ScrollBar:
+    return ScrollBar(orientation=orientation, parent=parent)

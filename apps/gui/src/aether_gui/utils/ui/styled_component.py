@@ -1,26 +1,28 @@
 from abc import abstractmethod
+from collections.abc import Iterable
 from pathlib import Path
 
 from aether_utils.logger import get_logger
-from PySide6.QtWidgets import QWidget
 
-from .jinja_loaders import (
-    HTMLFileLoader,
-    HTMLStringLoader,
-    QSSFileLoader,
-    QSSStringLoader,
-    TemplateLoader,
+from .plugins import (
+    AbstractPluginManager,
+    JinjaPlugin,
+    JinjaPluginProtocol,
+    Theme,
+    ThemeColors,
+    ThemePlugin,
+    ThemePluginProtocol,
 )
-from .theme import Theme, ThemeColors
-from .theme import get_shared_theme_manager as _get_shared_theme_manager
+from .plugins.abstract_component_plugin import AbstractComponentPlugin
+from .plugins.theme_plugin.theme_manager_singleton import get_shared_theme_manager
 
 
 class _ColorsProxy:
     """Wraps ThemeColors dict as attribute access for Jinja templates.
 
-    Jinja2 resolves ``{{ theme.base }}`` via Python's ``getattr``, not dict
-    key access, so this proxy lets templates use ``{{ theme.base }}`` instead
-    of the more verbose ``{{ theme['base'] }}``.
+    Jinja2 resolves ``{{ colors.base }}`` via Python's ``getattr``, not dict
+    key access, so this proxy lets templates use ``{{ colors.base }}`` instead
+    of the more verbose ``{{ colors['base'] }}``.
 
     Args:
         colors: The ThemeColors dict to wrap.
@@ -33,132 +35,74 @@ class _ColorsProxy:
         return f"<ThemeColors {self.__dict__}>"
 
 
-class StyledComponent(QWidget):
-    """Base class for all themed, Jinja-templated PySide6 components.
+class StyledComponent(AbstractPluginManager, JinjaPluginProtocol, ThemePluginProtocol):
+    """Themed, Jinja-driven QWidget base powered by plugins.
 
-    Wires a PySide6 ``QWidget`` to the shared ``ThemeManager`` so that QSS
-    and HTML templates are automatically re-rendered whenever the active theme
-    changes. Subclasses declare their templates by overriding one or more of
-    the template hook methods below; the base class handles the rest.
+    StyledComponent installs ``ThemePlugin`` and ``JinjaPlugin`` by default.
+    Subclasses implement Jinja hooks (``styles``, ``style_file``, ``template``,
+    ``template_file``) and the theme hook ``on_theme_change``.
 
     Lifecycle:
         On construction::
 
-            __init__
-            ├── init_ui()           # build widget tree (once)
-            ├── _apply_styles()     # first QSS paint
-            └── _on_theme_changed() # wired to ThemeManager.theme_changed
+            setup()
+            init_ui()
+            install_plugins()
+            plugins_ready()  # run after all plugins installed
+                -> ThemePlugin.install() calls _apply_styles() + on_theme_change()
 
         On theme change::
 
-            _on_theme_changed()
-            ├── _apply_styles()
-            └── on_theme_changed()  # optional subclass hook
+            ThemePlugin -> _apply_styles(); on_theme_change()
+
+        On close::
+            teardown() -> plugin.uninstall()
 
     Template context:
-        Every Jinja template receives the following variables automatically:
-
-        - ``{{ theme.window }}``    — window / panel background colour
-        - ``{{ theme.base }}``      — input / card background colour
-        - ``{{ theme.text }}``      — primary text colour
-        - ``{{ theme.mid }}``       — borders and dividers
-        - ``{{ theme.button }}``    — button background colour
-        - ``{{ theme.highlight }}`` — accent / selection colour
-        - ``{{ mode }}``            — ``"light"`` or ``"dark"``
+        Jinja templates receive:
+        - ``colors.<role>`` for each ``QPalette.ColorRole`` (lowercased), e.g.
+          ``colors.window``, ``colors.text``, ``colors.base``, ``colors.mid``.
+        - ``theme``: ``"light"`` or ``"dark"``.
 
     Note:
-        ``setObjectName()`` is called automatically with the class name so
-        ``#MyComponent { }`` QSS selectors work without manual wiring.
+        ``setObjectName()`` is set automatically to the class name.
 
-    Examples:
-        **QSS-only component** — styles live in an external ``.qss.jinja``
-        file; no HTML is involved::
+    Examples (concise):
+        QSS file::
 
             class StatusBadge(StyledComponent):
-                # init_ui builds the widget tree once at construction time.
-                # Never call setStyleSheet() here — the render pipeline owns that.
-                def init_ui(self) -> None:
-                    layout = QHBoxLayout(self)
-                    self._label = QLabel("Ready", self)
-                    layout.addWidget(self._label)
+                def setup(self): self._text = "Ready"
+                def init_ui(self): self._label = QLabel(self._text, self)
+                def style_file(self) -> Path: return Path(__file__).with_name("styles.qss.jinja")
+                def plugins_ready(self): pass
+            def create_status_badge(parent=None): return StatusBadge(parent)
 
-                # Returning a Path tells the base class to load and render this
-                # file on every theme change instead of calling styles().
-                def style_file(self) -> Path:
-                    return Path(__file__).resolve().parent / "styles.qss.jinja"
-
-        **Inline QSS** — useful when the stylesheet is short enough to live
-        alongside the Python code::
+        Inline QSS::
 
             class Divider(StyledComponent):
-                def init_ui(self) -> None:
-                    self.setFixedHeight(1)
+                def init_ui(self): self.setFixedHeight(1)
+                def styles(self) -> str: return "#Divider { background: {{ colors.mid }}; }"
+            def create_divider(parent=None): return Divider(parent)
 
-                # The Jinja expression {{ theme.mid }} is replaced with the
-                # current theme's border/divider colour at render time.
-                def styles(self) -> str:
-                    return "#Divider { background-color: {{ theme.mid }}; }"
-
-        **HTML template rendered into a QWebEngineView** — ``on_theme_changed``
-        pushes fresh HTML whenever the palette switches::
+        HTML template::
 
             class ProfileCard(StyledComponent):
-                def init_ui(self) -> None:
-                    layout = QVBoxLayout(self)
-                    # The web view displays richly styled HTML produced by the
-                    # template; QSS alone cannot style web content.
-                    self._view = QWebEngineView(self)
-                    layout.addWidget(self._view)
-                    self._user = {"name": "Ada", "role": "Admin"}
-                    # Render once immediately so the card isn't blank on launch.
-                    self._view.setHtml(self.render_html(**self._user))
-
-                def template_file(self) -> Path:
-                    return Path(__file__).resolve().parent / "profile_card.html.jinja"
-
-                # Called automatically after every theme change; re-renders the
-                # HTML so colours in the web view stay in sync with the rest of
-                # the UI without any manual signal wiring.
-                def on_theme_changed(self, *, colors: ThemeColors, mode: Theme) -> None:
-                    self._view.setHtml(self.render_html(**self._user))
-
-        **QPainter canvas** — ``on_theme_changed`` triggers a repaint so
-        custom-drawn elements pick up the new palette::
-
-            class ActivityRing(StyledComponent):
-                def init_ui(self) -> None:
-                    self._progress = 0.67676767
-
-                def set_progress(self, value: float) -> None:
-                    self._progress = value
-                    self.update()  # schedules a paintEvent
-
-                # update() queues a paintEvent; the next paintEvent call will
-                # use whatever colours were last stored in self._colors.
-                def on_theme_changed(self, *, colors: ThemeColors, mode: Theme) -> None:
-                    self._colors = colors
-                    self.update()
-
-                def paintEvent(self, event) -> None:
-                    painter = QPainter(self)
-                    arc_color = QColor(self._colors.get("highlight", "#0af"))
-                    # … draw arc using arc_color and self._progress …
+                def setup(self): self._user = {"name": "Ada"}
+                def init_ui(self): self._view = QWebEngineView(self)
+                def template_file(self) -> Path: return Path(__file__).with_name("profile_card.html.jinja")
+                def on_theme_change(self, *, theme: Theme, colors: ThemeColors) -> None:
+                    self._view.setHtml(self.render_html(user=self._user))
+            def create_profile_card(parent=None): return ProfileCard(parent)
     """
 
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-        self._theme_mgr = _get_shared_theme_manager()
-
-        if not self.objectName():
-            self.setObjectName(type(self).__name__)
-
-        self.init_ui()
-
-        colors, mode = self._theme_mgr.current_theme()
-        self._apply_styles(colors=colors, mode=mode)
-
-        self._theme_mgr.theme_changed.connect(self._on_theme_changed)
+    def __init__(
+        self,
+        parent=None,
+        *,
+        plugins: Iterable[AbstractComponentPlugin] | None = None,
+    ) -> None:
+        all_plugins = [ThemePlugin(), JinjaPlugin(), *(plugins or [])]
+        super().__init__(parent, plugins=all_plugins)
 
         self.logger = get_logger(f"component.{type(self).__name__}")
 
@@ -179,7 +123,7 @@ class StyledComponent(QWidget):
         """
         raise NotImplementedError
 
-    def styles(self) -> str:
+    def styles(self) -> str | None:
         """Return an inline Jinja-templated QSS string.
 
         Override this method when the component's stylesheet is short enough
@@ -190,7 +134,7 @@ class StyledComponent(QWidget):
             A Jinja2 QSS template string, or an empty string (default) to
             apply no inline styles.
         """
-        return ""
+        return None
 
     def style_file(self) -> Path | None:
         """Return the path to an external ``.qss.jinja`` template.
@@ -204,7 +148,7 @@ class StyledComponent(QWidget):
         """
         return None
 
-    def template(self) -> str:
+    def template(self) -> str | None:
         """Return an inline Jinja-templated HTML string.
 
         The rendered output is returned by ``render_html()``; subclasses decide
@@ -214,7 +158,7 @@ class StyledComponent(QWidget):
         Returns:
             A Jinja2 HTML template string, or an empty string (default).
         """
-        return ""
+        return None
 
     def template_file(self) -> Path | None:
         """Return the path to an external ``.html.jinja`` template.
@@ -228,30 +172,18 @@ class StyledComponent(QWidget):
         """
         return None
 
-    def on_theme_changed(self, *, colors: ThemeColors, mode: Theme) -> None:
-        """Hook called after QSS is re-applied on every theme change.
-
-        Override this method for imperative updates that QSS cannot express,
-        such as swapping icon sets, repainting a ``QPainter`` canvas, or
-        pushing new HTML into a ``QWebEngineView``.
-
-        Args:
-            colors: The full colour map for the new theme.
-            mode: The new theme mode, either ``Theme.LIGHT`` or ``Theme.DARK``.
-        """
-
     def render_html(self, **context: object) -> str:
         """Compile the HTML template against the current theme and return it.
 
         Resolves the active template (file or inline string), injects the
-        current theme colours and mode alongside any caller-supplied context
+        current theme colors and theme alongside any caller-supplied context
         variables, renders the Jinja template, and returns the resulting HTML
         string. The caller is responsible for consuming the output.
 
         Args:
             **context: Arbitrary keyword arguments forwarded to the Jinja
-                template as top-level variables. The reserved names ``theme``
-                and ``mode`` are silently removed if passed, as they are
+                template as top-level variables. The reserved names ``colors``
+                and ``theme`` are silently removed if passed, as they are
                 always supplied by the render pipeline.
 
         Returns:
@@ -264,72 +196,46 @@ class StyledComponent(QWidget):
                 def init_ui(self) -> None:
                     self._view = QWebEngineView(self)
 
-                def on_theme_changed(self, *, colors, mode) -> None:
+                def on_theme_change(self, *, theme, colors) -> None:
                     # Re-render with the latest data on every palette switch.
                     self._view.setHtml(self.render_html(title="Stats", rows=self._rows))
         """
-        colors, mode = self._theme_mgr.current_theme()
-        return self._render(
-            self._resolve_html_loader(),
-            colors=colors,
-            mode=mode,
-            context=context,
+        theme, colors = self._current_theme()
+        extra_context = dict(context)
+        extra_context.pop("colors", None)
+        extra_context.pop("theme", None)
+
+        return self.get_plugin(JinjaPlugin).render_html(
+            self,
+            colors=_ColorsProxy(colors),
+            theme=theme,
+            **extra_context,
         )
 
-    def _on_theme_changed(self, colors: ThemeColors, mode: Theme) -> None:
-        self._apply_styles(colors=colors, mode=mode)
-        self.on_theme_changed(colors=colors, mode=mode)
+    def on_theme_change(self, *, theme: Theme, colors: ThemeColors) -> None:
+        """Hook called after QSS is re-applied on every theme change.
 
-    def _apply_styles(self, *, colors: ThemeColors, mode: Theme) -> None:
-        qss = self._render(self._resolve_qss_loader(), colors=colors, mode=mode)
+        Override this method for imperative updates that QSS cannot express,
+        such as swapping icon sets, repainting a ``QPainter`` canvas, or
+        pushing new HTML into a ``QWebEngineView``.
+
+        Args:
+            theme: The new theme, either ``"light"`` or ``"dark"``.
+            colors: The full colour map for the new theme.
+        """
+        pass
+
+    def _apply_styles(self, *, theme: Theme, colors: ThemeColors, **_kwargs) -> None:
+        qss = self.get_plugin(JinjaPlugin).render_qss(
+            self,
+            colors=_ColorsProxy(colors),
+            theme=theme,
+        )
         if qss.strip():
             self.setStyleSheet(qss)
 
-    def _resolve_qss_loader(self) -> TemplateLoader | None:
-        if (f := self.style_file()) is not None:
-            return QSSFileLoader(f)
-        if (s := self.styles()).strip():
-            return QSSStringLoader(s)
-        return None
-
-    def _resolve_html_loader(self) -> TemplateLoader | None:
-        if (f := self.template_file()) is not None:
-            return HTMLFileLoader(f)
-        if (s := self.template()).strip():
-            return HTMLStringLoader(s)
-        return None
-
-    def _render(
-        self,
-        loader: TemplateLoader | None,
-        *,
-        colors: ThemeColors,
-        mode: Theme,
-        context: dict[str, object] | None = None,
-    ) -> str:
-        if loader is None:
-            return ""
-        extra_context = dict(context or {})
-        extra_context.pop("theme", None)
-        extra_context.pop("mode", None)
-
-        env = loader.make_env()
-        tmpl = env.get_template(loader.get_template_name())
-        return tmpl.render(theme=_ColorsProxy(colors), mode=mode, **extra_context)
-
-    def closeEvent(self, event) -> None:
-        """Disconnect theme signals and release resources on close.
-
-        Overrides ``QWidget.closeEvent`` to cleanly remove the connection to
-        ``ThemeManager.theme_changed``, preventing callbacks from firing on a
-        destroyed widget.
-
-        Args:
-            event: The ``QCloseEvent`` passed by Qt.
-        """
+    def _current_theme(self) -> tuple[Theme, ThemeColors]:
         try:
-            self._theme_mgr.theme_changed.disconnect(self._on_theme_changed)
-        except RuntimeError as e:
-            self.logger.warning("Failed to disconnect theme_changed signal: %s", e)
-            pass
-        super().closeEvent(event)
+            return self.get_plugin(ThemePlugin).current_theme
+        except Exception:
+            return get_shared_theme_manager().get_current_theme()

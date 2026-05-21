@@ -7,15 +7,15 @@ from PySide6 import QtCore, QtWidgets
 class ChatbotPanel(StyledComponent):
     """Container that owns the chat layout and background styling."""
 
-    def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
-        """Initialize panel state and let StyledComponent build the UI."""
+    def setup(self) -> None:
         self._layout: QtWidgets.QVBoxLayout | None = None
         self._body: QtWidgets.QWidget | None = None
-        super().__init__(parent)
 
     def init_ui(self) -> None:
         """Build the panel layout and enable themed background painting."""
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground, True)
+
+        # Root layout
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(8)
@@ -35,3 +35,7 @@ class ChatbotPanel(StyledComponent):
     def style_file(self) -> Path | None:
         """Return the QSS template that paints the panel background."""
         return Path(__file__).resolve().parent / "styles.qss.jinja"
+
+
+def create_chatbot_panel(parent: QtWidgets.QWidget | None = None) -> ChatbotPanel:
+    return ChatbotPanel(parent)

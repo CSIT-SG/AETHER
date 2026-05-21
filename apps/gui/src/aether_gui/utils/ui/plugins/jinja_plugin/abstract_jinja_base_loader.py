@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from jinja2 import Environment
 
 
-class TemplateLoader(ABC):
+class AbstractJinjaBaseLoader(ABC):
     """Abstract base class for Jinja template loaders used by styled components.
 
     Implementations of this interface provide a configured :class:`jinja2.Environment`

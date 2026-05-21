@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from aether_gui.utils.ui import StyledComponent
+from aether_gui.utils.ui.plugins import Theme, ThemeColors
 from PySide6 import QtCore, QtWidgets
 
 from ..scrollbar import ScrollBar
@@ -9,20 +10,21 @@ from ..scrollbar import ScrollBar
 class ChatHistoryView(StyledComponent):
     """Scrollable chat transcript with a themed custom scrollbar."""
 
-    def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
-        """Initialize state and defer UI construction to init_ui()."""
+    def setup(self) -> None:
         self._text: QtWidgets.QTextEdit | None = None
         self._scrollbar_component: ScrollBar | None = None
         self._messages: list[tuple[str, str]] = []
-        super().__init__(parent)
 
     def init_ui(self) -> None:
-        """Build the text view and bind the custom scrollbar."""
+        """Build the text view and custom scrollbar."""
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground, True)
+
+        # Layout
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
+        # Text view
         text = QtWidgets.QTextEdit(self)
         text.setObjectName("ChatHistoryText")
         text.setReadOnly(True)
@@ -36,6 +38,7 @@ class ChatHistoryView(StyledComponent):
         )
         layout.addWidget(text)
 
+        # Scrollbar
         scrollbar_component = ScrollBar(QtCore.Qt.Orientation.Vertical, self)
         layout.addWidget(scrollbar_component)
 
@@ -43,8 +46,12 @@ class ChatHistoryView(StyledComponent):
         layout.setStretchFactor(scrollbar_component, 0)
         self._text = text
         self._scrollbar_component = scrollbar_component
+
+    def plugins_ready(self) -> None:
+        if self._text is None or self._scrollbar_component is None:
+            return
         # Bind the themed scrollbar to the text viewport.
-        self._scrollbar_component.bind_to(text)
+        self._scrollbar_component.bind_to(self._text)
 
     def style_file(self) -> Path | None:
         """Return the QSS template for the chat background and text styling."""
@@ -65,7 +72,7 @@ class ChatHistoryView(StyledComponent):
         text_scrollbar = self._text.verticalScrollBar()
         text_scrollbar.setValue(text_scrollbar.maximum())
 
-    def on_theme_changed(self, *, colors, mode) -> None:
+    def on_theme_change(self, *, theme: Theme, colors: ThemeColors) -> None:
         """Re-render cached messages so HTML colors track the new theme."""
         if self._text is None:
             return
@@ -76,3 +83,7 @@ class ChatHistoryView(StyledComponent):
                 self._text.append(rendered)
         text_scrollbar = self._text.verticalScrollBar()
         text_scrollbar.setValue(text_scrollbar.maximum())
+
+
+def create_chat_history_view(parent: QtWidgets.QWidget | None = None) -> ChatHistoryView:
+    return ChatHistoryView(parent)

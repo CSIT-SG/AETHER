@@ -10,18 +10,34 @@ logger = get_logger("theme_manager")
 
 
 class ThemeManager(QObject):
-    theme_changed = Signal(ThemeColors, str)
     """
     Manages light/dark themes for the entire application by installing a
     global event filter on QApplication. Detects theme changes by monitoring
     QEvent.PaletteChange events.
     """
 
+    theme_change_event = Signal(str, dict)
+
     def __init__(self):
         super().__init__()
         self._installed = False
-        self.current_mode: Theme = self.detect_mode()
+        self.current_theme: Theme = self.detect_theme()
         self.theme_colors: ThemeColors = self._read_palette()  # read only, no emit yet
+
+    def eventFilter(self, obj, event) -> bool:
+        if event.type() != QEvent.Type.PaletteChange:
+            return False
+
+        new_theme = self.detect_theme()
+        if self.current_theme == new_theme:
+            return False
+
+        logger.info("Theme changed to: %s", new_theme)
+        self.current_theme = new_theme
+        self.theme_colors = self._read_palette()
+        self.theme_change_event.emit(self.current_theme, self.theme_colors)
+
+        return False
 
     def _get_app(self) -> QApplication:
         app = QApplication.instance()
@@ -30,28 +46,13 @@ class ThemeManager(QObject):
         assert isinstance(app, QApplication)
         return app
 
-    def eventFilter(self, obj, event) -> bool:
-        if event.type() != QEvent.Type.PaletteChange:
-            return False
-
-        new_mode = self.detect_mode()
-        if self.current_mode == new_mode:
-            return False
-
-        logger.info("Theme changed to: %s", new_mode)
-        self.current_mode = new_mode
-        self.theme_colors = self._read_palette()
-        self.theme_changed.emit(self.theme_colors, self.current_mode)
-
-        return False
-
     def install_event_filter(self):
         if self._installed:
             return
         self._get_app().installEventFilter(self)
         self._installed = True
 
-    def detect_mode(self) -> Theme:
+    def detect_theme(self) -> Theme:
         try:
             app = self._get_app()
             window = app.activeWindow() or app.focusWidget()
@@ -62,23 +63,19 @@ class ThemeManager(QObject):
             return "light"
 
     def _read_palette(self) -> ThemeColors:
-        """Read current palette colors without emitting any signal."""
         app = self._get_app()
         window = app.activeWindow() or app.focusWidget()
         palette = window.palette() if window else app.palette()
 
-        def color(role: QPalette.ColorRole) -> str:
-            return palette.color(role).name()
+        DEFAULT_COLOR = "#000000" if self.current_theme == "light" else "#FFFFFF"
 
         return {
-            "window": color(QPalette.ColorRole.Window),
-            "base": color(QPalette.ColorRole.Base),
-            "text": color(QPalette.ColorRole.Text),
-            "mid": color(QPalette.ColorRole.Mid),
-            "button": color(QPalette.ColorRole.Button),
-            "highlight": color(QPalette.ColorRole.Highlight),
+            role.name.lower(): (
+                palette.color(role).name() if palette.color(role).isValid() else DEFAULT_COLOR
+            )
+            for role in QPalette.ColorRole
         }
 
-    def current_theme(self) -> tuple[ThemeColors, Theme]:
+    def get_current_theme(self) -> tuple[Theme, ThemeColors]:
         """Snapshot of the current theme — useful for initial paint."""
-        return self.theme_colors, self.current_mode
+        return self.current_theme, self.theme_colors

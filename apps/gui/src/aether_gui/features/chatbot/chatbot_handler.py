@@ -2,7 +2,12 @@ from typing import Any, Literal, cast
 
 import ida_kernwin
 import idaapi
-from aether_gui.features.chatbot.components import ChatbotPanel, ChatHistoryView
+from aether_gui.features.chatbot.components import (
+    ChatbotPanel,
+    ChatHistoryView,
+    create_chatbot_panel,
+    create_chat_history_view,
+)
 from aether_utils.logger import get_logger
 from PySide6 import QtWidgets
 
@@ -22,10 +27,10 @@ class ChatbotPanelForm(ida_kernwin.PluginForm):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        self.root = ChatbotPanel(self.parent)
+        self.root = create_chatbot_panel(self.parent)
         layout.addWidget(self.root)
 
-        self.chat_history = ChatHistoryView(self.root)
+        self.chat_history = create_chat_history_view(self.root)
         self.root.set_body(self.chat_history)
 
         if self.chat_history is not None:

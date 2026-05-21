@@ -4,10 +4,10 @@ from pathlib import Path
 
 from jinja2 import BaseLoader, Environment, TemplateNotFound
 
-from .base import TemplateLoader
+from .abstract_jinja_base_loader import AbstractJinjaBaseLoader
 
 
-class QSSStringLoader(TemplateLoader):
+class QSSStringLoader(AbstractJinjaBaseLoader):
     """Load QSS (Qt stylesheet) templates from an in-memory string.
 
     The returned :class:`jinja2.Environment` is configured for non-HTML
@@ -47,7 +47,7 @@ class QSSStringLoader(TemplateLoader):
         return "<inline:qss>"
 
 
-class QSSFileLoader(TemplateLoader):
+class QSSFileLoader(AbstractJinjaBaseLoader):
     """Load QSS templates from a file on disk.
 
     This loader reads the template file and provides a Jinja2 environment

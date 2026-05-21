@@ -4,10 +4,10 @@ from pathlib import Path
 
 from jinja2 import BaseLoader, Environment, TemplateNotFound, select_autoescape
 
-from .base import TemplateLoader
+from .abstract_jinja_base_loader import AbstractJinjaBaseLoader
 
 
-class HTMLStringLoader(TemplateLoader):
+class HTMLStringLoader(AbstractJinjaBaseLoader):
     """Load HTML templates from an in-memory string.
 
     This loader builds a :class:`jinja2.Environment` that serves a single
@@ -50,7 +50,7 @@ class HTMLStringLoader(TemplateLoader):
         return "<inline:html>"
 
 
-class HTMLFileLoader(TemplateLoader):
+class HTMLFileLoader(AbstractJinjaBaseLoader):
     """Load HTML templates from a file on disk.
 
     This loader builds a :class:`jinja2.Environment` that reads the template
