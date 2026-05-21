@@ -8,11 +8,27 @@ from .base import TemplateLoader
 
 
 class HTMLStringLoader(TemplateLoader):
+    """Load HTML templates from an in-memory string.
+
+    This loader builds a :class:`jinja2.Environment` that serves a single
+    HTML template provided as a string. The environment is configured with
+    sensible defaults for HTML generation (autoescaping, trimming blocks).
+
+    Args:
+        source: The HTML template source string.
+    """
+
     def __init__(self, source: str):
         self._source = source
 
     def make_env(self) -> Environment:
         class _Loader(BaseLoader):
+            """Internal Jinja2 loader that returns the provided HTML string.
+
+            The loader implements :meth:`get_source` expected by Jinja2's
+            loader protocol.
+            """
+
             def get_source(_self, environment, template):
                 return self._source, "<inline:html>", lambda: True
 
@@ -25,15 +41,39 @@ class HTMLStringLoader(TemplateLoader):
         )
 
     def get_template_name(self) -> str:
+        """Return the synthetic template name for inline HTML templates.
+
+        Returns:
+            A stable identifier used as the template name within the environment.
+        """
+
         return "<inline:html>"
 
 
 class HTMLFileLoader(TemplateLoader):
+    """Load HTML templates from a file on disk.
+
+    This loader builds a :class:`jinja2.Environment` that reads the template
+    from the provided filesystem path. The environment will report the file
+    path as the template name and provides a callable that Jinja2 uses to
+    determine template freshness.
+
+    Args:
+        path: Path to the HTML template file.
+    """
+
     def __init__(self, path: Path):
         self._path = path
 
     def make_env(self) -> Environment:
         class _Loader(BaseLoader):
+            """Internal Jinja2 loader that reads the template from disk.
+
+            The loader returns the file contents, the file path as the template
+            name, and a callable that compares modification times to determine
+            whether the template is up-to-date.
+            """
+
             def get_source(_self, environment, template):
                 if not self._path.exists():
                     raise TemplateNotFound(str(self._path))
@@ -50,4 +90,10 @@ class HTMLFileLoader(TemplateLoader):
         )
 
     def get_template_name(self) -> str:
+        """Return the filesystem path used as the template name.
+
+        Returns:
+            The string representation of the template file path.
+        """
+
         return str(self._path)

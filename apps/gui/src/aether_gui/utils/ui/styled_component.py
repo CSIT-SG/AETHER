@@ -312,6 +312,7 @@ class StyledComponent(QWidget):
         extra_context = dict(context or {})
         extra_context.pop("theme", None)
         extra_context.pop("mode", None)
+
         env = loader.make_env()
         tmpl = env.get_template(loader.get_template_name())
         return tmpl.render(theme=_ColorsProxy(colors), mode=mode, **extra_context)
