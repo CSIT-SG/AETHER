@@ -7,5 +7,6 @@ requires-python = ">=3.10"
 dependencies = [
     "aether_core",
     "aether_utils",
+    "PySide6",
 ]
 

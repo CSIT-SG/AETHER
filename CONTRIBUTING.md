@@ -1,41 +1,18 @@
 # Contributing
 
-Thanks for contributing to AETHER Next.
+Requires:
+    - `python 3.12 or 3.13`
+    - `ida >= 9.2`
+    - `mypy` IDE extension
 
-## Prerequisites
+## IDE setup
+1. Set your language server's option `Extra Paths` to `C:\Program Files\IDA Professional 9.x\python` (replace as needed). 
+2. Run `uv sync --all-packages` (`--allow-insecure-host <host>` if any ssl error).
 
-- Python 3.10+
-- uv installed
-- ida >= 9.0
+TODO: update the install script to install deps into the ida python interpreter.
 
-## Setup
+## Developer tooling
 
-From the repository root:
-
-```bash
-uv sync
-```
-
-in your ide configure `python.analysis.extraPaths` to `C:\Program Files\IDA Professional 9.x\python`. this is to allow for type checking.
-
-## Development Commands
-
-Use the root scripts to keep checks consistent:
-
-```bash
-# Lint
-uv run ruff check .
-
-# Format
-uv run ruff format .
-
-# Run tests
-uv run pytest
-```
-
-
-## Build Packages
-
-```bash
-uv build --all-packages --out-dir dist --clear
-```
+- Lint: `ruff check`
+- Format: `ruff format`
+- Unit tests: `uv run pytest`
