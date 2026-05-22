@@ -59,6 +59,30 @@ class ChatbotPanelForm(ida_kernwin.PluginForm):
                     "AETHER",
                     "Check for null, verify the address range, and wrap memory reads in a try/except.",
                 ),
+                ("User", "Hey AETHER, can you help me summarize this function?"),
+                ("AETHER", "Sure. Paste the function or describe its inputs and outputs."),
+                ("User", "It takes an address, reads bytes, and returns a parsed struct."),
+                (
+                    "AETHER",
+                    "Got it. It reads memory from the given address and decodes it into a struct for easier access.",
+                ),
+                ("User", "What if the buffer is too short?"),
+                (
+                    "AETHER",
+                    "It should validate length first and return an error or None when the buffer is insufficient.",
+                ),
+                ("User", "Can you suggest a name for the helper?"),
+                ("AETHER", "Maybe `parse_header_at` or `read_header_struct` depending on usage."),
+                ("User", "I need a quick test case idea too."),
+                (
+                    "AETHER",
+                    "Create a fake byte array with a known header and assert the parsed fields match expected values.",
+                ),
+                ("User", "Nice. Any guardrails for invalid pointers?"),
+                (
+                    "AETHER",
+                    "Check for null, verify the address range, and wrap memory reads in a try/except.",
+                ),
             ]
             for sender, message in conversation:
                 self.chat_history.append_message(sender, message)

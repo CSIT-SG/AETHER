@@ -59,7 +59,29 @@ def create_async_httpx_client(
     client_cert_path: str = "",
     client_key_path: str = "",
 ) -> httpx.AsyncClient:
-    """Create an Async HTTPX client with optional mTLS configuration."""
+    """Create an Async HTTPX client with optional mTLS configuration.
+
+    This function builds a low-level transport (`httpx.AsyncClient`) that
+    handles optional mTLS certificate/key configuration. Keeping transport
+    creation separate from the OpenAI client allows reusing the same HTTP
+    transport (and its connection pool / certificate configuration) across
+    multiple higher-level clients or requests.
+
+    Example:
+
+        httpx_client = create_async_httpx_client(
+            client_cert_path="path/to/cert.pem",
+            client_key_path="path/to/key.pem",
+        )
+        openai_client = create_async_openai_client(
+            api_key="sk-...",
+            base_url="https://api.example.com",
+            httpx_client=httpx_client,
+            feature="chat",
+        )
+        # use openai_client...
+        await httpx_client.aclose()
+    """
     client_cert_key = _build_client_cert_key(client_cert_path, client_key_path)
     return _create_httpx_client(client_cert_key)
 
@@ -71,7 +93,24 @@ def create_async_openai_client(
     httpx_client: httpx.AsyncClient,
     feature: str = "",
 ) -> AsyncOpenAI:
+    """Create an `AsyncOpenAI` client using an existing `httpx.AsyncClient`.
 
+    The OpenAI client is a thin wrapper that requires an HTTP transport. By
+    separating transport (`httpx.AsyncClient`) creation from the higher-level
+    OpenAI client we let callers reuse a single, configured transport for
+    connection pooling, shared timeouts, mTLS, proxies, etc.
+
+    Example:
+
+        httpx_client = create_async_httpx_client()
+        openai_client = create_async_openai_client(
+            api_key="sk-...",
+            base_url="https://api.example.com",
+            httpx_client=httpx_client,
+            feature="indexing",
+        )
+
+    """
     custom_headers = _build_user_agent_header(feature)
 
     client = AsyncOpenAI(

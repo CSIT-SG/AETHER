@@ -6,6 +6,7 @@ from typing import Any
 # Since can take in just functions, could be used for different apps with different APIs
 # Should probably isolate tool manager from tools import and stuff
 
+
 class ToolManager:
     def __init__(self):
         self._registry: dict[str, Callable] = {}
@@ -15,6 +16,7 @@ class ToolManager:
         def decorator(func: Callable) -> Callable:
             self._registry[name] = func
             return func
+
         return decorator
 
     def execute(self, tool_name: str, args_list: list[Any]) -> Any:
