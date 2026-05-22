@@ -32,7 +32,7 @@ class ThemeManager(QObject):
         if self.current_theme == new_theme:
             return False
 
-        logger.info("Theme changed to: %s", new_theme)
+        logger.debug("Theme changed to: %s", new_theme)
         self.current_theme = new_theme
         self.theme_colors = self._read_palette()
         self.theme_change_event.emit(self.current_theme, self.theme_colors)

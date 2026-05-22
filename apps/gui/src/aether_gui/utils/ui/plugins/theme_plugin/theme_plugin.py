@@ -35,7 +35,7 @@ class ThemePlugin(AbstractComponentPlugin):
         self._notify(widget, theme, colors)
 
         self._manager.theme_change_event.connect(
-            lambda colors, theme: self._notify(widget, theme, colors)
+            lambda theme, colors: self._notify(widget, theme, colors)
         )
 
     def uninstall(self, widget: QWidget) -> None:

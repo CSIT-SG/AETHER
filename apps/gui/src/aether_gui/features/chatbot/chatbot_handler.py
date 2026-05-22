@@ -5,8 +5,8 @@ import idaapi
 from aether_gui.features.chatbot.components import (
     ChatbotPanel,
     ChatHistoryView,
-    create_chatbot_panel,
     create_chat_history_view,
+    create_chatbot_panel,
 )
 from aether_utils.logger import get_logger
 from PySide6 import QtWidgets

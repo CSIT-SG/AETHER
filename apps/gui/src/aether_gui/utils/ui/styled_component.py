@@ -7,11 +7,9 @@ from aether_utils.logger import get_logger
 from .plugins import (
     AbstractPluginManager,
     JinjaPlugin,
-    JinjaPluginProtocol,
     Theme,
     ThemeColors,
     ThemePlugin,
-    ThemePluginProtocol,
 )
 from .plugins.abstract_component_plugin import AbstractComponentPlugin
 from .plugins.theme_plugin.theme_manager_singleton import get_shared_theme_manager
@@ -35,7 +33,8 @@ class _ColorsProxy:
         return f"<ThemeColors {self.__dict__}>"
 
 
-class StyledComponent(AbstractPluginManager, JinjaPluginProtocol, ThemePluginProtocol):
+# implements JinjaPluginProtocol and ThemePluginProtocol implicitly
+class StyledComponent(AbstractPluginManager):
     """Themed, Jinja-driven QWidget base powered by plugins.
 
     StyledComponent installs ``ThemePlugin`` and ``JinjaPlugin`` by default.
@@ -202,8 +201,18 @@ class StyledComponent(AbstractPluginManager, JinjaPluginProtocol, ThemePluginPro
         """
         theme, colors = self._current_theme()
         extra_context = dict(context)
-        extra_context.pop("colors", None)
-        extra_context.pop("theme", None)
+
+        # we ignore any user-supplied "theme" or "colors" keys since those are reserved
+        if extra_context.pop("colors", None):
+            self.logger.debug(
+                "Context variable 'colors' is reserved and will be ignored. Received: %s",
+                context["colors"],
+            )
+        if extra_context.pop("theme", None):
+            self.logger.debug(
+                "Context variable 'theme' is reserved and will be ignored. Received: %s",
+                context["theme"],
+            )
 
         return self.get_plugin(JinjaPlugin).render_html(
             self,

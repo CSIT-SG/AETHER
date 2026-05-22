@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 from collections.abc import Iterable
 from typing import TypeVar, cast
 
@@ -12,7 +12,13 @@ from .abstract_component_plugin import AbstractComponentPlugin
 TPlugin = TypeVar("TPlugin", bound=AbstractComponentPlugin)
 
 
-class AbstractPluginManager(QWidget, ABC):
+class _WidgetABCMeta(ABCMeta, type(QWidget)):
+    """Metaclass to allow AbstractPluginManager to be both an ABC and a QWidget."""
+
+    pass
+
+
+class AbstractPluginManager(QWidget, metaclass=_WidgetABCMeta):
     """
     Lifecycle-driven plugin host.
 
