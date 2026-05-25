@@ -3,27 +3,32 @@
 
 Usage: python griffe_generate.py <dir> [--output <dir>]
 """
+
 from __future__ import annotations
-from typing import Iterable, Callable
 
 import argparse
+from collections.abc import Callable, Iterable
 from pathlib import Path
 
-from griffe import Alias, Class, Function, Module, load, Object
+from griffe import Alias, Class, Function, Module, Object, load
 
 
 def iter_py_files(root: Path) -> Iterable[Path]:
-    return (p for p in root.rglob("*.py") if not p.name.startswith(".") and "__pycache__" not in p.parts)
+    return (
+        p for p in root.rglob("*.py") if not p.name.startswith(".") and "__pycache__" not in p.parts
+    )
 
 
 def module_name(root: Path, path: Path) -> str:
     parts = list(path.relative_to(root).parts)
-    parts = parts[:-1] if parts[-1] == "__init__.py" else [*parts[:-1], parts[-1].removesuffix(".py")]
+    parts = (
+        parts[:-1] if parts[-1] == "__init__.py" else [*parts[:-1], parts[-1].removesuffix(".py")]
+    )
     return ".".join(parts)
 
 
-H: Callable[[int, str], str] = lambda n, t: f'{"#" * n} {t}\n'
-code: Callable[[str], str] = lambda t: f"```python\n{t.strip()}\n```\n"
+H: Callable[[int, str], str] = lambda n, t: f"{'#' * n} {t}\n"  # noqa: E731
+code: Callable[[str], str] = lambda t: f"```python\n{t.strip()}\n```\n"  # noqa: E731
 
 
 def escape_mdx(text: str) -> str:
@@ -123,7 +128,8 @@ def main() -> None:
 
     files = list(iter_py_files(root))
     if not files:
-        print("No Python files found."); return
+        print("No Python files found.")
+        return
 
     out_dir = Path(args.output).resolve()
     for f in files:
