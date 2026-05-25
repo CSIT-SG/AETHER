@@ -13,13 +13,14 @@ from openai import AsyncOpenAI
 
 from ..services import PromptCommand, ResourceCommand, ToolCommand
 
+# TODO: shift this to some other utils file
 
 @dataclass
 class IDAContext:
     """IDA database state — what the binary looks like."""
 
-    idb_path: str
-    segment_map: dict[str, Any] = field(default_factory=dict)
+    idb_path: str | None = None
+    segment_map: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass
@@ -124,13 +125,23 @@ class AbstractMCPRoute(ABC):
         """
         self.on_startup()
         self._register_tools(server)
-        self._register_resources(server)
-        self._register_prompts(server)
+        # self._register_resources(server)
+        # self._register_prompts(server)
 
-    # TODO: implement register
+    # TODO: implement register for resources and prompts
 
     def _register_tools(self, server: Server) -> None:
-        raise NotImplementedError("Tool registration not implemented.")
+        @server.list_tools()
+        async def list_tools():
+            return [cmd.tool for cmd in self.tools]
+
+        @server.call_tool()
+        async def call_tool(name: str, arguments: dict):
+            for cmd in self.tools:
+                if cmd.tool.name == name:
+                    return await cmd.handler(**arguments)
+
+            raise ValueError(f"Unknown tool: {name}")
 
     def _register_resources(self, server: Server) -> None:
         raise NotImplementedError("Resource registration not implemented.")

@@ -1,5 +1,6 @@
-from collections.abc import Callable
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
+from typing import Any
 
 from mcp.types import CallToolResult, GetPromptResult, Prompt, ReadResourceResult, Resource, Tool
 
@@ -9,7 +10,7 @@ from mcp.types import CallToolResult, GetPromptResult, Prompt, ReadResourceResul
 @dataclass(frozen=True)
 class ToolCommand:
     tool: Tool
-    handler: Callable[..., CallToolResult]
+    handler: Callable[..., Coroutine[Any, Any, CallToolResult]]
 
 
 @dataclass(frozen=True)
