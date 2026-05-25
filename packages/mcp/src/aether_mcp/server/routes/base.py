@@ -10,8 +10,9 @@ from mcp.types import (
     TextContent,
 )
 from openai import AsyncOpenAI
+from pydantic import AnyUrl
 
-from ..services import PromptCommand, ResourceCommand, ToolCommand
+from ..services import PromptCommand, ResourceCommand, ResourceTemplateCommand, ToolCommand
 
 # TODO: shift this to some other utils file
 
@@ -74,6 +75,10 @@ class AbstractMCPRoute(ABC):
         return []
 
     @property
+    def resource_templates(self) -> Sequence[ResourceTemplateCommand]:
+        return []
+
+    @property
     def prompts(self) -> Sequence[PromptCommand]:
         """Prompts exposed by this route.  Override to add prompts."""
         return []
@@ -125,10 +130,8 @@ class AbstractMCPRoute(ABC):
         """
         self.on_startup()
         self._register_tools(server)
-        # self._register_resources(server)
-        # self._register_prompts(server)
-
-    # TODO: implement register for resources and prompts
+        self._register_resources(server)
+        self._register_prompts(server)
 
     def _register_tools(self, server: Server) -> None:
         @server.list_tools()
@@ -144,7 +147,30 @@ class AbstractMCPRoute(ABC):
             raise ValueError(f"Unknown tool: {name}")
 
     def _register_resources(self, server: Server) -> None:
-        raise NotImplementedError("Resource registration not implemented.")
+        @server.list_resources()
+        async def list_resources():
+            return [cmd.resource for cmd in self.resources]
+
+        @server.list_resource_templates()
+        async def list_resource_templates():
+            return [cmd.template for cmd in self.resource_templates]
+
+        @server.read_resource()
+        async def read_resource(uri: AnyUrl):
+            for cmd in self.resources:
+                if cmd.resource.uri == str(uri):
+                    return await cmd.handler(str(uri))
+            raise ValueError(f"Unknown resource: {uri}")
 
     def _register_prompts(self, server: Server) -> None:
-        raise NotImplementedError("Prompt registration not implemented.")
+        @server.list_prompts()
+        async def list_prompts():
+            return [cmd.prompt for cmd in self.prompts]
+
+        @server.get_prompt()
+        async def get_prompt(name: str, arguments: dict[str, str] | None):
+            for cmd in self.prompts:
+                if cmd.prompt.name == name:
+                    return await cmd.handler(**(arguments or {}))
+
+            raise ValueError(f"Unknown prompt: {name}")
