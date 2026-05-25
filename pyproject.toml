@@ -22,6 +22,7 @@ dev = [
     "pytest-cov>=7.1.0",
     "ruff>=0.15.12",
     "mypy>=2.1.0",
+    "griffe"
 ]
 
 # Dev dependencies are managed at workspace level
@@ -55,3 +56,6 @@ known-first-party = ["aether"]
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

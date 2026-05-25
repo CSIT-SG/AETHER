@@ -14,6 +14,7 @@ class JinjaManager:
     """Compiles Jinja templates against an arbitrary context."""
 
     def __init__(self) -> None:
+        """Initialize the manager and its environment cache."""
         self._env_cache: dict[JinjaEnvironmentCacheKey, Environment] = {}
 
     def render_qss(
@@ -23,6 +24,16 @@ class JinjaManager:
         file: Path | None = None,
         **context: object,
     ) -> str:
+        """Render a QSS template with the given context.
+
+        Args:
+            inline: Inline QSS template string.
+            file: Path to a QSS template file.
+            **context: Context variables for the template.
+
+        Returns:
+            Rendered QSS string, or an empty string if no template is provided.
+        """
         loader, cache_key = self._resolve_qss_loader(inline=inline, file=file)
         return self._render(loader, cache_key, **context)
 
@@ -33,12 +44,31 @@ class JinjaManager:
         file: Path | None = None,
         **context: object,
     ) -> str:
+        """Render an HTML template with the given context.
+
+        Args:
+            inline: Inline HTML template string.
+            file: Path to an HTML template file.
+            **context: Context variables for the template.
+
+        Returns:
+            Rendered HTML string, or an empty string if no template is provided.
+        """
         loader, cache_key = self._resolve_html_loader(inline=inline, file=file)
         return self._render(loader, cache_key, **context)
 
     def _resolve_qss_loader(
         self, *, inline: str | None, file: Path | None
     ) -> tuple[AbstractJinjaBaseLoader | None, JinjaEnvironmentCacheKey | None]:
+        """Resolve the loader and cache key for a QSS template.
+
+        Args:
+            inline: Inline QSS template string.
+            file: Path to a QSS template file.
+
+        Returns:
+            Tuple of (loader, cache key), or (None, None) when no template exists.
+        """
         if file is not None:
             cache_key = ("qss", "file", str(file.resolve()))
             return QSSFileLoader(file), cache_key
@@ -50,6 +80,15 @@ class JinjaManager:
     def _resolve_html_loader(
         self, *, inline: str | None, file: Path | None
     ) -> tuple[AbstractJinjaBaseLoader | None, JinjaEnvironmentCacheKey | None]:
+        """Resolve the loader and cache key for an HTML template.
+
+        Args:
+            inline: Inline HTML template string.
+            file: Path to an HTML template file.
+
+        Returns:
+            Tuple of (loader, cache key), or (None, None) when no template exists.
+        """
         if file is not None:
             cache_key = ("html", "file", str(file.resolve()))
             return HTMLFileLoader(file), cache_key
@@ -64,6 +103,16 @@ class JinjaManager:
         cache_key: JinjaEnvironmentCacheKey | None,
         **context: object,
     ) -> str:
+        """Render a template using the supplied loader.
+
+        Args:
+            loader: Template loader, or None if no template exists.
+            cache_key: Cache key for environment reuse.
+            **context: Template context variables.
+
+        Returns:
+            Rendered template string, or an empty string when no loader exists.
+        """
         if loader is None:
             return ""
         env = self._get_env(loader, cache_key)
@@ -75,7 +124,15 @@ class JinjaManager:
         loader: AbstractJinjaBaseLoader,
         cache_key: JinjaEnvironmentCacheKey | None,
     ) -> Environment:
-        """Get a Jinja Environment for the given loader, using the cache if possible."""
+        """Get a Jinja environment for the given loader.
+
+        Args:
+            loader: Template loader to build the environment for.
+            cache_key: Cache key for environment reuse.
+
+        Returns:
+            A Jinja environment configured for the loader.
+        """
         if cache_key is None:
             return loader.make_env()
 

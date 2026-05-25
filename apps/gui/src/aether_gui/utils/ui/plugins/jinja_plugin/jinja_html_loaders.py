@@ -19,9 +19,20 @@ class HTMLStringLoader(AbstractJinjaBaseLoader):
     """
 
     def __init__(self, source: str):
+        """Initialize the loader with an inline HTML template.
+
+        Args:
+            source: HTML template source string.
+        """
         self._source = source
 
     def make_env(self) -> Environment:
+        """Create a Jinja environment for inline HTML templates.
+
+        Returns:
+            A configured Jinja environment.
+        """
+
         class _Loader(BaseLoader):
             """Internal Jinja2 loader that returns the provided HTML string.
 
@@ -30,6 +41,15 @@ class HTMLStringLoader(AbstractJinjaBaseLoader):
             """
 
             def get_source(_self, environment, template):
+                """Return the inline template source for Jinja.
+
+                Args:
+                    environment: Jinja environment requesting the source.
+                    template: Template name being requested.
+
+                Returns:
+                    Tuple of (source, template name, uptodate callable).
+                """
                 return self._source, "<inline:html>", lambda: True
 
         return Environment(
@@ -63,9 +83,20 @@ class HTMLFileLoader(AbstractJinjaBaseLoader):
     """
 
     def __init__(self, path: Path):
+        """Initialize the loader with a template file path.
+
+        Args:
+            path: Path to the HTML template file.
+        """
         self._path = path
 
     def make_env(self) -> Environment:
+        """Create a Jinja environment for file-based HTML templates.
+
+        Returns:
+            A configured Jinja environment.
+        """
+
         class _Loader(BaseLoader):
             """Internal Jinja2 loader that reads the template from disk.
 
@@ -75,6 +106,18 @@ class HTMLFileLoader(AbstractJinjaBaseLoader):
             """
 
             def get_source(_self, environment, template):
+                """Return the file template source for Jinja.
+
+                Args:
+                    environment: Jinja environment requesting the source.
+                    template: Template name being requested.
+
+                Returns:
+                    Tuple of (source, template name, uptodate callable).
+
+                Raises:
+                    TemplateNotFound: If the template file does not exist.
+                """
                 if not self._path.exists():
                     raise TemplateNotFound(str(self._path))
                 source = self._path.read_text(encoding="utf-8")

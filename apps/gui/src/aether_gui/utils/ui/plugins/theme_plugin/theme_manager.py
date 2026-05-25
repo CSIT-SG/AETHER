@@ -19,12 +19,22 @@ class ThemeManager(QObject):
     theme_change_event = Signal(str, dict)
 
     def __init__(self):
+        """Initialize the theme manager and read the current palette."""
         super().__init__()
         self._installed = False
         self.current_theme: Theme = self.detect_theme()
         self.theme_colors: ThemeColors = self._read_palette()  # read only, no emit yet
 
     def eventFilter(self, obj, event) -> bool:
+        """Handle palette changes and emit theme updates.
+
+        Args:
+            obj: Qt object emitting the event.
+            event: Qt event being filtered.
+
+        Returns:
+            True if the event is handled, otherwise False.
+        """
         if event.type() != QEvent.Type.PaletteChange:
             return False
 
@@ -40,6 +50,14 @@ class ThemeManager(QObject):
         return False
 
     def _get_app(self) -> QApplication:
+        """Return the active QApplication instance.
+
+        Returns:
+            The active QApplication.
+
+        Raises:
+            RuntimeError: If no QApplication exists.
+        """
         app = QApplication.instance()
         if app is None:
             raise RuntimeError("No QApplication instance found")
@@ -47,12 +65,18 @@ class ThemeManager(QObject):
         return app
 
     def install_event_filter(self):
+        """Install the global palette change event filter."""
         if self._installed:
             return
         self._get_app().installEventFilter(self)
         self._installed = True
 
     def detect_theme(self) -> Theme:
+        """Detect the current theme from the active palette.
+
+        Returns:
+            "dark" or "light" based on palette lightness.
+        """
         try:
             app = self._get_app()
             window = app.activeWindow() or app.focusWidget()
@@ -63,6 +87,11 @@ class ThemeManager(QObject):
             return "light"
 
     def _read_palette(self) -> ThemeColors:
+        """Read the current palette into a theme color mapping.
+
+        Returns:
+            Mapping of palette roles to hex color strings.
+        """
         app = self._get_app()
         window = app.activeWindow() or app.focusWidget()
         palette = window.palette() if window else app.palette()
@@ -77,5 +106,9 @@ class ThemeManager(QObject):
         }
 
     def get_current_theme(self) -> tuple[Theme, ThemeColors]:
-        """Snapshot of the current theme — useful for initial paint."""
+        """Return the current theme snapshot.
+
+        Returns:
+            Tuple of (theme, theme colors).
+        """
         return self.current_theme, self.theme_colors

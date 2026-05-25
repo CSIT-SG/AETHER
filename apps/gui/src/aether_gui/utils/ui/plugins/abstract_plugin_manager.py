@@ -36,6 +36,12 @@ class AbstractPluginManager(QWidget, metaclass=_WidgetABCMeta):
         *,
         plugins: Iterable[AbstractComponentPlugin] | None = None,
     ) -> None:
+        """Initialize the widget and install plugins.
+
+        Args:
+            parent: Optional Qt parent widget.
+            plugins: Plugins to install on this widget.
+        """
         super().__init__(parent)
 
         self.logger = get_logger(f"component.{type(self).__name__}")
@@ -56,30 +62,20 @@ class AbstractPluginManager(QWidget, metaclass=_WidgetABCMeta):
     # -------------------------
 
     def setup(self) -> None:
-        """
-        Early initialization hook.
-        No UI should be created here.
-        """
+        """Run early initialization logic before UI creation."""
         pass
 
     @abstractmethod
     def init_ui(self) -> None:
-        """
-        Build widget UI structure.
-        """
+        """Build the widget UI structure."""
         raise NotImplementedError
 
     def plugins_ready(self) -> None:
-        """
-        Called after all plugins are installed.
-        Safe place for cross-plugin wiring.
-        """
+        """Run logic after all plugins are installed."""
         pass
 
     def teardown(self) -> None:
-        """
-        Called before plugins are uninstalled.
-        """
+        """Run cleanup logic before plugins are uninstalled."""
         pass
 
     # -------------------------
@@ -87,6 +83,7 @@ class AbstractPluginManager(QWidget, metaclass=_WidgetABCMeta):
     # -------------------------
 
     def install_plugins(self) -> None:
+        """Install all registered plugins in priority order."""
         for plugin in self._plugins.values():
             try:
                 plugin.install(self)
@@ -94,6 +91,14 @@ class AbstractPluginManager(QWidget, metaclass=_WidgetABCMeta):
                 self.logger.exception("Plugin %s failed to install: %s", type(plugin).__name__, e)
 
     def get_plugin(self, plugin_cls: type[TPlugin]) -> TPlugin:
+        """Return the plugin instance for a given class.
+
+        Args:
+            plugin_cls: Plugin class to retrieve.
+
+        Returns:
+            The installed plugin instance.
+        """
         return cast(TPlugin, self._plugins[plugin_cls])
 
     # -------------------------
@@ -101,6 +106,11 @@ class AbstractPluginManager(QWidget, metaclass=_WidgetABCMeta):
     # -------------------------
 
     def closeEvent(self, event) -> None:
+        """Handle widget close and uninstall plugins.
+
+        Args:
+            event: Qt close event.
+        """
         try:
             self.teardown()
         except Exception as e:
@@ -126,5 +136,13 @@ class AbstractPluginManager(QWidget, metaclass=_WidgetABCMeta):
     def _build_registry(
         plugins: Iterable[AbstractComponentPlugin],
     ) -> dict[type[AbstractComponentPlugin], AbstractComponentPlugin]:
+        """Build a plugin registry keyed by plugin class.
+
+        Args:
+            plugins: Iterable of plugin instances.
+
+        Returns:
+            Mapping of plugin class to plugin instance, ordered by priority.
+        """
         ordered = sorted(plugins, key=lambda p: p.priority, reverse=True)
         return {type(p): p for p in ordered}

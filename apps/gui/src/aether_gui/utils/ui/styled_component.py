@@ -12,7 +12,6 @@ from .plugins import (
     ThemePlugin,
 )
 from .plugins.abstract_component_plugin import AbstractComponentPlugin
-from .plugins.theme_plugin.theme_manager_singleton import get_shared_theme_manager
 
 
 class _ColorsProxy:
@@ -27,9 +26,19 @@ class _ColorsProxy:
     """
 
     def __init__(self, colors: ThemeColors):
+        """Initialize the proxy with a theme color mapping.
+
+        Args:
+            colors: Mapping of palette roles to hex color strings.
+        """
         self.__dict__.update(colors)
 
     def __repr__(self):
+        """Return a debug-friendly representation.
+
+        Returns:
+            Debug string showing the color mapping.
+        """
         return f"<ThemeColors {self.__dict__}>"
 
 
@@ -41,57 +50,9 @@ class StyledComponent(AbstractPluginManager):
     Subclasses implement Jinja hooks (``styles``, ``style_file``, ``template``,
     ``template_file``) and the theme hook ``on_theme_change``.
 
-    Lifecycle:
-        On construction::
-
-            setup()
-            init_ui()
-            install_plugins()
-            plugins_ready()  # run after all plugins installed
-                -> ThemePlugin.install() calls _apply_styles() + on_theme_change()
-
-        On theme change::
-
-            ThemePlugin -> _apply_styles(); on_theme_change()
-
-        On close::
-            teardown() -> plugin.uninstall()
-
     Template context:
-        Jinja templates receive:
-        - ``colors.<role>`` for each ``QPalette.ColorRole`` (lowercased), e.g.
-          ``colors.window``, ``colors.text``, ``colors.base``, ``colors.mid``.
+        - ``colors.<role>`` for each ``QPalette.ColorRole`` (lowercased).
         - ``theme``: ``"light"`` or ``"dark"``.
-
-    Note:
-        ``setObjectName()`` is set automatically to the class name.
-
-    Examples (concise):
-        QSS file::
-
-            class StatusBadge(StyledComponent):
-                def setup(self): self._text = "Ready"
-                def init_ui(self): self._label = QLabel(self._text, self)
-                def style_file(self) -> Path: return Path(__file__).with_name("styles.qss.jinja")
-                def plugins_ready(self): pass
-            def create_status_badge(parent=None): return StatusBadge(parent)
-
-        Inline QSS::
-
-            class Divider(StyledComponent):
-                def init_ui(self): self.setFixedHeight(1)
-                def styles(self) -> str: return "#Divider { background: {{ colors.mid }}; }"
-            def create_divider(parent=None): return Divider(parent)
-
-        HTML template::
-
-            class ProfileCard(StyledComponent):
-                def setup(self): self._user = {"name": "Ada"}
-                def init_ui(self): self._view = QWebEngineView(self)
-                def template_file(self) -> Path: return Path(__file__).with_name("profile_card.html.jinja")
-                def on_theme_change(self, *, theme: Theme, colors: ThemeColors) -> None:
-                    self._view.setHtml(self.render_html(user=self._user))
-            def create_profile_card(parent=None): return ProfileCard(parent)
     """
 
     def __init__(
@@ -100,6 +61,12 @@ class StyledComponent(AbstractPluginManager):
         *,
         plugins: Iterable[AbstractComponentPlugin] | None = None,
     ) -> None:
+        """Initialize the component and install plugins.
+
+        Args:
+            parent: Optional Qt parent widget.
+            plugins: Additional plugins to install after defaults.
+        """
         all_plugins = [ThemePlugin(), JinjaPlugin(), *(plugins or [])]
         super().__init__(parent, plugins=all_plugins)
 
@@ -109,95 +76,57 @@ class StyledComponent(AbstractPluginManager):
     def init_ui(self) -> None:
         """Build the widget tree.
 
-        Called once during ``__init__``, before the first style pass. Subclasses
-        must implement this method to construct and lay out all child widgets.
-
-        Note:
-            Do **not** call ``setStyleSheet()`` here. Style application is
-            handled entirely by the render pipeline so that theme changes are
-            applied consistently.
+        Called during ``__init__`` before the first style pass. Subclasses must
+        implement this method to create and lay out child widgets.
 
         Raises:
-            NotImplementedError: Always, if not overridden by a subclass.
+            NotImplementedError: If not overridden by a subclass.
         """
         raise NotImplementedError
 
     def styles(self) -> str | None:
         """Return an inline Jinja-templated QSS string.
 
-        Override this method when the component's stylesheet is short enough
-        to co-locate with its Python source. For larger or shared stylesheets
-        prefer ``style_file()``, which takes precedence over this method.
-
         Returns:
-            A Jinja2 QSS template string, or an empty string (default) to
-            apply no inline styles.
+            A Jinja2 QSS template string, or ``None`` to apply no inline styles.
         """
         return None
 
     def style_file(self) -> Path | None:
         """Return the path to an external ``.qss.jinja`` template.
 
-        When a non-``None`` path is returned it takes precedence over any
-        string returned by ``styles()``.
-
         Returns:
-            Absolute ``Path`` to a ``.qss.jinja`` file, or ``None`` (default)
-            to fall back to ``styles()``.
+            Absolute ``Path`` to a ``.qss.jinja`` file, or ``None`` to fall back
+            to ``styles()``.
         """
         return None
 
     def template(self) -> str | None:
         """Return an inline Jinja-templated HTML string.
 
-        The rendered output is returned by ``render_html()``; subclasses decide
-        how to consume it (e.g. pass it to ``QWebEngineView.setHtml``). For
-        larger templates prefer ``template_file()``, which takes precedence.
-
         Returns:
-            A Jinja2 HTML template string, or an empty string (default).
+            A Jinja2 HTML template string, or ``None`` to apply no template.
         """
         return None
 
     def template_file(self) -> Path | None:
         """Return the path to an external ``.html.jinja`` template.
 
-        When a non-``None`` path is returned it takes precedence over any
-        string returned by ``template()``.
-
         Returns:
-            Absolute ``Path`` to a ``.html.jinja`` file, or ``None`` (default)
-            to fall back to ``template()``.
+            Absolute ``Path`` to a ``.html.jinja`` file, or ``None`` to fall back
+            to ``template()``.
         """
         return None
 
     def render_html(self, **context: object) -> str:
         """Compile the HTML template against the current theme and return it.
 
-        Resolves the active template (file or inline string), injects the
-        current theme colors and theme alongside any caller-supplied context
-        variables, renders the Jinja template, and returns the resulting HTML
-        string. The caller is responsible for consuming the output.
-
         Args:
-            **context: Arbitrary keyword arguments forwarded to the Jinja
-                template as top-level variables. The reserved names ``colors``
-                and ``theme`` are silently removed if passed, as they are
-                always supplied by the render pipeline.
+            **context: Keyword arguments forwarded to the Jinja template. The
+                reserved names ``colors`` and ``theme`` are ignored if passed.
 
         Returns:
-            The rendered HTML string, or an empty string if no template is
-            configured.
-
-        Example::
-
-            class InfoPanel(StyledComponent):
-                def init_ui(self) -> None:
-                    self._view = QWebEngineView(self)
-
-                def on_theme_change(self, *, theme, colors) -> None:
-                    # Re-render with the latest data on every palette switch.
-                    self._view.setHtml(self.render_html(title="Stats", rows=self._rows))
+            The rendered HTML string, or an empty string if no template exists.
         """
         theme, colors = self._current_theme()
         extra_context = dict(context)
@@ -222,19 +151,22 @@ class StyledComponent(AbstractPluginManager):
         )
 
     def on_theme_change(self, *, theme: Theme, colors: ThemeColors) -> None:
-        """Hook called after QSS is re-applied on every theme change.
-
-        Override this method for imperative updates that QSS cannot express,
-        such as swapping icon sets, repainting a ``QPainter`` canvas, or
-        pushing new HTML into a ``QWebEngineView``.
+        """Handle imperative updates after a theme change.
 
         Args:
             theme: The new theme, either ``"light"`` or ``"dark"``.
-            colors: The full colour map for the new theme.
+            colors: The full color map for the new theme.
         """
         pass
 
     def _apply_styles(self, *, theme: Theme, colors: ThemeColors, **_kwargs) -> None:
+        """Render QSS and apply it to the widget.
+
+        Args:
+            theme: The active theme name.
+            colors: Mapping of theme colors.
+            **_kwargs: Unused theme payload for compatibility with callbacks.
+        """
         qss = self.get_plugin(JinjaPlugin).render_qss(
             self,
             colors=_ColorsProxy(colors),
@@ -244,7 +176,11 @@ class StyledComponent(AbstractPluginManager):
             self.setStyleSheet(qss)
 
     def _current_theme(self) -> tuple[Theme, ThemeColors]:
-        try:
-            return self.get_plugin(ThemePlugin).current_theme
-        except Exception:
-            return get_shared_theme_manager().get_current_theme()
+        """Return the current theme and colors.
+
+        Returns:
+            The active theme and color map, falling back to the shared manager
+            if the theme plugin is unavailable.
+        """
+
+        return self.get_plugin(ThemePlugin).current_theme

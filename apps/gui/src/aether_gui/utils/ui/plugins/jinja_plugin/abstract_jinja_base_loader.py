@@ -23,10 +23,18 @@ class AbstractJinjaBaseLoader(ABC):
 
     @abstractmethod
     def make_env(self) -> Environment:
-        """Create a Jinja Environment with this loader."""
+        """Create a configured Jinja environment.
+
+        Returns:
+            A configured :class:`jinja2.Environment` instance.
+        """
         raise NotImplementedError
 
     @abstractmethod
     def get_template_name(self) -> str:
-        """Return a unique name for this template."""
+        """Return a unique template name for the environment.
+
+        Returns:
+            The template name used by the environment.
+        """
         raise NotImplementedError

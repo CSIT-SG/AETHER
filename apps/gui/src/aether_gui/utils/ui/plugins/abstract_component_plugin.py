@@ -20,23 +20,36 @@ class AbstractComponentPlugin(ABC):
     @property
     @abstractmethod
     def name(self) -> str:
-        """Return the name of the plugin."""
+        """Return the plugin name.
+
+        Returns:
+            The human-readable plugin name.
+        """
         ...
 
     @property
     def priority(self) -> int:
-        """Return the plugin's priority for installation order.
+        """Return the plugin priority for installation order.
 
-        Defaults to 0 if the implementing class does not provide a value.
+        Returns:
+            Higher values install earlier. Defaults to 0.
         """
         return 0
 
     @abstractmethod
     def install(self, widget: QWidget) -> None:
-        """Called once during StyledComponent.__init__, after init_ui()."""
+        """Install the plugin on a widget.
+
+        Args:
+            widget: Host widget that owns this plugin.
+        """
         ...
 
     @abstractmethod
     def uninstall(self, widget: QWidget) -> None:
-        """Called during StyledComponent.closeEvent for cleanup."""
+        """Uninstall the plugin from a widget.
+
+        Args:
+            widget: Host widget that owns this plugin.
+        """
         ...
