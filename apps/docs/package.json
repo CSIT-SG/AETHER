@@ -1,0 +1,40 @@
+{
+	"name": "aether_docs",
+	"version": "0.1.0",
+	"private": true,
+	"scripts": {
+		"dev": "next dev",
+		"build": "next build",
+		"prebuild": "bun run src/scripts/prebuild/index.ts",
+		"postbuild": "bun run src/scripts/postbuild/index.ts",
+		"start": "next start",
+		"lint": "biome check",
+		"format": "biome format --write"
+	},
+	"dependencies": {
+		"next": "16.2.6",
+		"nextra": "4.5.0",
+		"nextra-theme-docs": "4.5.0",
+		"react": "19.2.4",
+		"react-dom": "19.2.4"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.4.15",
+		"@tailwindcss/postcss": "^4",
+		"@types/node": "^20",
+		"@types/react": "^19",
+		"@types/react-dom": "^19",
+		"babel-plugin-react-compiler": "1.0.0",
+		"pagefind": "^1.4.0",
+		"tailwindcss": "^4",
+		"typescript": "^5"
+	},
+	"ignoreScripts": [
+		"sharp",
+		"unrs-resolver"
+	],
+	"trustedDependencies": [
+		"sharp",
+		"unrs-resolver"
+	]
+}

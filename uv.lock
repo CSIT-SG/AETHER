@@ -9,6 +9,7 @@ resolution-markers = [
 [manifest]
 members = [
     "aether-core",
+    "aether-docs",
     "aether-gui",
     "aether-next",
     "aether-utils",
@@ -30,6 +31,17 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.13.3" },
     { name = "python-dotenv", specifier = ">=1.2.2" },
 ]
+
+[[package]]
+name = "aether-docs"
+version = "0.1.0"
+source = { virtual = "apps/docs" }
+dependencies = [
+    { name = "griffe" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "griffe" }]
 
 [[package]]
 name = "aether-gui"
@@ -61,7 +73,6 @@ source = { virtual = "." }
 
 [package.dev-dependencies]
 dev = [
-    { name = "griffe" },
     { name = "mypy" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -72,7 +83,6 @@ dev = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "griffe" },
     { name = "mypy", specifier = ">=2.1.0" },
     { name = "pytest", specifier = ">=9.0.3" },
     { name = "pytest-cov", specifier = ">=7.1.0" },

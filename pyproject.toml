@@ -22,7 +22,6 @@ dev = [
     "pytest-cov>=7.1.0",
     "ruff>=0.15.12",
     "mypy>=2.1.0",
-    "griffe"
 ]
 
 # Dev dependencies are managed at workspace level

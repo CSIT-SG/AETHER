@@ -1,4 +1,4 @@
-# Plugin Guide
+# Component Plugin
 
 ## Minimal Steps
 
@@ -6,6 +6,15 @@
 2. Implement `name`, `install()`, and `uninstall()`.
 3. (Optional) Override `priority` to control install order.
 4. Pass the plugin instance when constructing your widget.
+
+## Component Lifecycle
+
+1. `setup()` runs for early, non-UI initialization.
+2. `init_ui()` builds the widget tree.
+3. `install_plugins()` runs in priority order and calls each plugin's `install()`.
+4. `plugins_ready()` runs after all plugins are installed.
+5. Theme changes trigger `_apply_styles()` then `on_theme_change()`.
+6. On close, `teardown()` runs, then plugins are uninstalled in reverse order.
 
 ## Example 1: Add a Label
 
@@ -78,56 +87,6 @@ class TickingLabelPlugin(AbstractComponentPlugin):
 
 Behavior: a counter label increments once per second and stops updating when the widget closes.
 
-## Example 3: Priority and Layout Ordering
-
-```python
-from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
-
-from aether_gui.utils.ui.plugins import AbstractComponentPlugin
-
-
-class LayoutPlugin(AbstractComponentPlugin):
-    @property
-    def name(self) -> str:
-        return "layout"
-
-    @property
-    def priority(self) -> int:
-        return 10
-
-    def install(self, widget: QWidget) -> None:
-        widget._layout = QVBoxLayout(widget)
-        widget.setLayout(widget._layout)
-
-    def uninstall(self, widget: QWidget) -> None:
-        layout = getattr(widget, "_layout", None)
-        if layout is not None:
-            layout.deleteLater()
-            delattr(widget, "_layout")
-
-
-class BadgePlugin(AbstractComponentPlugin):
-    @property
-    def name(self) -> str:
-        return "badge"
-
-    def install(self, widget: QWidget) -> None:
-        label = QLabel("Ready", widget)
-        if hasattr(widget, "_layout"):
-            widget._layout.addWidget(label)
-        else:
-            label.move(8, 8)
-        widget._badge_label = label
-
-    def uninstall(self, widget: QWidget) -> None:
-        label = getattr(widget, "_badge_label", None)
-        if label is not None:
-            label.deleteLater()
-            delattr(widget, "_badge_label")
-```
-
-Behavior: `LayoutPlugin` installs first, so `BadgePlugin` can add its label to the vertical layout. If the layout is missing, the label falls back to absolute positioning.
-
 ## Using the Plugin
 
 ```python
@@ -138,11 +97,11 @@ class MyWidget(StyledComponent):
     def __init__(self, parent=None):
         super().__init__(
             parent,
-            plugins=[LayoutPlugin(), BadgePlugin(), TickingLabelPlugin(), HelloLabelPlugin()],
+            plugins=[TickingLabelPlugin(), HelloLabelPlugin()],
         )
 
     def init_ui(self) -> None:
         pass
 ```
 
-Behavior: the widget shows a "Ready" badge in a vertical layout, a ticking counter label, and a static "Hello" label.
+Behavior: the widget shows a ticking counter label and a static "Hello" label.
