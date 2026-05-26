@@ -5,7 +5,7 @@ from pathlib import Path
 from aether_utils.logger import get_logger
 
 from .plugins import (
-    AbstractPluginManager,
+    AbstractComponentPluginManager,
     JinjaPlugin,
     Theme,
     ThemeColors,
@@ -43,7 +43,7 @@ class _ColorsProxy:
 
 
 # implements JinjaPluginProtocol and ThemePluginProtocol implicitly
-class StyledComponent(AbstractPluginManager):
+class StyledComponent(AbstractComponentPluginManager):
     """Themed, Jinja-driven QWidget base powered by plugins.
 
     StyledComponent installs ``ThemePlugin`` and ``JinjaPlugin`` by default.

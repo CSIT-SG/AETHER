@@ -1,5 +1,5 @@
 from .plugins import (
-    AbstractPluginManager,
+    AbstractComponentPluginManager,
     JinjaPlugin,
     JinjaPluginProtocol,
     Theme,
@@ -11,7 +11,7 @@ from .styled_component import StyledComponent
 
 __all__ = [
     "StyledComponent",
-    "AbstractPluginManager",
+    "AbstractComponentPluginManager",
     "JinjaPlugin",
     "JinjaPluginProtocol",
     "Theme",

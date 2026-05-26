@@ -13,12 +13,12 @@ TPlugin = TypeVar("TPlugin", bound=AbstractComponentPlugin)
 
 
 class _WidgetABCMeta(ABCMeta, type(QWidget)):
-    """Metaclass to allow AbstractPluginManager to be both an ABC and a QWidget."""
+    """Metaclass to allow AbstractComponentPluginManager to be both an ABC and a QWidget."""
 
     pass
 
 
-class AbstractPluginManager(QWidget, metaclass=_WidgetABCMeta):
+class AbstractComponentPluginManager(QWidget, metaclass=_WidgetABCMeta):
     """
     Lifecycle-driven plugin host.
 
