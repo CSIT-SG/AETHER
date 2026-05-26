@@ -1,8 +1,9 @@
-from typing import Any
+import json
 
 import uvicorn
 from mcp.server import Server as MCPServer
 from mcp.server.sse import SseServerTransport
+from pydantic import ValidationError
 from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import Response
@@ -11,59 +12,65 @@ from starlette.routing import Mount, Route
 from .routes import HelloWorldRoute, IDAContext, ServerContext
 
 
-def build_server_context(
-    idb_path: str,
-    architecture: str | None = None,
-    bitness: int | None = None,
-    entry_point: int | None = None,
-    segment_map: list[dict[str, Any]] | None = None,
-    functions: list[dict[str, Any]] | None = None,
-) -> ServerContext:
-    ida_context = IDAContext(
-        idb_path=idb_path,
-        architecture=architecture,
-        bitness=bitness,
-        entry_point=entry_point,
-        segment_map=segment_map or [],
-        functions=functions or [],
-    )
-    return ServerContext(ida=ida_context)
+def _parse_context_from_request(request: Request) -> ServerContext | None:
+    """
+    Extract IDA context from request headers.
+    Validates data types silently without raising exceptions or HTTP errors.
+    """
+    raw = request.headers.get("X-IDA-Context")
+    if raw is None:
+        return None
+
+    callback_url = request.headers.get("X-IDA-Callback-URL")
+    if callback_url is None:
+        return None
+
+    try:
+        ida_context = IDAContext.model_validate_json(raw)
+        return ServerContext(ida=ida_context, callback_url=callback_url)
+
+    except (ValidationError, json.JSONDecodeError):
+        return None
 
 
-def build_starlette_app(ctx: ServerContext) -> Starlette:
-    # one shared SSE transport — manages all session UUIDs and message routing
-    sse = SseServerTransport("/messages/")
+def build_starlette_app() -> Starlette:
+    # manages session UUIDs and routes inbound messages to the right client stream
+    session_transport = SseServerTransport("/ida/messages/")
 
-    async def handle_sse(request: Request) -> Response:
-        # fresh server per client — isolated request_handlers
-        server = MCPServer("aether_mcp_server")
+    async def handle_ida_client_connection(request: Request) -> Response:
+        # each connecting IDA plugin instance provides its own database context
+        client_ctx = _parse_context_from_request(request)
 
-        # register routes onto this client's server with the shared context
-        routes = [HelloWorldRoute(ctx)]
+        if client_ctx is None:
+            return Response("Missing or invalid X-IDA-Context header", status_code=400)
+
+        # isolated mcp server and routes per IDA client session
+        session_server = MCPServer("aether_mcp_server")
+
+        routes = [HelloWorldRoute(client_ctx)]
         for route in routes:
-            route.register(server)
+            route.register(session_server)
 
-        # open this client's SSE streams
-        async with sse.connect_sse(
+        # open bidirectional streams for this session
+        async with session_transport.connect_sse(
             request.scope, request.receive, request._send
-        ) as streams:
-            # blocks for the lifetime of this client's connection
-            await server.run(
-                streams[0],
-                streams[1],
-                server.create_initialization_options(),
+        ) as (inbound, outbound):
+            await session_server.run(
+                inbound,
+                outbound,
+                session_server.create_initialization_options(),
             )
 
         return Response()
 
     return Starlette(
         routes=[
-            Route("/sse", endpoint=handle_sse, methods=["GET"]),
-            Mount("/messages/", app=sse.handle_post_message),
+            Route("/ida/session", endpoint=handle_ida_client_connection, methods=["GET"]),
+            Mount("/ida/requests/", app=session_transport.handle_post_message), # Route for client to send POST request for calls to server
         ]
     )
 
 
-def run_server(ctx: ServerContext, host: str = "0.0.0.0", port: int = 8000) -> None:
-    app = build_starlette_app(ctx)
+def run_server(host: str = "0.0.0.0", port: int = 8000) -> None:
+    app = build_starlette_app()
     uvicorn.run(app, host=host, port=port)

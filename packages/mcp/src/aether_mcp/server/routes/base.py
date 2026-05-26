@@ -1,34 +1,13 @@
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
-from dataclasses import dataclass, field
 from typing import Any
 
 from mcp.server import Server
-from mcp.types import (
-    CallToolResult,
-    TextContent,
-)
+from mcp.types import CallToolResult, Prompt, Resource, ResourceTemplate, TextContent, Tool
 from pydantic import AnyUrl
 
 from ..services import PromptCommand, ResourceCommand, ResourceTemplateCommand, ToolCommand
-
-# TODO: shift this to some other utils file
-
-@dataclass
-class IDAContext:
-    """IDA database state — what the binary looks like."""
-    idb_path: str
-    architecture: str | None = None
-    bitness: int | None = None          # 32 or 64
-    entry_point: int | None = None
-    segment_map: list[dict[str, Any]] = field(default_factory=list)
-    functions: list[dict[str, Any]] = field(default_factory=list)
-
-
-@dataclass
-class ServerContext:
-    """Server infrastructure — per-client session state."""
-    ida: IDAContext
+from .context import ServerContext
 
 
 class AbstractMCPRoute(ABC):
@@ -130,11 +109,11 @@ class AbstractMCPRoute(ABC):
 
     def _register_tools(self, server: Server) -> None:
         @server.list_tools()
-        async def list_tools():
+        async def list_tools() -> list[Tool]:
             return [cmd.tool for cmd in self.tools]
 
         @server.call_tool()
-        async def call_tool(name: str, arguments: dict):
+        async def call_tool(name: str, arguments: dict) -> Any:
             for cmd in self.tools:
                 if cmd.tool.name == name:
                     return await cmd.handler(**arguments)
@@ -143,15 +122,15 @@ class AbstractMCPRoute(ABC):
 
     def _register_resources(self, server: Server) -> None:
         @server.list_resources()
-        async def list_resources():
+        async def list_resources() -> list[Resource]:
             return [cmd.resource for cmd in self.resources]
 
         @server.list_resource_templates()
-        async def list_resource_templates():
+        async def list_resource_templates() -> list[ResourceTemplate]:
             return [cmd.template for cmd in self.resource_templates]
 
         @server.read_resource()
-        async def read_resource(uri: AnyUrl):
+        async def read_resource(uri: AnyUrl) -> Any:
             for cmd in self.resources:
                 if cmd.resource.uri == str(uri):
                     return await cmd.handler(str(uri))
@@ -159,11 +138,11 @@ class AbstractMCPRoute(ABC):
 
     def _register_prompts(self, server: Server) -> None:
         @server.list_prompts()
-        async def list_prompts():
+        async def list_prompts() -> list[Prompt]:
             return [cmd.prompt for cmd in self.prompts]
 
         @server.get_prompt()
-        async def get_prompt(name: str, arguments: dict[str, str] | None):
+        async def get_prompt(name: str, arguments: dict[str, str] | None) -> Any:
             for cmd in self.prompts:
                 if cmd.prompt.name == name:
                     return await cmd.handler(**(arguments or {}))

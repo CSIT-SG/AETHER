@@ -6,15 +6,23 @@ from .base_tool import BaseTool
 
 
 class HelloWorld(BaseTool):
-    name = "hello_world"
-    description = "Returns hello world"
-    input_schema = {
-        "type": "object",
-        "properties": {
-            "word": {"type": "string", "description": "Changes output depending on input"},
-        },
-        "required": ["word"],
-    }
+    @property
+    def name(self) -> str:
+        return "hello_world"
+
+    @property
+    def description(self) -> str:
+        return "Returns hello world"
+
+    @property
+    def input_schema(self) -> dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                "word": {"type": "string", "description": "Changes output depending on input"},
+            },
+            "required": ["word"],
+        }
 
     async def run(self, **kwargs: Any) -> CallToolResult:
         word: str = kwargs["word"]
