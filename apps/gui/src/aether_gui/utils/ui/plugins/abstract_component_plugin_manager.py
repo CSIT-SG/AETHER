@@ -25,7 +25,7 @@ class AbstractComponentPluginManager(QWidget, metaclass=_WidgetABCMeta):
     Phases:
         1. setup
         2. init_ui
-        3. install_plugins
+        3. _install_plugins
         4. plugins_ready
         5. teardown (closeEvent)
     """
@@ -54,7 +54,7 @@ class AbstractComponentPluginManager(QWidget, metaclass=_WidgetABCMeta):
         self.setup()
         self.init_ui()
 
-        self.install_plugins()
+        self._install_plugins()
         self.plugins_ready()
 
     # -------------------------
@@ -82,7 +82,7 @@ class AbstractComponentPluginManager(QWidget, metaclass=_WidgetABCMeta):
     # Plugin system
     # -------------------------
 
-    def install_plugins(self) -> None:
+    def _install_plugins(self) -> None:
         """Install all registered plugins in priority order."""
         for plugin in self._plugins.values():
             try:

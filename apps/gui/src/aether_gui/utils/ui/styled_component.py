@@ -160,7 +160,7 @@ class StyledComponent(AbstractComponentPluginManager):
         pass
 
     def _apply_styles(self, *, theme: Theme, colors: ThemeColors, **_kwargs) -> None:
-        """Render QSS and apply it to the widget.
+        """Render QSS and apply it to the widget. ThemePlugin calls this method before on_theme_change.
 
         Args:
             theme: The active theme name.
