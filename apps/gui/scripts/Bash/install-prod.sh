@@ -5,7 +5,7 @@
 #   ./install-prod.sh [--ida-plugins-dir <path>] [--repo-root <path>] [--python-path <path>]
 #
 # Defaults:
-#   --ida-plugins-dir   $IDADIR/plugins
+#   --ida-plugins-dir   None
 #   --repo-root         Three directories above this script's location
 #   --python-path       first 'python' or 'python3' found on PATH
 
