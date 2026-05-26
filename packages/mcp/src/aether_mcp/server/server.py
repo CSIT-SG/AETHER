@@ -36,7 +36,7 @@ def _parse_context_from_request(request: Request) -> ServerContext | None:
 
 def build_starlette_app(raw_routes: tuple[type, ...]) -> Starlette:
     # manages session UUIDs and routes inbound messages to the right client stream
-    session_transport = SseServerTransport("/ida/messages/")
+    session_transport = SseServerTransport("/messages/")
 
     async def handle_ida_client_connection(request: Request) -> Response:
         # each connecting IDA plugin instance provides its own database context
@@ -48,18 +48,10 @@ def build_starlette_app(raw_routes: tuple[type, ...]) -> Starlette:
         # isolated mcp server and routes per IDA client session
         session_server = MCPServer("aether_mcp_server")
 
-        shared_arguments = {"ctx": client_ctx}
         routes = []
         for cls in raw_routes:
-            # Look up what arguments this specific child class requires
-            sig = inspect.signature(cls.__init__)
-            valid_params = sig.parameters.keys()
-
-            # Filter the single variable down to only what this class accepts
-            safe_args = {k: v for k, v in shared_arguments.items() if k in valid_params}
-
             # Instantiate the class and store it
-            node_instance = cls(**safe_args)
+            node_instance = cls(**{"ctx": client_ctx})
             routes.append(node_instance)
 
         # open bidirectional streams for this session
@@ -76,8 +68,8 @@ def build_starlette_app(raw_routes: tuple[type, ...]) -> Starlette:
 
     return Starlette(
         routes=[
-            Route("/ida/session", endpoint=handle_ida_client_connection, methods=["GET"]),
-            Mount("/ida/requests/", app=session_transport.handle_post_message), # Route for client to send POST request for calls to server
+            Route("/session", endpoint=handle_ida_client_connection, methods=["GET"]),
+            Mount("/messages/", app=session_transport.handle_post_message), # Route for client to send POST request for calls to server
         ]
     )
 
