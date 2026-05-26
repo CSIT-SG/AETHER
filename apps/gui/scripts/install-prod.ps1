@@ -6,14 +6,8 @@ param(
 
 . .\utils\checks.ps1
 
-$PythonDependencies =@(
-    "openai>=2.34.0",
-    "pydantic>=2.13.3",
-    "python-dotenv>=1.2.2",
-    "markupsafe==2.0.1",
-    "jinja2==3.1.5"
-)
-
+$PythonDependencies =@(Get-Content -Path ".\utils\requirements.txt")
+$PythonDependencies = $PythonDependencies | Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and -not $_.StartsWith("#") }
 
 
 $pluginFileDest = Join-Path $IdaPluginsDir "aether-next-plugin.py"
