@@ -1,3 +1,4 @@
+import inspect
 import json
 
 import uvicorn
@@ -33,7 +34,7 @@ def _parse_context_from_request(request: Request) -> ServerContext | None:
         return None
 
 
-def build_starlette_app() -> Starlette:
+def build_starlette_app(raw_routes: tuple[type, ...]) -> Starlette:
     # manages session UUIDs and routes inbound messages to the right client stream
     session_transport = SseServerTransport("/ida/messages/")
 
@@ -47,9 +48,19 @@ def build_starlette_app() -> Starlette:
         # isolated mcp server and routes per IDA client session
         session_server = MCPServer("aether_mcp_server")
 
-        routes = [HelloWorldRoute(client_ctx)]
-        for route in routes:
-            route.register(session_server)
+        shared_arguments = {"ctx": client_ctx}
+        routes = []
+        for cls in raw_routes:
+            # Look up what arguments this specific child class requires
+            sig = inspect.signature(cls.__init__)
+            valid_params = sig.parameters.keys()
+
+            # Filter the single variable down to only what this class accepts
+            safe_args = {k: v for k, v in shared_arguments.items() if k in valid_params}
+
+            # Instantiate the class and store it
+            node_instance = cls(**safe_args)
+            routes.append(node_instance)
 
         # open bidirectional streams for this session
         async with session_transport.connect_sse(
@@ -71,6 +82,6 @@ def build_starlette_app() -> Starlette:
     )
 
 
-def run_server(host: str = "0.0.0.0", port: int = 8000) -> None:
-    app = build_starlette_app()
+def run_server(host: str = "0.0.0.0", port: int = 8000, routes: tuple[type, ...] = (HelloWorldRoute,)) -> None:
+    app = build_starlette_app(routes)
     uvicorn.run(app, host=host, port=port)
