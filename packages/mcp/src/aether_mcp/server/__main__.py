@@ -1,15 +1,18 @@
-import asyncio
-
-import mcp.server.stdio
-
-from .server import build_server, build_server_context
+from .server import build_server_context, run_server
 
 
-# TODO: This is just for testing but can be used for future reference on how to start server
-async def main():
-    async with mcp.server.stdio.stdio_server() as (read, write):
-        ctx = build_server_context()
-        server = build_server(ctx)
-        await server.run(read, write, server.create_initialization_options())
+# TODO: This is merely for testing, do not use in real use
+# Just follow this format to deploy server
+def main() -> None:
+    ctx = build_server_context(
+        idb_path="test.idb",
+        architecture="x86",
+        bitness=64,
+        entry_point=0x401000,
+    )
 
-asyncio.run(main())
+    run_server(ctx, host="127.0.0.1", port=8000)
+
+
+if __name__ == "__main__":
+    main()

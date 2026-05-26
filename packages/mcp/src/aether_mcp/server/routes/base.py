@@ -3,13 +3,11 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
-import httpx
 from mcp.server import Server
 from mcp.types import (
     CallToolResult,
     TextContent,
 )
-from openai import AsyncOpenAI
 from pydantic import AnyUrl
 
 from ..services import PromptCommand, ResourceCommand, ResourceTemplateCommand, ToolCommand
@@ -19,21 +17,18 @@ from ..services import PromptCommand, ResourceCommand, ResourceTemplateCommand, 
 @dataclass
 class IDAContext:
     """IDA database state — what the binary looks like."""
-
-    idb_path: str | None = None
+    idb_path: str
+    architecture: str | None = None
+    bitness: int | None = None          # 32 or 64
+    entry_point: int | None = None
     segment_map: list[dict[str, Any]] = field(default_factory=list)
+    functions: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass
 class ServerContext:
-    """Server infrastructure — how the server talks to the outside world.
-
-    For example, the server may want to spawn a subagent that calls back into the server's own API routes.
-    """
-
+    """Server infrastructure — per-client session state."""
     ida: IDAContext
-    http_client: httpx.AsyncClient | None = None
-    openai_client: AsyncOpenAI | None = None
 
 
 class AbstractMCPRoute(ABC):
