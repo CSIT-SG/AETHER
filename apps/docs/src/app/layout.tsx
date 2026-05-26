@@ -8,11 +8,7 @@ export const metadata = {
 	// For more information on metadata API, see: https://nextjs.org/docs/app/building-your-application/optimizing/metadata
 };
 
-const navbar = (
-	<Navbar
-		logo={<b>tfdsgs</b>}
-	/>
-);
+const navbar = <Navbar logo={<b>tfdsgs</b>} />;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
 	return (

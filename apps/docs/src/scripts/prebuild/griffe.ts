@@ -25,7 +25,10 @@ function run(cmd: string, args: string[]): Promise<void> {
 }
 
 export async function generateGriffe(): Promise<void> {
-	const targets = workspaces.map(([scope, name]) => [ `${scope}.${name}`, path.join(repoRoot, scope, name, "src") ]);
+	const targets = workspaces.map(([scope, name]) => [
+		`${scope}.${name}`,
+		path.join(repoRoot, scope, name, "src"),
+	]);
 	for (const [targetName, targetPath] of targets) {
 		await run("python", [scriptPath, targetPath, "--output", path.join(contentDir, targetName)]);
 	}

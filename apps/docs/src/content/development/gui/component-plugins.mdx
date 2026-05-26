@@ -1,24 +1,20 @@
-# Component Plugin
+# Writing GUI Component Plugins
 
-Under the hood, `StyledComponent` implements `AbstractComponentPluginManager`.
+Say you want to add some custom behaviour to many components, such as a debug overlay or a common data-fetching mechanism. 
 
-## Minimal Steps
+You can add this functionality as a plugin, which is a class that implements the `AbstractComponentPlugin` interface.
+
+Then, add it to the constructor of any component (inheriting from `StyledComponent`) to have it automatically installed and uninstalled with the component's lifecycle.
+
+## Create your own plugin
 
 1. Create a class that implements `AbstractComponentPlugin`.
 2. Implement `name`, `install()`, and `uninstall()`.
 3. (Optional) Override `priority` to control install order.
 4. Pass the plugin instance when constructing your widget.
 
-## Component Lifecycle
 
-1. `setup()` runs for early, non-UI initialization.
-2. `init_ui()` builds the widget tree.
-3. `install_plugins()` runs in priority order and calls each plugin's `install()`.
-4. `plugins_ready()` runs after all plugins are installed.
-5. Theme changes trigger `_apply_styles()` then `on_theme_change()`.
-6. On close, `teardown()` runs, then plugins are uninstalled in reverse order.
-
-## Example 1: Add a Label
+### Example: Label Plugin
 
 ```python
 from PySide6.QtWidgets import QLabel, QWidget
@@ -44,7 +40,7 @@ class HelloLabelPlugin(AbstractComponentPlugin):
 
 Behavior: a small "Hello" label appears at the top-left of the widget and is removed when the widget closes.
 
-## Example 2: Timer-Driven Status Text
+### Example: Timer Plugin
 
 ```python
 from PySide6.QtCore import QTimer
@@ -91,6 +87,8 @@ Behavior: a counter label increments once per second and stops updating when the
 
 ## Using the Plugin
 
+To use a plugin, pass an instance of it to the `plugins` argument of any `StyledComponent` subclass.
+
 ```python
 from aether_gui.utils.ui import StyledComponent
 
@@ -105,5 +103,3 @@ class MyWidget(StyledComponent):
     def init_ui(self) -> None:
         pass
 ```
-
-Behavior: the widget shows a ticking counter label and a static "Hello" label.
