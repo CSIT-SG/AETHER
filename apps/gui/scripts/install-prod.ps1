@@ -1,48 +1,97 @@
 param(
     [string]$IdaPluginsDir = (Join-Path $env:APPDATA "Hex-Rays\IDA Pro\plugins"),
-    [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\.."))
+    [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")),
+    [string]$PythonPath = (Get-Command python).Path
 )
+
+. .\utils\checks.ps1
+
+$PythonDependencies =@(
+    "openai>=2.34.0",
+    "pydantic>=2.13.3",
+    "python-dotenv>=1.2.2",
+    "markupsafe==2.0.1",
+    "jinja2==3.1.5"
+)
+
+
 
 $pluginFileDest = Join-Path $IdaPluginsDir "aether-next-plugin.py"
 $pluginPackageDir = Join-Path $IdaPluginsDir "aether-next"
+$pipCheck = Test-PipExists -PythonPath $PythonPath
+
+if (-not $pipCheck) {
+    exit 1
+}
+
+
+foreach ($dep in $PythonDependencies) {
+    if(Test-PipDependency -PythonPath $PythonPath -PackageRequirement $dep){
+        Write-Host "[+] Dependency met: $dep"
+    }else {
+        Write-Warning "[-] Dependency NOT met: $dep. Installing..."
+        Invoke-Expression "$PythonPath -m pip install $dep"
+    }
+}
+
+Write-Host "All Python dependencies are satisfied. Proceeding with installation..."
 
 if (-not (Test-Path $IdaPluginsDir)) {
     throw "IDA plugins directory not found: $IdaPluginsDir"
+}else{
+    Write-Host "IDA plugins directory found: $IdaPluginsDir"
 }
 
 if (-not (Test-Path $RepoRoot)) {
     throw "Repository root not found: $RepoRoot"
+}else{
+    Write-Host "Repository root found: $RepoRoot"
 }
 
 if (Test-Path $pluginPackageDir) {
+    Write-Host "Existing plugin package directory found. Removing: $pluginPackageDir"
     Remove-Item -LiteralPath $pluginPackageDir -Force -Recurse
 }
 
-New-Item -ItemType Directory -Path $pluginPackageDir | Out-Null
-Copy-Item -Path (Join-Path $RepoRoot "*") -Destination $pluginPackageDir -Recurse -Force
+Write-Host "Plugin package directory deleted... `nCreating plugin package directory $PluginPackageDir and copying source files..."
+New-Item -ItemType Directory -Path $PluginPackageDir | Out-Null
+. .\utils\Check-Ignore -Path $RepoRoot
+#Copy-Item -Path (Join-Path $RepoRoot "*") -Destination $pluginPackageDir -Recurse -Force
 
 $pluginShimSource = Join-Path $pluginPackageDir "apps\gui\src\plugin.py"
 if (-not (Test-Path $pluginShimSource)) {
     throw "plugin.py not found: $pluginShimSource"
+}else{
+    Write-Host "Plugin shim source found: $pluginShimSource"
 }
 
 $configSource = Join-Path $pluginPackageDir "apps\gui\src\aether-next-config.json"
 if (-not (Test-Path $configSource)) {
     # Create an empty config file in the package so installers expose something
+    Write-Host "Config file not found: $configSource. Creating an empty config file..."
     New-Item -ItemType File -Path $configSource -Force | Out-Null
+}else{
+    Write-Host "Config source found: $configSource"
 }
 
 if (Test-Path $pluginFileDest) {
+    Write-Host "Existing plugin shim found. Removing: $pluginFileDest"
     Remove-Item -LiteralPath $pluginFileDest -Force
 }
+
+Write-Host "Plugin shim removed `nCreating symbolic link for plugin shim: $pluginFileDest -> $pluginShimSource"
 
 New-Item -ItemType SymbolicLink -Path $pluginFileDest -Target $pluginShimSource | Out-Null
 
 # Create a symlink to the config file so users can edit it from the plugins dir
 $configLinkDest = Join-Path $IdaPluginsDir "aether-next-config.json"
 if (Test-Path $configLinkDest) {
+    Write-Host "Existing config link found. Removing: $configLinkDest"
     Remove-Item -LiteralPath $configLinkDest -Force
+}else{
+    Write-Host "No existing config link found. Creating symbolic link for config: $configLinkDest -> $configSource"
 }
+
 New-Item -ItemType SymbolicLink -Path $configLinkDest -Target $configSource | Out-Null
 
 Write-Host "Installed AETHER GUI production artifacts in: $IdaPluginsDir"
