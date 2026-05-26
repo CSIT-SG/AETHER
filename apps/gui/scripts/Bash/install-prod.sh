@@ -18,21 +18,22 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Mirrors: . .\utils\checks.ps1
 # shellcheck source=utils/checks.sh
-source "$SCRIPT_DIR/utils/checks.sh"
+source "$SCRIPT_DIR/Bash_Utils/checks.sh"
 
 # shellcheck source=utils/check-ignore.sh
-source "$SCRIPT_DIR/utils/check-ignore.sh"
+source "$SCRIPT_DIR/Bash_Utils/check-ignore.sh"
 
 # ---------------------------------------------------------------------------
 # Locate Python (sets $PYTHON_PATH)
 # ---------------------------------------------------------------------------
 check_python_exists   # exits 1 if not found
+check_python_version 3 12 
 
 # ---------------------------------------------------------------------------
 # Default parameter values  (overridable via CLI flags)
 # ---------------------------------------------------------------------------
 IDA_PLUGINS_DIR=""
-REPO_ROOT="${REPO_ROOT:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
+REPO_ROOT="${REPO_ROOT:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
 PYTHON_PATH="${PYTHON_PATH}"    # already exported by check_python_exists
 
 # ---------------------------------------------------------------------------
@@ -59,7 +60,7 @@ fi
 # ---------------------------------------------------------------------------
 # Read and filter requirements.txt  (mirrors $PythonDependencies logic)
 # ---------------------------------------------------------------------------
-REQUIREMENTS_FILE="$SCRIPT_DIR/utils/requirements.txt"
+REQUIREMENTS_FILE="$SCRIPT_DIR/../utils/requirements.txt"
 mapfile -t PYTHON_DEPENDENCIES < <(
     grep -v '^\s*#' "$REQUIREMENTS_FILE" | grep -v '^\s*$'
 )

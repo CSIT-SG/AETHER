@@ -5,7 +5,7 @@ param(
 )
 
 # 1. INTERNAL RULES CONFIGURATION
-$GitignoreRules = @(Get-Content -Path ".\utils\ignore.txt")
+$GitignoreRules = @(Get-Content -Path "..\utils\ignore.txt")
 $GitignoreRules = $GitignoreRules | Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and -not $_.StartsWith("#") }
 
 # 2. THE MATCHING ENGINE

@@ -21,6 +21,32 @@ check_python_exists() {
 }
 
 # ---------------------------------------------------------------------------
+# check_python_version <min_major> <min_minor>
+#   Verifies the interpreter at $PYTHON_PATH meets the minimum version.
+#   Exits 1 if the version is too old.
+#
+#   Example: check_python_version 3 12
+#     passes on 3.12.x, 3.13.x, 4.x …
+#     fails  on 3.11.x and below
+# ---------------------------------------------------------------------------
+check_python_version() {
+    local min_major="3"
+    local min_minor="12"
+    local actual_major actual_minor
+    actual_major="$("$PYTHON_PATH" -c 'import sys; print(sys.version_info.major)')"
+    actual_minor="$("$PYTHON_PATH" -c 'import sys; print(sys.version_info.minor)')"
+ 
+    if (( actual_major > min_major )) || \
+       (( actual_major == min_major && actual_minor >= min_minor )); then
+        echo "[+] Python version OK: ${actual_major}.${actual_minor} >= ${min_major}.${min_minor}"
+    else
+        echo "ERROR: Python ${min_major}.${min_minor}+ is required." \
+             "Found: ${actual_major}.${actual_minor}" >&2
+        exit 1
+    fi
+}
+
+# ---------------------------------------------------------------------------
 # test_pip_exists <python_path>
 #   Returns 0 (true) if pip is available, 1 (false) otherwise.
 #   Mirrors Test-PipExists in checks.ps1.

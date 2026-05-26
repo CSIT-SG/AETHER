@@ -1,22 +1,20 @@
 param(
     [string]$IdaPluginsDir = (Join-Path $env:APPDATA "Hex-Rays\IDA Pro\plugins"),
-    [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")),
+    [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..\..")),
     [string]$PythonPath = (Get-Command python).Path
 )
 
-. .\utils\checks.ps1
+. .\PS_Utils\checks.ps1
 
-$PythonDependencies =@(Get-Content -Path ".\utils\requirements.txt")
+$PythonDependencies =@(Get-Content -Path "..\utils\requirements.txt")
 $PythonDependencies = $PythonDependencies | Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and -not $_.StartsWith("#") }
 
 
 $pluginFileDest = Join-Path $IdaPluginsDir "aether-next-plugin.py"
 $pluginPackageDir = Join-Path $IdaPluginsDir "aether-next"
-$pipCheck = Test-PipExists -PythonPath $PythonPath
-
-if (-not $pipCheck) {
-    exit 1
-}
+Test-PipExists -PythonPath $PythonPath
+Test-PythonExists -PythonPath $PythonPath
+Test-PythonVer -PythonPath $PythonPath
 
 
 foreach ($dep in $PythonDependencies) {
@@ -49,8 +47,7 @@ if (Test-Path $pluginPackageDir) {
 
 Write-Host "Plugin package directory deleted... `nCreating plugin package directory $PluginPackageDir and copying source files..."
 New-Item -ItemType Directory -Path $PluginPackageDir | Out-Null
-. .\utils\Check-Ignore -Path $RepoRoot
-#Copy-Item -Path (Join-Path $RepoRoot "*") -Destination $pluginPackageDir -Recurse -Force
+. .\PS_Utils\Check-Ignore -Path $RepoRoot
 
 $pluginShimSource = Join-Path $pluginPackageDir "apps\gui\src\plugin.py"
 if (-not (Test-Path $pluginShimSource)) {

@@ -16,7 +16,7 @@
 #   stripping blank lines and comments.  Mirrors the $GitignoreRules setup.
 # ---------------------------------------------------------------------------
 _load_ignore_rules() {
-    local ignore_file="${SCRIPT_DIR}/utils/ignore.txt"
+    local ignore_file="${SCRIPT_DIR}/../utils/ignore.txt"
     IGNORE_RULES=()
     while IFS= read -r line || [[ -n "$line" ]]; do
         # Strip leading/trailing whitespace
