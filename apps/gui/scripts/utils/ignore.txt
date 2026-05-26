@@ -1,0 +1,11 @@
+#regex expression for ignore files add new expression on new line
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.venv/
+.mypy_cache/
+aether-next-config.json
+.gitignore
+CONTRIBUTING.md
