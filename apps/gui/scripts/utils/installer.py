@@ -4,6 +4,7 @@ import os
 import fnmatch
 import sys
 import shutil
+from unittest import result
 
 
 IGNORE: list[str] = [".gitignore", "CONTRIBUTING.md", ".git"]
@@ -19,14 +20,14 @@ def format_to_regex(pattern: str) -> re.Pattern[str]:
 
 
 # Scan the directory and decide if it should be copied or not based on the regexes
-def scan(path: str) -> dict[str, bool]:
-    result: dict[str, bool] = {path: bool(regex.match(path)) for regex in REGEXES}
-    return result
+def scan(path: str) -> bool:
+    skip: bool = any(regex.match(path) for regex in REGEXES)
+    return skip
 
 
-def main() -> None:
-    # take the .gitignore file and convert it to regexes
-    with open(f"{root}/.gitignore") as f:
+def main(plugin_dir:str, root:str) -> None:
+    # read the .gitignore file
+    with open(f"{join(root, '.gitignore')}") as f:
         for line in f:
             line = line.strip()
             if line and not line.startswith("#"):
@@ -38,7 +39,7 @@ def main() -> None:
     # logic for copying files
     for path in paths:
         scan_result = scan(path)
-        if not scan_result[path]:
+        if not scan_result:
             try:
                 print(f"[INSTALLER] Copying {path}...")
                 shutil.copytree(join(root, path), join(plugin_dir, path))
@@ -58,4 +59,4 @@ if __name__ == "__main__":
         sys.exit(1)
     plugin_dir: str = sys.argv[1]  # path to ida plugins directory
     root: str = sys.argv[2]  # path to the root of the project
-    main()
+    main(plugin_dir, root)

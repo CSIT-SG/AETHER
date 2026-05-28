@@ -1,7 +1,6 @@
 param(
     [string]$IdaPluginsDir = (Join-Path $env:APPDATA "Hex-Rays\IDA Pro\plugins"),
-    [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..\..")),
-    [string]$PythonPath = (Get-Command python).Path
+    [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..\.."))
 )
 
 
@@ -11,11 +10,14 @@ param(
 $pluginFileDest = Join-Path $IdaPluginsDir "aether-next-plugin.py"
 $pluginPackageDir = Join-Path $IdaPluginsDir "aether-next"
 $ReuqirementsFile = Join-Path $RepoRoot "apps\gui\utils\requirements.txt"
+$pluginShimSource = Join-Path $pluginPackageDir "apps\gui\src\plugin.py"
+$configSource = Join-Path $pluginPackageDir "apps\gui\src\aether-next-config.json"
+
+Test-PythonExists
+[string]$PythonPath = (Get-Command python).Path
 
 Test-PipExists -PythonPath $PythonPath
-Test-PythonExists -PythonPath $PythonPath
 Test-PythonVer -PythonPath $PythonPath
-
 
 Invoke-Expression "$PythonPath -m pip install -r $ReuqirementsFile --user"
 
