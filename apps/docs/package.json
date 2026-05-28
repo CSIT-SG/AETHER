@@ -4,6 +4,7 @@
 	"private": true,
 	"scripts": {
 		"dev": "next dev",
+		"predev": "bun run src/scripts/prebuild/index.ts",
 		"build": "next build",
 		"prebuild": "bun run src/scripts/prebuild/index.ts",
 		"postbuild": "bun run src/scripts/postbuild/index.ts",
