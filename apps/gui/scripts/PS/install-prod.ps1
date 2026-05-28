@@ -4,27 +4,23 @@ param(
     [string]$PythonPath = (Get-Command python).Path
 )
 
-. .\PS_Utils\checks.ps1
 
-$PythonDependencies =@(Get-Content -Path "..\utils\requirements.txt")
+.(Join-Path $PSScriptRoot "PS_Utils\checks.ps1")
+
+
+$PythonDependencies =@(Get-Content -Path (Join-Path $PSScriptRoot "..\utils\requirements.txt"))
 $PythonDependencies = $PythonDependencies | Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and -not $_.StartsWith("#") }
 
 
 $pluginFileDest = Join-Path $IdaPluginsDir "aether-next-plugin.py"
 $pluginPackageDir = Join-Path $IdaPluginsDir "aether-next"
+
 Test-PipExists -PythonPath $PythonPath
 Test-PythonExists -PythonPath $PythonPath
 Test-PythonVer -PythonPath $PythonPath
 
 
-foreach ($dep in $PythonDependencies) {
-    if(Test-PipDependency -PythonPath $PythonPath -PackageRequirement $dep){
-        Write-Host "[+] Dependency met: $dep"
-    }else {
-        Write-Warning "[-] Dependency NOT met: $dep. Installing..."
-        Invoke-Expression "$PythonPath -m pip install $dep"
-    }
-}
+Invoke-Expression "$PythonPath -m pip install -r '..\\utils\\requirements.txt' --user"
 
 Write-Host "All Python dependencies are satisfied. Proceeding with installation..."
 
@@ -48,7 +44,13 @@ if (Test-Path $pluginPackageDir) {
 
 Write-Host "Plugin package directory deleted... `nCreating plugin package directory $PluginPackageDir and copying source files..."
 New-Item -ItemType Directory -Path $PluginPackageDir | Out-Null
-. .\PS_Utils\Check-Ignore -Path $RepoRoot
+
+
+$installerPath = Join-Path $PSScriptRoot "../utils/installer.py"
+Invoke-Expression "$PythonPath '$installerPath' '$pluginPackageDir' '$RepoRoot'"
+
+
+
 
 $pluginShimSource = Join-Path $pluginPackageDir "apps\gui\src\plugin.py"
 if (-not (Test-Path $pluginShimSource)) {

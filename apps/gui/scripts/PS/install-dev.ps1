@@ -3,11 +3,20 @@ param(
     [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\.."))
 )
 
+.(Join-Path $PSScriptRoot "PS_Utils\checks.ps1")
+
 $guiSrcDir = Join-Path $RepoRoot "apps\gui\src"
 $pluginFileLink = Join-Path $IdaPluginsDir "aether-next-plugin.py"
 $pluginFileTarget = Join-Path $guiSrcDir "plugin.py"
 $configFileTarget = Join-Path $guiSrcDir "aether-next-config.json"
 $configFileLink = Join-Path $IdaPluginsDir "aether-next-config.json"
+
+Test-PipExists -PythonPath $PythonPath
+Test-PythonExists -PythonPath $PythonPath
+Test-PythonVer -PythonPath $PythonPath
+
+
+Invoke-Expression "$PythonPath -m pip install -r '..\\utils\\requirements.txt' --user"
 
 if (-not (Test-Path $guiSrcDir)) {
     throw "GUI source directory not found: $guiSrcDir"
