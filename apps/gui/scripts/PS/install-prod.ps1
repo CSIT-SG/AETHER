@@ -5,7 +5,7 @@ param(
 )
 
 
-.(Join-Path $PSScriptRoot "PS_Utils\checks.ps1")
+.(Join-Path $PSScriptRoot "utils\checks.ps1")
 
 
 $PythonDependencies =@(Get-Content -Path (Join-Path $PSScriptRoot "..\utils\requirements.txt"))
@@ -88,4 +88,4 @@ if (Test-Path $configLinkDest) {
 
 New-Item -ItemType SymbolicLink -Path $configLinkDest -Target $configSource | Out-Null
 
-Write-Host "Installed AETHER GUI production artifacts in: $IdaPluginsDir"
+Write-Host "Installed AETHER GUI production artifacts in: $IdaPluginsDir" -ForegroundColor Green

@@ -11,14 +11,15 @@ function Test-PythonVer {
     param (
         [string]$PythonPath = "",
         [int]$RequiredMajor = 3,
-        [int]$RequiredMinor = 12
+        [int]$RequiredMinor = 12,
+        [int]$MaxMinor = 13
     )
     $versionRaw = & $PythonPath -c "import sys; print(f'{sys.version_info.major} {sys.version_info.minor}')" 2>$null
         
     if ($LASTEXITCODE -eq 0 -and $versionRaw) {
         $major, $minor = $versionRaw.Split(" ") | ForEach-Object { [int]$_ }
 
-        if ($major -eq $RequiredMajor -and $minor -ge $RequiredMinor) {
+        if ($major -eq $RequiredMajor -and ($minor -ge $RequiredMinor -or $minor -le $MaxMinor)) {
             Write-Host "Python version $major.$minor detected. Requirement satisfied." -ForegroundColor Green
         }else{
             Write-Error "CRITICAL: Python version $major.$minor unsupported. Python $RequiredMajor.$RequiredMinor or above is required. Please update your Python environment."

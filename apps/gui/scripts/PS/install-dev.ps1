@@ -3,7 +3,7 @@ param(
     [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\.."))
 )
 
-.(Join-Path $PSScriptRoot "PS_Utils\checks.ps1")
+.(Join-Path $PSScriptRoot "utils\checks.ps1")
 
 $guiSrcDir = Join-Path $RepoRoot "apps\gui\src"
 $pluginFileLink = Join-Path $IdaPluginsDir "aether-next-plugin.py"
