@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { rmdirSync } from "node:fs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../../../../..");
@@ -25,6 +26,7 @@ function run(cmd: string, args: string[]): Promise<void> {
 }
 
 export async function generateGriffe(): Promise<void> {
+	rmdirSync(contentDir, { recursive: true });
 	const targets = workspaces.map(([scope, name]) => [
 		`${scope}.${name}`,
 		path.join(repoRoot, scope, name, "src"),
