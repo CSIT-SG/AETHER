@@ -3,7 +3,6 @@ import { getPageMap } from "nextra/page-map";
 import "nextra-theme-docs/style.css";
 import "./globals.css";
 
-
 const navbar = <Navbar logo={<b>AETHER Next</b>} />;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
