@@ -8,19 +8,16 @@ param(
 .(Join-Path $PSScriptRoot "utils\checks.ps1")
 
 
-$PythonDependencies =@(Get-Content -Path (Join-Path $PSScriptRoot "..\utils\requirements.txt"))
-$PythonDependencies = $PythonDependencies | Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and -not $_.StartsWith("#") }
-
-
 $pluginFileDest = Join-Path $IdaPluginsDir "aether-next-plugin.py"
 $pluginPackageDir = Join-Path $IdaPluginsDir "aether-next"
+$ReuqirementsFile = Join-Path $RepoRoot "apps\gui\utils\requirements.txt"
 
 Test-PipExists -PythonPath $PythonPath
 Test-PythonExists -PythonPath $PythonPath
 Test-PythonVer -PythonPath $PythonPath
 
 
-Invoke-Expression "$PythonPath -m pip install -r '..\\utils\\requirements.txt' --user"
+Invoke-Expression "$PythonPath -m pip install -r $ReuqirementsFile --user"
 
 Write-Host "All Python dependencies are satisfied. Proceeding with installation..."
 
@@ -46,27 +43,15 @@ Write-Host "Plugin package directory deleted... `nCreating plugin package direct
 New-Item -ItemType Directory -Path $PluginPackageDir | Out-Null
 
 
-$installerPath = Join-Path $PSScriptRoot "../utils/installer.py"
+$installerPath = Join-Path $RepoRoot "apps\gui\scripts\utils\installer.py"
 Invoke-Expression "$PythonPath '$installerPath' '$pluginPackageDir' '$RepoRoot'"
 
 
-
-
-$pluginShimSource = Join-Path $pluginPackageDir "apps\gui\src\plugin.py"
-if (-not (Test-Path $pluginShimSource)) {
-    throw "plugin.py not found: $pluginShimSource"
-}else{
-    Write-Host "Plugin shim source found: $pluginShimSource"
+if ($LASTEXITCODE -eq 1) {
+    Write-Host "Copy operation failed" -ForegroundColor Red
+    exit $LASTEXITCODE
 }
 
-$configSource = Join-Path $pluginPackageDir "apps\gui\src\aether-next-config.json"
-if (-not (Test-Path $configSource)) {
-    # Create an empty config file in the package so installers expose something
-    Write-Host "Config file not found: $configSource. Creating an empty config file..."
-    New-Item -ItemType File -Path $configSource -Force | Out-Null
-}else{
-    Write-Host "Config source found: $configSource"
-}
 
 if (Test-Path $pluginFileDest) {
     Write-Host "Existing plugin shim found. Removing: $pluginFileDest"

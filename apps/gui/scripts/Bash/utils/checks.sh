@@ -33,8 +33,7 @@ check_python_version() {
     actual_major="$("$PYTHON_PATH" -c 'import sys; print(sys.version_info.major)')"
     actual_minor="$("$PYTHON_PATH" -c 'import sys; print(sys.version_info.minor)')"
  
-    if (( actual_major > min_major )) || \
-       (( actual_major == min_major && actual_minor >= min_minor && actual_minor <= max_minor )); then
+    if (( actual_major == min_major && (actual_minor >= min_minor || actual_minor <= max_minor ) )); then
         echo "[+] Python version OK: ${actual_major}.${actual_minor} >= ${min_major}.${min_minor}"
     else
         echo "ERROR: Python ${min_major}.${min_minor}+ or ${min_major}.${max_minor}+ is required." \
@@ -59,24 +58,4 @@ test_pip_exists() {
         echo "Pip not found. Please install pip to proceed." >&2
         return 1
     fi
-}
-
-# test_pip_dependency <python_path> <package_requirement>
-#   Returns 0 if the package satisfies the requirement, 1 otherwise.
-#   Mirrors Test-PipDependency in checks.ps1.
-#
-#   Note: pip show does not understand version specifiers (>=, ==, etc.),
-#   so we use 'pip install --dry-run' which honours full PEP 508 specifiers.
-test_pip_dependency() {
-    local python_path="${1:?python_path is required}"
-    local package_requirement="${2:?package_requirement is required}"
-
-    echo "$python_path"   # mirrors: iex "echo $PythonPath"
-
-    # Strip version specifier to get the bare package name for pip show
-    local package_name
-    package_name="$(echo "$package_requirement" | sed 's/[>=<!].*//')"
-
-    "$python_path" -m pip show "$package_name" &>/dev/null
-    return $?
 }

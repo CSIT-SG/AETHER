@@ -1,22 +1,23 @@
 param(
     [string]$IdaPluginsDir = (Join-Path $env:APPDATA "Hex-Rays\IDA Pro\plugins"),
-    [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\.."))
+    [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")),
+    [string]$PythonPath = (Get-Command python).Path
 )
 
 .(Join-Path $PSScriptRoot "utils\checks.ps1")
 
-$guiSrcDir = Join-Path $RepoRoot "apps\gui\src"
+$guiSrcDir = Join-Path $RepoRoot "gui\src"
 $pluginFileLink = Join-Path $IdaPluginsDir "aether-next-plugin.py"
 $pluginFileTarget = Join-Path $guiSrcDir "plugin.py"
 $configFileTarget = Join-Path $guiSrcDir "aether-next-config.json"
 $configFileLink = Join-Path $IdaPluginsDir "aether-next-config.json"
 
 Test-PipExists -PythonPath $PythonPath
-Test-PythonExists -PythonPath $PythonPath
+Test-PythonExists
 Test-PythonVer -PythonPath $PythonPath
 
 
-Invoke-Expression "$PythonPath -m pip install -r '..\\utils\\requirements.txt' --user"
+Invoke-Expression "$PythonPath -m pip install -r (Join-Path $RepoRoot 'apps\gui\scripts\utils\requirements.txt') --user"
 
 if (-not (Test-Path $guiSrcDir)) {
     throw "GUI source directory not found: $guiSrcDir"
@@ -45,4 +46,4 @@ if (Test-Path $configFileLink) {
 
 cmd /c mklink "$configFileLink" "$configFileTarget"
 
-Write-Host "Installed AETHER GUI plugin links in: $IdaPluginsDir"
+Write-Host "Installed AETHER GUI plugin links in: $IdaPluginsDir" -ForegroundColor Green

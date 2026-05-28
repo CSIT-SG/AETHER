@@ -14,6 +14,7 @@ function Test-PythonVer {
         [int]$RequiredMinor = 12,
         [int]$MaxMinor = 13
     )
+    Write-Host $PythonPath
     $versionRaw = & $PythonPath -c "import sys; print(f'{sys.version_info.major} {sys.version_info.minor}')" 2>$null
         
     if ($LASTEXITCODE -eq 0 -and $versionRaw) {
@@ -39,20 +40,5 @@ function Test-PipExists{
     exit 1
     }else{
         Write-Host "Pip found: $($pipCheck.Source)"
-    }
-}
-
-function Test-PipDependency {
-    param(
-        [string]$PackageRequirement,
-        [string]$PythonPath
-    )
-    iex "echo $PythonPath"
-    $null = & $PythonPath -m pip show $PackageRequirement 2>&1
-
-    if ($LASTEXITCODE -eq 0) {
-        return $true
-    } else {
-        return $false
     }
 }

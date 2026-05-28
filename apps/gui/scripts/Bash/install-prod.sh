@@ -27,12 +27,11 @@ IDA_PLUGINS_DIR=""
 REPO_ROOT="${REPO_ROOT:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
 PYTHON_PATH="${PYTHON_PATH}"    # already exported by check_python_exists
 
+
 # Argument parsing
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --plugins-dir) IDA_PLUGINS_DIR="$2"; shift 2 ;;
-        --repo-root)       REPO_ROOT="$2";        shift 2 ;;
-        --python-path)     PYTHON_PATH="$2";       shift 2 ;;
         *) echo "Unknown argument: $1" >&2; exit 1 ;;
     esac
 done
@@ -45,15 +44,14 @@ if [[ -z "$IDA_PLUGINS_DIR" ]]; then
 fi
  
 
-# Read and filter requirements.txt  (mirrors $PythonDependencies logic)
-REQUIREMENTS_FILE="$SCRIPT_DIR/../utils/requirements.txt"
-mapfile -t PYTHON_DEPENDENCIES < <(
-    grep -v '^\s*#' "$REQUIREMENTS_FILE" | grep -v '^\s*$'
-)
-
 # Derived paths
 PLUGIN_FILE_DEST="$IDA_PLUGINS_DIR/aether-next-plugin.py"
 PLUGIN_PACKAGE_DIR="$IDA_PLUGINS_DIR/aether-next"
+PLUGIN_SHIM_SOURCE="$PLUGIN_PACKAGE_DIR/apps/gui/src/plugin.py"
+REQUIREMENTS_FILE="$REPO_ROOT/apps/gui/scripts/utils/requirements.txt"
+CONFIG_SOURCE="$PLUGIN_PACKAGE_DIR/apps/gui/src/aether-next-config.json"
+
+
 
 # pip check
 if ! test_pip_exists "$PYTHON_PATH"; then
@@ -91,25 +89,11 @@ mkdir -p "$PLUGIN_PACKAGE_DIR"
 
 # run installer.py to copy plugin source files into the package directory
 INSTALLER_SCRIPT="$REPO_ROOT/apps/gui/scripts/utils/installer.py"
-python3 $INSTALLER_SCRIPT $PLUGIN_PACKAGE_DIR $REPO_ROOT
+$PYTHON_PATH $INSTALLER_SCRIPT $PLUGIN_PACKAGE_DIR $REPO_ROOT
 
-# Validate plugin shim was copied
-PLUGIN_SHIM_SOURCE="$PLUGIN_PACKAGE_DIR/apps/gui/src/plugin.py"
-if [[ ! -f "$PLUGIN_SHIM_SOURCE" ]]; then
-    echo "ERROR: plugin.py not found: $PLUGIN_SHIM_SOURCE" >&2
+if [ $? -eq 1 ]; then
+    echo "Copy operation failed"
     exit 1
-else
-    echo "Plugin shim source found: $PLUGIN_SHIM_SOURCE"
-fi
-
-# Ensure config file exists in the package
-CONFIG_SOURCE="$PLUGIN_PACKAGE_DIR/apps/gui/src/aether-next-config.json"
-if [[ ! -f "$CONFIG_SOURCE" ]]; then
-    echo "Config file not found: $CONFIG_SOURCE. Creating an empty config file..."
-    mkdir -p "$(dirname "$CONFIG_SOURCE")"
-    touch "$CONFIG_SOURCE"
-else
-    echo "Config source found: $CONFIG_SOURCE"
 fi
 
 # Plugin shim symlink

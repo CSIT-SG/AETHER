@@ -23,7 +23,6 @@ REPO_ROOT="${REPO_ROOT:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --plugins-dir) IDA_PLUGINS_DIR="$2"; shift 2 ;;
-        --repo-root)       REPO_ROOT="$2";        shift 2 ;;
         *) echo "Unknown argument: $1" >&2; exit 1 ;;
     esac
 done
@@ -41,7 +40,8 @@ PLUGIN_FILE_LINK="$IDA_PLUGINS_DIR/aether-next-plugin.py"
 PLUGIN_FILE_TARGET="$GUI_SRC_DIR/plugin.py"
 CONFIG_FILE_TARGET="$GUI_SRC_DIR/aether-next-config.json"
 CONFIG_FILE_LINK="$IDA_PLUGINS_DIR/aether-next-config.json"
-REQUIREMENTS_FILE="$SCRIPT_DIR/../utils/requirements.txt"
+REQUIREMENTS_FILE="$REPO_ROOT/gui/scripts/utils/requirements.txt"
+
 
 #Python envvironment checks
 check_python_exists   # exits 1 if not found
