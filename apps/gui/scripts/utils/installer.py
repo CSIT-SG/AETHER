@@ -4,12 +4,10 @@ import os
 import fnmatch
 import sys
 import shutil
-from unittest import result
 
 
 IGNORE: list[str] = [".gitignore", "CONTRIBUTING.md", ".git"]
 REGEXES: list[re.Pattern[str]] = []
-
 
 
 # Convert gitignore patterns to regex
@@ -25,7 +23,7 @@ def scan(path: str) -> bool:
     return skip
 
 
-def main(plugin_dir:str, root:str) -> None:
+def main(plugin_dir: str, root: str) -> None:
     # read the .gitignore file
     with open(f"{join(root, '.gitignore')}") as f:
         for line in f:

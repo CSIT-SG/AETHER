@@ -2,9 +2,14 @@ function Test-PythonExists{
     try{
     $PythonPath = (Get-Command python).Path 
     }catch{
+        try{
+        $PythonPath = (Get-Command python3).Path
+    }catch{
         Write-Warning "Python is not installed or not in PATH. Please install Python and ensure it's in your PATH environment variable."
         exit 1
+        }
     }
+    return $PythonPath
 }
 
 function Test-PythonVer {

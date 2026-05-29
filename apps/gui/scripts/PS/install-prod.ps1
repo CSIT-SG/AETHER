@@ -13,9 +13,8 @@ $ReuqirementsFile = Join-Path $RepoRoot "apps\gui\utils\requirements.txt"
 $pluginShimSource = Join-Path $pluginPackageDir "apps\gui\src\plugin.py"
 $configSource = Join-Path $pluginPackageDir "apps\gui\src\aether-next-config.json"
 
-Test-PythonExists
-[string]$PythonPath = (Get-Command python).Path
 
+$PythonPath = Test-PythonExists
 Test-PipExists -PythonPath $PythonPath
 Test-PythonVer -PythonPath $PythonPath
 
