@@ -9,4 +9,4 @@ Includes autogeneration of docstrings, as well as internal and public guides.
 Requires `bun`. 
 
 1. `bun i` (`export NODE_TLS_REJECT_UNAUTHORIZED=0` if ssl errors)
-2. `bun run dev
+2. `bun run dev`
