@@ -9,7 +9,7 @@ param(
 
 $pluginFileDest = Join-Path $IdaPluginsDir "aether-next-plugin.py"
 $pluginPackageDir = Join-Path $IdaPluginsDir "aether-next"
-$ReuqirementsFile = Join-Path $RepoRoot "apps\gui\utils\requirements.txt"
+$ReuqirementsFile = Join-Path $RepoRoot "apps\gui\scripts\utils\requirements.txt"
 $pluginShimSource = Join-Path $pluginPackageDir "apps\gui\src\plugin.py"
 $configSource = Join-Path $pluginPackageDir "apps\gui\src\aether-next-config.json"
 

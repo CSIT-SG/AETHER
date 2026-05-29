@@ -6,7 +6,7 @@ import sys
 import shutil
 
 
-IGNORE: list[str] = [".gitignore", "CONTRIBUTING.md", ".git"]
+IGNORE: list[str] = [".gitignore", "CONTRIBUTING.md", ".git", "pyrightconfig.json", "uv.lock"]
 REGEXES: list[re.Pattern[str]] = []
 
 
@@ -25,7 +25,7 @@ def scan(path: str) -> bool:
 
 def main(plugin_dir: str, root: str) -> None:
     # read the .gitignore file
-    with open(f"{join(root, '.gitignore')}") as f:
+    with open(join(root, '.gitignore')) as f:
         for line in f:
             line = line.strip()
             if line and not line.startswith("#"):

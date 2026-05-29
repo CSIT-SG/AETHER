@@ -19,6 +19,9 @@ From the root monorepo directory:
 ```
 
 ```bash
+# IMPORTANT!!!
+# Ensure to run ./idapyswitch to point ida pro to your python installation. AETHER plugin may not work otherwise
+
 # Dev: link the plugin entrypoint into the IDA plugins folder
 ./apps/gui/scripts/Bash/install-dev.sh
 
@@ -27,5 +30,5 @@ From the root monorepo directory:
 ./apps/gui/scripts/Bash/install-prod.sh
 # Usage: ./install-prod.sh --ida-plugins-dir Path/To/Plugins/Folder
 
-# formatter used: https://marketplace.visualstudio.com/items?itemName=Tooark.ark-format-powershell
+# Formatter Used: https://marketplace.visualstudio.com/items?itemName=Tooark.ark-format-powershell
 ```
