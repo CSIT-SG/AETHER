@@ -1,4 +1,5 @@
-import { Callout } from 'nextra/components'
+import { Callout, Tabs } from 'nextra/components'
+
 
 # Getting Started
 
@@ -23,9 +24,60 @@ import { Callout } from 'nextra/components'
 ## Installation
 1. Clone the repository:
 
-```bash
-git clone https://github.com/SebassNoob/AETHER-next
-```
+### Powershell
+
+##### Requires Administrator Powershell
+
+1. Open powershell as administrator and change directory to `\AETHER-next\apps\gui\scripts\PS`.
+2. Run `./install-prod.ps1` or `./install-dev.ps1` for developers and users respectively,
+
+<Tabs items={['Production', 'Development']}>
+    <Tabs.Tab>
+        <p>
+            install-prod.ps1 copies relevant files from the repo into the Ida plugins folder. Though not recommended, it is safe to delete the repo from your computer.
+        </p>
+        <p>
+            `./install-prod.ps1`
+        </p>
+    </Tabs.Tab>
+    <Tabs.Tab>
+        <p>
+            install-dev.ps1 creates a symbolic link to the repo in the Ida. **DO NOT** delete the repo.
+        </p>
+        <p>
+            `./install-dev.ps1`
+        </p>
+    </Tabs.Tab>
+</Tabs>
+
+### Bash
+
+##### Requires sudo privileges
+
+1. Open terminal with sudo privileges and navigate to `\AETHER-next\apps\gui\scripts\Bash`.
+2. Run `./install-prod.sh` or `./install-dev.sh` for developers and users respectively,
+3. Ensure to set the `--plugins-dir` flag
+
+<Tabs items={['Production', 'Development']}>
+    <Tabs.Tab>
+        <p>
+            install-prod.ps1 copies relevant files from the repo into the Ida plugins folder. Though not recommended, it is safe to delete the repo from your computer.
+        </p>
+        <p>
+            `./install-prod.sh --plugins-dir /path/to/ida/plugins/dir`
+        </p>
+    </Tabs.Tab>
+    <Tabs.Tab>
+        <p>
+            install-dev.ps1 creates a symbolic link to the repo in the Ida. **DO NOT** delete the repo.
+        </p>
+        <p>
+            `./install-dev.sh --plugins-dir /path/to/ida/plugins/dir`
+        </p>
+    </Tabs.Tab>
+</Tabs>
+
+
 
 ### Graphical User Interface (GUI)
 
