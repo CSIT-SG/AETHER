@@ -7,8 +7,8 @@ import { Callout } from 'nextra/components'
 This is the high-level architecture of Aether. The main components are:
 
 - **IDA Pro**
-- `AETHER rpc`: Provides a low level interface to IDA Pro's API, exposing it as a JSON-RPC server.
-- `AETHER mcp`: Manages connections between the many IDA Pro instances and implements tool call logic, exposing a higher level API to the LLM. 
+- **AETHER rpc**: Provides a low level interface to IDA Pro's API, exposing it as a JSON-RPC server.
+- **AETHER mcp**: Manages connections between the many IDA Pro instances and implements tool call logic, exposing a higher level API to the LLM. 
     Also manages chatbot memory and holds system prompts.
 - **LLM**/**Agents**: A collection of agents that interact with the AETHER_mcp. 
 - **AETHER GUI**: A gui client.
@@ -42,18 +42,24 @@ Do not directly expose ida api calls. Use a wrapper to expose specific functiona
 
 The MCP server is the core of the system. It manages all the IDA Pro instances and implements the logic for calling tools and agents.
 
-We implement ai memory here, and also hold the system prompts for the agents. Under the hood, tools calls are routed to the appropriate RPC server.
+We implement agent specific logic here, eg. memory management, system prompts, tool call logic, etc.
+
+Under the hood, tool calls are routed to the appropriate RPC server.
 
 
 ### LLM and Agents
 
 For each task, we have a collection of agents that can be called. Each agent has a specific role and set of tools it can call.
 
-### Aether GUI
+### Clients
+
+We have two clients: a GUI and a CLI. Both clients are able to spawn agents (which then in turn call the mcp server) and display the results.
+
+#### Aether GUI
 
 We request the mcp server to spawn an LLM agent for each call. We just act as the client that sends requests and displays responses.
 
-### Aether CLI
+#### Aether CLI
 
 <Callout type="warning">
 Not implemented.
