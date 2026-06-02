@@ -13,6 +13,7 @@ members = [
     "aether-gui",
     "aether-mcp",
     "aether-next",
+    "aether-rpc",
     "aether-utils",
 ]
 
@@ -103,6 +104,23 @@ dev = [
     { name = "pytest", specifier = ">=9.0.3" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
     { name = "ruff", specifier = ">=0.15.12" },
+]
+
+[[package]]
+name = "aether-rpc"
+version = "0.1.0"
+source = { virtual = "packages/rpc" }
+dependencies = [
+    { name = "idapro" },
+    { name = "pydantic" },
+    { name = "rpyc" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "idapro", specifier = ">=0.0.9" },
+    { name = "pydantic", specifier = ">=2.13.3" },
+    { name = "rpyc", specifier = ">=6.0.1" },
 ]
 
 [[package]]
@@ -496,6 +514,15 @@ wheels = [
 ]
 
 [[package]]
+name = "idapro"
+version = "0.0.9"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/8a/c9/7529ea6f5ecc7272342e85b3c7a8087646f347a9052b2e34eab71a3667bc/idapro-0.0.9.tar.gz", hash = "sha256:8a043a89ce507533e502e8f6581a4fb58bade25e8fa6049545b79ec636792e35", size = 986315, upload-time = "2026-05-12T15:03:50.068Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ab/d9/a455c08b162ec8b16eb9020eb96a6404c2cc4f87ba3b74b8401647b45fe1/idapro-0.0.9-py3-none-any.whl", hash = "sha256:9518ead4d84833a92e6085e9c8204e87ab4b3ae1800267d6c3dc579822311405", size = 2042736, upload-time = "2026-05-12T15:03:48.22Z" },
+]
+
+[[package]]
 name = "idna"
 version = "3.16"
 source = { registry = "https://pypi.org/simple" }
@@ -812,6 +839,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f9/e2/3e91f31a7d2b083fe6ef3fa267035b518369d9511ffab804f839851d2779/pluggy-1.6.0.tar.gz", hash = "sha256:7dcc130b76258d33b90f61b658791dede3486c3e6bfb003ee5c9bfb396dd22f3", size = 69412, upload-time = "2025-05-15T12:30:07.975Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/54/20/4d324d65cc6d9205fabedc306948156824eb9f0ee1633355a8f7ec5c66bf/pluggy-1.6.0-py3-none-any.whl", hash = "sha256:e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746", size = 20538, upload-time = "2025-05-15T12:30:06.134Z" },
+]
+
+[[package]]
+name = "plumbum"
+version = "1.10.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pywin32", marker = "platform_python_implementation != 'PyPy' and sys_platform == 'win32'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/dc/c8/11a5f792704b70f071a3dbc329105a98e9cc8d25daaf09f733c44eb0ef8e/plumbum-1.10.0.tar.gz", hash = "sha256:f8cbf0ecec0b73ff4e349398b65112a9e3f9300e7dc019001217dcc148d5c97c", size = 320039, upload-time = "2025-10-31T05:02:48.697Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/79/ad/45312df6b63ba64ea35b8d8f5f0c577aac16e6b416eafe8e1cb34e03f9a7/plumbum-1.10.0-py3-none-any.whl", hash = "sha256:9583d737ac901c474d99d030e4d5eec4c4e6d2d7417b1cf49728cf3be34f6dc8", size = 127383, upload-time = "2025-10-31T05:02:47.002Z" },
 ]
 
 [[package]]
@@ -1155,6 +1194,18 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/85/70/92482ccffb96f5441aab93e26c4d66489eb599efdcf96fad90c14bbfb976/rpds_py-0.30.0-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:dbd936cde57abfee19ab3213cf9c26be06d60750e60a8e4dd85d1ab12c8b1f40", size = 556030, upload-time = "2025-11-30T20:24:10.956Z" },
     { url = "https://files.pythonhosted.org/packages/20/53/7c7e784abfa500a2b6b583b147ee4bb5a2b3747a9166bab52fec4b5b5e7d/rpds_py-0.30.0-cp314-cp314t-win32.whl", hash = "sha256:dc824125c72246d924f7f796b4f63c1e9dc810c7d9e2355864b3c3a73d59ade0", size = 211570, upload-time = "2025-11-30T20:24:12.735Z" },
     { url = "https://files.pythonhosted.org/packages/d0/02/fa464cdfbe6b26e0600b62c528b72d8608f5cc49f96b8d6e38c95d60c676/rpds_py-0.30.0-cp314-cp314t-win_amd64.whl", hash = "sha256:27f4b0e92de5bfbc6f86e43959e6edd1425c33b5e69aab0984a72047f2bcf1e3", size = 226532, upload-time = "2025-11-30T20:24:14.634Z" },
+]
+
+[[package]]
+name = "rpyc"
+version = "6.0.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "plumbum" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8b/e7/1c17410673b634f4658bb5d2232d0c4507432a97508b2c6708e59481644a/rpyc-6.0.2.tar.gz", hash = "sha256:8e780a6a71b842128a80a337c64adfb6f919014e069951832161c9efc630c93b", size = 62321, upload-time = "2025-04-18T16:33:21.693Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3f/99/2e119d541d596daea39643eb9312b47c7847383951300f889166938035b1/rpyc-6.0.2-py3-none-any.whl", hash = "sha256:8072308ad30725bc281c42c011fc8c922be15f3eeda6eafb2917cafe1b6f00ec", size = 74768, upload-time = "2025-04-18T16:33:20.147Z" },
 ]
 
 [[package]]

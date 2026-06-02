@@ -1,13 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import Any
-from aether_rpc.capabilities import Capability
+from typing import Any, Callable
 
 
 class IDAExecutor(ABC):
     """Runs IDA operations. Impl decides whether that's GUI or headless."""
 
     @abstractmethod
-    async def execute(self, capability: Capability, arguments: dict[str, Any]) -> Any:
+    async def execute(self, callback: Callable[..., Any], arguments: dict[str, Any]) -> Any:
         """Dispatch a single IDA operation by method name."""
 
     @abstractmethod

@@ -1,5 +1,7 @@
-from .base import Capability
+from .set_comment import SetComment
 
+# ONLY export the capability classes, never submodules or helper functions
+# the service layer will dynamically discover capabilities by looking for these names in the package namespace
 __all__ = [
-    "Capability",
+    "SetComment",
 ]

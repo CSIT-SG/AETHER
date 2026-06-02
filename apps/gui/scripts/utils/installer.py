@@ -25,7 +25,7 @@ def scan(path: str) -> bool:
 
 def main(plugin_dir: str, root: str) -> None:
     # read the .gitignore file
-    with open(join(root, '.gitignore')) as f:
+    with open(join(root, ".gitignore")) as f:
         for line in f:
             line = line.strip()
             if line and not line.startswith("#"):

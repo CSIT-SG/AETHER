@@ -55,9 +55,10 @@ def build_starlette_app(raw_routes: tuple[type, ...]) -> Starlette:
             routes.append(node_instance)
 
         # open bidirectional streams for this session
-        async with session_transport.connect_sse(
-            request.scope, request.receive, request._send
-        ) as (inbound, outbound):
+        async with session_transport.connect_sse(request.scope, request.receive, request._send) as (
+            inbound,
+            outbound,
+        ):
             await session_server.run(
                 inbound,
                 outbound,
@@ -69,11 +70,15 @@ def build_starlette_app(raw_routes: tuple[type, ...]) -> Starlette:
     return Starlette(
         routes=[
             Route("/session", endpoint=handle_ida_client_connection, methods=["GET"]),
-            Mount("/messages/", app=session_transport.handle_post_message), # Route for client to send POST request for calls to server
+            Mount(
+                "/messages/", app=session_transport.handle_post_message
+            ),  # Route for client to send POST request for calls to server
         ]
     )
 
 
-def run_server(host: str = "0.0.0.0", port: int = 8000, routes: tuple[type, ...] = (HelloWorldRoute,)) -> None:
+def run_server(
+    host: str = "0.0.0.0", port: int = 8000, routes: tuple[type, ...] = (HelloWorldRoute,)
+) -> None:
     app = build_starlette_app(routes)
     uvicorn.run(app, host=host, port=port)

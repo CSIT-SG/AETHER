@@ -18,6 +18,7 @@ class ResourceCommand:
     resource: Resource
     handler: Callable[..., Awaitable[Iterable[ReadResourceContents]]]
 
+
 @dataclass(frozen=True)
 class ResourceTemplateCommand:
     template: ResourceTemplate
