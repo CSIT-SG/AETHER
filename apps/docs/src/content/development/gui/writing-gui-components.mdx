@@ -295,3 +295,7 @@ class ChatPanel(QtWidgets.QWidget):
 		self._history.append_message("AETHER", "Hi there.")
 ```
 
+
+## Logging
+
+You also have access to a logger via `self.logger`. It is recommended to use this logger for any logging in your component, as it will be properly namespaced and integrated with the rest of the system.

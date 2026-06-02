@@ -10,9 +10,9 @@ This is the high-level architecture of Aether. The main components are:
 - **AETHER rpc**: Provides a low level interface to IDA Pro's API, exposing it as a JSON-RPC server.
 - **AETHER mcp**: Manages connections between the many IDA Pro instances and implements tool call logic, exposing a higher level API to the LLM. 
     Also manages chatbot memory and holds system prompts.
-- **LLM**/**Agents**: A collection of agents that interact with the AETHER_mcp. 
-- **AETHER GUI**: A gui client.
-- **AETHER CLI**: A command line client.
+- **Agents**: A collection of agents that interact with the AETHER_mcp. 
+- **AETHER gui**: A gui client.
+- **AETHER cli**: A command line client.
 
 We will go into detail about each component, from the bottom up.
 

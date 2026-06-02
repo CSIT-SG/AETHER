@@ -12,6 +12,7 @@ const workspaces = [
 	["apps", "gui"],
 	["packages", "core"],
 	["packages", "utils"],
+	["packages", "rpc"],
 ];
 
 function run(cmd: string, args: string[]): Promise<void> {
@@ -26,7 +27,11 @@ function run(cmd: string, args: string[]): Promise<void> {
 }
 
 export async function generateGriffe(): Promise<void> {
-	rmdirSync(contentDir, { recursive: true });
+	try {
+		rmdirSync(contentDir, { recursive: true });
+	} catch (_e) {
+		/* ignore */
+	}
 	const targets = workspaces.map(([scope, name]) => [
 		`${scope}.${name}`,
 		path.join(repoRoot, scope, name, "src"),
