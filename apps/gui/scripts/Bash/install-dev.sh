@@ -17,8 +17,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/utils/checks.sh"
 
 IDA_PLUGINS_DIR=""
-REPO_ROOT="${REPO_ROOT:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
-REPO_ROOT_PARENT="$(cd "$REPO_ROOT/.." && pwd)"
+REPO_ROOT="${REPO_ROOT:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
 
 # Argument parsing
 while [[ $# -gt 0 ]]; do
@@ -36,14 +35,9 @@ if [[ -z $IDA_PLUGINS_DIR ]]; then
 fi    
 
 # Derived paths
-GUI_SRC_DIR="$REPO_ROOT/gui/src"
-GUI_PLUGIN_FILE_LINK="$IDA_PLUGINS_DIR/aether-next-gui.py"
-GUI_PLUGIN_FILE_TARGET="$GUI_SRC_DIR/plugin.py"
-RPC_PLUGIN_FILE_LINK="$IDA_PLUGINS_DIR/aether-next-rpc.py"
-RPC_PLUGIN_FILE_TARGET="$REPO_ROOT_PARENT/packages/rpc/src/gui_plugin.py"
-CONFIG_FILE_TARGET="$GUI_SRC_DIR/aether-next-config.json"
-CONFIG_FILE_LINK="$IDA_PLUGINS_DIR/aether-next-config.json"
-REQUIREMENTS_FILE="$REPO_ROOT/gui/scripts/utils/requirements.txt"
+GUI_SRC_DIR="$REPO_ROOT/apps/gui/src"
+REQUIREMENTS_FILE="$REPO_ROOT/apps/gui/scripts/utils/requirements.txt"
+LINKER="$REPO_ROOT/apps/gui/scripts/utils/linker.py"
 
 
 #Python envvironment checks
@@ -69,37 +63,4 @@ if [[ ! -d "$IDA_PLUGINS_DIR" ]]; then
     exit 1
 fi
 
-if [[ ! -f "$RPC_PLUGIN_FILE_TARGET" ]]; then
-    echo "ERROR: RPC plugin file not found: $RPC_PLUGIN_FILE_TARGET" >&2
-    exit 1
-fi
-
-# Plugin symlink — remove stale link then recreate
-if [[ -L "$GUI_PLUGIN_FILE_LINK" || -f "$GUI_PLUGIN_FILE_LINK" ]]; then
-    rm -f "$GUI_PLUGIN_FILE_LINK"
-fi
-
-ln -s "$GUI_PLUGIN_FILE_TARGET" "$GUI_PLUGIN_FILE_LINK"
-echo "Symlink created: $GUI_PLUGIN_FILE_LINK -> $GUI_PLUGIN_FILE_TARGET"
-
-if [[ -L "$RPC_PLUGIN_FILE_LINK" || -f "$RPC_PLUGIN_FILE_LINK" ]]; then
-    rm -f "$RPC_PLUGIN_FILE_LINK"
-fi
-
-ln -s "$RPC_PLUGIN_FILE_TARGET" "$RPC_PLUGIN_FILE_LINK"
-echo "Symlink created: $RPC_PLUGIN_FILE_LINK -> $RPC_PLUGIN_FILE_TARGET"
-
-# Config file — create if absent, then symlink
-if [[ ! -f "$CONFIG_FILE_TARGET" ]]; then
-    # Create an empty JSON file; the application populates defaults on first run.
-    touch "$CONFIG_FILE_TARGET"
-fi
-
-if [[ -L "$CONFIG_FILE_LINK" || -f "$CONFIG_FILE_LINK" ]]; then
-    rm -f "$CONFIG_FILE_LINK"
-fi
-
-ln -s "$CONFIG_FILE_TARGET" "$CONFIG_FILE_LINK"
-echo "Symlink created: $CONFIG_FILE_LINK -> $CONFIG_FILE_TARGET"
-
-echo "Installed AETHER GUI and RPC plugin links in: $IDA_PLUGINS_DIR"
+$PYTHON_PATH "$LINKER" "$GUI_SRC_DIR" "$IDA_PLUGINS_DIR"

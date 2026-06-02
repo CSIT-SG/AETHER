@@ -26,7 +26,10 @@ check_python_version 3 12
 IDA_PLUGINS_DIR=""
 REPO_ROOT="${REPO_ROOT:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
 PYTHON_PATH="${PYTHON_PATH}"    # already exported by check_python_exists
-
+PLUGIN_PACKAGE_DIR="$IDA_PLUGINS_DIR/aether-next"
+REQUIREMENTS_FILE="$REPO_ROOT/apps/gui/scripts/utils/requirements.txt"
+INSTALLER_SCRIPT="$REPO_ROOT/apps/gui/scripts/utils/installer.py"
+LINKER="$REPO_ROOT/apps/gui/scripts/utils/linker.py"
 
 # Argument parsing
 while [[ $# -gt 0 ]]; do
@@ -42,18 +45,6 @@ if [[ -z "$IDA_PLUGINS_DIR" ]]; then
     echo "Usage: $0 --plugins-dir <path> [--repo-root <path>] [--python-path <path>]" >&2
     exit 1
 fi
- 
-
-# Derived paths
-GUI_PLUGIN_FILE_DEST="$IDA_PLUGINS_DIR/aether-next-gui.py"
-RPC_PLUGIN_FILE_DEST="$IDA_PLUGINS_DIR/aether-next-rpc.py"
-PLUGIN_PACKAGE_DIR="$IDA_PLUGINS_DIR/aether-next"
-GUI_PLUGIN_SHIM_SOURCE="$PLUGIN_PACKAGE_DIR/apps/gui/src/plugin.py"
-RPC_PLUGIN_SHIM_SOURCE="$PLUGIN_PACKAGE_DIR/packages/rpc/src/gui_plugin.py"
-REQUIREMENTS_FILE="$REPO_ROOT/apps/gui/scripts/utils/requirements.txt"
-CONFIG_SOURCE="$PLUGIN_PACKAGE_DIR/apps/gui/src/aether-next-config.json"
-
-
 
 # pip check
 if ! test_pip_exists "$PYTHON_PATH"; then
@@ -90,7 +81,6 @@ echo -e "Plugin package directory deleted...\nCreating plugin package directory 
 mkdir -p "$PLUGIN_PACKAGE_DIR"
 
 # run installer.py to copy plugin source files into the package directory
-INSTALLER_SCRIPT="$REPO_ROOT/apps/gui/scripts/utils/installer.py"
 $PYTHON_PATH $INSTALLER_SCRIPT $PLUGIN_PACKAGE_DIR $REPO_ROOT
 
 if [ $? -eq 1 ]; then
@@ -98,32 +88,6 @@ if [ $? -eq 1 ]; then
     exit 1
 fi
 
-# Plugin shim symlink
-if [[ -L "$GUI_PLUGIN_FILE_DEST" || -f "$GUI_PLUGIN_FILE_DEST" ]]; then
-    echo "Existing GUI plugin shim found. Removing: $GUI_PLUGIN_FILE_DEST"
-    rm -f "$GUI_PLUGIN_FILE_DEST"
-fi
-
-echo -e "GUI plugin shim removed\nCreating symbolic link for GUI plugin shim: $GUI_PLUGIN_FILE_DEST -> $GUI_PLUGIN_SHIM_SOURCE"
-ln -s "$GUI_PLUGIN_SHIM_SOURCE" "$GUI_PLUGIN_FILE_DEST"
-
-if [[ -L "$RPC_PLUGIN_FILE_DEST" || -f "$RPC_PLUGIN_FILE_DEST" ]]; then
-    echo "Existing RPC plugin shim found. Removing: $RPC_PLUGIN_FILE_DEST"
-    rm -f "$RPC_PLUGIN_FILE_DEST"
-fi
-
-echo -e "RPC plugin shim removed\nCreating symbolic link for RPC plugin shim: $RPC_PLUGIN_FILE_DEST -> $RPC_PLUGIN_SHIM_SOURCE"
-ln -s "$RPC_PLUGIN_SHIM_SOURCE" "$RPC_PLUGIN_FILE_DEST"
-
-# Config symlink
-CONFIG_LINK_DEST="$IDA_PLUGINS_DIR/aether-next-config.json"
-if [[ -L "$CONFIG_LINK_DEST" || -f "$CONFIG_LINK_DEST" ]]; then
-    echo "Existing config link found. Removing: $CONFIG_LINK_DEST"
-    rm -f "$CONFIG_LINK_DEST"
-else
-    echo "No existing config link found. Creating symbolic link for config: $CONFIG_LINK_DEST -> $CONFIG_SOURCE"
-fi
-
-ln -s "$CONFIG_SOURCE" "$CONFIG_LINK_DEST"
+$PYTHON_PATH $LINKER "$PLUGIN_PACKAGE_DIR" "$IDA_PLUGINS_DIR"
 
 echo "Installed AETHER GUI and RPC production artifacts in: $IDA_PLUGINS_DIR"
