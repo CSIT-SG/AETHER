@@ -1,8 +1,9 @@
 import ida_bytes
-import ida_hexrays
 import ida_funcs
+import ida_hexrays
 import idaapi
 import idc
+
 from ..base import Capability
 
 

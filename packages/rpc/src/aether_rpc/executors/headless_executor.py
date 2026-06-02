@@ -1,8 +1,11 @@
 # rpc/executors/headless.py
 import os
 import sys
+from collections.abc import Callable
+from typing import Any
+
 import idapro
-from typing import Any, Callable
+
 from .base import IDAExecutor
 
 

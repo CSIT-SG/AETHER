@@ -6,7 +6,7 @@ from aether_utils.logger import get_logger
 
 from aether_gui.features.context_menu import AetherUIHooks
 
-logger = get_logger("ida_plugin")
+logger = get_logger("gui_plugin")
 
 
 class _Aether(idaapi.plugin_t):
@@ -20,7 +20,7 @@ class _Aether(idaapi.plugin_t):
         self._ui_hooks: AetherUIHooks | None = None
 
     def init(self) -> int:
-        logger.info("IDA plugin initialized")
+        logger.info("GUI plugin initialized")
 
         try:
             cfg = load_config()

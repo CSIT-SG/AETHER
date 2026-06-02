@@ -1,7 +1,10 @@
-import ida_kernwin
-from .base import IDAExecutor
-from typing import Any, Callable
+from collections.abc import Callable
 from functools import partial
+from typing import Any
+
+import ida_kernwin
+
+from .base import IDAExecutor
 
 
 class GUIExecutor(IDAExecutor):

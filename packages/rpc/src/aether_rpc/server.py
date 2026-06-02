@@ -1,7 +1,9 @@
 import threading
+
 from rpyc.utils.server import ThreadedServer
-from .executors import IDAExecutor
+
 from .capabilities.base import Capability
+from .executors import IDAExecutor
 from .ida_service import IDAService
 
 

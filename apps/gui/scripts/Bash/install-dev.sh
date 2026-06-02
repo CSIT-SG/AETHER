@@ -18,6 +18,7 @@ source "$SCRIPT_DIR/utils/checks.sh"
 
 IDA_PLUGINS_DIR=""
 REPO_ROOT="${REPO_ROOT:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
+REPO_ROOT_PARENT="$(cd "$REPO_ROOT/.." && pwd)"
 
 # Argument parsing
 while [[ $# -gt 0 ]]; do
@@ -36,8 +37,10 @@ fi
 
 # Derived paths
 GUI_SRC_DIR="$REPO_ROOT/gui/src"
-PLUGIN_FILE_LINK="$IDA_PLUGINS_DIR/aether-next-plugin.py"
-PLUGIN_FILE_TARGET="$GUI_SRC_DIR/plugin.py"
+GUI_PLUGIN_FILE_LINK="$IDA_PLUGINS_DIR/aether-next-gui.py"
+GUI_PLUGIN_FILE_TARGET="$GUI_SRC_DIR/plugin.py"
+RPC_PLUGIN_FILE_LINK="$IDA_PLUGINS_DIR/aether-next-rpc.py"
+RPC_PLUGIN_FILE_TARGET="$REPO_ROOT_PARENT/packages/rpc/src/gui_plugin.py"
 CONFIG_FILE_TARGET="$GUI_SRC_DIR/aether-next-config.json"
 CONFIG_FILE_LINK="$IDA_PLUGINS_DIR/aether-next-config.json"
 REQUIREMENTS_FILE="$REPO_ROOT/gui/scripts/utils/requirements.txt"
@@ -66,13 +69,25 @@ if [[ ! -d "$IDA_PLUGINS_DIR" ]]; then
     exit 1
 fi
 
-# Plugin symlink — remove stale link then recreate
-if [[ -L "$PLUGIN_FILE_LINK" || -f "$PLUGIN_FILE_LINK" ]]; then
-    rm -f "$PLUGIN_FILE_LINK"
+if [[ ! -f "$RPC_PLUGIN_FILE_TARGET" ]]; then
+    echo "ERROR: RPC plugin file not found: $RPC_PLUGIN_FILE_TARGET" >&2
+    exit 1
 fi
 
-ln -s "$PLUGIN_FILE_TARGET" "$PLUGIN_FILE_LINK"
-echo "Symlink created: $PLUGIN_FILE_LINK -> $PLUGIN_FILE_TARGET"
+# Plugin symlink — remove stale link then recreate
+if [[ -L "$GUI_PLUGIN_FILE_LINK" || -f "$GUI_PLUGIN_FILE_LINK" ]]; then
+    rm -f "$GUI_PLUGIN_FILE_LINK"
+fi
+
+ln -s "$GUI_PLUGIN_FILE_TARGET" "$GUI_PLUGIN_FILE_LINK"
+echo "Symlink created: $GUI_PLUGIN_FILE_LINK -> $GUI_PLUGIN_FILE_TARGET"
+
+if [[ -L "$RPC_PLUGIN_FILE_LINK" || -f "$RPC_PLUGIN_FILE_LINK" ]]; then
+    rm -f "$RPC_PLUGIN_FILE_LINK"
+fi
+
+ln -s "$RPC_PLUGIN_FILE_TARGET" "$RPC_PLUGIN_FILE_LINK"
+echo "Symlink created: $RPC_PLUGIN_FILE_LINK -> $RPC_PLUGIN_FILE_TARGET"
 
 # Config file — create if absent, then symlink
 if [[ ! -f "$CONFIG_FILE_TARGET" ]]; then
@@ -87,4 +102,4 @@ fi
 ln -s "$CONFIG_FILE_TARGET" "$CONFIG_FILE_LINK"
 echo "Symlink created: $CONFIG_FILE_LINK -> $CONFIG_FILE_TARGET"
 
-echo "Installed AETHER GUI plugin links in: $IDA_PLUGINS_DIR"
+echo "Installed AETHER GUI and RPC plugin links in: $IDA_PLUGINS_DIR"

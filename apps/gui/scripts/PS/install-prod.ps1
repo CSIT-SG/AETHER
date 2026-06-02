@@ -7,10 +7,12 @@ param(
 .(Join-Path $PSScriptRoot "utils\checks.ps1")
 
 
-$pluginFileDest = Join-Path $IdaPluginsDir "aether-next-plugin.py"
+$guiPluginFileDest = Join-Path $IdaPluginsDir "aether-next-gui.py"
+$rpcPluginFileDest = Join-Path $IdaPluginsDir "aether-next-rpc.py"
 $pluginPackageDir = Join-Path $IdaPluginsDir "aether-next"
 $ReuqirementsFile = Join-Path $RepoRoot "apps\gui\scripts\utils\requirements.txt"
-$pluginShimSource = Join-Path $pluginPackageDir "apps\gui\src\plugin.py"
+$guiPluginShimSource = Join-Path $pluginPackageDir "apps\gui\src\plugin.py"
+$rpcPluginShimSource = Join-Path $pluginPackageDir "packages\rpc\src\gui_plugin.py"
 $configSource = Join-Path $pluginPackageDir "apps\gui\src\aether-next-config.json"
 
 
@@ -54,14 +56,23 @@ if ($LASTEXITCODE -eq 1) {
 }
 
 
-if (Test-Path $pluginFileDest) {
-    Write-Host "Existing plugin shim found. Removing: $pluginFileDest"
-    Remove-Item -LiteralPath $pluginFileDest -Force
+if (Test-Path $guiPluginFileDest) {
+    Write-Host "Existing GUI plugin shim found. Removing: $guiPluginFileDest"
+    Remove-Item -LiteralPath $guiPluginFileDest -Force
 }
 
-Write-Host "Plugin shim removed `nCreating symbolic link for plugin shim: $pluginFileDest -> $pluginShimSource"
+Write-Host "GUI plugin shim removed `nCreating symbolic link for GUI plugin shim: $guiPluginFileDest -> $guiPluginShimSource"
 
-New-Item -ItemType SymbolicLink -Path $pluginFileDest -Target $pluginShimSource | Out-Null
+New-Item -ItemType SymbolicLink -Path $guiPluginFileDest -Target $guiPluginShimSource | Out-Null
+
+if (Test-Path $rpcPluginFileDest) {
+    Write-Host "Existing RPC plugin shim found. Removing: $rpcPluginFileDest"
+    Remove-Item -LiteralPath $rpcPluginFileDest -Force
+}
+
+Write-Host "RPC plugin shim removed `nCreating symbolic link for RPC plugin shim: $rpcPluginFileDest -> $rpcPluginShimSource"
+
+New-Item -ItemType SymbolicLink -Path $rpcPluginFileDest -Target $rpcPluginShimSource | Out-Null
 
 # Create a symlink to the config file so users can edit it from the plugins dir
 $configLinkDest = Join-Path $IdaPluginsDir "aether-next-config.json"
@@ -74,4 +85,4 @@ if (Test-Path $configLinkDest) {
 
 New-Item -ItemType SymbolicLink -Path $configLinkDest -Target $configSource | Out-Null
 
-Write-Host "Installed AETHER GUI production artifacts in: $IdaPluginsDir" -ForegroundColor Green
+Write-Host "Installed AETHER GUI and RPC production artifacts in: $IdaPluginsDir" -ForegroundColor Green

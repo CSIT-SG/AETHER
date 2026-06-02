@@ -1,14 +1,16 @@
 param(
     [string]$IdaPluginsDir = (Join-Path $env:APPDATA "Hex-Rays\IDA Pro\plugins"),
-    [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")),
+    [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..\..")),
     [string]$PythonPath = (Get-Command python).Path
 )
 
 .(Join-Path $PSScriptRoot "utils\checks.ps1")
 
-$guiSrcDir = Join-Path $RepoRoot "gui\src"
-$pluginFileLink = Join-Path $IdaPluginsDir "aether-next-plugin.py"
-$pluginFileTarget = Join-Path $guiSrcDir "plugin.py"
+$guiSrcDir = Join-Path $RepoRoot "apps\gui\src"
+$guiPluginFileLink = Join-Path $IdaPluginsDir "aether-next-gui.py"
+$guiPluginFileTarget = Join-Path $guiSrcDir "plugin.py"
+$rpcPluginFileLink = Join-Path $IdaPluginsDir "aether-next-rpc.py"
+$rpcPluginFileTarget = Join-Path $RepoRoot "packages\rpc\src\gui_plugin.py"
 $configFileTarget = Join-Path $guiSrcDir "aether-next-config.json"
 $configFileLink = Join-Path $IdaPluginsDir "aether-next-config.json"
 
@@ -27,11 +29,21 @@ if (-not (Test-Path $IdaPluginsDir)) {
     throw "IDA plugins directory not found: $IdaPluginsDir"
 }
 
-if (Test-Path $pluginFileLink) {
-    Remove-Item -LiteralPath $pluginFileLink -Force
+if (-not (Test-Path $rpcPluginFileTarget)) {
+    throw "RPC plugin file not found: $rpcPluginFileTarget"
 }
 
-cmd /c mklink "$pluginFileLink" "$pluginFileTarget"
+if (Test-Path $guiPluginFileLink) {
+    Remove-Item -LiteralPath $guiPluginFileLink -Force
+}
+
+cmd /c mklink "$guiPluginFileLink" "$guiPluginFileTarget"
+
+if (Test-Path $rpcPluginFileLink) {
+    Remove-Item -LiteralPath $rpcPluginFileLink -Force
+}
+
+cmd /c mklink "$rpcPluginFileLink" "$rpcPluginFileTarget"
 
 # Ensure a config file exists in the GUI source and create a symlink in the IDA plugins dir
 if (-not (Test-Path $configFileTarget)) {
@@ -46,4 +58,4 @@ if (Test-Path $configFileLink) {
 
 cmd /c mklink "$configFileLink" "$configFileTarget"
 
-Write-Host "Installed AETHER GUI plugin links in: $IdaPluginsDir" -ForegroundColor Green
+Write-Host "Installed AETHER GUI and RPC plugin links in: $IdaPluginsDir" -ForegroundColor Green

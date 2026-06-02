@@ -1,5 +1,10 @@
+import json
 import sys
+import urllib.request
 from pathlib import Path
+
+import aether_rpc.capabilities as caps
+import idaapi
 
 # We can't import the find_repo_root function from aether_utils because it relies on workspace imports, which wont work until we add the necessary paths to sys.path.
 # Instead, we re-implement the logic here to find the repo root and add the necessary paths to sys.path.
@@ -40,17 +45,13 @@ def _add_workspace_package_paths() -> None:
 _add_workspace_package_paths()
 
 
-import urllib.request
-import json
-import idaapi
-
-import aether_rpc.capabilities as caps
-from aether_rpc import RPCServer, GUIExecutor
-from aether_utils.logger import get_logger
+from aether_rpc import RPCServer  # noqa: E402
+from aether_rpc.executors.gui_executor import GUIExecutor  # noqa: E402
+from aether_utils.logger import get_logger  # noqa: E402
 
 CONTROLLER_URL = "http://127.0.0.1:13337"
 CAPABILITIES = [getattr(caps, c)() for c in caps.__all__]
-logger = get_logger("mcp_plugin")
+logger = get_logger("rpc_plugin")
 
 
 class RPCPlugin(idaapi.plugin_t):
@@ -61,6 +62,7 @@ class RPCPlugin(idaapi.plugin_t):
     wanted_hotkey = ""
 
     def init(self) -> int:
+        print("Initializing RPC plugin...")
         executor = GUIExecutor()
         self._server = RPCServer(executor, CAPABILITIES)
         self._server.start()
@@ -71,7 +73,7 @@ class RPCPlugin(idaapi.plugin_t):
     def term(self) -> None:
         self._server.stop()
         # self._deregister(self._server.port)
-        logger.info("[mcp] RPC server stopped")
+        logger.info("RPC server stopped")
 
     def run(self, arg: int) -> None:
         pass
@@ -94,7 +96,7 @@ class RPCPlugin(idaapi.plugin_t):
         try:
             urllib.request.urlopen(req, timeout=3)
         except Exception as e:
-            logger.error(f"[mcp] controller unreachable: {e}")
+            logger.error(f"controller unreachable: {e}")
 
 
 def PLUGIN_ENTRY() -> idaapi.plugin_t:

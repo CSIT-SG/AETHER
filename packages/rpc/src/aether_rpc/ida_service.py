@@ -1,8 +1,10 @@
-from rpyc import Service
-from asyncio import get_event_loop
-from .executors.base import IDAExecutor
-from .capabilities.base import Capability
+import asyncio
 from functools import wraps
+
+from rpyc import Service
+
+from .capabilities.base import Capability
+from .executors.base import IDAExecutor
 
 
 class IDAService(Service):  # type: ignore[misc]
@@ -26,6 +28,11 @@ class IDAService(Service):  # type: ignore[misc]
 
         @wraps(cap.execute)  # preserves the signature rpyc reflects
         def _handler(**kwargs):
-            return get_event_loop().run_until_complete(self._executor.execute(cap.execute, kwargs))
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            return loop.run_until_complete(self._executor.execute(cap.execute, kwargs))
 
         return _handler
