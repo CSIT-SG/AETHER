@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8
+        with:
+          python-version: 3.12
+
+      - name: Run pytest
+        run: uv run pytest
+
+  build:
+    name: Build docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build Docker image
+        run: docker build -f apps/docs/Dockerfile -t aether-docs .
+
+      - name: Extract standalone artifact
+        run: |
+          docker create --name docs-extract aether-docs
+          docker cp docs-extract:/app ./docs-standalone
+          docker rm docs-extract
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-standalone
+          path: docs-standalone
+          retention-days: 7

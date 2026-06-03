@@ -17,4 +17,4 @@ export default {
 		}
 		return {};
 	})(),
-} satisfies MetaRecord;
+} as MetaRecord;
