@@ -17,18 +17,6 @@ DEFAULT_INSTALLER_IGNORE = [
 ]
 
 
-@pytest.fixture(autouse=True)
-def reset_installer_state() -> Generator[None, None, None]:
-    """Reset installer module global state before each test."""
-    import installer
-
-    installer.IGNORE[:] = DEFAULT_INSTALLER_IGNORE.copy()
-    installer.REGEXES.clear()
-    yield
-    installer.IGNORE[:] = DEFAULT_INSTALLER_IGNORE.copy()
-    installer.REGEXES.clear()
-
-
 @pytest.fixture
 def tmp_root(tmp_path: Path) -> Path:
     """

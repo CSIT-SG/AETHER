@@ -8,7 +8,7 @@ PARENT_DIR = Path(__file__).parent.parent
 sys.path.append(str(PARENT_DIR))
 
 import installer
-from installer import format_to_regex, main, scan
+from installer import format_to_regex, main, scan, REGEXES, IGNORE
 
 
 def _reset_globals() -> None:
@@ -16,8 +16,8 @@ def _reset_globals() -> None:
     installer.py uses module-level mutable lists (IGNORE, REGEXES).
     Reset them before each test so state never leaks between tests.
     """
-    installer.IGNORE[:] = [".gitignore", "CONTRIBUTING.md", ".git", "pyrightconfig.json", "uv.lock"]
-    installer.REGEXES.clear()
+    IGNORE[:] = [".gitignore", "CONTRIBUTING.md", ".git", "pyrightconfig.json", "uv.lock"]
+    REGEXES.clear()
 
 
 class TestFormatToRegex:
@@ -63,19 +63,19 @@ class TestScan:
         assert scan("anything.py") is False
 
     def test_returns_true_for_matching_pattern(self) -> None:
-        installer.REGEXES.append(re.compile(r"ignored_dir"))
+        REGEXES.append(re.compile(r"ignored_dir"))
         assert scan("ignored_dir") is True
 
     def test_returns_false_for_non_matching_pattern(self) -> None:
-        installer.REGEXES.append(re.compile(r"ignored_dir"))
+        REGEXES.append(re.compile(r"ignored_dir"))
         assert scan("allowed_dir") is False
 
     def test_returns_true_for_glob_match(self) -> None:
-        installer.REGEXES.append(format_to_regex("*.pyc"))
+        REGEXES.append(format_to_regex("*.pyc"))
         assert scan("module.pyc") is True
 
     def test_returns_false_for_glob_non_match(self) -> None:
-        installer.REGEXES.append(format_to_regex("*.pyc"))
+        REGEXES.append(format_to_regex("*.pyc"))
         assert scan("module.py") is False
 
 
