@@ -1,3 +1,72 @@
+import { Callout } from "nextra/components"
+
 # Creating Capabilities
 
-TODO: document rpc once its merged
+The motivation for this rpc server is to have a way to expose functionality from IDA Pro to the outside world. 
+We accomplish this by using [rpyc](https://rpyc.readthedocs.io/en/latest/), which allows us to expose a python API through its custom protocol.
+
+In doing so, we can define a set of "capabilities", which are essentially wrappers around the IDA Pro API that we want to expose.
+
+![RPC](/rpc.svg)
+
+The RPC server can be broken down into an equation where we combine all the capabilities (which are simply functor classes) we want to expose 
+with an executor which handles the actual execution of the code in IDA Pro. 
+You can read more about the executor in the [about RPC entrypoints](./about-rpc-entrypoints.mdx) doc.
+
+## Writing a new capability
+
+To write a new capability, we need to create a new class that inherits from the `Capability` base class.
+
+```python
+# capabilities/base.py
+class Capability(ABC):
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        pass
+
+    @abstractmethod
+    def execute(self, *args: Any, **kwargs: Any) -> Any:
+        pass
+
+# capabilities/get_function_size.py
+class GetFunctionSize(Capability):
+    @property
+    def name(self) -> str:
+        return "get_function_size"
+    
+    def execute(self, ea: int) -> int:
+        ...
+```
+
+Then export it in the `__init__.py` of the capabilities folder:
+
+```python
+from .get_function_size import GetFunctionSize
+__all__ = [
+    "GetFunctionSize",
+    ...
+]
+```
+
+I've found it useful to think of capabilities as functors, where the `execute` method is analagous to the `__call__` method. 
+These functors are then combined with the executor to create the actual RPC entrypoints that are exposed to the outside world.
+
+<Callout type="warning">
+Note that capabilities should be designed to be atomic, and should not have any side effects. 
+Please do not mutate any server state (apart from the IDA Pro database) in the capabilities.
+
+If needed, you can create shared utility functions to be used across capabilities, but the capabilities themselves should be self contained.
+</Callout>
+
+## Using your capability externally
+
+After exporting the capability, the `Service` layer will automatically pick it up and expose it as an RPC entrypoint. 
+The exposed function name will be the same as the `name` property of the capability, and it will take in the same arguments as the `execute` method.
+
+For example, the `GetFunctionSize` capability will be exposed as an RPC entrypoint like this:
+
+```python
+conn = rpyc.connect(...)
+result = conn.root.get_function_size(ea=0x401000)
+```

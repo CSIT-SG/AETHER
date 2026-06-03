@@ -1,0 +1,40 @@
+# About RPC Entrypoints
+
+We need to allow different clients to be able to run the RPC server. Hence, we implement the executor layer.
+
+Each entrypoint (client type) will then be able to run the server with its own executor. 
+The entrypoint should inject the executor dependency into the server.
+
+```python
+# executors/base.py
+class IDAExecutor(ABC):
+    """Runs IDA operations. Impl decides whether that's GUI or headless."""
+
+    @abstractmethod
+    async def execute(self, callback: Callable[..., Any], arguments: dict[str, Any]) -> Any:
+        """Dispatch a single IDA operation by method name."""
+
+    @abstractmethod
+    async def startup(self) -> None:
+        """Called once when the RPC server starts."""
+
+    @abstractmethod
+    async def shutdown(self) -> None:
+        """Called once when the RPC server stops."""
+
+# my_entrypoint.py
+CAPABILITIES = ...
+executor = GUIExecutor() # or any other type
+self._server = RPCServer(executor, CAPABILITIES)
+```
+
+To write your own executor, you must basically define what happens when the server is started and stopped (can be opening/closing an ida database).
+Importantly, you must use the IDA api to actually perform the operation and return the result of the operation.
+
+For example,
+```python
+async def execute(self, callback: Callable[..., Any], arguments: dict[str, Any]) -> Any:
+    apply = partial(callback, **arguments)
+    # run the callback in the main thread and wait for the result, since IDA's API is not thread safe
+    return ida_kernwin.execute_sync(apply, ida_kernwin.MFF_FAST)
+```

@@ -3,7 +3,6 @@ import sys
 import urllib.request
 from pathlib import Path
 
-import aether_rpc.capabilities as caps
 import idaapi
 
 # We can't import the find_repo_root function from aether_utils because it relies on workspace imports, which wont work until we add the necessary paths to sys.path.
@@ -45,10 +44,12 @@ def _add_workspace_package_paths() -> None:
 _add_workspace_package_paths()
 
 
+import aether_rpc.capabilities as caps  # noqa: E402
 from aether_rpc import RPCServer  # noqa: E402
 from aether_rpc.executors.gui_executor import GUIExecutor  # noqa: E402
 from aether_utils.logger import get_logger  # noqa: E402
 
+# TODO: implement registration with mcp server
 CONTROLLER_URL = "http://127.0.0.1:13337"
 CAPABILITIES = [getattr(caps, c)() for c in caps.__all__]
 logger = get_logger("rpc_plugin")
