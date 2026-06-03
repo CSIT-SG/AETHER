@@ -45,4 +45,3 @@ def test_load_config_rejects_unknown_subagent_model(mock_config_file: Path) -> N
 
     with pytest.raises(ValueError, match="GATHERER_MODEL"):
         load_config()
-

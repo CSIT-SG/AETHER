@@ -1,6 +1,32 @@
-import pytest
-from pathlib import Path
+import sys
 from collections.abc import Generator
+from pathlib import Path
+
+import pytest
+
+UTILS_ROOT = Path(__file__).resolve().parent.parent
+if str(UTILS_ROOT) not in sys.path:
+    sys.path.insert(0, str(UTILS_ROOT))
+
+DEFAULT_INSTALLER_IGNORE = [
+    ".gitignore",
+    "CONTRIBUTING.md",
+    ".git",
+    "pyrightconfig.json",
+    "uv.lock",
+]
+
+
+@pytest.fixture(autouse=True)
+def reset_installer_state() -> Generator[None, None, None]:
+    """Reset installer module global state before each test."""
+    import installer
+
+    installer.IGNORE[:] = DEFAULT_INSTALLER_IGNORE.copy()
+    installer.REGEXES.clear()
+    yield
+    installer.IGNORE[:] = DEFAULT_INSTALLER_IGNORE.copy()
+    installer.REGEXES.clear()
 
 
 @pytest.fixture

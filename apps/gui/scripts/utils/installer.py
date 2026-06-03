@@ -1,10 +1,9 @@
-from os.path import join
-import re
-import os
 import fnmatch
-import sys
+import os
+import re
 import shutil
-
+import sys
+from os.path import join
 
 IGNORE: list[str] = [".gitignore", "CONTRIBUTING.md", ".git", "pyrightconfig.json", "uv.lock"]
 REGEXES: list[re.Pattern[str]] = []
@@ -25,11 +24,16 @@ def scan(path: str) -> bool:
 
 def main(plugin_dir: str, root: str) -> None:
     # read the .gitignore file
-    with open(join(root, ".gitignore")) as f:
-        for line in f:
-            line = line.strip()
-            if line and not line.startswith("#"):
-                IGNORE.append(line)
+    try:
+        with open(join(root, ".gitignore")) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#"):
+                    IGNORE.append(line)
+    except FileNotFoundError:
+        print(
+            f"[INSTALLER] No .gitignore found at {join(root, '.gitignore')}, proceeding with default ignore list."
+        )
     # format patterns into regex
     for pattern in IGNORE:
         REGEXES.append(format_to_regex(pattern))
