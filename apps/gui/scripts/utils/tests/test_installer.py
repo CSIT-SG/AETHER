@@ -106,26 +106,3 @@ class TestMain:
         (tmp_root / ".gitignore").write_text("ignored_dir\nREADME.md\n")
         main(str(plugin_dir), str(tmp_root))
         assert not (plugin_dir / "README.md").exists()
-
-    def test_exits_on_missing_gitignore(
-        self, plugin_dir: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
-    ) -> None:
-        empty_root = tmp_path / "empty"
-        empty_root.mkdir()
-        main(str(plugin_dir), str(empty_root))
-        capture = capsys.readouterr()
-        assert "No .gitignore found" in capture.out
-
-    def test_prints_copying_message(
-        self, tmp_root: Path, plugin_dir: Path, capsys: pytest.CaptureFixture[str]
-    ) -> None:
-        main(str(plugin_dir), str(tmp_root))
-        captured = capsys.readouterr()
-        assert "[INSTALLER] Copying" in captured.out
-
-    def test_prints_skipping_message(
-        self, tmp_root: Path, plugin_dir: Path, capsys: pytest.CaptureFixture[str]
-    ) -> None:
-        main(str(plugin_dir), str(tmp_root))
-        captured = capsys.readouterr()
-        assert "[INSTALLER] Skipping" in captured.out

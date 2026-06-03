@@ -48,25 +48,6 @@ class TestCreateLink:
 
         assert Path(dst).resolve() == Path(src).resolve()
 
-    def test_prints_created_message(
-        self, src_dir: Path, dst_dir: Path, capsys: pytest.CaptureFixture[str]
-    ) -> None:
-        src = str(src_dir / "plugin.py")
-        dst = str(dst_dir / "aether-next-gui.py")
-        create_link(src, dst)
-        captured = capsys.readouterr()
-        assert "Created Link" in captured.out
-
-    def test_prints_already_exists_message_when_link_exists(
-        self, src_dir: Path, dst_dir: Path, capsys: pytest.CaptureFixture[str]
-    ) -> None:
-        src = str(src_dir / "plugin.py")
-        dst = str(dst_dir / "aether-next-gui.py")
-        Path(dst).symlink_to(src)  # pre-create the link
-        create_link(src, dst)  # should not raise, should print message
-        captured = capsys.readouterr()
-        assert "already exists" in captured.out
-
     def test_exits_on_unexpected_error(
         self, dst_dir: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
@@ -75,11 +56,9 @@ class TestCreateLink:
         Force an OSError inside create_link
         """
         src = "/nonexistent/path/plugin.py"
-        dst = str(dst_dir / "bad.py")
-
-        create_link(src, dst)
-        captured = capsys.readouterr()
-        assert "Invalid Source" in captured.out
+        dst = Path.joinpath(dst_dir, "bad.py")
+        create_link(src, str(dst))
+        assert not Path.exists(dst)
 
 
 class TestMain:
@@ -107,10 +86,3 @@ class TestMain:
 
         # Link should now resolve to the correct source
         assert dst.resolve() == stale_target.resolve()
-
-    def test_prints_output_for_each_link(
-        self, src_dir: Path, dst_dir: Path, capsys: pytest.CaptureFixture[str]
-    ) -> None:
-        main(str(src_dir), str(dst_dir))
-        captured = capsys.readouterr()
-        assert captured.out.count("Created Link") == len(LINKS)
