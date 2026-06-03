@@ -1,8 +1,8 @@
+import ida_hexrays
 import ida_idaapi
 import ida_name
 
 from ..base import Capability
-from ..utils import decompile_or_none
 
 
 class GetFunctionPseudocode(Capability):
@@ -31,7 +31,7 @@ class GetFunctionPseudocode(Capability):
         if ea == ida_idaapi.BADADDR:
             return "None"
 
-        result["code"] = decompile_or_none(ea)
+        result["code"] = ida_hexrays.decompile(ea)
 
         if not result or result["code"] is None:
             self.logger.error(f"Function '{function_name}' not found")

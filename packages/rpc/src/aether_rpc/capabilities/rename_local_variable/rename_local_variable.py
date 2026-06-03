@@ -3,7 +3,7 @@ import ida_hexrays
 import ida_kernwin
 
 from ..base import Capability
-from ..utils import decompile_or_none, resolve_effective_address
+from ..utils import resolve_effective_address
 
 
 class RenameLocalVariable(Capability):
@@ -31,7 +31,7 @@ class RenameLocalVariable(Capability):
             self.logger.error(f"No function found at {hex(ea)}")
             return False
 
-        cfunc = decompile_or_none(func.start_ea)
+        cfunc = ida_hexrays.decompile(func.start_ea)
         if cfunc is None:
             self.logger.error(f"Failed to decompile function at {hex(func.start_ea)}")
             return False

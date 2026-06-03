@@ -1,10 +1,11 @@
 import ida_bytes
 import ida_funcs
+import ida_hexrays
 import idaapi
 import idc
 
 from ..base import Capability
-from ..utils import decompile_or_none, resolve_effective_address
+from ..utils import resolve_effective_address
 
 
 class SetComment(Capability):
@@ -27,7 +28,7 @@ class SetComment(Capability):
             comment: Text to write. Pass an empty string to clear.
         """
         ea = resolve_effective_address(address)
-        cfunc = decompile_or_none(ea)
+        cfunc = ida_hexrays.decompile(ea)
 
         if cfunc is None:
             self.logger.error(f"Failed to decompile at {hex(ea)}")

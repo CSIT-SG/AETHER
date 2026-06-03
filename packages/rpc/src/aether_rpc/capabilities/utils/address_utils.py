@@ -1,3 +1,6 @@
+"""Address-related utilities for capability modules."""
+
+
 def resolve_effective_address(address: str) -> int:
     """Resolve a hex or decimal string address to an integer EA.
 
