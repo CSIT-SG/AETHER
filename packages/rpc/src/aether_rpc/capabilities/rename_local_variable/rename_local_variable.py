@@ -1,6 +1,5 @@
 import ida_funcs
 import ida_hexrays
-import ida_kernwin
 
 from ..base import Capability
 from ..utils import refresh_pseudocode, resolve_effective_address
