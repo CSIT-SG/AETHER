@@ -2,7 +2,7 @@ import ida_name
 import idautils
 
 from ..base import Capability
-from ..utils import collect_xrefs, resolve_effective_address
+from ..utils import XrefsResult, collect_xrefs, resolve_effective_address
 
 
 class GetXrefsTo(Capability):
@@ -12,7 +12,7 @@ class GetXrefsTo(Capability):
     def name(self) -> str:
         return "get_xrefs_to"
 
-    def execute(self, location: str | int) -> dict | None:
+    def execute(self, location: str | int) -> XrefsResult | None:
         """Find all locations that reference the given address or symbol name.
 
         Args:

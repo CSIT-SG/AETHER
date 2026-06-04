@@ -4,9 +4,10 @@ import ida_name
 import idautils
 
 from .function_utils import function_info
+from .typings import XrefEntry
 
 
-def collect_xrefs(xref) -> dict[str, Any]:
+def collect_xrefs(xref) -> XrefEntry:
     """Build a structured entry describing a single cross-reference.
 
     Flattens an IDA xref object into a serializable dict that includes

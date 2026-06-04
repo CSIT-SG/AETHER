@@ -3,8 +3,10 @@
 import ida_funcs
 import idc
 
+from .typings import FunctionInfo, FunctionMetadata
 
-def function_info(ea: int) -> dict[str, str | int] | None:
+
+def function_info(ea: int) -> FunctionInfo | None:
     """Return brief identifying info for the function containing ``ea``.
 
     Lightweight companion to ``get_function``: returns just the name and
@@ -29,7 +31,7 @@ def function_info(ea: int) -> dict[str, str | int] | None:
         "start_address": hex(func.start_ea),
     }
 
-def get_function(ea: int) -> dict[str, str | int] | None:
+def get_function(ea: int) -> FunctionMetadata | None:
     """Return metadata for the function containing ``ea``.
 
     Looks up the ``func_t`` containing the given address and extracts the

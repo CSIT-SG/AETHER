@@ -6,7 +6,13 @@ import ida_name
 import idautils
 
 from ..base import Capability
-from ..utils import collect_xrefs, function_info, resolve_effective_address
+from ..utils import (
+    AddressData,
+    PointerInfo,
+    collect_xrefs,
+    function_info,
+    resolve_effective_address,
+)
 
 
 class GetDataAtAddress(Capability):
@@ -16,7 +22,7 @@ class GetDataAtAddress(Capability):
     def name(self) -> str:
         return "get_data_at_address"
 
-    def execute(self, location: str | int) -> dict | None:
+    def execute(self, location: str | int) -> AddressData | None:
         """Collect and return all available data at the given address or symbol.
 
         Args:
@@ -39,20 +45,20 @@ class GetDataAtAddress(Capability):
         item_size = max(ida_bytes.get_item_size(ea), 1)
         raw = ida_bytes.get_bytes(ea, item_size)
 
-        result = {
-            "address": hex(ea),
-            "name": ida_name.get_name(ea) or None,
-            "function": function_info(ea),
-            "item_size": item_size,
-            "raw_bytes": raw.hex() if raw else "",
-            "is_code": bool(ida_bytes.is_code(flags)),
-            "is_data": bool(ida_bytes.is_data(flags)),
-            "disassembly": self._get_disassembly(ea, flags),
-            "string": self._get_string(ea, flags),
-            "pointer": self._get_pointer(ea, flags),
-            "xrefs_to": [collect_xrefs(x) for x in idautils.XrefsTo(ea)],
-            "xrefs_from": [collect_xrefs(x) for x in idautils.XrefsFrom(ea)],
-        }
+        result = AddressData(
+            address=hex(ea),
+            name=ida_name.get_name(ea) or None,
+            function=function_info(ea),
+            item_size=item_size,
+            raw_bytes=raw.hex() if raw else "",
+            is_code=bool(ida_bytes.is_code(flags)),
+            is_data=bool(ida_bytes.is_data(flags)),
+            disassembly=self._get_disassembly(ea, flags),
+            string=self._get_string(ea, flags),
+            pointer=self._get_pointer(ea, flags),
+            xrefs_to=[collect_xrefs(x) for x in idautils.XrefsTo(ea)],
+            xrefs_from=[collect_xrefs(x) for x in idautils.XrefsFrom(ea)],
+        )
 
         return result
 
@@ -102,7 +108,7 @@ class GetDataAtAddress(Capability):
             return None
         return contents.decode("utf-8", errors="replace")
 
-    def _get_pointer(self, ea: int, flags: int) -> dict | None:
+    def _get_pointer(self, ea: int, flags: int) -> PointerInfo | None:
         """Return pointer info if ``ea`` holds a value that points into the database.
 
         Reads a pointer-sized word at ``ea`` (8 bytes on 64-bit databases,
@@ -115,7 +121,7 @@ class GetDataAtAddress(Capability):
             flags: Pre-fetched flags for ``ea`` from ``ida_bytes.get_flags``.
 
         Returns:
-            A dict with ``value`` (hex string of the target address) and
+            A PointerInfo instance with ``value`` (hex string of the target address) and
             ``name`` (symbol at the target, or ``None``), or ``None`` if
             ``ea`` is not data or the value does not point into the database.
         """

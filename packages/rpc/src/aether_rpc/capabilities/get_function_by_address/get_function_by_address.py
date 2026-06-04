@@ -1,7 +1,6 @@
-from typing import Any
 
 from ..base import Capability
-from ..utils import get_function, resolve_effective_address
+from ..utils import FunctionMetadata, get_function, resolve_effective_address
 
 
 class GetFunctionByAddress(Capability):
@@ -11,7 +10,7 @@ class GetFunctionByAddress(Capability):
     def name(self) -> str:
         return "get_function_by_address"
 
-    def execute(self, address: str | int) -> dict[str, Any] | None:
+    def execute(self, address: str | int) -> FunctionMetadata | None:
         """Look up the function enclosing the given address and return its metadata.
 
         Args:

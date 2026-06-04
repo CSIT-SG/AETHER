@@ -1,7 +1,5 @@
-from typing import Any
-
 from ..base import Capability
-from ..utils import get_function, resolve_function_name
+from ..utils import FunctionMetadata, get_function, resolve_function_name
 
 
 class GetFunctionByName(Capability):
@@ -11,7 +9,7 @@ class GetFunctionByName(Capability):
     def name(self) -> str:
         return "get_function_by_name"
 
-    def execute(self, function_name: str) -> dict[str, Any] | None:
+    def execute(self, function_name: str) -> FunctionMetadata | None:
         """Look up a function by name and return its metadata.
 
         Args:
