@@ -1,6 +1,4 @@
-# rpc/executors/headless.py
 import os
-import sys
 from collections.abc import Callable
 from typing import Any
 
@@ -21,8 +19,8 @@ def configure_idapro(ida_install_dir: str) -> None:
     os.environ.setdefault("IDADIR", ida_install_dir)
 
     # Also needs to be on sys.path so ida_* modules (ida_funcs, idc, etc.) are importable
-    if ida_install_dir not in sys.path:
-        sys.path.insert(0, ida_install_dir)
+    # if ida_install_dir not in sys.path:
+    #     sys.path.insert(0, ida_install_dir)
 
     # CLANKER output: needs to be verified.
     # idapro itself looks for the license via IDAUSR or the standard IDA license path.
