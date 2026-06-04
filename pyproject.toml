@@ -5,8 +5,9 @@ members = ["apps/*", "packages/*"]
 aether_core = { workspace = true }
 aether_cli = { workspace = true }
 aether_gui = { workspace = true }
-aether_ui = { workspace = true }
 aether_utils = { workspace = true }
+aether_rpc = { workspace = true }
+aether_mcp = { workspace = true }
 
 [project]
 name = "aether-next"
@@ -64,6 +65,5 @@ testpaths = ["apps", "packages"]
 python_files = ["test_*.py"]
 
 markers = [
-    "integration: marks tests as integration tests",
-    "unit: marks tests as unit tests",
+    "depends-ida: marks tests that require IDA Pro to run",
 ]

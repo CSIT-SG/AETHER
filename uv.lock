@@ -69,7 +69,7 @@ requires-dist = [
 [[package]]
 name = "aether-mcp"
 version = "0.1.0"
-source = { virtual = "packages/mcp" }
+source = { editable = "packages/mcp" }
 dependencies = [
     { name = "httpx" },
     { name = "mcp" },
@@ -109,7 +109,7 @@ dev = [
 [[package]]
 name = "aether-rpc"
 version = "0.1.0"
-source = { virtual = "packages/rpc" }
+source = { editable = "packages/rpc" }
 dependencies = [
     { name = "idapro" },
     { name = "pydantic" },
