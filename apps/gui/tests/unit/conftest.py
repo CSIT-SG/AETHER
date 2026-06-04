@@ -1,6 +1,4 @@
-import os
 import sys
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -8,6 +6,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
+from scripts.utils.linker import LINKS
 
 DEFAULT_INSTALLER_IGNORE = [
     ".gitignore",
@@ -16,25 +15,6 @@ DEFAULT_INSTALLER_IGNORE = [
     "pyrightconfig.json",
     "uv.lock",
 ]
-
-
-def _can_create_symlink() -> bool:
-    if not hasattr(os, "symlink"):
-        return False
-    try:
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            src = Path(tmp_dir) / "src.txt"
-            dst = Path(tmp_dir) / "dst.txt"
-            src.write_text("x")
-            os.symlink(src, dst)
-            return dst.is_symlink()
-    except OSError:
-        return False
-
-
-@pytest.fixture(scope="session")
-def symlink_supported() -> bool:
-    return _can_create_symlink()
 
 
 @pytest.fixture
@@ -79,27 +59,34 @@ def plugin_dir(tmp_path: Path) -> Path:
     return dest
 
 
+# conftest.py — build src_dir from LINKS instead of hardcoding
 @pytest.fixture
 def src_dir(tmp_path: Path) -> Path:
-    """
-    Source directory for linker tests containing the files that get symlinked.
-
-        <src_dir>/
-            plugin.py
-            gui_plugin.py
-            aether-next-config.json
-    """
     src = tmp_path / "src"
     src.mkdir()
-    (src / "plugin.py").write_text("# plugin")
-    (src / "gui_plugin.py").write_text("# gui plugin")
-    (src / "aether-next-config.json").write_text("{}")
+    for src_name in LINKS:
+        full_path = src / src_name
+        full_path.parent.mkdir(parents=True, exist_ok=True)
+        suffix = Path(src_name).suffix
+        full_path.write_text("# generated" if suffix == ".py" else "{}")
     return src
 
 
 @pytest.fixture
 def dst_dir(tmp_path: Path) -> Path:
-    """Empty directory that acts as the symlink destination for linker tests."""
     dst = tmp_path / "dst"
     dst.mkdir()
     return dst
+
+
+@pytest.fixture
+def symlink_supported(tmp_path: Path) -> bool:
+    probe_target = tmp_path / "_probe_target"
+    probe_link = tmp_path / "_probe_link"
+    probe_target.write_text("")
+    try:
+        probe_link.symlink_to(probe_target)
+        probe_link.unlink()
+        return True
+    except (OSError, NotImplementedError):
+        return False

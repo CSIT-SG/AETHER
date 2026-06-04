@@ -1,5 +1,6 @@
 from os.path import islink
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from scripts.utils.linker import LINKS, cleanup, create_link, main
@@ -12,16 +13,13 @@ class TestCleanup:
         if not symlink_supported:
             pytest.skip("Symlinks are not permitted on this system.")
         link = dst_dir / "existing.py"
-        link.symlink_to(src_dir / "plugin.py")
+        link.symlink_to(src_dir / "apps" / "gui" / "src" / "plugin.py")
         assert link.is_symlink()
-
         cleanup(str(link))
-
         assert not link.exists()
 
     def test_does_nothing_when_no_link_exists(self, dst_dir: Path) -> None:
-        path = str(dst_dir / "nonexistent.py")
-        cleanup(path)
+        cleanup(str(dst_dir / "nonexistent.py"))
 
     def test_does_not_remove_real_file(self, dst_dir: Path) -> None:
         real_file = dst_dir / "real.py"
@@ -34,11 +32,9 @@ class TestCreateLink:
     def test_creates_symlink(self, src_dir: Path, dst_dir: Path, symlink_supported: bool) -> None:
         if not symlink_supported:
             pytest.skip("Symlinks are not permitted on this system.")
-        src = str(src_dir / "plugin.py")
+        src = str(src_dir / "apps" / "gui" / "src" / "plugin.py")
         dst = str(dst_dir / "aether-next-gui.py")
-
         create_link(src, dst)
-
         assert islink(dst)
 
     def test_symlink_points_to_correct_source(
@@ -46,24 +42,25 @@ class TestCreateLink:
     ) -> None:
         if not symlink_supported:
             pytest.skip("Symlinks are not permitted on this system.")
-        src = str(src_dir / "plugin.py")
+        src = str(src_dir / "apps" / "gui" / "src" / "plugin.py")
         dst = str(dst_dir / "aether-next-gui.py")
-
         create_link(src, dst)
-
         assert Path(dst).resolve() == Path(src).resolve()
 
     def test_exits_on_unexpected_error(
-        self, dst_dir: Path, capsys: pytest.CaptureFixture[str]
+        self, src_dir: Path, dst_dir: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
         """
-        Pass a source path whose parent directory does not exist to
-        Force an OSError inside create_link
+        Patch symlink to raise an unexpected OSError so that sys.exit(1)
+        is triggered inside create_link, bypassing the path.exists() guard.
+        The source must exist so the guard doesn't swallow the call first.
         """
-        src = "/nonexistent/path/plugin.py"
-        dst = Path.joinpath(dst_dir, "bad.py")
-        create_link(src, str(dst))
-        assert not Path.exists(dst)
+        src = str(src_dir / "apps" / "gui" / "src" / "plugin.py")
+        dst = str(dst_dir / "bad.py")
+        with patch("scripts.utils.linker.symlink", side_effect=PermissionError("mocked")):
+            with pytest.raises(SystemExit) as exc_info:
+                create_link(src, dst)
+        assert exc_info.value.code == 1
 
 
 class TestMain:
@@ -91,13 +88,11 @@ class TestMain:
     ) -> None:
         if not symlink_supported:
             pytest.skip("Symlinks are not permitted on this system.")
-        # Pre-create a stale link pointing at a nonexistent path
-        stale_target = src_dir / "plugin.py"
+        stale_target = src_dir / "apps" / "gui" / "src" / "plugin.py"
         dst = dst_dir / "aether-next-gui.py"
         dst.symlink_to("/stale/path/plugin.py")
         assert islink(str(dst))
 
         main(str(src_dir), str(dst_dir))
 
-        # Link should now resolve to the correct source
         assert dst.resolve() == stale_target.resolve()
