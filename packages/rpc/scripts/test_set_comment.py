@@ -3,7 +3,7 @@ import sys
 
 import rpyc
 
-DEFAULT_ADDRESS = "0x000080F0"
+DEFAULT_ADDRESS = "0x140009050"
 
 
 def main() -> int:
@@ -19,7 +19,7 @@ def main() -> int:
     )
     parser.add_argument(
         "--comment",
-        default="test comment from rpc",
+        default="test comment from",
         help="Comment to set at the target address",
     )
     args = parser.parse_args()

@@ -1,5 +1,3 @@
-from typing import Any
-
 import ida_name
 import idautils
 

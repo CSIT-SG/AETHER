@@ -1,6 +1,8 @@
 import ida_bytes
 import ida_funcs
 import ida_hexrays
+import ida_kernwin
+import idc
 
 from ..base import Capability
 from ..utils import resolve_effective_address
@@ -25,6 +27,7 @@ class SetComment(Capability):
             address: Hex or decimal string address of the comment target.
             comment: Text to write. Pass an empty string to clear.
         """
+
         ea = resolve_effective_address(address)
         if ea is None:
             self.logger.error(f"Invalid address: {address}")
@@ -32,29 +35,40 @@ class SetComment(Capability):
 
         func = ida_funcs.get_func(ea)
         if func is None:
-            return self._set_disassembly_comment(ea, comment)
+            self.logger.error("Address %s is not inside a function", hex(ea))
+            return False
 
         if ea == func.start_ea:
-            return self._set_function_comment(func, comment)
+            return self._set_function_header_comment(ea, comment)
 
         return self._set_pseudocode_comment(func, ea, comment)
 
-    def _set_disassembly_comment(self, ea: int, comment: str) -> bool:
-        if not ida_bytes.set_cmt(ea, comment, False):
-            self.logger.error("Failed to set disassembly comment at %s", hex(ea))
-            return False
-        return True
+    def _set_function_header_comment(self, ea: int, comment: str) -> bool:
+        """Write a comment that appears above the function signature in pseudocode.
 
-    def _set_function_comment(self, func: ida_funcs.func_t, comment: str) -> bool:
-        if not ida_funcs.set_func_cmt(func, comment, False):
-            self.logger.error("Failed to set function comment at %s", hex(func.start_ea))
+        Args:
+            func: The function whose header is being annotated.
+            comment: Text to write. Empty string clears the comment.
+        """
+
+        ea = ida_bytes.get_item_head(ea)
+        cfunc = ida_hexrays.decompile(ea)
+        if cfunc is None:
+            self.logger.error("Failed to decompile function at %s", hex(ea))
             return False
+
+        idc.set_func_cmt(ea, comment, 1)
+        cfunc.refresh_func_ctext()
         return True
 
     def _set_pseudocode_comment(self, func: ida_funcs.func_t, ea: int, comment: str) -> bool:
-        if not ida_hexrays.init_hexrays_plugin():
-            self.logger.warning("Hex-Rays unavailable; falling back to disassembly comment at %s", hex(ea))
-            return self._set_disassembly_comment(ea, comment)
+        """Write a Hex-Rays user comment on the AST node at ``ea``.
+
+        Args:
+            func: The function containing ``ea``.
+            ea: Effective address of the statement to annotate.
+            comment: Text to write. Empty string clears the comment.
+        """
 
         try:
             cfunc = ida_hexrays.decompile(func)
@@ -71,4 +85,6 @@ class SetComment(Capability):
         tl.itp = ida_hexrays.ITP_SEMI
         cfunc.set_user_cmt(tl, comment)
         cfunc.save_user_cmts()
+        cfunc.refresh_func_ctext()
+        ida_kernwin.refresh_idaview_anyway()
         return True
