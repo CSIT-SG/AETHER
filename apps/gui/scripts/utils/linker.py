@@ -5,7 +5,7 @@ from os.path import islink, join
 # Global for links to be created, src: dst
 LINKS: dict[str, str] = {
     join("apps", "gui", "src", "plugin.py"): "aether-next-gui.py",
-    join("packages", "rpc", "src", "gui_plugin.py"): "aether-next-rpc.py",
+    join("packages", "rpc", "src", "entrypoint_gui.py"): "aether-next-rpc.py",
     join("apps", "gui", "src", "aether-next-config.json"): "aether-next-config.json",
 }
 
