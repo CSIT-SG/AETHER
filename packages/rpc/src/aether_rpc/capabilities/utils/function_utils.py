@@ -1,5 +1,6 @@
 """Function context and metadata helpers for capabilities."""
 
+import ida_funcs
 import ida_idaapi
 import idc
 
@@ -28,3 +29,16 @@ def function_info(ea: int) -> tuple[str, bool]:
         return context, is_start
     except Exception:
         return "outside_function", False
+
+def get_function(ea: int) -> dict[str, str | int] | None:
+    func = ida_funcs.get_func(ea)
+    if func is None:
+        return None
+
+    return {
+        "name": idc.get_func_name(func.start_ea),
+        "start_address": hex(func.start_ea),
+        "end_address": hex(func.end_ea),
+        "size_bytes": func.size(),
+        "flags": hex(func.flags),
+    }

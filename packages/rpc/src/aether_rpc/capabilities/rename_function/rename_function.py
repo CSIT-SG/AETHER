@@ -12,7 +12,7 @@ class RenameFunction(Capability):
     def name(self) -> str:
         return "rename_function"
 
-    def execute(self, address: str, new_name: str) -> bool:
+    def execute(self, address: str | int, new_name: str) -> bool:
         """Rename the function at the given address.
 
         Args:
@@ -23,6 +23,9 @@ class RenameFunction(Capability):
             True if the rename succeeded, False otherwise.
         """
         ea = resolve_effective_address(address)
+        if ea is None:
+            self.logger.error(f"Invalid address: {address}")
+            return False
 
         func = ida_funcs.get_func(ea)
         if func is None:

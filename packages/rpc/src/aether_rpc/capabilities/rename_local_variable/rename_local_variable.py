@@ -1,6 +1,5 @@
 import ida_funcs
 import ida_hexrays
-import ida_kernwin
 
 from ..base import Capability
 from ..utils import resolve_effective_address
@@ -13,7 +12,7 @@ class RenameLocalVariable(Capability):
     def name(self) -> str:
         return "rename_local_variable"
 
-    def execute(self, function_address: str, old_var_name: str, new_var_name: str) -> bool:
+    def execute(self, function_address: str | int, old_var_name: str, new_var_name: str) -> bool:
         """Rename a local variable in the Hex-Rays decompiled view.
 
         Args:
@@ -25,35 +24,32 @@ class RenameLocalVariable(Capability):
             True if the rename succeeded, False otherwise.
         """
         ea = resolve_effective_address(function_address)
+        if ea is None:
+            self.logger.error(f"Invalid address: {function_address}")
+            return False
 
         func = ida_funcs.get_func(ea)
         if func is None:
             self.logger.error(f"No function found at {hex(ea)}")
             return False
 
-        cfunc = ida_hexrays.decompile(func.start_ea)
+        try:
+            cfunc = ida_hexrays.decompile(ea)
+        except ida_hexrays.DecompilationFailure as e:
+            self.logger.error("Failed to decompile %r: %s", old_var_name, e)
+            return False
+
         if cfunc is None:
             self.logger.error(f"Failed to decompile function at {hex(func.start_ea)}")
             return False
 
-        target = next((v for v in cfunc.get_lvars() if v.name == old_var_name), None)
-        if target is None:
-            self.logger.error(f"Local variable '{old_var_name}' not found in {hex(func.start_ea)}")
+        lvar = next((v for v in cfunc.get_lvars() if v.name == old_var_name), None)
+        if lvar is None:
+            self.logger.error("No local variable named %r in function %r", old_var_name, new_var_name, hex(func.start_ea))
             return False
 
-        info = ida_hexrays.lvar_saved_info_t()
-        info.ll.location = target.location
-        info.ll.defea = target.defea
-        info.type = target.type
-        info.name = new_var_name
-
-        if not ida_hexrays.modify_user_lvar_info(func.start_ea, ida_hexrays.MLI_NAME, info):
-            self.logger.error(f"modify_user_lvar_info failed for '{old_var_name}'")
+        if not ida_hexrays.rename_lvar(func.start_ea, old_var_name, new_var_name):
+            self.logger.error("Failed to rename %r to %r in function %r", old_var_name, new_var_name, hex(func.start_ea))
             return False
 
-        vdui = ida_hexrays.get_widget_vdui(ida_kernwin.get_current_widget())
-        if vdui:
-            vdui.refresh_view(True)
-
-        self.logger.info(f"Renamed '{old_var_name}' to '{new_var_name}' in {hex(func.start_ea)}")
         return True

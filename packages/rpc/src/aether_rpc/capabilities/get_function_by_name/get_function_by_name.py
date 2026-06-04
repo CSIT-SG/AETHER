@@ -1,10 +1,7 @@
 from typing import Any
 
-import ida_funcs
-import ida_idaapi
-import ida_name
-
 from ..base import Capability
+from ..utils import get_function, resolve_function_name
 
 
 class GetFunctionByName(Capability):
@@ -24,21 +21,13 @@ class GetFunctionByName(Capability):
             Dict containing name, start/end address, size, and flags,
             or None if the name cannot be resolved or does not point to a function.
         """
-        ea = ida_name.get_name_ea(ida_idaapi.BADADDR, function_name)
-        if ea == ida_idaapi.BADADDR:
-            self.logger.error(f"Symbol '{function_name}' could not be resolved")
+        ea = resolve_function_name(function_name)
+        if ea is None:
+            self.logger.error(f"Symbol '{function_name}' not found")
             return None
 
-        func = ida_funcs.get_func(ea)
+        func = get_function(ea)
         if func is None:
-            self.logger.error(f"'{function_name}' resolves to {hex(ea)} but is not a valid function")
-            return None
+            self.logger.error(f"Symbol '{function_name}' at {hex(ea)} is not a function")
 
-        self.logger.info(f"'{function_name}' resolved to function at {hex(func.start_ea)}")
-        return {
-            "name": function_name,
-            "start_address": hex(func.start_ea),
-            "end_address": hex(func.end_ea),
-            "size_bytes": func.size(),
-            "flags": hex(func.flags),
-        }
+        return func
