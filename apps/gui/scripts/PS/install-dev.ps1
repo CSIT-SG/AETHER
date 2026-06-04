@@ -24,10 +24,6 @@ if (-not (Test-Path $IdaPluginsDir)) {
   throw "IDA plugins directory not found: $IdaPluginsDir"
 }
 
-if (-not (Test-Path $rpcPluginFileTarget)) {
-  throw "RPC plugin file not found: $rpcPluginFileTarget"
-}
-
-Invoke-Expression "$PythonPath '$linker' '$guiSrcDir' '$IdaPluginsDir'"
+Invoke-Expression "$PythonPath '$linker' '$RepoRoot' '$IdaPluginsDir'"
 
 Write-Host "Installed AETHER GUI and RPC plugin links in: $IdaPluginsDir" -ForegroundColor Green

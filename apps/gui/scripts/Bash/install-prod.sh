@@ -88,6 +88,6 @@ if [ $? -eq 1 ]; then
     exit 1
 fi
 
-$PYTHON_PATH $LINKER "$PLUGIN_PACKAGE_DIR" "$IDA_PLUGINS_DIR"
+$PYTHON_PATH $LINKER "$REPO_ROOT" "$IDA_PLUGINS_DIR"
 
 echo "Installed AETHER GUI and RPC production artifacts in: $IDA_PLUGINS_DIR"

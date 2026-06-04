@@ -47,6 +47,6 @@ if ($LASTEXITCODE -eq 1) {
   exit $LASTEXITCODE
 }
 
-Invoke-Expression "$PythonPath '$linker' '$pluginPackageDir' '$IdaPluginsDir'"
+Invoke-Expression "$PythonPath '$linker' '$RepoRoot' '$IdaPluginsDir'"
 
 Write-Host "Installed AETHER GUI and RPC production artifacts in: $IdaPluginsDir" -ForegroundColor Green
