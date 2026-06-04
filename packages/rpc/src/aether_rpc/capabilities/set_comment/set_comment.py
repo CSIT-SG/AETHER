@@ -39,9 +39,15 @@ class SetComment(Capability):
             return False
 
         if ea == func.start_ea:
-            return self._set_function_header_comment(ea, comment)
+            success = self._set_function_header_comment(ea, comment)
+        else:
+            success = self._set_pseudocode_comment(func, ea, comment)
 
-        return self._set_pseudocode_comment(func, ea, comment)
+        if success:
+            ida_kernwin.refresh_idaview_anyway()
+            ida_hexrays.open_pseudocode(func.start_ea, ida_hexrays.OPF_REUSE)
+
+        return success
 
     def _set_function_header_comment(self, ea: int, comment: str) -> bool:
         """Write a comment that appears above the function signature in pseudocode.
@@ -86,5 +92,4 @@ class SetComment(Capability):
         cfunc.set_user_cmt(tl, comment)
         cfunc.save_user_cmts()
         cfunc.refresh_func_ctext()
-        ida_kernwin.refresh_idaview_anyway()
         return True

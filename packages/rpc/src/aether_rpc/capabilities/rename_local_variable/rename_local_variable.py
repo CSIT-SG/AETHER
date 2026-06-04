@@ -1,5 +1,6 @@
 import ida_funcs
 import ida_hexrays
+import ida_kernwin
 
 from ..base import Capability
 from ..utils import resolve_effective_address
@@ -45,11 +46,14 @@ class RenameLocalVariable(Capability):
 
         lvar = next((v for v in cfunc.get_lvars() if v.name == old_var_name), None)
         if lvar is None:
-            self.logger.error("No local variable named %r in function %r", old_var_name, new_var_name, hex(func.start_ea))
+            self.logger.error("No local variable named %r in function %r", old_var_name, hex(func.start_ea))
             return False
 
         if not ida_hexrays.rename_lvar(func.start_ea, old_var_name, new_var_name):
             self.logger.error("Failed to rename %r to %r in function %r", old_var_name, new_var_name, hex(func.start_ea))
             return False
+
+        ida_kernwin.refresh_idaview_anyway()
+        ida_hexrays.open_pseudocode(func.start_ea, ida_hexrays.OPF_REUSE)
 
         return True
