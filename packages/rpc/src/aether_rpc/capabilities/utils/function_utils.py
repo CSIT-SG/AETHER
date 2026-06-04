@@ -1,36 +1,51 @@
 """Function context and metadata helpers for capabilities."""
 
 import ida_funcs
-import ida_idaapi
 import idc
 
 
-def function_info(ea: int) -> tuple[str, bool]:
-    """Return (context string, is_function_start) for ea in a single IDA call.
+def function_info(ea: int) -> dict[str, str | int] | None:
+    """Return brief identifying info for the function containing ``ea``.
+
+    Lightweight companion to ``get_function``: returns just the name and
+    entry address, suitable for embedding as context inside larger
+    result structures (e.g. xref entries or address lookups) where the
+    full function metadata would be excessive.
 
     Args:
-        ea: Effective address to inspect.
+        ea: Effective address. May be the function's entry point or any
+            address within its body; IDA resolves the containing function.
 
     Returns:
-        Tuple of a readable context string and a boolean indicating
-        whether ea is the start of a function.
+        A dict with ``name`` and ``start_address`` (hex string), or
+        ``None`` if no function contains ``ea``.
     """
-    try:
-        func_start = idc.get_func_attr(ea, idc.FUNCATTR_START)
-        if func_start == ida_idaapi.BADADDR:
-            return "outside_function", False
-        func_name = idc.get_func_name(ea) or f"0x{func_start:X}"
-        is_start = ea == func_start
-        context = (
-            f"function_start:{func_name}"
-            if is_start
-            else f"in_function:{func_name}+0x{ea - func_start:X}"
-        )
-        return context, is_start
-    except Exception:
-        return "outside_function", False
+
+    func = ida_funcs.get_func(ea)
+    if func is None:
+        return None
+    return {
+        "name": ida_funcs.get_func_name(func.start_ea),
+        "start_address": hex(func.start_ea),
+    }
 
 def get_function(ea: int) -> dict[str, str | int] | None:
+    """Return metadata for the function containing ``ea``.
+
+    Looks up the ``func_t`` containing the given address and extracts the
+    fields used across tools that report function information. Returns
+    ``None`` when ``ea`` is not inside any recognized function.
+
+    Args:
+        ea: Effective address. May be the function's entry point or any
+            address within its body; IDA resolves the containing function.
+
+    Returns:
+        A dict with ``name``, ``start_address`` (hex string), ``end_address``
+        (hex string), ``size_bytes`` (int), and ``flags`` (hex string), or
+        ``None`` if no function contains ``ea``.
+    """
+
     func = ida_funcs.get_func(ea)
     if func is None:
         return None

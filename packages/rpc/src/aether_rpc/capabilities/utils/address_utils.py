@@ -16,6 +16,7 @@ def resolve_effective_address(address: str | int) -> int | None:
     Raises:
         ValueError: If the address string cannot be parsed.
     """
+
     if isinstance(address, int):
         return address
 
@@ -35,6 +36,7 @@ def resolve_function_name(name: str) -> int | None:
     Returns:
         The address of the enclosing function, or None if no function bounds the name.
     """
+
     ea = ida_name.get_name_ea(ida_idaapi.BADADDR, name)
     if ea == ida_idaapi.BADADDR:
         return None

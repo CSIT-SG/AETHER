@@ -1,15 +1,11 @@
 from .address_utils import resolve_effective_address, resolve_function_name
 from .function_utils import function_info, get_function
-from .symbol_utils import name_or_address, symbol_hints, xref_type
 from .xref_utils import collect_xrefs
 
 __all__ = [
     "resolve_effective_address",
     "resolve_function_name",
     "get_function",
-    "name_or_address",
-    "symbol_hints",
-    "xref_type",
     "function_info",
     "collect_xrefs",
 ]

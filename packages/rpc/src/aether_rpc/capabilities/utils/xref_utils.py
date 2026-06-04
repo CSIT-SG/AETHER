@@ -1,38 +1,37 @@
 from typing import Any
 
+import ida_name
 import idautils
 
 from .function_utils import function_info
-from .symbol_utils import name_or_address, xref_type
 
 
-def collect_xrefs(ea: int, limit: int = 10) -> tuple[list[dict[str, Any]], int, list[str]]:
-    """Collect xrefs to ea up to a preview limit.
+def collect_xrefs(xref) -> dict[str, Any]:
+    """Build a structured entry describing a single cross-reference.
+
+    Flattens an IDA xref object into a serializable dict that includes
+    both the raw reference data and contextual information about the
+    source address (its symbol name and containing function, if any).
 
     Args:
-        ea: Target address to collect xrefs for.
-        limit: Maximum number of xrefs to collect in the preview.
+        xref: An xref object yielded by ``idautils.XrefsTo`` or
+            ``idautils.XrefsFrom``. Expected to expose ``frm``, ``type``,
+            and ``iscode`` attributes.
 
     Returns:
-        Tuple of (preview list, total count, warnings list).
+        A dict with ``from_address`` (hex string of the referencing
+        address), ``type`` (readable xref type name such as
+        ``"Code_Near_Call"`` or ``"Data_Read"``), ``is_code`` (whether
+        the reference is a code xref), ``from_name`` (symbol at the
+        source address, or ``None``), and ``from_function`` (metadata
+        for the containing function, or ``None`` if the source is not
+        inside a function).
     """
-    preview: list[dict[str, Any]] = []
-    warnings: list[str] = []
-    total = 0
 
-    for xref in idautils.XrefsTo(ea):  # type: ignore[assignment]
-        total += 1
-        if len(preview) < limit:
-            try:
-                context, is_start = function_info(xref.frm)  # type: ignore[attr-defined]
-                preview.append({
-                    "from": hex(xref.frm),  # type: ignore[attr-defined]
-                    "name": name_or_address(xref.frm),  # type: ignore[attr-defined]
-                    "type": xref_type(xref.type),  # type: ignore[attr-defined]
-                    "context": context,
-                    "is_function_start": is_start,
-                })
-            except Exception as e:
-                warnings.append(f"xref entry failed: {e}")
-
-    return preview, total, warnings
+    return {
+        "from_address": hex(xref.frm),
+        "type": idautils.XrefTypeName(xref.type),
+        "is_code": bool(xref.iscode),
+        "from_name": ida_name.get_name(xref.frm) or None,
+        "from_function": function_info(xref.frm),
+    }
