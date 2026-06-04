@@ -3,7 +3,7 @@ import ida_hexrays
 import ida_kernwin
 
 from ..base import Capability
-from ..utils import resolve_effective_address
+from ..utils import refresh_pseudocode, resolve_effective_address
 
 
 class RenameLocalVariable(Capability):
@@ -53,7 +53,6 @@ class RenameLocalVariable(Capability):
             self.logger.error("Failed to rename %r to %r in function %r", old_var_name, new_var_name, hex(func.start_ea))
             return False
 
-        ida_kernwin.refresh_idaview_anyway()
-        ida_hexrays.open_pseudocode(func.start_ea, ida_hexrays.OPF_REUSE)
+        refresh_pseudocode(func.start_ea)
 
         return True

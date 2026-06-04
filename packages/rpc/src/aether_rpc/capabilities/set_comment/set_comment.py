@@ -1,11 +1,10 @@
 import ida_bytes
 import ida_funcs
 import ida_hexrays
-import ida_kernwin
 import idc
 
 from ..base import Capability
-from ..utils import resolve_effective_address
+from ..utils import refresh_pseudocode, resolve_effective_address
 
 
 class SetComment(Capability):
@@ -44,8 +43,7 @@ class SetComment(Capability):
             success = self._set_pseudocode_comment(func, ea, comment)
 
         if success:
-            ida_kernwin.refresh_idaview_anyway()
-            ida_hexrays.open_pseudocode(func.start_ea, ida_hexrays.OPF_REUSE)
+            refresh_pseudocode(func.start_ea)
 
         return success
 
