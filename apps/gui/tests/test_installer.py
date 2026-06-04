@@ -1,14 +1,7 @@
 import re
-import sys
 from pathlib import Path
 
-import pytest
-
-PARENT_DIR = Path(__file__).parent.parent
-sys.path.append(str(PARENT_DIR))
-
-import installer
-from installer import format_to_regex, main, scan, REGEXES, IGNORE
+from scripts.utils.installer import IGNORE, REGEXES, format_to_regex, main, scan
 
 
 def _reset_globals() -> None:
@@ -59,7 +52,7 @@ class TestScan:
         _reset_globals()
 
     def test_returns_false_when_no_regexes(self) -> None:
-        # REGEXES is empty — nothing should be skipped
+        # REGEXES is empty -- nothing should be skipped
         assert scan("anything.py") is False
 
     def test_returns_true_for_matching_pattern(self) -> None:

@@ -2,16 +2,15 @@ from os.path import islink
 from pathlib import Path
 
 import pytest
-import sys
-
-PARENT_DIR = Path(__file__).parent.parent
-sys.path.append(str(PARENT_DIR))
-
-from linker import LINKS, cleanup, create_link, main
+from scripts.utils.linker import LINKS, cleanup, create_link, main
 
 
 class TestCleanup:
-    def test_removes_existing_symlink(self, dst_dir: Path, src_dir: Path) -> None:
+    def test_removes_existing_symlink(
+        self, dst_dir: Path, src_dir: Path, symlink_supported: bool
+    ) -> None:
+        if not symlink_supported:
+            pytest.skip("Symlinks are not permitted on this system.")
         link = dst_dir / "existing.py"
         link.symlink_to(src_dir / "plugin.py")
         assert link.is_symlink()
@@ -32,7 +31,9 @@ class TestCleanup:
 
 
 class TestCreateLink:
-    def test_creates_symlink(self, src_dir: Path, dst_dir: Path) -> None:
+    def test_creates_symlink(self, src_dir: Path, dst_dir: Path, symlink_supported: bool) -> None:
+        if not symlink_supported:
+            pytest.skip("Symlinks are not permitted on this system.")
         src = str(src_dir / "plugin.py")
         dst = str(dst_dir / "aether-next-gui.py")
 
@@ -40,7 +41,11 @@ class TestCreateLink:
 
         assert islink(dst)
 
-    def test_symlink_points_to_correct_source(self, src_dir: Path, dst_dir: Path) -> None:
+    def test_symlink_points_to_correct_source(
+        self, src_dir: Path, dst_dir: Path, symlink_supported: bool
+    ) -> None:
+        if not symlink_supported:
+            pytest.skip("Symlinks are not permitted on this system.")
         src = str(src_dir / "plugin.py")
         dst = str(dst_dir / "aether-next-gui.py")
 
@@ -62,20 +67,30 @@ class TestCreateLink:
 
 
 class TestMain:
-    def test_creates_all_links(self, src_dir: Path, dst_dir: Path) -> None:
+    def test_creates_all_links(self, src_dir: Path, dst_dir: Path, symlink_supported: bool) -> None:
+        if not symlink_supported:
+            pytest.skip("Symlinks are not permitted on this system.")
         main(str(src_dir), str(dst_dir))
         for dst_name in LINKS.values():
             dst = dst_dir / dst_name
             assert islink(str(dst)), f"Expected symlink not found: {dst}"
 
-    def test_each_link_points_to_correct_source(self, src_dir: Path, dst_dir: Path) -> None:
+    def test_each_link_points_to_correct_source(
+        self, src_dir: Path, dst_dir: Path, symlink_supported: bool
+    ) -> None:
+        if not symlink_supported:
+            pytest.skip("Symlinks are not permitted on this system.")
         main(str(src_dir), str(dst_dir))
         for src_name, dst_name in LINKS.items():
             src = src_dir / src_name
             dst = dst_dir / dst_name
             assert dst.resolve() == src.resolve()
 
-    def test_replaces_stale_link(self, src_dir: Path, dst_dir: Path) -> None:
+    def test_replaces_stale_link(
+        self, src_dir: Path, dst_dir: Path, symlink_supported: bool
+    ) -> None:
+        if not symlink_supported:
+            pytest.skip("Symlinks are not permitted on this system.")
         # Pre-create a stale link pointing at a nonexistent path
         stale_target = src_dir / "plugin.py"
         dst = dst_dir / "aether-next-gui.py"

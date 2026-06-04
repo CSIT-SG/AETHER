@@ -1,5 +1,5 @@
 import sys
-from os import remove, symlink, path
+from os import path, remove, symlink
 from os.path import islink, join
 
 # Global for links to be created, src: dst

@@ -1,10 +1,15 @@
+import os
 import sys
-from collections.abc import Generator
+import tempfile
 from pathlib import Path
 
 import pytest
 
-UTILS_ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent
+print(ROOT)
+sys.path.insert(0, str(ROOT))
+
+UTILS_ROOT = Path(__file__).resolve().parent.parent / "scripts" / "utils"
 if str(UTILS_ROOT) not in sys.path:
     sys.path.insert(0, str(UTILS_ROOT))
 
@@ -17,6 +22,25 @@ DEFAULT_INSTALLER_IGNORE = [
 ]
 
 
+def _can_create_symlink() -> bool:
+    if not hasattr(os, "symlink"):
+        return False
+    try:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            src = Path(tmp_dir) / "src.txt"
+            dst = Path(tmp_dir) / "dst.txt"
+            src.write_text("x")
+            os.symlink(src, dst)
+            return dst.is_symlink()
+    except OSError:
+        return False
+
+
+@pytest.fixture(scope="session")
+def symlink_supported() -> bool:
+    return _can_create_symlink()
+
+
 @pytest.fixture
 def tmp_root(tmp_path: Path) -> Path:
     """
@@ -25,7 +49,7 @@ def tmp_root(tmp_path: Path) -> Path:
 
     Layout:
         <tmp_root>/
-            .gitignore          ← contains one pattern: "ignored_dir"
+            .gitignore          <- contains one pattern: "ignored_dir"
             main.py
             README.md
             ignored_dir/
