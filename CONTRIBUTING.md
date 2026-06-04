@@ -15,4 +15,5 @@ TODO: update the install script to install deps into the ida python interpreter.
 
 - Lint: `ruff check`
 - Format: `ruff format`
-- Unit tests: `uv run pytest`
+- Unit tests: `uv run pytest */*/tests/unit`
+- Integration tests: `uv run pytest */*/tests/integration`

@@ -58,3 +58,12 @@ known-first-party = ["aether"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.pytest.ini_options]
+testpaths = ["apps", "packages"]
+python_files = ["test_*.py"]
+
+markers = [
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]

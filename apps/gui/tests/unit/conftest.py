@@ -5,13 +5,10 @@ from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 print(ROOT)
 sys.path.insert(0, str(ROOT))
 
-UTILS_ROOT = Path(__file__).resolve().parent.parent / "scripts" / "utils"
-if str(UTILS_ROOT) not in sys.path:
-    sys.path.insert(0, str(UTILS_ROOT))
 
 DEFAULT_INSTALLER_IGNORE = [
     ".gitignore",
