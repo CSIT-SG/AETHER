@@ -1,15 +1,13 @@
 import asyncio
-import os
 import signal
 import sys
+from os import environ
 from pathlib import Path
 
-import aether_rpc.capabilities as caps
-from aether_rpc import RPCServer
 from aether_rpc.executors.headless_executor import HeadlessExecutor, configure_idapro
 from aether_utils.logger import get_logger
 
-logger = get_logger("headless_ida")
+logger = get_logger("rpc_headless_plugin")
 
 
 async def main(
@@ -20,12 +18,15 @@ async def main(
 ) -> None:
     configure_idapro(ida_install_dir)
 
+    # Deferred imports that require IDA to be configured
+    import aether_rpc.capabilities as caps
+    from aether_rpc.server import RPCServer
+
     executor = HeadlessExecutor(idb_path, ida_install_dir)
     capabilities = [getattr(caps, c)() for c in caps.__all__]
 
     server = RPCServer(executor, capabilities, host=host, port=port)
 
-    await executor.startup()
     server.start()
 
     # Print the port so the test harness can read it from stdout
@@ -34,13 +35,15 @@ async def main(
 
     stop_event = asyncio.Event()
 
-    def _handle_signal() -> None:
+    def _handle_signal(_sig, _frame) -> None:
         logger.info("Shutdown signal received")
-        stop_event.set()
+        # schedule the set on the event loop — signal handlers run outside it
+        loop.call_soon_threadsafe(stop_event.set)
 
     loop = asyncio.get_running_loop()
-    for sig in (signal.SIGINT, signal.SIGTERM):
-        loop.add_signal_handler(sig, _handle_signal)
+
+    signal.signal(signal.SIGINT, _handle_signal)
+    signal.signal(signal.SIGTERM, _handle_signal)
 
     await stop_event.wait()
 
@@ -58,7 +61,7 @@ def cli() -> None:
     parser.add_argument("idb_path", help="Path to the .idb / .i64 database")
     parser.add_argument(
         "--ida-dir",
-        default=os.environ.get("IDADIR", ""),
+        default=environ.get("IDADIR", ""),
         help="IDA installation directory (or set IDADIR env var)",
     )
     parser.add_argument("--host", default="127.0.0.1")

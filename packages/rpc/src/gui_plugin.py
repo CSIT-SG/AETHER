@@ -45,14 +45,15 @@ _add_workspace_package_paths()
 
 
 import aether_rpc.capabilities as caps  # noqa: E402
-from aether_rpc import RPCServer  # noqa: E402
 from aether_rpc.executors.gui_executor import GUIExecutor  # noqa: E402
+from aether_rpc.server import RPCServer  # noqa: E402
+from aether_utils.is_headless_ida import is_headless_ida  # noqa: E402
 from aether_utils.logger import get_logger  # noqa: E402
 
 # TODO: implement registration with mcp server
 CONTROLLER_URL = "http://127.0.0.1:13337"
 CAPABILITIES = [getattr(caps, c)() for c in caps.__all__]
-logger = get_logger("rpc_plugin")
+logger = get_logger("rpc_gui_plugin")
 
 
 class RPCPlugin(idaapi.plugin_t):
@@ -63,7 +64,9 @@ class RPCPlugin(idaapi.plugin_t):
     wanted_hotkey = ""
 
     def init(self) -> int:
-        print("Initializing RPC plugin...")
+        if is_headless_ida():
+            return idaapi.PLUGIN_SKIP
+
         executor = GUIExecutor()
         self._server = RPCServer(executor, CAPABILITIES)
         self._server.start()
