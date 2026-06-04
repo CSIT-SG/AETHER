@@ -1,3 +1,4 @@
+import argparse
 import asyncio
 import signal
 import sys
@@ -29,8 +30,6 @@ async def main(
 
     server.start()
 
-    # Print the port so the test harness can read it from stdout
-    print(f"HEADLESS_IDA_PORT={server.port}", flush=True)
     logger.info(f"Headless IDA RPC server started on port {server.port}")
 
     stop_event = asyncio.Event()
@@ -55,8 +54,6 @@ async def main(
 
 def cli() -> None:
     """Entrypoint for uv run / direct invocation."""
-    import argparse
-
     parser = argparse.ArgumentParser(description="Headless IDA RPC server")
     parser.add_argument("idb_path", help="Path to the .idb / .i64 database")
     parser.add_argument(
@@ -69,11 +66,11 @@ def cli() -> None:
     args = parser.parse_args()
 
     if not args.ida_dir:
-        print("ERROR: --ida-dir or IDADIR env var required", file=sys.stderr)
+        logger.error("ERROR: --ida-dir or IDADIR env var required")
         sys.exit(1)
 
     if not Path(args.idb_path).exists():
-        print(f"ERROR: idb not found: {args.idb_path}", file=sys.stderr)
+        logger.error(f"ERROR: idb not found: {args.idb_path}")
         sys.exit(1)
 
     asyncio.run(main(args.idb_path, args.ida_dir, args.host, args.port))

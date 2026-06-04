@@ -3,9 +3,9 @@ from typing import Any
 
 import pytest
 import rpyc
-from aether_rpc.server import RPCServer
 from aether_rpc.capabilities.base import Capability
 from aether_rpc.executors.base import IDAExecutor
+from aether_rpc.server import RPCServer
 
 
 class DirectExecutor(IDAExecutor):  # type: ignore[misc]

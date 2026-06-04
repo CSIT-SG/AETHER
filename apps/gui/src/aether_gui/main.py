@@ -2,10 +2,10 @@ import json
 
 import idaapi
 from aether_core.config import load_config
+from aether_utils.is_headless_ida import is_headless_ida
 from aether_utils.logger import get_logger
 
 from aether_gui.features.context_menu import AetherUIHooks
-from aether_utils.is_headless_ida import is_headless_ida
 
 logger = get_logger("gui_plugin")
 
@@ -24,7 +24,7 @@ class _Aether(idaapi.plugin_t):
         if is_headless_ida():
             logger.debug("Headless IDA detected, skipping GUI plugin initialization")
             return idaapi.PLUGIN_SKIP
-        
+
         logger.debug("GUI plugin initialized")
 
         try:
