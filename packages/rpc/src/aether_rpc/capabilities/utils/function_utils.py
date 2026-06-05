@@ -3,7 +3,7 @@
 import ida_funcs
 import idc
 
-from .typings import FunctionInfo, FunctionMetadata
+from ..types import FunctionInfo, FunctionMetadata
 
 
 def function_info(ea: int) -> FunctionInfo | None:

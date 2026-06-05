@@ -1,4 +1,5 @@
 from .get_function_by_address import GetFunctionByAddress
+from .get_function_by_name import GetFunctionByName
 from .rename_local_variable import RenameLocalVariable
 from .set_comment import SetComment
 
@@ -8,4 +9,5 @@ __all__ = [
     "SetComment",
     "RenameLocalVariable",
     "GetFunctionByAddress",
+    "GetFunctionByName"
 ]

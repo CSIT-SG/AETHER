@@ -1,5 +1,7 @@
+from capabilities.types import FunctionMetadata
+from utils import get_function, resolve_function_name
+
 from ..base import Capability
-from ..utils import FunctionMetadata, get_function, resolve_function_name
 
 
 class GetFunctionByName(Capability):
@@ -23,9 +25,7 @@ class GetFunctionByName(Capability):
         if ea is None:
             self.logger.error(f"Symbol '{function_name}' not found")
             return None
-
         func = get_function(ea)
         if func is None:
             self.logger.error(f"Symbol '{function_name}' at {hex(ea)} is not a function")
-
         return func
