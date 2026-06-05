@@ -15,13 +15,16 @@ def get_binary() -> Callable[[str], Path]:
     if system not in _PLATFORM_DIR:
         pytest.skip(f"unsupported platform: {system}")
 
-    bin_dir = _AUTOGEN_DIR / _PLATFORM_DIR[system]
-    if not bin_dir.exists():
-        pytest.skip(f"{bin_dir} not found — run scripts/build.py first")
+    # bin_dir = _AUTOGEN_DIR / _PLATFORM_DIR[system]
+    if not _AUTOGEN_DIR.exists():
+        pytest.skip(f"{_AUTOGEN_DIR} not found — run scripts/build.py first")
 
-    binaries = {p.stem: p.resolve() for p in bin_dir.iterdir() if p.is_file()}
-
-    def _get(name: str) -> Path:
+    def _get(name: str, platform: str = system) -> Path:
+        bin_dir = _AUTOGEN_DIR / _PLATFORM_DIR[platform]
+        if not bin_dir.exists():
+            pytest.skip(f"{bin_dir} not found — run scripts/build.py first")
+        binaries = {p.stem: p.resolve() for p in bin_dir.iterdir() if p.is_file()}
+        
         if name not in binaries:
             pytest.fail(f"binary '{name}' not found — available: {', '.join(binaries)}")
         return binaries[name]

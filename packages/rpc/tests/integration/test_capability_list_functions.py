@@ -1,6 +1,7 @@
+import pytest
+import rpyc
 
-from aether_test_fixtures import GetBinary
 
-def test_runner(get_binary: GetBinary) -> None:
-    binary = get_binary("basic")  # returns absolute Path
-    assert binary.exists()
+class TestLiveCapabilities:
+    def test_connection_is_alive(self, ida_client: rpyc.Connection) -> None:
+        assert ida_client.root is not None

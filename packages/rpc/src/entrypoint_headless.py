@@ -1,6 +1,7 @@
 import argparse
 import signal
 import sys
+import threading
 from collections.abc import Callable
 from os import environ
 from pathlib import Path
@@ -18,45 +19,43 @@ def main(
     host: str = "127.0.0.1",
     port: int = 0,
     on_ready: Callable[[str, int], None] | None = None,
+    stop_event: Event | None = None,
 ) -> None:
     configure_idapro(ida_install_dir)
+
     import aether_rpc.capabilities as caps
     from aether_rpc.server import RPCServer
 
     executor = HeadlessExecutor(idb_path, ida_install_dir)
     capabilities = [getattr(caps, c)() for c in caps.__all__]
     server = RPCServer(executor, capabilities, host=host, port=port)
+    server.start()  # calls executor.startup() on this (main) thread
 
-    server.start()
     logger.info(f"Headless IDA RPC server started on port {server.port}")
 
     if on_ready:
         on_ready(host, server.port)
 
-    stop_event = Event()
+    if stop_event is None:
+        stop_event = Event()
 
-    def _handle_signal(_sig, _frame):
-        logger.info("Shutdown signal received")
-        stop_event.set()
+    # Watch for shutdown signal on a background thread, then unblock pump()
+    def _watch() -> None:
+        stop_event.wait()
+        logger.info("Shutting down...")
+        server.stop()  # posts sentinel → unblocks executor.pump()
 
-    signal.signal(signal.SIGINT, _handle_signal)
-    signal.signal(signal.SIGTERM, _handle_signal)
+    threading.Thread(target=_watch, daemon=True).start()
 
     try:
-        # Poll instead of blocking indefinitely — lets Windows deliver signals
-        while not stop_event.is_set():
-            stop_event.wait(timeout=0.5)
+        executor.pump()  # blocks main thread; dispatches all IDA API calls
     except KeyboardInterrupt:
-        # Fallback: catches Ctrl+C if the signal handler path is bypassed
         logger.info("KeyboardInterrupt received")
     finally:
-        logger.info("Shutting down...")
-        server.stop()
         logger.info("Shutdown complete")
 
 
 def cli() -> None:
-    """Entrypoint for uv run / direct invocation."""
     parser = argparse.ArgumentParser(description="Headless IDA RPC server")
     parser.add_argument("idb_path", help="Path to the .idb / .i64 database")
     parser.add_argument(
@@ -76,7 +75,16 @@ def cli() -> None:
         logger.error(f"ERROR: idb not found: {args.idb_path}")
         sys.exit(1)
 
-    main(args.idb_path, args.ida_dir, args.host, args.port)
+    stop_event = Event()
+
+    def _handle_signal(_sig, _frame) -> None:
+        logger.info("Shutdown signal received")
+        stop_event.set()
+
+    signal.signal(signal.SIGINT, _handle_signal)
+    signal.signal(signal.SIGTERM, _handle_signal)
+
+    main(args.idb_path, args.ida_dir, args.host, args.port, stop_event=stop_event)
 
 
 if __name__ == "__main__":
