@@ -1,6 +1,6 @@
 import os
-import sys
 import queue
+import sys
 from collections.abc import Callable
 from concurrent.futures import Future
 from typing import Any, cast

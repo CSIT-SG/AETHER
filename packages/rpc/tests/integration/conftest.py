@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 import rpyc
-
 from entrypoint_headless import main
 
 
