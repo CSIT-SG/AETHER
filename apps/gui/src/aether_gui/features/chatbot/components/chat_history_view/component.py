@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from aether_gui.features.chatbot.components.chat_input.component import ChatInput
 from aether_gui.utils.ui import StyledComponent
 from aether_gui.utils.ui.plugins import Theme, ThemeColors
 from PySide6 import QtCore, QtWidgets
@@ -19,11 +20,16 @@ class ChatHistoryView(StyledComponent):
         """Build the text view and custom scrollbar."""
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground, True)
 
-        # Layout
+        # Main Layout
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
+        #Chat Layout
+        chat_container = QtWidgets.QWidget(self)
+        chat_layout = QtWidgets.QVBoxLayout(chat_container)
+        chat_layout.setContentsMargins(0, 0, 0, 0)
+        chat_layout.setSpacing(0)
         # Text view
         text = QtWidgets.QTextEdit(self)
         text.setObjectName("ChatHistoryText")
@@ -36,13 +42,19 @@ class ChatHistoryView(StyledComponent):
             QtWidgets.QSizePolicy.Policy.Expanding,
             QtWidgets.QSizePolicy.Policy.Expanding,
         )
-        layout.addWidget(text)
+        chat_layout.addWidget(text)
+
+        # Chat Input
+        chat_input = ChatInput(chat_container)
+        chat_layout.addWidget(chat_input)
+
+        layout.addWidget(chat_container)
 
         # Scrollbar
         scrollbar_component = ScrollBar(QtCore.Qt.Orientation.Vertical, self)
         layout.addWidget(scrollbar_component)
 
-        layout.setStretchFactor(text, 1)
+        layout.setStretchFactor(chat_container, 1)
         layout.setStretchFactor(scrollbar_component, 0)
         self._text = text
         self._scrollbar_component = scrollbar_component
