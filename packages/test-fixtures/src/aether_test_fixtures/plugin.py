@@ -1,6 +1,6 @@
 import platform
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 import pytest
 
@@ -9,7 +9,7 @@ _PLATFORM_DIR = {"Linux": "linux", "Windows": "windows", "Darwin": "linux"}
 
 
 @pytest.fixture(scope="session")
-def get_binary() -> Callable[[str], Path]:
+def get_binary() -> Callable[[str, str], Path]:
     """Return the absolute path of a built binary by stem name."""
     system = platform.system()
     if system not in _PLATFORM_DIR:
@@ -24,7 +24,7 @@ def get_binary() -> Callable[[str], Path]:
         if not bin_dir.exists():
             pytest.skip(f"{bin_dir} not found — run scripts/build.py first")
         binaries = {p.stem: p.resolve() for p in bin_dir.iterdir() if p.is_file()}
-        
+
         if name not in binaries:
             pytest.fail(f"binary '{name}' not found — available: {', '.join(binaries)}")
         return binaries[name]

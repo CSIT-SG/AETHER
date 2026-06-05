@@ -1,11 +1,25 @@
 import os
-import threading
+import socket
+import subprocess
+import sys
+import time
 from collections.abc import Callable, Generator
 from pathlib import Path
 
 import pytest
 import rpyc
-from entrypoint_headless import main
+
+BIN_NAME = "basic"
+HEADLESS_PORT = 57000
+
+
+def _port_is_free(port: int) -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        try:
+            s.bind(("127.0.0.1", port))
+            return True
+        except OSError:
+            return False
 
 
 @pytest.fixture(scope="session")
@@ -16,46 +30,49 @@ def ida_dir() -> str:
     return d
 
 
-BIN_NAME = "basic"
-
-
 @pytest.fixture(scope="session")
 def headless_ida(
-    get_binary: Callable[[str], Path], ida_dir: str
+    get_binary: Callable[..., Path], ida_dir: str
 ) -> Generator[tuple[str, int], None, None]:
+    if not _port_is_free(HEADLESS_PORT):
+        pytest.skip(f"Port {HEADLESS_PORT} is already in use")
+
     idb_path = get_binary(BIN_NAME)
 
-    ready = threading.Event()
-    stop = threading.Event()
-    host_port: tuple[str, int] = ("", 0)
-    exc: BaseException | None = None
+    proc = subprocess.Popen(
+        [
+            sys.executable,
+            "-m",
+            "entrypoint_headless",
+            str(idb_path),
+            "--ida-dir",
+            ida_dir,
+            "--host",
+            "127.0.0.1",
+            "--port",
+            str(HEADLESS_PORT),
+        ],
+        env={**os.environ, "IDADIR": ida_dir},
+    )
 
-    def _on_ready(host: str, port: int) -> None:
-        nonlocal host_port
-        host_port = (host, port)
-        ready.set()
-
-    def _run() -> None:
-        nonlocal exc
+    # Wait for the port to start accepting connections
+    deadline = time.monotonic() + 60
+    while True:
+        if proc.poll() is not None:
+            pytest.fail(f"Headless IDA server exited with code {proc.returncode}")
+        if time.monotonic() > deadline:
+            proc.kill()
+            pytest.fail("Headless IDA server did not become ready within 60s")
         try:
-            main(str(idb_path), ida_dir, on_ready=_on_ready, stop_event=stop)
-        except BaseException as e:
-            exc = e
-            ready.set()
+            with socket.create_connection(("127.0.0.1", HEADLESS_PORT), timeout=1):
+                break  # port is accepting connections
+        except OSError:
+            time.sleep(0.2)
 
-    t = threading.Thread(target=_run, daemon=True)
-    t.start()
+    yield "127.0.0.1", HEADLESS_PORT
 
-    if not ready.wait(timeout=60):
-        pytest.fail("Headless IDA server did not become ready within 60s")
-
-    if exc is not None:
-        raise exc
-
-    yield host_port
-
-    stop.set()  # clean shutdown
-    t.join(timeout=10)
+    proc.terminate()
+    proc.wait(timeout=10)
 
 
 @pytest.fixture(scope="session")

@@ -1,3 +1,4 @@
+from .get_function_by_address import GetFunctionByAddress
 from .rename_local_variable import RenameLocalVariable
 from .set_comment import SetComment
 
@@ -5,5 +6,6 @@ from .set_comment import SetComment
 # the service layer will dynamically discover capabilities by looking for these names in the package namespace
 __all__ = [
     "SetComment",
-    "RenameLocalVariable"
+    "RenameLocalVariable",
+    "GetFunctionByAddress",
 ]
