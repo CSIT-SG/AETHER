@@ -1,3 +1,4 @@
+import contextlib
 import threading
 
 from rpyc.utils.server import ThreadedServer
@@ -8,7 +9,6 @@ from .ida_service import IDAService
 
 
 class RPCServer:
-    # we perform DI so we get mocking for free
     def __init__(
         self,
         executor: IDAExecutor,
@@ -20,6 +20,7 @@ class RPCServer:
         self._capabilities = capabilities
         self._host = host
         self._port = port
+
         self._server: ThreadedServer | None = None
         self._thread: threading.Thread | None = None
 
@@ -27,10 +28,16 @@ class RPCServer:
     def port(self) -> int:
         if self._server is None:
             raise RuntimeError("Server not started")
+
         return self._server.port
 
     def start(self) -> None:
-        service = IDAService(self._executor, self._capabilities)
+        self._executor.startup()
+
+        service = IDAService(
+            self._executor,
+            self._capabilities,
+        )
 
         self._server = ThreadedServer(
             service,
@@ -42,11 +49,27 @@ class RPCServer:
             },
         )
 
-        self._thread = threading.Thread(target=self._server.start, daemon=True)
+        self._thread = threading.Thread(
+            target=self._run,
+            daemon=True,
+        )
+
         self._thread.start()
 
+    def _run(self):
+        if not self._server:
+            raise RuntimeError("Server not initialized")
+        self._server.start()
+
     def stop(self) -> None:
-        if self._server:
+        if not self._server:
+            return
+
+        with contextlib.suppress(Exception):
             self._server.close()
+
+        # 3. Join thread
         if self._thread:
-            self._thread.join(timeout=5)
+            self._thread.join(timeout=2)
+
+        self._executor.shutdown()

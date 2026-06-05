@@ -1,9 +1,10 @@
 import argparse
-import asyncio
 import signal
 import sys
+from collections.abc import Callable
 from os import environ
 from pathlib import Path
+from threading import Event
 
 from aether_rpc.executors.headless_executor import HeadlessExecutor, configure_idapro
 from aether_utils.logger import get_logger
@@ -11,45 +12,47 @@ from aether_utils.logger import get_logger
 logger = get_logger("rpc_headless_plugin")
 
 
-async def main(
+def main(
     idb_path: str,
     ida_install_dir: str,
     host: str = "127.0.0.1",
-    port: int = 0,  # 0 = OS picks a free port
+    port: int = 0,
+    on_ready: Callable[[str, int], None] | None = None,
 ) -> None:
     configure_idapro(ida_install_dir)
-
-    # Deferred imports that require IDA to be configured
     import aether_rpc.capabilities as caps
     from aether_rpc.server import RPCServer
 
     executor = HeadlessExecutor(idb_path, ida_install_dir)
     capabilities = [getattr(caps, c)() for c in caps.__all__]
-
     server = RPCServer(executor, capabilities, host=host, port=port)
 
     server.start()
-
     logger.info(f"Headless IDA RPC server started on port {server.port}")
 
-    stop_event = asyncio.Event()
+    if on_ready:
+        on_ready(host, server.port)
 
-    def _handle_signal(_sig, _frame) -> None:
+    stop_event = Event()
+
+    def _handle_signal(_sig, _frame):
         logger.info("Shutdown signal received")
-        # schedule the set on the event loop — signal handlers run outside it
-        loop.call_soon_threadsafe(stop_event.set)
-
-    loop = asyncio.get_running_loop()
+        stop_event.set()
 
     signal.signal(signal.SIGINT, _handle_signal)
     signal.signal(signal.SIGTERM, _handle_signal)
 
-    await stop_event.wait()
-
-    logger.info("Shutting down...")
-    server.stop()
-    await executor.shutdown()
-    logger.info("Shutdown complete")
+    try:
+        # Poll instead of blocking indefinitely — lets Windows deliver signals
+        while not stop_event.is_set():
+            stop_event.wait(timeout=0.5)
+    except KeyboardInterrupt:
+        # Fallback: catches Ctrl+C if the signal handler path is bypassed
+        logger.info("KeyboardInterrupt received")
+    finally:
+        logger.info("Shutting down...")
+        server.stop()
+        logger.info("Shutdown complete")
 
 
 def cli() -> None:
@@ -73,7 +76,7 @@ def cli() -> None:
         logger.error(f"ERROR: idb not found: {args.idb_path}")
         sys.exit(1)
 
-    asyncio.run(main(args.idb_path, args.ida_dir, args.host, args.port))
+    main(args.idb_path, args.ida_dir, args.host, args.port)
 
 
 if __name__ == "__main__":
