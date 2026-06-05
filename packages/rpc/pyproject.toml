@@ -12,3 +12,6 @@ dependencies = [
 
 [tool.mypy]
 plugins = ["pydantic.mypy"]
+
+[tool.uv.sources]
+aether_test_fixtures = { workspace = true }

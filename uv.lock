@@ -14,6 +14,7 @@ members = [
     "aether-mcp",
     "aether-next",
     "aether-rpc",
+    "aether-test-fixtures",
     "aether-utils",
 ]
 
@@ -122,6 +123,11 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.13.3" },
     { name = "rpyc", specifier = ">=6.0.1" },
 ]
+
+[[package]]
+name = "aether-test-fixtures"
+version = "0.1.0"
+source = { editable = "packages/test-fixtures" }
 
 [[package]]
 name = "aether-utils"

@@ -8,6 +8,7 @@ aether_gui = { workspace = true }
 aether_utils = { workspace = true }
 aether_rpc = { workspace = true }
 aether_mcp = { workspace = true }
+aether_test_fixtures = { workspace = true }
 
 [project]
 name = "aether-next"
