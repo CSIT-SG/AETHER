@@ -2,11 +2,6 @@
 import rpyc
 
 
-class TestLiveCapabilities:
-    def test_connection_is_alive(self, ida_client: rpyc.Connection) -> None:
-        assert ida_client.root is not None
-
-
 class TestGetFunctionByName:
     def test_finds_main_by_name(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.get_function_by_name(function_name="main")
