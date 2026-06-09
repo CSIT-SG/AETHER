@@ -8,7 +8,7 @@ From the root monorepo directory:
 
 ```powershell
 # Dev: link the plugin entrypoint into the IDA plugins folder
-./apps/gui/scripts//PSinstall-dev.ps1
+./apps/gui/scripts/PS/install-dev.ps1
 
 # Prod: copy artifacts into the IDA plugins folder
 # we create a shim at the root of the file that resolves the imports and re-calls the entrypoint plugin.py

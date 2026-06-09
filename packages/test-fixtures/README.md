@@ -1,3 +1,3 @@
 # AETHER test fixtures
 
-Shared utility package for the AETHER workspace.
+Provides binary fixtures for integration tests.

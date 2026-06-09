@@ -15,10 +15,6 @@ version = "0.1.0"
 description = "AETHER - AI-powered Next Generation Framework"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = [
-    "pytest-dependency>=0.6.1",
-    "pytest-order>=1.4.0",
-]
 
 [dependency-groups]
 dev = [
@@ -26,6 +22,8 @@ dev = [
     "pytest-cov>=7.1.0",
     "ruff>=0.15.12",
     "mypy>=2.1.0",
+    "pytest-dependency>=0.6.1",
+    "pytest-order>=1.4.0",
 ]
 
 # Dev dependencies are managed at workspace level
@@ -66,7 +64,3 @@ convention = "google"
 [tool.pytest.ini_options]
 testpaths = ["apps", "packages"]
 python_files = ["test_*.py"]
-
-markers = [
-    "depends-ida: marks tests that require IDA Pro to run",
-]

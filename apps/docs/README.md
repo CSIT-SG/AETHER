@@ -24,3 +24,11 @@ If you want to install a mcp server for these docs, paste this in your config:
   }
 }
 ```
+
+## Running
+
+We have a docker image built by github actions on every push to master. Just download and docker load that. Expose port `3000`.
+
+Or, run `bun run build` and then `bun run start`.
+
+Or, `docker build -f apps/docs/Dockerfile -t aether-docs .` from the root.
