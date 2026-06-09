@@ -12,6 +12,7 @@ members = [
     "aether-docs",
     "aether-gui",
     "aether-mcp",
+    "aether-mcp-client",
     "aether-next",
     "aether-rpc",
     "aether-test-fixtures",
@@ -66,6 +67,23 @@ requires-dist = [
 name = "aether-mcp"
 version = "0.1.0"
 source = { editable = "packages/mcp" }
+dependencies = [
+    { name = "httpx" },
+    { name = "mcp" },
+    { name = "openai" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "httpx" },
+    { name = "mcp" },
+    { name = "openai" },
+]
+
+[[package]]
+name = "aether-mcp-client"
+version = "0.1.0"
+source = { virtual = "packages/mcp_client" }
 dependencies = [
     { name = "httpx" },
     { name = "mcp" },

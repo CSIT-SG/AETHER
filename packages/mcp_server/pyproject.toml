@@ -1,0 +1,14 @@
+[project]
+name = "aether_mcp_server"
+version = "0.1.0"
+description = "AETHER mcp server"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "mcp",
+    "httpx",
+    "openai",
+]
+
+[tool.mypy]
+plugins = ["pydantic.mypy"]
