@@ -1,12 +1,9 @@
 # type: ignore
+import pytest
 import rpyc
 
 
-class TestLiveCapabilities:
-    def test_connection_is_alive(self, ida_client: rpyc.Connection) -> None:
-        assert ida_client.root is not None
-
-
+@pytest.mark.dependency(depends=["connection"], scope="session")
 class TestGetFunctionByAddress:
     def test_finds_main(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.get_function_by_address(address="main")

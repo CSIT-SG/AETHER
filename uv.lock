@@ -3,7 +3,8 @@ revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.15'",
-    "python_full_version < '3.15'",
+    "python_full_version == '3.14.*'",
+    "python_full_version < '3.14'",
 ]
 
 [manifest]
@@ -88,6 +89,10 @@ requires-dist = [
 name = "aether-next"
 version = "0.1.0"
 source = { virtual = "." }
+dependencies = [
+    { name = "pytest-dependency" },
+    { name = "pytest-order" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -98,6 +103,10 @@ dev = [
 ]
 
 [package.metadata]
+requires-dist = [
+    { name = "pytest-dependency", specifier = ">=0.6.1" },
+    { name = "pytest-order", specifier = ">=1.4.0" },
+]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1074,6 +1083,28 @@ wheels = [
 ]
 
 [[package]]
+name = "pytest-dependency"
+version = "0.6.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+    { name = "setuptools" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c2/ea/84509533e0f6477960b8a9179d240d93c909c6543e4dd8209932026d7815/pytest_dependency-0.6.1.tar.gz", hash = "sha256:246c24d2a5fc743a942cec4408853640e56a05ba58d46e5b213a1d4b738a2464", size = 20837, upload-time = "2026-02-15T18:08:43.927Z" }
+
+[[package]]
+name = "pytest-order"
+version = "1.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fe/76/c7b4a2ad3758a3c2757f532c6e931aa5e387781512a71b67b6ddc19d9ef8/pytest_order-1.4.0.tar.gz", hash = "sha256:327fb6eee1ae771051da13d2a0d9306d947e87f9ab8f4d6302e5d122c7472691", size = 49891, upload-time = "2026-04-26T12:37:43.056Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1e/d0/c62c07141151f259faddff6bd591f28235c37dd0c486160d0d2a0d4e6e5a/pytest_order-1.4.0-py3-none-any.whl", hash = "sha256:05b1710cf16bb2123294eec5bdfaee513322ff1926c0dfa86eb8be632eb264a1", size = 14918, upload-time = "2026-04-26T12:37:41.123Z" },
+]
+
+[[package]]
 name = "python-dotenv"
 version = "1.2.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1237,6 +1268,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/36/38/012bf76752e1f89ed50b77b99532d90f3a3e287bc7918e1fc0948ac866ac/ruff-0.15.14-py3-none-win32.whl", hash = "sha256:6d0c1ad2a0ab718d39b6d8fd2217981ce4d625cd96a720095f798fb47d8b13e6", size = 10805548, upload-time = "2026-05-21T14:34:33.453Z" },
     { url = "https://files.pythonhosted.org/packages/d1/b7/4ea2c170f10ad760fff2a5250beb18897719dc8b52b53a24cddbb9dd3f19/ruff-0.15.14-py3-none-win_amd64.whl", hash = "sha256:802342981e056db3851a7836e5b070f8f15f67d4a685ae2a6160939d364b2902", size = 11939523, upload-time = "2026-05-21T14:34:18.077Z" },
     { url = "https://files.pythonhosted.org/packages/62/d5/bc97ff895ec35cf3925d4bd60f3b39d822f377a446906ec9bcc87405e59b/ruff-0.15.14-py3-none-win_arm64.whl", hash = "sha256:ff47b90a9ef6a40c9e2f3b479c1fb78531adf055b94c1eba0a7ba04b31951826", size = 11208607, upload-time = "2026-05-21T14:34:26.525Z" },
+]
+
+[[package]]
+name = "setuptools"
+version = "82.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/4f/db/cfac1baf10650ab4d1c111714410d2fbb77ac5a616db26775db562c8fab2/setuptools-82.0.1.tar.gz", hash = "sha256:7d872682c5d01cfde07da7bccc7b65469d3dca203318515ada1de5eda35efbf9", size = 1152316, upload-time = "2026-03-09T12:47:17.221Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9d/76/f789f7a86709c6b087c5a2f52f911838cad707cc613162401badc665acfe/setuptools-82.0.1-py3-none-any.whl", hash = "sha256:a59e362652f08dcd477c78bb6e7bd9d80a7995bc73ce773050228a348ce2e5bb", size = 1006223, upload-time = "2026-03-09T12:47:15.026Z" },
 ]
 
 [[package]]

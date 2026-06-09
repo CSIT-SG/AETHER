@@ -1,7 +1,9 @@
 # type: ignore
 import rpyc
+import pytest
 
 
+@pytest.mark.dependency(depends=["connection"], scope="session")
 class TestGetFunctionByName:
     def test_finds_main_by_name(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.get_function_by_name(function_name="main")

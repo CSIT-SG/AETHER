@@ -3,6 +3,7 @@ import pytest
 import rpyc
 
 
+@pytest.mark.dependency(depends=["connection"], scope="session")
 class TestRenameFunction:
     def test_renames_function(self, ida_client: rpyc.Connection) -> None:
         result= ida_client.root.rename_function(address="main", new_name="test_renamed_main")
