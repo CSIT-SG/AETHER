@@ -1,5 +1,5 @@
-from capabilities.types import FunctionMetadata
-from utils import get_function, resolve_function_name
+from aether_rpc.capabilities.types import FunctionMetadata
+from aether_rpc.capabilities.utils import get_function, resolve_function_name
 
 from ..base import Capability
 
