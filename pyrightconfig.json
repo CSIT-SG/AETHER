@@ -2,10 +2,10 @@
   "extraPaths": [
     "apps/cli/src",
     "apps/gui/src",
-    "packages/core/src",
     "packages/utils/src",
     "packages/rpc/src",
     "packages/mcp/src",
+    "packages/test_fixtures/src",
     "C:\\Program Files\\IDA Professional 9.2\\python",
     "C:\\Program Files\\IDA Professional 9.1\\python",
     "C:\\Program Files\\IDA Professional 9.0\\python",

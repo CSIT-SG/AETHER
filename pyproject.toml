@@ -2,7 +2,6 @@
 members = ["apps/*", "packages/*"]
 
 [tool.uv.sources]
-aether_core = { workspace = true }
 aether_cli = { workspace = true }
 aether_gui = { workspace = true }
 aether_utils = { workspace = true }

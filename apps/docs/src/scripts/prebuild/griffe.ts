@@ -10,7 +10,6 @@ const contentDir = path.join(repoRoot, "apps", "docs", "src", "content", "_autog
 
 const workspaces = [
 	["apps", "gui"],
-	["packages", "core"],
 	["packages", "utils"],
 	["packages", "rpc"],
 ];
