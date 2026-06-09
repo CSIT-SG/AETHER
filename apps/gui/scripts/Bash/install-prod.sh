@@ -25,7 +25,6 @@ check_python_version 3 12
 # Default parameter values  (overridable via CLI flags)
 IDA_PLUGINS_DIR=""
 REPO_ROOT="${REPO_ROOT:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
-PYTHON_PATH="${PYTHON_PATH}"    # already exported by check_python_exists
 PLUGIN_PACKAGE_DIR="$IDA_PLUGINS_DIR/aether-next"
 REQUIREMENTS_FILE="$REPO_ROOT/apps/gui/scripts/utils/requirements.txt"
 INSTALLER_SCRIPT="$REPO_ROOT/apps/gui/scripts/utils/installer.py"

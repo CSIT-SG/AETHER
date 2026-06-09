@@ -22,13 +22,13 @@ Write-Host "All Python dependencies are satisfied. Proceeding with installation.
 if (-not (Test-Path $IdaPluginsDir)) {
   Write-Host "IDA plugins directory not found: $IdaPluginsDir"
   Write-Host "If Plugins folder is not in %APPDATA%\Roaming\Hex-Rays\IDA Pro. Run .\install-prod.ps1 -IdaPluginsDir Path\To\Plugins\Folder"
-}else {
+} else {
   Write-Host "IDA plugins directory found: $IdaPluginsDir"
 }
 
 if (-not (Test-Path $RepoRoot)) {
   throw "Repository root not found: $RepoRoot"
-}else {
+} else {
   Write-Host "Repository root found: $RepoRoot"
 }
 

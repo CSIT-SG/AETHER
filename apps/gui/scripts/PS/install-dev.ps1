@@ -1,7 +1,6 @@
 param(
   [string]$IdaPluginsDir = (Join-Path $env:APPDATA "Hex-Rays\IDA Pro\plugins"),
-  [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..\..")),
-  [string]$PythonPath = (Get-Command python).Path
+  [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..\.."))
 )
 
 .(Join-Path $PSScriptRoot "utils\checks.ps1")

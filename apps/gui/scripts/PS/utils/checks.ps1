@@ -1,10 +1,10 @@
 function Test-PythonExists{
     try{
     $PythonPath = (Get-Command python).Path 
-    }catch{
+    } catch {
         try{
         $PythonPath = (Get-Command python3).Path
-    }catch{
+    } catch {
         Write-Warning "Python is not installed or not in PATH. Please install Python and ensure it's in your PATH environment variable."
         exit 1
         }
@@ -26,7 +26,7 @@ function Test-PythonVer {
 
         if ($major -eq $RequiredMajor -and ($minor -ge $RequiredMinor -or $minor -le $MaxMinor)) {
             Write-Host "Python version $major.$minor detected. Requirement satisfied." -ForegroundColor Green
-        }else{
+        } else {
             Write-Error "CRITICAL: Python version $major.$minor unsupported. Python $RequiredMajor.$RequiredMinor or above is required. Please update your Python environment."
             exit 1
         }
@@ -42,7 +42,7 @@ function Test-PipExists{
     # Method A: Try using ensurepip (safest for modern Python)
     Write-Host "Pip not found. Please install pip to proceed"
     exit 1
-    }else{
+    } else {
         Write-Host "Pip found: $($pipCheck.Source)"
     }
 }
