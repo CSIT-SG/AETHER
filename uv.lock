@@ -11,8 +11,8 @@ resolution-markers = [
 members = [
     "aether-docs",
     "aether-gui",
-    "aether-mcp",
     "aether-mcp-client",
+    "aether-mcp-server",
     "aether-next",
     "aether-rpc",
     "aether-test-fixtures",
@@ -64,23 +64,6 @@ requires-dist = [
 ]
 
 [[package]]
-name = "aether-mcp"
-version = "0.1.0"
-source = { editable = "packages/mcp" }
-dependencies = [
-    { name = "httpx" },
-    { name = "mcp" },
-    { name = "openai" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "httpx" },
-    { name = "mcp" },
-    { name = "openai" },
-]
-
-[[package]]
 name = "aether-mcp-client"
 version = "0.1.0"
 source = { virtual = "packages/mcp_client" }
@@ -98,33 +81,46 @@ requires-dist = [
 ]
 
 [[package]]
+name = "aether-mcp-server"
+version = "0.1.0"
+source = { virtual = "packages/mcp_server" }
+dependencies = [
+    { name = "httpx" },
+    { name = "mcp" },
+    { name = "openai" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "httpx" },
+    { name = "mcp" },
+    { name = "openai" },
+]
+
+[[package]]
 name = "aether-next"
 version = "0.1.0"
 source = { virtual = "." }
-dependencies = [
-    { name = "pytest-dependency" },
-    { name = "pytest-order" },
-]
 
 [package.dev-dependencies]
 dev = [
     { name = "mypy" },
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "pytest-dependency" },
+    { name = "pytest-order" },
     { name = "ruff" },
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "pytest-dependency", specifier = ">=0.6.1" },
-    { name = "pytest-order", specifier = ">=1.4.0" },
-]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "mypy", specifier = ">=2.1.0" },
     { name = "pytest", specifier = ">=9.0.3" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
+    { name = "pytest-dependency", specifier = ">=0.6.1" },
+    { name = "pytest-order", specifier = ">=1.4.0" },
     { name = "ruff", specifier = ">=0.15.12" },
 ]
 
@@ -154,6 +150,18 @@ source = { editable = "packages/test-fixtures" }
 name = "aether-utils"
 version = "0.1.0"
 source = { editable = "packages/utils" }
+dependencies = [
+    { name = "httpx" },
+    { name = "openai" },
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "httpx" },
+    { name = "openai" },
+    { name = "pydantic" },
+]
 
 [[package]]
 name = "annotated-types"
