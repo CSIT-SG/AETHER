@@ -1,4 +1,3 @@
-
 from aether_rpc.capabilities.types import FunctionMetadata
 
 from ..base import Capability

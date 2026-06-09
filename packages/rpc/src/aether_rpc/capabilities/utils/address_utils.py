@@ -1,4 +1,5 @@
 """Address-related utilities for capability modules."""
+
 import ida_idaapi
 import ida_kernwin
 import ida_name
@@ -26,6 +27,7 @@ def resolve_effective_address(address: str | int) -> int | None:
             return None
 
         return ea
+
 
 def resolve_function_name(name: str) -> int | None:
     """Resolve the address of the function containing the given name.

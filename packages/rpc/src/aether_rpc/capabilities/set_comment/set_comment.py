@@ -81,7 +81,9 @@ class SetComment(Capability):
             return False
 
         if cfunc is None:
-            self.logger.error("Decompilation returned no result for function at %s", hex(func.start_ea))
+            self.logger.error(
+                "Decompilation returned no result for function at %s", hex(func.start_ea)
+            )
             return False
 
         tl = ida_hexrays.treeloc_t()

@@ -4,6 +4,7 @@ from ..base import Capability
 
 # --- Field Parsing ---
 
+
 def _parse_field(til, name: str, t_str: str, offset: int) -> tuple | None:
     """Parse a single field declaration into a tinfo_t object.
 
@@ -30,6 +31,7 @@ def _parse_field(til, name: str, t_str: str, offset: int) -> tuple | None:
 
 
 # --- Overlap Detection ---
+
 
 def _has_overlap(m_start: int, m_end: int, occupied_ranges: list[tuple[int, int]]) -> bool:
     """Return True if [m_start, m_end) overlaps any range in occupied_ranges.
@@ -104,7 +106,11 @@ class DeclareCStruct(Capability):
         else:
             self.logger.info(f"Creating new struct: {struct_name}")
             tif.create_udt(udt_data, ida_typeinf.BTF_STRUCT)
-            tif.set_named_type(til, struct_name, ida_typeinf.NTF_REPLACE | ida_typeinf.NTF_TYPE | ida_typeinf.NTF_NOBASE)
+            tif.set_named_type(
+                til,
+                struct_name,
+                ida_typeinf.NTF_REPLACE | ida_typeinf.NTF_TYPE | ida_typeinf.NTF_NOBASE,
+            )
 
     def _parse_fields(
         self, til, fields_list: list, max_bit_reached: int
@@ -160,7 +166,7 @@ class DeclareCStruct(Capability):
         """
         for member in udt_data:
             size = member.type.get_size()
-            if size == 0xffffffffffffffff:
+            if size == 0xFFFFFFFFFFFFFFFF:
                 # Skip members with invalid or unknown size
                 continue
 
@@ -169,7 +175,9 @@ class DeclareCStruct(Capability):
             max_bit_reached = max(max_bit_reached, m_end)
 
             if _has_overlap(m_start, m_end, occupied_ranges):
-                self.logger.warning(f"Removing overlapping member '{member.name}' at {m_start // 8:#x}")
+                self.logger.warning(
+                    f"Removing overlapping member '{member.name}' at {m_start // 8:#x}"
+                )
             else:
                 new_members.append((member.name, member.type, member.offset))
 
@@ -208,7 +216,13 @@ class DeclareCStruct(Capability):
             final_udt.push_back(new_member)
 
         if tif.create_udt(final_udt, ida_typeinf.BTF_STRUCT):
-            tif.set_named_type(til, struct_name, ida_typeinf.NTF_REPLACE | ida_typeinf.NTF_TYPE | ida_typeinf.NTF_NOBASE)
-            self.logger.info(f"Successfully upserted '{struct_name}' with {len(new_members)} fields.")
+            tif.set_named_type(
+                til,
+                struct_name,
+                ida_typeinf.NTF_REPLACE | ida_typeinf.NTF_TYPE | ida_typeinf.NTF_NOBASE,
+            )
+            self.logger.info(
+                f"Successfully upserted '{struct_name}' with {len(new_members)} fields."
+            )
         else:
             self.logger.error(f"Could not save struct '{struct_name}'.")

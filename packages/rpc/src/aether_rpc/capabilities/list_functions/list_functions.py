@@ -23,10 +23,12 @@ class ListFunctions(Capability):
         functions = []
 
         for ea in idautils.Functions():
-            functions.append({
-                "name": ida_funcs.get_func_name(ea),
-                "address": hex(ea),
-            })
+            functions.append(
+                {
+                    "name": ida_funcs.get_func_name(ea),
+                    "address": hex(ea),
+                }
+            )
 
         self.logger.info(f"{len(functions)} functions found")
         return "\n".join(f"{f['name']} {f['address']}" for f in functions)

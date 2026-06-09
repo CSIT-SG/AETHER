@@ -31,6 +31,7 @@ def function_info(ea: int) -> FunctionInfo | None:
         "start_address": hex(func.start_ea),
     }
 
+
 def get_function(ea: int) -> FunctionMetadata | None:
     """Return metadata for the function containing ``ea``.
 

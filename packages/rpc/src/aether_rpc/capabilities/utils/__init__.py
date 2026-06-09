@@ -9,5 +9,5 @@ __all__ = [
     "get_function",
     "function_info",
     "collect_xrefs",
-    "refresh_pseudocode"
+    "refresh_pseudocode",
 ]
