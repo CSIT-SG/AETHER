@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from aether_core import api_client
+from aether_utils.api_client import api_client
 
 
 def test_build_client_cert_key_returns_none_when_paths_not_provided() -> None:
