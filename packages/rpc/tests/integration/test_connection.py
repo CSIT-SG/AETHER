@@ -1,6 +1,7 @@
 # type: ignore
-import rpyc
 import pytest
+import rpyc
+
 
 @pytest.mark.dependency(name="connection", scope="session")
 @pytest.mark.order(1)

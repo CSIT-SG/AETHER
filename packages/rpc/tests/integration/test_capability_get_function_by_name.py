@@ -1,6 +1,6 @@
 # type: ignore
-import rpyc
 import pytest
+import rpyc
 
 
 @pytest.mark.dependency(depends=["connection"], scope="session")
