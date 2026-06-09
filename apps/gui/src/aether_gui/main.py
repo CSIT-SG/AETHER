@@ -1,7 +1,7 @@
 import json
 
 import idaapi
-from aether_core.config import load_config
+from aether_utils.config import load_config
 from aether_utils.is_headless_ida import is_headless_ida
 from aether_utils.logger import get_logger
 

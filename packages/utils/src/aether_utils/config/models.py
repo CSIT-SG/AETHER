@@ -1,51 +1,7 @@
-"""
-AETHER config handling
-"""
+from pydantic import BaseModel, Field, field_validator, model_validator
+from .constants import SUBAGENT_KEYS, DEFAULT_MODEL_LIST
 
-from __future__ import annotations
-
-import json
-from pathlib import Path
-from typing import Annotated
-
-from aether_utils.find_root import find_repo_root
-from aether_utils.logger import get_logger
-from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
-
-
-def get_config_file_path() -> Path:
-    repo_root: Path = find_repo_root()
-    gui_src = repo_root / "apps" / "gui" / "src"
-    gui_src.mkdir(parents=True, exist_ok=True)
-
-    filename = "aether-next-config.json"
-    return gui_src / filename
-
-
-CONFIG_FILE = get_config_file_path()
-
-# Logger for this module
-logger = get_logger("config")
-
-MODEL_CONFIG_KEYS = (
-    "openai_model",
-    "gatherer_model",
-    "annotator_model",
-    "ai_decomp_model",
-    "single_analysis_model",
-    "struct_creator_model",
-    "index_agent_model",
-)
-
-# Keys for the grouped subagents config
-SUBAGENT_KEYS = (
-    "gatherer_model",
-    "annotator_model",
-    "ai_decomp_model",
-    "single_analysis_model",
-    "struct_creator_model",
-    "index_agent_model",
-)
+from typing import Annotated, Self
 
 
 class Subagents(BaseModel):
@@ -57,13 +13,6 @@ class Subagents(BaseModel):
     single_analysis_model: str | None = Field("")
     struct_creator_model: str | None = Field("")
     index_agent_model: str | None = Field("")
-
-
-_DEFAULT_MODEL_LIST = {
-    "Qwen: Qwen3 Coder 480B A35B": "qwen/qwen3-coder",
-    "OpenAI: gpt-oss-120b": "openai/gpt-oss-120b",
-    "Qwen: Qwen3 Next 80B A3B Instruct": "qwen/qwen3-next-80b-a3b-instruct",
-}
 
 
 class AetherConfig(BaseModel):
@@ -106,7 +55,7 @@ class AetherConfig(BaseModel):
 
     # Model catalogue
     model_list: dict[str, str] = Field(
-        default_factory=lambda: dict(_DEFAULT_MODEL_LIST),
+        default_factory=lambda: dict(DEFAULT_MODEL_LIST),
     )
 
     @field_validator("model_list")
@@ -121,7 +70,7 @@ class AetherConfig(BaseModel):
         return v
 
     @model_validator(mode="after")
-    def resolve_subagents(self) -> AetherConfig:
+    def resolve_subagents(self) -> Self:
         valid_ids = set(self.model_list.values())
 
         for key in SUBAGENT_KEYS:
@@ -132,34 +81,3 @@ class AetherConfig(BaseModel):
                 raise ValueError(f"{key.upper()}: '{value}' is not listed in MODEL_LIST")
 
         return self
-
-
-def _write_config_file(config: AetherConfig) -> bool:
-    try:
-        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-            json.dump(config.model_dump(), f, indent=2)
-        return True
-    except Exception as e:
-        logger.error("Error saving config file: %s", e)
-        return False
-
-
-def load_config() -> AetherConfig:
-    try:
-        with open(CONFIG_FILE, encoding="utf-8") as f:
-            raw = json.load(f)
-    except Exception:
-        logger.info("Config file not found or unreadable at %s, using defaults", CONFIG_FILE)
-        raw = {}
-
-    try:
-        cfg = AetherConfig.model_validate(raw)
-    except ValidationError as e:
-        raise ValueError(f"Config validation error: {e}") from e
-
-    try:
-        if (not CONFIG_FILE.exists()) or (CONFIG_FILE.exists() and CONFIG_FILE.stat().st_size == 0):
-            _write_config_file(cfg)
-    except Exception as e:
-        logger.error("Error writing default config file: %s", e)
-    return cfg

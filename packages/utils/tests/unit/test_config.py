@@ -2,13 +2,14 @@ import json
 from pathlib import Path
 
 import pytest
-from aether_core.config import load_config
+from aether_utils.config import load_config
 
 
 def test_load_config_creates_default_file(mock_config_file: Path) -> None:
     assert not mock_config_file.exists()
+    print(f"Testing with mock config file at: {mock_config_file}")
 
-    cfg = load_config()
+    cfg = load_config(mock_config_file)
 
     assert mock_config_file.exists()
     assert cfg.openai_model == "qwen/qwen3-coder"
@@ -28,7 +29,7 @@ def test_load_config_reads_existing_file(mock_config_file: Path) -> None:
     }
     mock_config_file.write_text(json.dumps(raw, indent=2), encoding="utf-8")
 
-    cfg = load_config()
+    cfg = load_config(mock_config_file)
 
     assert cfg.openai_api_key == "test-key"
     assert cfg.openai_model == "openai/gpt-oss-120b"
@@ -44,4 +45,4 @@ def test_load_config_rejects_unknown_subagent_model(mock_config_file: Path) -> N
     mock_config_file.write_text(json.dumps(raw, indent=2), encoding="utf-8")
 
     with pytest.raises(ValueError, match="GATHERER_MODEL"):
-        load_config()
+        load_config(mock_config_file)
