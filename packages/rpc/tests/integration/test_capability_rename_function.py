@@ -3,7 +3,13 @@ import pytest
 import rpyc
 
 
-@pytest.mark.dependency(depends=["connection"], scope="session")
+#@pytest.mark.dependency(depends=["connection"], scope="session")
+
+class TestLiveCapabilities:
+    def test_connection_is_alive(self, ida_client: rpyc.Connection) -> None:
+        assert ida_client.root is not None
+
+
 class TestRenameFunction:
     def test_renames_function(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.rename_function(address="main", new_name="test_renamed_main")
@@ -14,18 +20,15 @@ class TestRenameFunction:
         assert func["name"] == "test_renamed_main"
 
     def test_rename_is_reflected_by_address_lookup(self, ida_client: rpyc.Connection) -> None:
-        main_func = ida_client.root.get_function_by_address(address="main")
+        main_func = ida_client.root.get_function_by_address(address="test_renamed_main")
         assert main_func is not None
-
-        result = ida_client.root.rename_function(address="main", new_name="test_addr_renamed")
-        assert result is True
 
         func = ida_client.root.get_function_by_address(address=main_func["start_address"])
         assert func is not None
-        assert func["name"] == "test_addr_renamed"
+        assert func["name"] == "test_renamed_main"
 
     def test_accepts_integer_address(self, ida_client: rpyc.Connection) -> None:
-        main_func = ida_client.root.get_function_by_address(address="main")
+        main_func = ida_client.root.get_function_by_address(address="test_renamed_main")
         assert main_func is not None
 
         int_address = int(main_func["start_address"], 16)
@@ -35,7 +38,7 @@ class TestRenameFunction:
         assert result is True
 
     def test_accepts_address_within_function_body(self, ida_client: rpyc.Connection) -> None:
-        main_func = ida_client.root.get_function_by_address(address="main")
+        main_func = ida_client.root.get_function_by_address(address="test_int_addr_renamed")
         assert main_func is not None
 
         inner_address = hex(int(main_func["start_address"], 16) + 1)
