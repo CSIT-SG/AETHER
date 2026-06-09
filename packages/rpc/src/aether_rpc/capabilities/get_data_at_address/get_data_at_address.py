@@ -5,10 +5,10 @@ import ida_nalt
 import ida_name
 import idautils
 
+from aether_rpc.capabilities.types import AddressData, PointerInfo
+
 from ..base import Capability
 from ..utils import (
-    AddressData,
-    PointerInfo,
     collect_xrefs,
     function_info,
     resolve_effective_address,

@@ -1,6 +1,8 @@
 
+from aether_rpc.capabilities.types import FunctionMetadata
+
 from ..base import Capability
-from ..utils import FunctionMetadata, get_function, resolve_effective_address
+from ..utils import get_function, resolve_effective_address
 
 
 class GetFunctionByAddress(Capability):

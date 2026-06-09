@@ -1,8 +1,10 @@
 import ida_name
 import idautils
 
+from aether_rpc.capabilities.types import XrefsResult
+
 from ..base import Capability
-from ..utils import XrefsResult, collect_xrefs, resolve_effective_address
+from ..utils import collect_xrefs, resolve_effective_address
 
 
 class GetXrefsTo(Capability):
