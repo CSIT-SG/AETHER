@@ -8,6 +8,7 @@ dependencies = [
     "mcp",
     "httpx",
     "openai",
+    "pydantic",
 ]
 
 [tool.mypy]

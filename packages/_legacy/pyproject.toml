@@ -1,0 +1,15 @@
+[project]
+name = "aether_backend_legacy"
+version = "0.1.0"
+description = "AETHER backend"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "mcp",
+    "httpx",
+    "openai",
+    "pydantic",
+]
+
+[tool.mypy]
+plugins = ["pydantic.mypy"]
