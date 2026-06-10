@@ -59,6 +59,10 @@ Construction runs these steps, in order:
 4. `plugins_ready()`: Run any code that depends on plugins being installed. 
 	For example, if your component relies on a plugin to provide data, you can safely access that data here.
 
+<Callout>
+If you need to override `__init__`, set your component properties before you call `super().__init__`.
+</Callout>
+
 ### Theme Changes
 On theme changes, `ThemePlugin` runs:
 
@@ -113,6 +117,34 @@ To define styles for your component, create a Jinja template with the `.qss.jinj
 Then, you need to implement one of `style_file()` or `style()` in your component class to return the template path or inlined styles, respectively.
 
 `ThemePlugin` will inject theme variables (namespaced under `colors`) into the template context, allowing you to use dynamic values in your styles.
+
+The following colors are supported:
+- `windowtext`
+- `button`
+- `light`
+- `midlight`
+- `dark`
+- `mid`
+- `text`
+- `brighttext`
+- `buttontext`
+- `base`
+- `window`
+- `shadow`
+- `highlight`
+- `highlightedtext`
+- `link`
+- `linkvisited`
+- `alternatebase`
+- `norole`
+- `tooltipbase`
+- `tooltiptext`
+- `placeholdertext`
+- `accent`
+- `ncolorroles`
+
+Access them like this: `{{ colors.window }}` in your jinja template. They map to hex color values like `#000000`.
+
 
 #### Example: QSS Template
 
