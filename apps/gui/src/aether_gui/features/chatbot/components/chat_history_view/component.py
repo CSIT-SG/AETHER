@@ -26,10 +26,10 @@ class ChatHistoryView(StyledComponent):
         layout.setSpacing(0)
 
         #Chat Layout
-        chat_container = QtWidgets.QWidget(self)
-        chat_layout = QtWidgets.QVBoxLayout(chat_container)
-        chat_layout.setContentsMargins(0, 0, 0, 0)
-        chat_layout.setSpacing(0)
+        # chat_container = QtWidgets.QWidget(self)
+        # chat_layout = QtWidgets.QVBoxLayout(chat_container)
+        # chat_layout.setContentsMargins(0, 0, 0, 0)
+        # chat_layout.setSpacing(0)
         # Text view
         text = QtWidgets.QTextEdit(self)
         text.setObjectName("ChatHistoryText")
@@ -42,19 +42,20 @@ class ChatHistoryView(StyledComponent):
             QtWidgets.QSizePolicy.Policy.Expanding,
             QtWidgets.QSizePolicy.Policy.Expanding,
         )
-        chat_layout.addWidget(text)
-
-        # Chat Input
-        chat_input = ChatInput(chat_container)
-        chat_layout.addWidget(chat_input)
-
-        layout.addWidget(chat_container)
+        layout.addWidget(text)
+        # chat_layout.addWidget(text)
+        #
+        # # Chat Input
+        # chat_input = ChatInput(chat_container)
+        # chat_layout.addWidget(chat_input)
+        #
+        # layout.addWidget(chat_container)
 
         # Scrollbar
         scrollbar_component = ScrollBar(QtCore.Qt.Orientation.Vertical, self)
         layout.addWidget(scrollbar_component)
 
-        layout.setStretchFactor(chat_container, 1)
+        layout.setStretchFactor(text, 1)
         layout.setStretchFactor(scrollbar_component, 0)
         self._text = text
         self._scrollbar_component = scrollbar_component

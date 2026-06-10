@@ -18,7 +18,7 @@ class ChatbotPanelForm(ida_kernwin.PluginForm):
     def __init__(self) -> None:
         super().__init__()
         self.parent: QtWidgets.QWidget | None = None
-        self.root: ChatbotPanel | None = None
+        self.chat_panel: ChatbotPanel | None = None
         self.chat_history: ChatHistoryView | None = None
 
     def OnCreate(self, form: object) -> None:
@@ -27,11 +27,11 @@ class ChatbotPanelForm(ida_kernwin.PluginForm):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        self.root = create_chatbot_panel(self.parent)
-        layout.addWidget(self.root)
+        self.chat_panel= create_chatbot_panel(self.parent)
+        layout.addWidget(self.chat_panel)
 
-        self.chat_history = create_chat_history_view(self.root)
-        self.root.set_body(self.chat_history)
+        # self.chat_history = create_chat_history_view(self.chat_panel)
+        # self.chat_panel.set_body(self.chat_history)
 
         if self.chat_history is not None:
             conversation = [
