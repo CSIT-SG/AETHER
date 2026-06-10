@@ -6,7 +6,7 @@ aether_cli = { workspace = true }
 aether_gui = { workspace = true }
 aether_utils = { workspace = true }
 aether_rpc = { workspace = true }
-aether_mcp = { workspace = true }
+aether_backend = { workspace = true }
 aether_test_fixtures = { workspace = true }
 
 [project]

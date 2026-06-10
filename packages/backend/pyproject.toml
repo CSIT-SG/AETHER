@@ -1,7 +1,7 @@
 [project]
-name = "aether_mcp_server"
+name = "aether_backend"
 version = "0.1.0"
-description = "AETHER mcp server"
+description = "AETHER backend"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
