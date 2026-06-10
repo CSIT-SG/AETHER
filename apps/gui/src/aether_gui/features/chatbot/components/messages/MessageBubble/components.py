@@ -72,7 +72,7 @@ class MessageBubble(StyledComponent):
             raise ValueError("tf? Message role neither 'User' nor 'Aether'")
 
         timestamp_layout.addWidget(timestamp)
-        # timestamp_layout.addStretch()
+        timestamp_layout.addStretch()
 
         layout.addWidget(bubble)
         layout.addWidget(timestamp_container)
