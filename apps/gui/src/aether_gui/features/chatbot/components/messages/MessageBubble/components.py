@@ -59,26 +59,26 @@ class MessageBubble(StyledComponent):
             self.is_user = True
 
             timestamp_container.setProperty("role", "user")
-            timestamp_layout.addStretch()
-            timestamp_layout.addWidget(timestamp)
+            # timestamp_layout.addStretch()
+            # timestamp_layout.addWidget(timestamp)
         elif self._message.role == "Aether":
             self.setObjectName("AetherBubble")
             self.is_user = False
 
             timestamp_container.setProperty("role", "aether")
-            timestamp_layout.addWidget(timestamp)
-            timestamp_layout.addStretch()
+            # timestamp_layout.addWidget(timestamp)
+            # timestamp_layout.addStretch()
         else:
             raise ValueError("tf? Message role neither 'User' nor 'Aether'")
+
+        timestamp_layout.addWidget(timestamp)
+        # timestamp_layout.addStretch()
 
         layout.addWidget(bubble)
         layout.addWidget(timestamp_container)
 
         self._bubble = bubble
         self._timestamp = timestamp
-
-    # def on_theme_change(self, *, theme: Theme, colors: ThemeColors) -> None:
-    #     pass
 
     def style_file(self) -> Path | None:
         """Return the QSS template that paints the panel background."""

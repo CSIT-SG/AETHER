@@ -6,4 +6,4 @@ class Message:
     """Message modal for all layers"""
     role: str
     content: str
-    timestamp: datetime.now()
+    timestamp: datetime

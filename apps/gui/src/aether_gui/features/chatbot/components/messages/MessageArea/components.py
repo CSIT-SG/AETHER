@@ -5,11 +5,11 @@ from aether_gui.features.chatbot.components.messages.MessageRow.components impor
 from aether_gui.features.chatbot.components.messages.Messages.components import Message
 from aether_gui.utils.ui.styled_component import StyledComponent
 from PySide6 import QtCore
-from PySide6.QtWidgets import QScrollArea, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QFrame, QScrollArea, QVBoxLayout, QWidget
 
 
 class MessageArea(StyledComponent):
-    """Literally the message area that contains message bubbles"""
+    """Message area where message bubbles are placed"""
 
     def setup(self) -> None:
         self._scroll_area = None
@@ -28,6 +28,12 @@ class MessageArea(StyledComponent):
         # Scroll Area
         scroll_area = QScrollArea(self)
         scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        # scroll_area.setFrameStyle(0)
+
+        # Style Scrollbar
+        scrollbar = scroll_area.verticalScrollBar()
+        scrollbar.setObjectName("ChatScrollBar")
 
         # Messages layout (for scrollable layout)
         messages_container = QWidget(self)
@@ -52,16 +58,3 @@ class MessageArea(StyledComponent):
 
     def style_file(self) -> Path | None:
         return Path(__file__).resolve().parent / "styles.qss.jinja"
-
-    # def on_theme_change(self, *, theme: Theme, colors: ThemeColors) -> None:
-    #     """Re-render cached messages so HTML colors track the new theme."""
-    #     if self._text is None:
-    #         return
-    #     self._text.clear()
-    #     for sender, message in self._messages:
-    #         rendered = self.render_html(sender=sender, message=message)
-    #         if rendered.strip():
-    #             self._text.append(rendered)
-    #     text_scrollbar = self._text.verticalScrollBar()
-    #     text_scrollbar.setValue(text_scrollbar.maximum())
-
