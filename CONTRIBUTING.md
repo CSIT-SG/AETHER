@@ -17,4 +17,4 @@ TODO: update the install script to install deps into the ida python interpreter.
 - Format: `ruff format`
 - Unit tests: `uv run pytest apps/*/tests/unit packages/*/tests/unit`
 - Integration tests: `uv run pytest apps/*/tests/integration packages/*/tests/integration`
-  - You should set the environment variable `IDADIR="C:\Program Files\IDA Professional 9.2"` (ot your ida install directory).
+  - You should set the environment variable `IDADIR="C:\Program Files\IDA Professional 9.2"` (or your ida install directory).
