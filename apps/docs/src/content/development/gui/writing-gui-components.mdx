@@ -62,7 +62,7 @@ Construction runs these steps, in order:
 <Callout>
 If you need to override `__init__`, set your component properties before you call `super().__init__`.
 
-E.g.
+For example,
 ```python
 class MessageBubble(StyledComponent):
     """Message Bubbles"""
@@ -159,10 +159,10 @@ The following colors are supported:
 
 Access them like this: `{{ colors.window }}` in your jinja template. They map to hex color values like `#000000`.
 
-Example of color scheme mapping (See MessageBubble for full example):
-- `{{ colors.highlight }}` -> Blue message bubble
-- `{{ colors.button }}` -> Grey message bubble
-- `{{ colors.text }}` -> Black/White text
+Example of color scheme mapping:
+- `{{ colors.highlight }}` -> Blue
+- `{{ colors.button }}` -> Grey
+- `{{ colors.text }}` -> Black/White
 
 #### Example: QSS Template
 
