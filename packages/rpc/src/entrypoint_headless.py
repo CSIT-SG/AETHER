@@ -83,6 +83,8 @@ def cli() -> None:
 
     signal.signal(signal.SIGINT, _handle_signal)
     signal.signal(signal.SIGTERM, _handle_signal)
+    if sys.platform == "win32":
+        signal.signal(signal.SIGBREAK, _handle_signal)
 
     main(args.idb_path, args.ida_dir, args.host, args.port, stop_event=stop_event)
 

@@ -1,4 +1,6 @@
+import contextlib
 import os
+import signal
 import socket
 import subprocess
 import sys
@@ -11,6 +13,7 @@ import rpyc
 
 BIN_NAME = "basic"
 HEADLESS_PORT = 57000
+ENTRYPOINT = Path(__file__).parent.parent.parent / "src" / "entrypoint_headless.py"
 
 
 def _port_is_free(port: int) -> bool:
@@ -37,14 +40,20 @@ def headless_ida(
     if not _port_is_free(HEADLESS_PORT):
         pytest.skip(f"Port {HEADLESS_PORT} is already in use")
 
-    idb_path = get_binary(BIN_NAME)
+    bin_path = get_binary(BIN_NAME)
+    
+    # remove the idb file
+    # find all files with the same stem as bin_path and suffix .idb or .i64, and delete them
+    with contextlib.suppress(Exception):
+        for p in bin_path.parent.glob(f"{bin_path.stem}.*"):
+            if p.suffix in [".idb", ".i64"]:
+                p.unlink()
 
     proc = subprocess.Popen(
         [
             sys.executable,
-            "-m",
-            "entrypoint_headless",
-            str(idb_path),
+            str(ENTRYPOINT),
+            str(bin_path),
             "--ida-dir",
             ida_dir,
             "--host",
@@ -53,10 +62,11 @@ def headless_ida(
             str(HEADLESS_PORT),
         ],
         env={**os.environ, "IDADIR": ida_dir},
+        creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == "win32" else 0,
     )
 
     # Wait for the port to start accepting connections
-    deadline = time.monotonic() + 60
+    deadline = time.monotonic() + 10
     while True:
         if proc.poll() is not None:
             pytest.fail(f"Headless IDA server exited with code {proc.returncode}")
@@ -71,8 +81,18 @@ def headless_ida(
 
     yield "127.0.0.1", HEADLESS_PORT
 
-    proc.terminate()
-    proc.wait(timeout=10)
+    
+    if sys.platform == "win32":
+        proc.send_signal(signal.CTRL_BREAK_EVENT)
+    else:
+        proc.send_signal(signal.SIGTERM)
+
+    try:
+        proc.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+
+
 
 
 @pytest.fixture(scope="session")

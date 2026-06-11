@@ -8,6 +8,7 @@ dependencies = [
     "idapro>=0.0.9",
     "pydantic>=2.13.3",
     "rpyc>=6.0.1",
+    "uuid-utils>=0.16.0",
 ]
 
 [tool.mypy]

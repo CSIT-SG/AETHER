@@ -1,9 +1,14 @@
 import contextlib
 import threading
+from os import getpid
+from pathlib import Path
 
+from aether_utils.data_dir import get_data_dir
 from rpyc.utils.server import ThreadedServer
+from uuid_utils import uuid7
 
 from .capabilities.base import Capability
+from .context import IDBContext
 from .executors import IDAExecutor
 from .ida_service import IDAService
 
@@ -21,6 +26,10 @@ class RPCServer:
         self._host = host
         self._port = port
 
+        self._id = uuid7()
+        self._data_file = get_data_dir(Path("rpc_server")) / f"{self._id}.json"
+        self._context = IDBContext()
+
         self._server: ThreadedServer | None = None
         self._thread: threading.Thread | None = None
 
@@ -30,6 +39,20 @@ class RPCServer:
             raise RuntimeError("Server not started")
 
         return self._server.port
+
+    # we register ourselves in the file system when we start, and deregister when we stop.
+    def _register(self) -> None:
+
+        data = {
+            "id": str(self._id),
+            "port": self._server.port if self._server else None,
+            "pid": getpid(),
+        }
+        print(self._data_file, data)
+        self._data_file.write_text(str(data))
+
+    def _deregister(self) -> None:
+        self._data_file.unlink(missing_ok=True)
 
     def start(self) -> None:
         self._executor.startup()
@@ -55,6 +78,7 @@ class RPCServer:
         )
 
         self._thread.start()
+        # self._register()
 
     def _run(self):
         if not self._server:
@@ -68,8 +92,9 @@ class RPCServer:
         with contextlib.suppress(Exception):
             self._server.close()
 
-        # 3. Join thread
         if self._thread:
             self._thread.join(timeout=2)
 
         self._executor.shutdown()
+
+        # self._deregister()
