@@ -1,0 +1,21 @@
+from aether_utils.config import load_config
+import rpyc
+from contextlib import asynccontextmanager
+from typing import Any, AsyncGenerator
+
+
+@asynccontextmanager
+async def get_rpc_connection(host: str, port: int) -> AsyncGenerator[Any, None]:
+    """Establish an RPyC connection to the IDA RPC server."""
+    conn = rpyc.connect(
+        host,
+        port,
+        config={
+            "allow_public_attrs": True,
+            "allow_pickle": True,
+        },
+    )
+    try:
+        yield conn.root
+    finally:
+        conn.close()
