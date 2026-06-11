@@ -45,7 +45,7 @@ class RPCServer:
             "port": self._server.port if self._server else None,
             "pid": getpid(),
         }
-        print(self._data_file, data)
+
         self._data_file.write_text(str(data))
 
     def _deregister(self) -> None:

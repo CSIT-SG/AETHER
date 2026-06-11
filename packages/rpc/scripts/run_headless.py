@@ -15,7 +15,7 @@ logger = get_logger("rpc_headless_plugin")
 
 
 def main(
-    idb_path: str,
+    idb_path: str,  # can also be the actual binary path
     ida_install_dir: str,
     host: str = "127.0.0.1",
     port: int = 0,
