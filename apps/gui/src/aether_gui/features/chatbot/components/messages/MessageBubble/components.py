@@ -4,7 +4,7 @@ import sys
 
 from PySide6 import QtCore
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
-from aether_gui.features.chatbot.components.messages.Messages.components import Message
+from aether_gui.features.chatbot.components.messages.Messages.components import Message, MessageRole
 from aether_gui.utils.ui.plugins.theme_plugin.types import Theme, ThemeColors
 from aether_gui.utils.ui.styled_component import StyledComponent
 
@@ -36,7 +36,7 @@ class MessageBubble(StyledComponent):
         bubble.setWordWrap(True)
         bubble.setObjectName("MessageText")
 
-        self.setMaximumWidth(700)
+        # self.setMaximumWidth(700)
 
         # Timestamp Container
         timestamp_container = QWidget(self)
@@ -54,20 +54,14 @@ class MessageBubble(StyledComponent):
         timestamp.setObjectName("Timestamp")
 
         # Determine User or Aether bubble
-        if self._message.role == "User":
+        if self._message.role == MessageRole.USER:
             self.setObjectName("UserBubble")
             self.is_user = True
 
-            timestamp_container.setProperty("role", "user")
-            # timestamp_layout.addStretch()
-            # timestamp_layout.addWidget(timestamp)
-        elif self._message.role == "Aether":
+        elif self._message.role == MessageRole.AETHER:
             self.setObjectName("AetherBubble")
             self.is_user = False
 
-            timestamp_container.setProperty("role", "aether")
-            # timestamp_layout.addWidget(timestamp)
-            # timestamp_layout.addStretch()
         else:
             raise ValueError("tf? Message role neither 'User' nor 'Aether'")
 

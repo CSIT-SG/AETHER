@@ -1,5 +1,6 @@
 from typing import cast
 
+from aether_gui.features.chatbot.components.chat_session.component import ChatSession
 import ida_kernwin
 from aether_gui.features.chatbot import ChatbotHandler
 from aether_utils.logger import get_logger
@@ -21,8 +22,9 @@ class AetherUIHooks(ida_kernwin.UI_Hooks):
     def __init__(self) -> None:
         super().__init__()
 
+        self.session = ChatSession()
         self.items = [
-            ContextMenuItem("aether:chatbot", "Open AI Chatbot", ChatbotHandler()),
+            ContextMenuItem("aether:chatbot", "Open AI Chatbot", ChatbotHandler(self.session)),
             ContextMenuItem("aether:whats_new", "What's new", DummyHandler()),
         ]
 

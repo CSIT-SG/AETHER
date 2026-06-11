@@ -1,5 +1,6 @@
 from typing import Any, Literal, cast
 
+from aether_gui.features.chatbot.components.chat_session.component import ChatSession
 import ida_kernwin
 import idaapi
 from aether_gui.features.chatbot.components import (
@@ -15,8 +16,9 @@ logger = get_logger("chatbot_handler")
 
 
 class ChatbotPanelForm(ida_kernwin.PluginForm):
-    def __init__(self) -> None:
+    def __init__(self, session: ChatSession) -> None:
         super().__init__()
+        self._session = session
         self.parent: QtWidgets.QWidget | None = None
         self.chat_panel: ChatbotPanel | None = None
         self.chat_history: ChatHistoryView | None = None
@@ -27,7 +29,7 @@ class ChatbotPanelForm(ida_kernwin.PluginForm):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        self.chat_panel= create_chatbot_panel(self.parent)
+        self.chat_panel = create_chatbot_panel(self._session, self.parent)
         layout.addWidget(self.chat_panel)
 
         # self.chat_history = create_chat_history_view(self.chat_panel)
@@ -94,9 +96,10 @@ class ChatbotPanelForm(ida_kernwin.PluginForm):
 
 
 class ChatbotHandler(ida_kernwin.action_handler_t):
-    def __init__(self) -> None:
+    def __init__(self, session: ChatSession) -> None:
         ida_kernwin.action_handler_t.__init__(self)
         self.panel_title = "AETHER ChatBot"
+        self.session = session
 
     def activate(self, ctx: ida_kernwin.action_ctx_base_t) -> Literal[0]:
         curr_form = idaapi.get_current_widget()
@@ -107,7 +110,7 @@ class ChatbotHandler(ida_kernwin.action_handler_t):
             logger.error(f"Error: Cleanly attach failed. Make sure '{target_title}' is open.")
             return 0
 
-        panel = ChatbotPanelForm()
+        panel = ChatbotPanelForm(self.session)
 
         panel.Show(
             self.panel_title,

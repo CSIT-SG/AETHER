@@ -9,6 +9,9 @@ from PySide6.QtGui import QTextOption
 class ChatInput(StyledComponent):
     """Chat bar to enter user input"""
 
+    # Submit Signal
+    submitted = QtCore.Signal(str)
+
     def __init__(self, parent: QtWidgets.QWidget | None = None,) -> None:
         super().__init__(parent)
 
@@ -49,9 +52,9 @@ class ChatInput(StyledComponent):
 
 
         # Submit Button
-        submit_btn = QtWidgets.QPushButton("\u2191", self)
+        submit_btn = QtWidgets.QPushButton("\u2191", self._textbox)
+        submit_btn.clicked.connect(self._submit)
         submit_btn.setObjectName("SendButton")
-        # submit_btn.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground, True)
         # submit_btn.setFixedSize(32, 32)
         layout.addWidget(submit_btn, 0, QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignBottom)
 
@@ -59,6 +62,7 @@ class ChatInput(StyledComponent):
 
         # Call _adjust_height to adjust height to single line
         self._adjust_height()
+
 
 
     def _adjust_height(self):
@@ -76,13 +80,17 @@ class ChatInput(StyledComponent):
 
         self._textbox.setFixedHeight(height)
 
-    # def _reposition_button(self):
-    #     margin = 8
-    #
-    #     self._send_button.move(
-    #             self._textbox.viewport().width() - self._send_button.width() - margin,
-    #             self._textbox.height() + self._send_button.height() + margin
-    #             )
+
+    def _submit(self) -> None:
+        text = self._textbox.toPlainText().strip()
+
+        if not text:
+            return
+
+        self.submitted.emit(text)
+
+        self._textbox.clear()
+
 
     def style_file(self) -> Path | None:
         return Path(__file__).with_name("styles.qss.jinja")

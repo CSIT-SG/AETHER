@@ -29,7 +29,6 @@ class MessageArea(StyledComponent):
         scroll_area = QScrollArea(self)
         scroll_area.setWidgetResizable(True)
         scroll_area.setFrameShape(QFrame.Shape.NoFrame)
-        # scroll_area.setFrameStyle(0)
 
         # Style Scrollbar
         scrollbar = scroll_area.verticalScrollBar()
