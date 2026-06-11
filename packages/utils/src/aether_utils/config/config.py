@@ -7,9 +7,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from pydantic import ValidationError
+
 from aether_utils.find_root import find_repo_root
 from aether_utils.logger import get_logger
-from pydantic import ValidationError
+
 from .models import AetherConfig
 
 

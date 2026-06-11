@@ -1,7 +1,8 @@
-from pydantic import BaseModel, Field, field_validator, model_validator
-from .constants import SUBAGENT_KEYS, DEFAULT_MODEL_LIST
-
 from typing import Annotated, Self
+
+from pydantic import BaseModel, Field, field_validator, model_validator
+
+from .constants import DEFAULT_MODEL_LIST, SUBAGENT_KEYS
 
 
 class Subagents(BaseModel):

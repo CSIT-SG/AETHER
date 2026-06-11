@@ -1,9 +1,10 @@
 from os import path
 
 import httpx
+from openai import AsyncOpenAI
+
 from aether_utils.find_root import get_version
 from aether_utils.logger import get_logger
-from openai import AsyncOpenAI
 
 VERSION = get_version()
 logger = get_logger("aether_core.api_client")
