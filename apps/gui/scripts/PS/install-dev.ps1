@@ -25,4 +25,4 @@ if (-not (Test-Path $IdaPluginsDir)) {
 
 Invoke-Expression "$PythonPath '$linker' '$RepoRoot' '$IdaPluginsDir'"
 
-Write-Host "Installed AETHER GUI and RPC plugin links in: $IdaPluginsDir" -ForegroundColor Green
+Write-Host "Installed AETHER plugin links in: $IdaPluginsDir" -ForegroundColor Green

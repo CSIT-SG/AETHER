@@ -49,4 +49,4 @@ if ($LASTEXITCODE -eq 1) {
 
 Invoke-Expression "$PythonPath '$linker' '$RepoRoot' '$IdaPluginsDir'"
 
-Write-Host "Installed AETHER GUI and RPC production artifacts in: $IdaPluginsDir" -ForegroundColor Green
+Write-Host "Installed AETHER artifacts in: $IdaPluginsDir" -ForegroundColor Green

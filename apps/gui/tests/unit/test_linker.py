@@ -57,9 +57,11 @@ class TestCreateLink:
         """
         src = str(src_dir / "apps" / "gui" / "src" / "plugin.py")
         dst = str(dst_dir / "bad.py")
-        with patch("scripts.utils.linker.symlink", side_effect=PermissionError("mocked")):
-            with pytest.raises(SystemExit) as exc_info:
-                create_link(src, dst)
+        with (
+            patch("scripts.utils.linker.symlink", side_effect=PermissionError("mocked")),
+            pytest.raises(SystemExit) as exc_info,
+        ):
+            create_link(src, dst)
         assert exc_info.value.code == 1
 
 
@@ -83,13 +85,14 @@ class TestMain:
             dst = dst_dir / dst_name
             assert dst.resolve() == src.resolve()
 
+    # TODO: make this test independent of the file name
     def test_replaces_stale_link(
         self, src_dir: Path, dst_dir: Path, symlink_supported: bool
     ) -> None:
         if not symlink_supported:
             pytest.skip("Symlinks are not permitted on this system.")
         stale_target = src_dir / "apps" / "gui" / "src" / "plugin.py"
-        dst = dst_dir / "aether-next-gui.py"
+        dst = dst_dir / "aether-next.py"
         dst.symlink_to("/stale/path/plugin.py")
         assert islink(str(dst))
 

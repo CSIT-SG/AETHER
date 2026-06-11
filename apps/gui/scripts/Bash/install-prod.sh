@@ -89,4 +89,4 @@ fi
 
 $PYTHON_PATH $LINKER "$REPO_ROOT" "$IDA_PLUGINS_DIR"
 
-echo "Installed AETHER GUI and RPC production artifacts in: $IDA_PLUGINS_DIR"
+echo "Installed AETHER artifacts in: $IDA_PLUGINS_DIR"
