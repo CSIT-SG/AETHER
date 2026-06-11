@@ -41,7 +41,7 @@ def headless_ida(
         pytest.skip(f"Port {HEADLESS_PORT} is already in use")
 
     bin_path = get_binary(BIN_NAME)
-    
+
     # remove the idb file
     # find all files with the same stem as bin_path and suffix .idb or .i64, and delete them
     with contextlib.suppress(Exception):
@@ -81,7 +81,6 @@ def headless_ida(
 
     yield "127.0.0.1", HEADLESS_PORT
 
-    
     if sys.platform == "win32":
         proc.send_signal(signal.CTRL_BREAK_EVENT)
     else:
@@ -91,8 +90,6 @@ def headless_ida(
         proc.wait(timeout=10)
     except subprocess.TimeoutExpired:
         proc.kill()
-
-
 
 
 @pytest.fixture(scope="session")

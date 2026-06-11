@@ -1,3 +1,2 @@
 
-APPNAME = "AETHER-next"
-DIRNAME = ".cache"
+AUTHORNAME = "AETHER-next"
