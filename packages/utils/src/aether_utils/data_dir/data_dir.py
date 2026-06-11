@@ -1,8 +1,8 @@
 from pathlib import Path
 from platformdirs import user_data_dir
-from .constants import APP_NAME
+from .constants import DIRNAME, APPNAME
 
-base_dir = Path(user_data_dir(APP_NAME))
+base_dir = Path(user_data_dir(DIRNAME, APPNAME))
 
 def _mkdir_if_not_exists(path: Path) -> None:
     """Create the directory if it does not exist."""
