@@ -8,6 +8,7 @@ from pathlib import Path
 from threading import Event
 
 from aether_rpc.executors.headless_executor import HeadlessExecutor, configure_idapro
+from aether_utils.file_id import file_id
 from aether_utils.logger import get_logger
 
 logger = get_logger("rpc_headless_plugin")
@@ -28,7 +29,8 @@ def main(
 
     executor = HeadlessExecutor(idb_path, ida_install_dir)
     capabilities = [getattr(caps, c)() for c in caps.__all__]
-    server = RPCServer(executor, capabilities, host=host, port=port)
+
+    server = RPCServer(file_id(idb_path), executor, capabilities, host=host, port=port)
     server.start()  # calls executor.startup() on this (main) thread
 
     logger.info(f"Headless IDA RPC server started on port {server.port}")
@@ -77,7 +79,7 @@ def cli() -> None:
 
     stop_event = Event()
 
-    def _handle_signal(_sig, _frame) -> None:
+    def _handle_signal(_sig: int, _frame: object) -> None:
         logger.info("Shutdown signal received")
         stop_event.set()
 

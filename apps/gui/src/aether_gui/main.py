@@ -1,5 +1,6 @@
 import json
 
+import ida_nalt
 import idaapi
 from aether_utils.config import load_config
 from aether_utils.is_headless_ida import is_headless_ida
@@ -37,6 +38,8 @@ class _Aether(idaapi.plugin_t):
         if self._ui_hooks is None:
             self._ui_hooks = AetherUIHooks()
             self._ui_hooks.hook()
+
+        logger.debug(ida_nalt.get_input_file_path())
 
         return idaapi.PLUGIN_KEEP
 

@@ -1,7 +1,8 @@
-from .mcp_server import app_provider
 from fastmcp import FastMCP
 from starlette.applications import Starlette
 from starlette.routing import Mount
+
+from .mcp_server import app_provider
 
 mcp_app = FastMCP("AETHER Backend", providers=[app_provider]).http_app(path="/")
 

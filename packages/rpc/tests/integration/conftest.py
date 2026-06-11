@@ -13,7 +13,7 @@ import rpyc
 
 BIN_NAME = "basic"
 HEADLESS_PORT = 57000
-ENTRYPOINT = Path(__file__).parent.parent.parent / "src" / "entrypoint_headless.py"
+ENTRYPOINT = Path(__file__).parent.parent.parent / "scripts" / "run_headless.py"
 
 
 def _port_is_free(port: int) -> bool:

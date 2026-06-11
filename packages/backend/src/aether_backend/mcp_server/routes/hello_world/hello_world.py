@@ -1,5 +1,5 @@
-from fastmcp.tools import tool
 from fastmcp import Context
+from fastmcp.tools import tool
 
 
 @tool

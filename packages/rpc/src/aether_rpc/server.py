@@ -4,7 +4,6 @@ from os import getpid
 
 from aether_utils.data_dir import get_data_dir
 from rpyc.utils.server import ThreadedServer
-from uuid_utils import uuid7
 
 from .capabilities.base import Capability
 from .executors import IDAExecutor
@@ -14,6 +13,7 @@ from .ida_service import IDAService
 class RPCServer:
     def __init__(
         self,
+        id: str,
         executor: IDAExecutor,
         capabilities: list[Capability],
         host: str = "127.0.0.1",
@@ -24,7 +24,7 @@ class RPCServer:
         self._host = host
         self._port = port
 
-        self._id = uuid7()
+        self._id = id
         self._data_file = get_data_dir("rpc_server") / f"{self._id}.json"
 
         self._server: ThreadedServer | None = None

@@ -1,7 +1,7 @@
 import argparse
 import sys
 
-from utils.set_connection import set_connection
+from .utils.set_connection import set_connection
 
 DEFAULT_ADDRESS = "0x140009050"
 
