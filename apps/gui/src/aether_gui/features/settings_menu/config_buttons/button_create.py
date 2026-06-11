@@ -6,7 +6,7 @@ from .abstract_button import ConfigButton
 
 
 class ApplyButton(ConfigButton):
-    def __init__(self, get_content: Callable) -> None:
+    def __init__(self, get_content: Callable[[], str]) -> None:
         super().__init__("Apply")
         self._get_content: Callable = get_content
 
@@ -16,7 +16,7 @@ class ApplyButton(ConfigButton):
 
 
 class OkButton(ConfigButton):
-    def __init__(self, get_content: Callable, on_close: Callable) -> None:
+    def __init__(self, get_content: Callable[[], str], on_close: Callable) -> None:
         super().__init__("OK")
         self._get_content: Callable = get_content
         self._on_close: Callable = on_close

@@ -25,6 +25,5 @@ class ConfigBox(StyledComponent):
         """Load config file content into box"""
         self._output_box.setPlainText(CONTENTS)
 
-
-def create_config_box() -> ConfigBox:
-    return ConfigBox()
+    def get_content(self) -> str:
+          return CONTENTS

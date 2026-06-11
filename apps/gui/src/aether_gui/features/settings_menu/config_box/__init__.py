@@ -1,7 +1,5 @@
-from .component import CONTENTS, ConfigBox, create_config_box
+from .component import ConfigBox
 
 __all__ = [
-    "ConfigBox",
-    "create_config_box",
-    "CONTENTS"
+    "ConfigBox"
 ]

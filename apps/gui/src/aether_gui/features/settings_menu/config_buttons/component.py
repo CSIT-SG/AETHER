@@ -22,7 +22,7 @@ class ButtonRow(StyledComponent):
         self._container = container
 
 
-    def set_buttons(self, get_content: Callable, on_close: Callable) -> None:
+    def set_buttons(self, get_content: Callable[[],str], on_close: Callable) -> None:
         ok: OkButton = OkButton(get_content, on_close)
         apply: ApplyButton = ApplyButton(get_content)
         cancel: CancelButton = CancelButton(on_close)
