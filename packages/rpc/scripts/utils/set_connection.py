@@ -1,8 +1,9 @@
+from typing import Any
+
 import rpyc
-import sys
 
 
-def set_connection(host: str, port: int) -> rpyc.Connection:
+def set_connection(host: str, port: int) -> Any:
     """Establish an RPyC connection to the IDA RPC server."""
     try:
         conn = rpyc.connect(
@@ -15,5 +16,4 @@ def set_connection(host: str, port: int) -> rpyc.Connection:
         )
         return conn
     except Exception as exc:
-        print(f"RPC call failed: {exc}", file=sys.stderr)
-        sys.exit(1)
+        raise ConnectionError(f"Failed to connect to RPC server at {host}:{port}: {exc}") from exc

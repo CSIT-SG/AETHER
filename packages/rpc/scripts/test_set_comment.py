@@ -1,7 +1,7 @@
 import argparse
 import sys
 
-import rpyc
+from utils.set_connection import set_connection
 
 DEFAULT_ADDRESS = "0x140009050"
 
@@ -24,18 +24,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    try:
-        conn = rpyc.connect(
-            args.host,
-            args.port,
-            config={
-                "allow_public_attrs": True,
-                "allow_pickle": True,
-            },
-        )
-    except Exception as exc:
-        print(f"Failed to connect to RPC server: {exc}", file=sys.stderr)
-        return 1
+    conn = set_connection(args.host, args.port)
 
     try:
         conn.root.set_comment(address=args.address, comment=args.comment)

@@ -1,7 +1,7 @@
 import argparse
 import sys
 
-import rpyc
+from utils.set_connection import set_connection
 
 DEFAULT_ADDRESS = "0x140009050"
 
@@ -29,21 +29,12 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    try:
-        conn = rpyc.connect(
-            args.host,
-            args.port,
-            config={
-                "allow_public_attrs": True,
-                "allow_pickle": True,
-            },
-        )
-    except Exception as exc:
-        print(f"Failed to connect to RPC server: {exc}", file=sys.stderr)
-        return 1
+    conn = set_connection(args.host, args.port)
 
     try:
-        conn.root.rename_local_variable(function_address=args.address, old_var_name=args.old_name, new_var_name=args.new_name)
+        conn.root.rename_local_variable(
+            function_address=args.address, old_var_name=args.old_name, new_var_name=args.new_name
+        )
     except Exception as exc:
         print(f"RPC call failed: {exc}", file=sys.stderr)
         return 1
