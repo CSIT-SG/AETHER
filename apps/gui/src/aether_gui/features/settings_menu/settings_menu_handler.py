@@ -1,4 +1,3 @@
-import idaapi
 from aether_utils.logger import get_logger
 from config_box import ConfigBox
 from config_buttons import ButtonRow
