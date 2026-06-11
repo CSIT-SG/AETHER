@@ -8,5 +8,6 @@ dependencies = [
     "httpx",
     "pydantic",
     "openai",
+    "platformdirs>=4.10.0",
 ]
 

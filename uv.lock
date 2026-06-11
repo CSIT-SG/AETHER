@@ -155,6 +155,7 @@ source = { editable = "packages/utils" }
 dependencies = [
     { name = "httpx" },
     { name = "openai" },
+    { name = "platformdirs" },
     { name = "pydantic" },
 ]
 
@@ -162,6 +163,7 @@ dependencies = [
 requires-dist = [
     { name = "httpx" },
     { name = "openai" },
+    { name = "platformdirs", specifier = ">=4.10.0" },
     { name = "pydantic" },
 ]
 
