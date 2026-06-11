@@ -1,4 +1,5 @@
-from aether_backend.server import app
+# from aether_backend.server import app
+import uvicorn
 
 if __name__ == "__main__":
-    app.run(transport="streamable-http", port=8000)
+    uvicorn.run("aether_backend.server:app", port=8000, reload=True)
