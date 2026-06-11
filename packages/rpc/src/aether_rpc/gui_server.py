@@ -5,7 +5,20 @@ from aether_rpc.executors.gui_executor import GUIExecutor
 from aether_rpc.server import RPCServer
 
 CAPABILITIES = [getattr(caps, c)() for c in caps.__all__]
-logger = get_logger("rpc_gui_plugin")
 executor = GUIExecutor()
 
-gui_server = RPCServer("gui", executor, CAPABILITIES)
+logger = get_logger("rpc_gui_plugin")
+
+
+class GUIRPCServer:
+    def __init__(self, file_id: str):
+        self.file_id = file_id
+        self.server = RPCServer(id=file_id, executor=executor, capabilities=CAPABILITIES)
+
+    def start(self):
+        self.server.start()
+        logger.info(f"GUI RPC server for file_id {self.file_id} started on port {self.server.port}")
+
+    def stop(self):
+        self.server.stop()
+        logger.info(f"GUI RPC server for file_id {self.file_id} stopped")

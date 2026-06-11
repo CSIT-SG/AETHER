@@ -2,7 +2,9 @@ import json
 
 import ida_nalt
 import idaapi
+from aether_rpc.gui_server import GUIRPCServer
 from aether_utils.config import load_config
+from aether_utils.file_id import file_id
 from aether_utils.is_headless_ida import is_headless_ida
 from aether_utils.logger import get_logger
 
@@ -20,6 +22,8 @@ class _Aether(idaapi.plugin_t):
         super().__init__()
         # Keep the state bound to the instance, completely avoiding 'global'
         self._ui_hooks: AetherUIHooks | None = None
+
+        self._rpc_server = GUIRPCServer(file_id=file_id(ida_nalt.get_input_file_path()))
 
     def init(self) -> int:
         if is_headless_ida():
@@ -39,7 +43,7 @@ class _Aether(idaapi.plugin_t):
             self._ui_hooks = AetherUIHooks()
             self._ui_hooks.hook()
 
-        logger.debug(ida_nalt.get_input_file_path())
+        self._rpc_server.start()
 
         return idaapi.PLUGIN_KEEP
 
@@ -57,6 +61,7 @@ class _Aether(idaapi.plugin_t):
                 logger.warning("Failed to unhook AETHER UI hooks: %s", e)
             finally:
                 self._ui_hooks = None
+        self._rpc_server.stop()
 
 
 def PLUGIN_ENTRY() -> _Aether:
