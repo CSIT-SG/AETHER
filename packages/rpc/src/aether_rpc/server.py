@@ -25,7 +25,7 @@ class RPCServer:
         self._port = port
 
         self._id = id
-        self._data_file = get_data_dir("rpc_server") / f"{self._id}.json"
+        self._data_file = get_data_dir("rpc") / f"{self._id}.json"
 
         self._server: ThreadedServer | None = None
         self._thread: threading.Thread | None = None

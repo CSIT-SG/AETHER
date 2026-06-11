@@ -1,7 +1,3 @@
-"""
-AETHER config handling
-"""
-
 from __future__ import annotations
 
 import json
@@ -9,19 +5,16 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from aether_utils.find_root import find_repo_root
+from aether_utils.data_dir import get_data_dir
 from aether_utils.logger import get_logger
 
 from .models import AetherConfig
 
 
 def get_config_file_path() -> Path:
-    repo_root: Path = find_repo_root()
-    gui_src = repo_root / "apps" / "gui" / "src"
-    gui_src.mkdir(parents=True, exist_ok=True)
-
-    filename = "aether-next-config.json"
-    return gui_src / filename
+    base = get_data_dir("_global")
+    filename = "config.json"
+    return base / filename
 
 
 CONFIG_FILE = get_config_file_path()

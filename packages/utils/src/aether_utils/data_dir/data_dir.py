@@ -2,10 +2,10 @@ from pathlib import Path
 
 from platformdirs import user_data_dir
 
-from .constants import AUTHORNAME
+from .constants import AUTHORNAME, AppName
 
 
-def get_base_dir(appname: str) -> Path:
+def get_base_dir(appname: AppName) -> Path:
     return Path(user_data_dir(appname=appname, appauthor=AUTHORNAME))
 
 
@@ -15,7 +15,7 @@ def _mkdir_if_not_exists(path: Path) -> None:
         path.mkdir(parents=True, exist_ok=True)
 
 
-def get_data_dir(appname: str, subdir: Path | None = None) -> Path:
+def get_data_dir(appname: AppName, subdir: Path | None = None) -> Path:
     """Get the path to the AETHER data directory."""
     base_dir = get_base_dir(appname)
     _mkdir_if_not_exists(base_dir)
