@@ -1,15 +1,15 @@
 from pathlib import Path
 
-import sys
+from markdown import markdown
 
 from PySide6 import QtCore
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QTextBrowser, QVBoxLayout, QWidget
 from aether_gui.features.chatbot.components.messages.Messages.components import Message, MessageRole
 from aether_gui.utils.ui.plugins.theme_plugin.types import Theme, ThemeColors
 from aether_gui.utils.ui.styled_component import StyledComponent
 
 class MessageBubble(StyledComponent):
-    """Message Bubbles"""
+    """Message Bubbles - contain markdown content"""
     def __init__(
             self,
             message: Message,
@@ -19,60 +19,82 @@ class MessageBubble(StyledComponent):
         super().__init__(parent)
 
     def setup(self) -> None:
+        self._browser = None
         self._bubble = None
-        self._timestamp = None
-        self.is_user = None
 
     def init_ui(self) -> None:
         """Builds bubble widget with custom background theme"""
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground, True)
 
+        """Pair QTextBrowser and markdown to render content in markdown format"""
         # Layout
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(12, 8, 12, 8)
 
-        # Label/Bubble
-        bubble = QLabel(self._message.content)
-        bubble.setWordWrap(True)
-        bubble.setObjectName("MessageText")
+        # Markdown rendering Browser
+        md_browser = QTextBrowser(self)
+        md_browser.setReadOnly(True)
+        md_browser.setOpenExternalLinks(True)
+        md_browser.setFrameShape(
+                QTextBrowser.Shape.NoFrame
+                )
 
-        # self.setMaximumWidth(700)
+        html = markdown(
+                self._message.content,
+                extensions=[
+                    "fenced_code",
+                    "tables",
+                    ]
+                )
 
-        # Timestamp Container
-        timestamp_container = QWidget(self)
-        timestamp_container.setObjectName("TimestampContainer")
+        md_browser.setHtml(html)
 
-        timestamp_layout = QHBoxLayout(timestamp_container)
+        layout.addWidget(md_browser)
 
-        # Timestamp
-        if sys.platform == "win32":
-            formatted_timestamp = self._message.timestamp.strftime("%#I:%M %p")
-        else:
-            formatted_timestamp = self._message.timestamp.strftime("%-I:%M %p")
+        self._browser = md_browser
 
-        timestamp = QLabel(formatted_timestamp)
-        timestamp.setObjectName("Timestamp")
+        # Styling
+        match self._message.role:
+            case MessageRole.USER:
+                self.setObjectName("UserBubble")
 
-        # Determine User or Aether bubble
-        if self._message.role == MessageRole.USER:
-            self.setObjectName("UserBubble")
-            self.is_user = True
+            case MessageRole.AETHER:
+                self.setObjectName("AetherBubble")
 
-        elif self._message.role == MessageRole.AETHER:
-            self.setObjectName("AetherBubble")
-            self.is_user = False
-
-        else:
-            raise ValueError("tf? Message role neither 'User' nor 'Aether'")
-
-        timestamp_layout.addWidget(timestamp)
-        timestamp_layout.addStretch()
-
-        layout.addWidget(bubble)
-        layout.addWidget(timestamp_container)
-
-        self._bubble = bubble
-        self._timestamp = timestamp
+        # Layout
+        # layout = QVBoxLayout(self)
+        # layout.setContentsMargins(12, 8, 12, 8)
+        #
+        # # Label/Bubble
+        # bubble = QLabel(self._message.content)
+        # bubble.setWordWrap(True)
+        # bubble.setObjectName("MessageText")
+        #
+        # # self.setMaximumWidth(700)
+        #
+        # # Timestamp Container
+        # timestamp_container = QWidget(self)
+        # timestamp_container.setObjectName("TimestampContainer")
+        #
+        # timestamp_layout = QHBoxLayout(timestamp_container)
+        #
+        # # Timestamp
+        # if sys.platform == "win32":
+        #     formatted_timestamp = self._message.timestamp.strftime("%#I:%M %p")
+        # else:
+        #     formatted_timestamp = self._message.timestamp.strftime("%-I:%M %p")
+        #
+        # timestamp = QLabel(formatted_timestamp)
+        # timestamp.setObjectName("Timestamp")
+        #
+        #
+        # timestamp_layout.addWidget(timestamp)
+        # timestamp_layout.addStretch()
+        #
+        # layout.addWidget(bubble)
+        # layout.addWidget(timestamp_container)
+        #
+        # self._bubble = bubble
+        # self._timestamp = formatted_timestamp
 
     def style_file(self) -> Path | None:
         """Return the QSS template that paints the panel background."""

@@ -51,9 +51,8 @@ class MessageArea(StyledComponent):
         self._messages_layout.setSpacing(12)
 
     def append_message(self, message:Message):
-        bubble = MessageBubble(message)
-        row = MessageRow(bubble, bubble.is_user)
-        self._messages_layout.addWidget(row)
+        card = MessageRow(message)
+        self._messages_layout.addWidget(card)
 
     def style_file(self) -> Path | None:
         return Path(__file__).resolve().parent / "styles.qss.jinja"

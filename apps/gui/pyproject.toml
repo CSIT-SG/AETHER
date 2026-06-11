@@ -9,6 +9,7 @@ dependencies = [
     "aether_utils",
     "PySide6",
     "jinja2",
-    "markupsafe==2.0.1"
+    "markupsafe==2.0.1",
+    "markdown",
 ]
 
