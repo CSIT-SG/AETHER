@@ -63,8 +63,6 @@ class ChatInput(StyledComponent):
         # Call _adjust_height to adjust height to single line
         self._adjust_height()
 
-
-
     def _adjust_height(self):
         document_height = (
                 self._textbox.document()
@@ -90,6 +88,8 @@ class ChatInput(StyledComponent):
         self.submitted.emit(text)
 
         self._textbox.clear()
+
+        self._textbox.setFocus()
 
 
     def style_file(self) -> Path | None:

@@ -2,7 +2,7 @@ from pathlib import Path
 
 from aether_gui.features.chatbot.components.messages.MessageBubble.components import MessageBubble
 from aether_gui.features.chatbot.components.messages.MessageRow.components import MessageRow
-from aether_gui.features.chatbot.components.messages.Messages.components import Message
+from aether_gui.features.chatbot.components.messages.Messages.components import Message, MessageRole
 from aether_gui.utils.ui.styled_component import StyledComponent
 from PySide6 import QtCore
 from PySide6.QtWidgets import QFrame, QScrollArea, QVBoxLayout, QWidget
@@ -32,6 +32,7 @@ class MessageArea(StyledComponent):
 
         # Style Scrollbar
         scrollbar = scroll_area.verticalScrollBar()
+        scrollbar.rangeChanged.connect(self.scroll_to_bottom)
         scrollbar.setObjectName("ChatScrollBar")
 
         # Messages layout (for scrollable layout)
@@ -53,6 +54,19 @@ class MessageArea(StyledComponent):
     def append_message(self, message:Message):
         card = MessageRow(message)
         self._messages_layout.addWidget(card)
+
+        QtCore.QTimer.singleShot(
+                0,
+                self.scroll_to_bottom,
+            )
+
+    def scroll_to_bottom(self, min_val, max_val) -> None:
+        scrollbar = self._scroll_area.verticalScrollBar()
+
+        # Scroll to bottom only if user is already close to bottom
+        if scrollbar.value() >= max_val - 50:
+            scrollbar.setValue(max_val)
+
 
     def style_file(self) -> Path | None:
         return Path(__file__).resolve().parent / "styles.qss.jinja"

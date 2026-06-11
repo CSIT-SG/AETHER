@@ -1,11 +1,10 @@
 from pathlib import Path
-from PySide6.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 from aether_gui.features.chatbot.components.messages.MessageBubble.components import MessageBubble
 from aether_gui.features.chatbot.components.messages.Messages.components import Message, MessageRole
 from aether_gui.utils.ui.styled_component import StyledComponent
+from PySide6.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
-import sys
 
 class MessageRow(StyledComponent):
     """Message Card"""
@@ -27,7 +26,6 @@ class MessageRow(StyledComponent):
 
         message_card_container = QWidget(self)
         card_layout = QVBoxLayout(message_card_container)
-
 
         ### HEADER - USER + TIMESTAMP ###
         header_container = QWidget(self)
@@ -65,7 +63,7 @@ class MessageRow(StyledComponent):
         footer_container = QWidget(self)
         footer_layout = QHBoxLayout(footer_container)
 
-        copy_btn = QPushButton("Copy") #TODO: replace w icon
+        copy_btn = QPushButton("\u2FFB")
         copy_btn.clicked.connect(self._copy_message)
 
         self._copy_btn = copy_btn
