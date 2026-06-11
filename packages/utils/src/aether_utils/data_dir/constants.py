@@ -1,2 +1,1 @@
-
 AUTHORNAME = "AETHER-next"
