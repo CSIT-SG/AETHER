@@ -26,9 +26,11 @@ class ConfigManager:
         return self._config
 
     @config.setter
-    def config(self, config: ConfigModel) -> None:
-        self._write_config_file(config)
-        self._config = config
+    def config(self, raw: dict[str, Any]) -> None:
+        cfg = self.validate_config(raw)
+        if not self._write_config_file(cfg):
+            return
+        self._config = cfg
 
     def _write_config_file(self, config: ConfigModel) -> bool:
         try:
@@ -45,14 +47,12 @@ class ConfigManager:
                 "Config file not found or unreadable at %s, using defaults", self.config_file
             )
             cfg = DEFAULT_CONFIG
+            self.config = cfg.model_dump()  # persist default to disk
         else:
-            print("Loading config from %s", self.config_file)
+            self.logger.info("Loading config from %s", self.config_file)
             with open(self.config_file, encoding="utf-8") as f:
                 raw = json.load(f)
-
             cfg = self.validate_config(raw)
-
-        self.config = cfg
         return cfg
 
     @staticmethod

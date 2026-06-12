@@ -1,3 +1,3 @@
-from .config_singleton import get_config_manager
+from .config_singleton import get_config, set_config
 
-__all__ = ["get_config_manager"]
+__all__ = ["get_config", "set_config"]

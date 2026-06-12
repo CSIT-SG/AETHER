@@ -282,3 +282,31 @@ class TestConfigManagerIO:
             pytest.raises(ValidationError, match="Default model must be listed"),
         ):
             ConfigManager()
+
+    def test_failed_write_does_not_update_config(self, tmp_path: Path) -> None:
+        """If _write_config_file fails, the in-memory config must not be updated."""
+        config_file = tmp_path / "config.json"
+
+        with patch("aether_utils.config.config.get_config_file_path", return_value=config_file):
+            manager = ConfigManager()
+
+        original_config = manager.config
+
+        with patch.object(manager, "_write_config_file", return_value=False):
+            manager.config = VALID_FULL  # raw dict, as the setter now expects
+
+        assert manager.config is original_config
+
+    def test_setter_raises_on_invalid_dict(self, tmp_path: Path) -> None:
+        """Setter validates before writing — invalid dict raises before touching disk."""
+        config_file = tmp_path / "config.json"
+
+        with patch("aether_utils.config.config.get_config_file_path", return_value=config_file):
+            manager = ConfigManager()
+
+        with pytest.raises(ValidationError, match="Default model must be listed"):
+            manager.config = INVALID_DEFAULT_IS_MODEL_ID
+
+        # config file should only contain the default, not the bad payload
+        written = json.loads(config_file.read_text(encoding="utf-8"))
+        assert written["provider"]["default_model"] == manager.config.provider.default_model

@@ -3,7 +3,7 @@ import json
 import ida_nalt
 import idaapi
 from aether_rpc.gui_server import GUIRPCServer
-from aether_utils.config import get_config_manager
+from aether_utils.config import get_config
 from aether_utils.file_id import file_id
 from aether_utils.is_headless_ida import is_headless_ida
 from aether_utils.logger import get_logger
@@ -33,7 +33,7 @@ class _Aether(idaapi.plugin_t):
         logger.debug("GUI plugin initialized")
 
         try:
-            cfg = get_config_manager().config
+            cfg = get_config()
             logger.info("Config loaded: %s", json.dumps(cfg.model_dump(), indent=2))
         except Exception as e:
             logger.error("Failed to load config: %s", e)

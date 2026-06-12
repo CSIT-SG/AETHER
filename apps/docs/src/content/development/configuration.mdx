@@ -1,0 +1,26 @@
+# Configuration
+
+## Reading
+
+```python
+from aether_utils.config import get_config
+
+config = get_config()
+model_ids = config.provider.models
+```
+
+Returns the current `ConfigModel`. Not reactive, call `get_config()` again if
+you need the latest value after an update.
+
+## Writing
+
+```python
+from aether_utils.config import get_config, set_config
+
+config = get_config()
+set_config({**config.model_dump(), "debug": True})
+```
+
+`set_config()` validates the dict, writes it to disk, then updates the
+in-memory config. Raises `pydantic.ValidationError` if the dict is invalid.
+If the disk write fails, the in-memory config is left unchanged.
