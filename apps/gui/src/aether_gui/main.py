@@ -20,17 +20,22 @@ class _Aether(idaapi.plugin_t):
 
     def __init__(self):
         super().__init__()
-        # Keep the state bound to the instance, completely avoiding 'global'
-        self._ui_hooks: AetherUIHooks | None = None
-
-        self._rpc_server = GUIRPCServer(file_id=file_id(ida_nalt.get_input_file_path()))
+        self._ui_hooks = None
+        self._rpc_server = None
 
     def init(self) -> int:
         if is_headless_ida():
             logger.debug("Headless IDA detected, skipping GUI plugin initialization")
             return idaapi.PLUGIN_SKIP
 
-        logger.debug("GUI plugin initialized")
+        path = ida_nalt.get_input_file_path()
+        if not path:
+            logger.warning("No input file path available yet")
+            return idaapi.PLUGIN_SKIP
+
+        self._rpc_server = GUIRPCServer(
+            file_id=file_id(path)
+        )
 
         try:
             cfg = get_config()
@@ -61,7 +66,8 @@ class _Aether(idaapi.plugin_t):
                 logger.warning("Failed to unhook AETHER UI hooks: %s", e)
             finally:
                 self._ui_hooks = None
-        self._rpc_server.stop()
+        if self._rpc_server:
+            self._rpc_server.stop()
 
 
 def PLUGIN_ENTRY() -> _Aether:
