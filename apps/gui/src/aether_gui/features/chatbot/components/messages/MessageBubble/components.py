@@ -5,7 +5,7 @@ from aether_gui.utils.ui.plugins.theme_plugin.types import Theme, ThemeColors
 from aether_gui.utils.ui.styled_component import StyledComponent
 from markdown import markdown
 from PySide6 import QtCore
-from PySide6.QtWidgets import QGraphicsOpacityEffect, QTextBrowser, QVBoxLayout, QSizePolicy
+from PySide6.QtWidgets import QSizePolicy, QTextBrowser, QTextEdit, QVBoxLayout
 
 
 class MessageBubble(StyledComponent):
@@ -34,22 +34,21 @@ class MessageBubble(StyledComponent):
 
         # Markdown rendering Browser
         md_browser = QTextBrowser(self)
+        md_browser.setObjectName("ChatBox")
+
+        # Style
         md_browser.setSizePolicy(
                 QSizePolicy.Policy.Expanding,
                 QSizePolicy.Policy.Preferred,
                 )
+        md_browser.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
+
         md_browser.setReadOnly(True)
         md_browser.setOpenExternalLinks(True)
 
-        # md_browser. # wrap text
-
+        #TODO: Horizontal scrollbar should be in code blocks only
         md_browser.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        # md_browser.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-
-        # Horizontal Scroll Bar
-        horizontal_scroll_bar = md_browser.horizontalScrollBar()
-        horizontal_scroll_bar.setObjectName("HorizontalScrollBar")
-
+        md_browser.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 
         md_browser.setSizePolicy(
             QSizePolicy.Policy.Expanding,
@@ -106,3 +105,9 @@ class MessageBubble(StyledComponent):
     def style_file(self) -> Path | None:
         """Return the QSS template that paints the panel background."""
         return Path(__file__).resolve().parent / "styles.qss.jinja"
+
+    ### DEBUGGING ###
+    def on_theme_change(self, *, theme: Theme, colors: ThemeColors) -> None:
+        print(f"Theme: {theme}")
+        print(f"Colors: {colors}")
+    ### END DEBUGGING ###

@@ -4,10 +4,14 @@ QTextBrowser {
     border: none;
 }
 
-QTextBrowser#HorizontalScrollBar:horizontal {
-    width: 10px;
+QTextBrowser#ChatBox QScrollBar:horizontal {
+    height: 10px;
     background: transparent;
     border: none;
+}
+
+QTextBrowser#ChatBox QScrollBar::handle:horizontal {
+    border-radius: 5px;
 }
 
 #UserBubble {

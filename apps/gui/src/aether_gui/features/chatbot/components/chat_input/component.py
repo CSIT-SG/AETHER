@@ -55,7 +55,6 @@ class ChatInput(StyledComponent):
         submit_btn = QtWidgets.QPushButton("\u2191", self._textbox)
         submit_btn.clicked.connect(self._submit)
         submit_btn.setObjectName("SendButton")
-        # submit_btn.setFixedSize(32, 32)
         layout.addWidget(submit_btn, 0, QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignBottom)
 
         self._send_button = submit_btn

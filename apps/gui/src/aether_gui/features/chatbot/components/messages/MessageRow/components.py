@@ -43,7 +43,6 @@ class MessageRow(StyledComponent):
         header_layout = QHBoxLayout(header_container)
         header_layout.setContentsMargins(0, 0, 0, 2)
         header_layout.setSpacing(8)
-        header_layout.setObjectName("Header_Layout")
 
         time_label = QLabel(self._message.formatted_timestamp)
         time_label.setObjectName("Timestamp")
@@ -127,8 +126,6 @@ class MessageRow(StyledComponent):
     def _copy_message(self):
         clipboard = QApplication.clipboard()
         clipboard.setText(self._message.content)
-
-    # def resize_event(self, event):
 
     def style_file(self) -> Path | None:
         return Path(__file__).resolve().parent / "styles.qss.jinja"
