@@ -1,4 +1,4 @@
-from os.path import islink
+from os.path import islink, sep
 from pathlib import Path
 from unittest.mock import patch
 
@@ -85,17 +85,21 @@ class TestMain:
             dst = dst_dir / dst_name
             assert dst.resolve() == src.resolve()
 
-    # TODO: make this test independent of the file name
     def test_replaces_stale_link(
         self, src_dir: Path, dst_dir: Path, symlink_supported: bool
     ) -> None:
         if not symlink_supported:
             pytest.skip("Symlinks are not permitted on this system.")
-        stale_target = src_dir / "apps" / "gui" / "src" / "plugin.py"
-        dst = dst_dir / "aether-next.py"
-        dst.symlink_to("/stale/path/plugin.py")
-        assert islink(str(dst))
+
+        for src_rel, dst_name in LINKS.items():
+            stale_target = src_dir.joinpath(*src_rel.split(sep))
+            dst = dst_dir / dst_name
+            dst.symlink_to("/stale/path/placeholder")
+            assert islink(str(dst))
 
         main(str(src_dir), str(dst_dir))
 
-        assert dst.resolve() == stale_target.resolve()
+        for src_rel, dst_name in LINKS.items():
+            stale_target = src_dir.joinpath(*src_rel.split(sep))
+            dst = dst_dir / dst_name
+            assert dst.resolve() == stale_target.resolve()

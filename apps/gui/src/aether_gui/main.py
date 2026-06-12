@@ -33,9 +33,7 @@ class _Aether(idaapi.plugin_t):
             logger.warning("No input file path available yet")
             return idaapi.PLUGIN_SKIP
 
-        self._rpc_server = GUIRPCServer(
-            file_id=file_id(path)
-        )
+        self._rpc_server = GUIRPCServer(file_id=file_id(path))
 
         try:
             cfg = get_config()
