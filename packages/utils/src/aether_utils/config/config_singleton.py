@@ -1,6 +1,7 @@
+from typing import Any
+
 from .config import ConfigManager
 from .models import ConfigModel
-from typing import Any
 
 _config_manager: ConfigManager | None = None
 
@@ -10,6 +11,7 @@ def get_config() -> ConfigModel:
     if _config_manager is None:
         _config_manager = ConfigManager()
     return _config_manager.config
+
 
 def set_config(raw: dict[str, Any]) -> None:
     global _config_manager
