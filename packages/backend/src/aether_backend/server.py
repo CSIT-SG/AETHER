@@ -3,8 +3,11 @@ from starlette.applications import Starlette
 from starlette.routing import Mount
 
 from .mcp_server import app_provider
+from .rpc_discovery import rpc_lifespan
 
-mcp_app = FastMCP("AETHER Backend", providers=[app_provider]).http_app(path="/")
+mcp_app = FastMCP("AETHER Backend", providers=[app_provider], lifespan=rpc_lifespan).http_app(
+    path="/"
+)
 
 app = Starlette(
     routes=[

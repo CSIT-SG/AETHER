@@ -1,4 +1,5 @@
 import contextlib
+import json
 import threading
 from os import getpid
 
@@ -46,7 +47,7 @@ class RPCServer:
             "pid": getpid(),
         }
 
-        self._data_file.write_text(str(data))
+        self._data_file.write_text(json.dumps(data))
 
     def _deregister(self) -> None:
         self._data_file.unlink(missing_ok=True)

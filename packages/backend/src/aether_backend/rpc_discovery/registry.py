@@ -99,38 +99,39 @@ class RpcRegistry:
     # ------------------------------------------------------------------
 
     async def refresh(self) -> None:
-        """
-        Re-read JSON configs and (re)connect every service in parallel.
-        Services that fail all retries are omitted from the live map; the
-        previously healthy connections remain in place until the new map
-        is swapped in atomically.
-        """
         configs = self._load_configs()
         if not configs:
             self._logger.warning("No RPC config files found in %s", self._directory)
 
-        tasks = [connect_with_backoff(cfg["id"], cfg["port"]) for cfg in configs]
+        live_ids = {cfg["id"] for cfg in configs}
 
-        results: list[RpcConnectionEntry | None] = await asyncio.gather(
-            *tasks, return_exceptions=False
-        )
+        # Connect only services not already connected
+        async with self._lock:
+            existing = dict(self._entries)
 
-        new_entries: dict[str, RpcConnectionEntry] = {}
-        for entry in results:
-            if entry is not None:
-                new_entries[entry.rpc_id] = entry
+        tasks = {
+            cfg["id"]: connect_with_backoff(cfg["id"], cfg["port"])
+            for cfg in configs
+            if cfg["id"] not in existing
+        }
+        results = dict(zip(tasks, await asyncio.gather(*tasks.values(), return_exceptions=False)))
 
         async with self._lock:
-            old_entries = self._entries
-            self._entries = new_entries
+            # Drop entries whose config files are gone
+            for rpc_id in list(self._entries):
+                if rpc_id not in live_ids:
+                    self._logger.info("RPC service %r deregistered (config removed)", rpc_id)
+                    safe_close(self._entries.pop(rpc_id).conn)
 
-        self._close_stale(old_entries, new_entries)
+            # Add newly connected entries
+            for rpc_id, entry in results.items():
+                if entry is not None:
+                    self._entries[rpc_id] = entry
 
         self._logger.info(
-            "RPC registry refreshed: %d/%d services connected %s",
-            len(new_entries),
-            len(configs),
-            sorted(new_entries),
+            "RPC registry refreshed: %d services connected %s",
+            len(self._entries),
+            sorted(self._entries),
         )
 
     # ------------------------------------------------------------------
@@ -142,48 +143,46 @@ class RpcRegistry:
             try:
                 await asyncio.sleep(self._refresh_interval)
                 await self._check_connections()
+                self._logger.debug("RPC registry heartbeat check complete")
             except asyncio.CancelledError:
                 raise
             except Exception:
                 self._logger.exception("RPC registry heartbeat error")
 
     async def _check_connections(self) -> None:
-        """
-        Ping every live connection concurrently.  Dead connections are
-        reconnected (with back-off) individually so healthy peers are
-        unaffected.
-        """
         async with self._lock:
             snapshot = dict(self._entries)
 
-        dead: list[RpcConnectionEntry] = []
+        live_ids = {cfg["id"] for cfg in self._load_configs()}
+
         ping_tasks = {
             rpc_id: asyncio.create_task(ping(entry)) for rpc_id, entry in snapshot.items()
         }
         ping_results = await asyncio.gather(*ping_tasks.values(), return_exceptions=True)
 
-        for rpc_id, ok in zip(ping_tasks, ping_results, strict=True):
-            alive = ok is True  # exceptions count as dead
-            if not alive:
-                self._logger.warning("RPC service %r is unresponsive; will reconnect", rpc_id)
-                dead.append(snapshot[rpc_id])
+        reconnect: list[RpcConnectionEntry] = []
+        async with self._lock:
+            for rpc_id, ok in zip(ping_tasks, ping_results):
+                if ok is True:
+                    continue
+                entry = snapshot[rpc_id]
+                safe_close(entry.conn)
+                self._entries.pop(rpc_id, None)
+                if rpc_id in live_ids:
+                    reconnect.append(entry)
+                else:
+                    self._logger.info("RPC service %r removed (config gone)", rpc_id)
 
-        if not dead:
+        if not reconnect:
             return
 
-        reconnect_tasks = [connect_with_backoff(e.rpc_id, e.port) for e in dead]
-        new_entries_list: list[RpcConnectionEntry | None] = await asyncio.gather(
-            *reconnect_tasks, return_exceptions=False
+        new_entries = await asyncio.gather(
+            *[connect_with_backoff(e.rpc_id, e.port) for e in reconnect],
+            return_exceptions=False,
         )
-
         async with self._lock:
-            for old_entry, new_entry in zip(dead, new_entries_list, strict=False):
-                safe_close(old_entry.conn)
-                if new_entry is not None:
-                    self._entries[new_entry.rpc_id] = new_entry
-                else:
-                    # Remove from map so callers get None instead of a dead root
-                    self._entries.pop(old_entry.rpc_id, None)
+            for entry in filter(None, new_entries):
+                self._entries[entry.rpc_id] = entry
 
     # ------------------------------------------------------------------
     # Internal helpers
