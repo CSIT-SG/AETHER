@@ -1,8 +1,9 @@
 # type: ignore
+import pytest
 import rpyc
 
 
-# @pytest.mark.dependency(depends=["connection"], scope="session")
+@pytest.mark.dependency(depends=["connection"], scope="session")
 class TestRenameLocalVariable:
     def test_renames_local_variable(self, ida_client: rpyc.Connection) -> None:
         func = ida_client.root.get_function_by_address(address="main")
