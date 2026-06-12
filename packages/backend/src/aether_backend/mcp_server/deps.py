@@ -6,10 +6,10 @@ import rpyc
 
 
 @asynccontextmanager
-async def get_rpc_connection(host: str, port: int) -> AsyncGenerator[Any, None]:
+async def get_rpc_connection(port: int) -> AsyncGenerator[Any, None]:
     """Establish an RPyC connection to the IDA RPC server."""
     conn = rpyc.connect(
-        host,
+        "127.0.0.1",
         port,
         config={
             "allow_public_attrs": True,
