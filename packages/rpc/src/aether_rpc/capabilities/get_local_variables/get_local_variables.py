@@ -34,7 +34,7 @@ class GetLocalVariables(Capability):
                 "name": lvar.name,
                 "type": lvar.type(),
                 "location": lvar.location,
-                "is_arg_var": lvar.is_arg_var,
+                "is_arg_var": lvar.is_arg_var(),
                 "is_stk_var": lvar.is_stk_var(),
                 "is_reg_var": lvar.is_reg_var(),
             }
