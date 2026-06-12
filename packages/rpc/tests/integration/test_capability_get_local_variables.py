@@ -1,8 +1,9 @@
 # type:ignore
+import pytest
 import rpyc
 
 
-# @pytest.mark.dependency(depends=["connection"], scope="session")
+@pytest.mark.dependency(depends=["connection"], scope="session")
 class TestGetLocalVariables:
     def test_returns_local_variables_for_main(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.get_local_variables(function_name="main")
