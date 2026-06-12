@@ -1,10 +1,11 @@
 from pathlib import Path
 
 from aether_gui.features.chatbot.components.messages.Messages.components import Message, MessageRole
+from aether_gui.utils.ui.plugins.theme_plugin.types import Theme, ThemeColors
 from aether_gui.utils.ui.styled_component import StyledComponent
 from markdown import markdown
 from PySide6 import QtCore
-from PySide6.QtWidgets import QTextBrowser, QVBoxLayout
+from PySide6.QtWidgets import QGraphicsOpacityEffect, QTextBrowser, QVBoxLayout, QSizePolicy
 
 
 class MessageBubble(StyledComponent):
@@ -29,19 +30,32 @@ class MessageBubble(StyledComponent):
         # Layout
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 8, 12, 8)
+        layout.setSpacing(0)
 
         # Markdown rendering Browser
         md_browser = QTextBrowser(self)
+        md_browser.setSizePolicy(
+                QSizePolicy.Policy.Expanding,
+                QSizePolicy.Policy.Preferred,
+                )
         md_browser.setReadOnly(True)
         md_browser.setOpenExternalLinks(True)
 
+        # md_browser. # wrap text
+
         md_browser.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        md_browser.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        # md_browser.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        # Horizontal Scroll Bar
+        horizontal_scroll_bar = md_browser.horizontalScrollBar()
+        horizontal_scroll_bar.setObjectName("HorizontalScrollBar")
+
 
         md_browser.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Maximum,
         )
+
         md_browser.setFrameShape(
                 QTextBrowser.Shape.NoFrame
                 )

@@ -1,0 +1,29 @@
+{# Message Row #}
+{#  font_family: "{{ font_family }}"; #}
+{#  font-size: {{ header_font_size }}pt; #}
+
+QLabel#Timestamp {
+    color: {{ colors.placeholdertext }};
+    background-color: transparent;
+    font-weight: normal;
+    font-size: 11px;
+}
+
+QLabel#Username {
+    color: {{ colors.text }};
+    font-weight: bold;
+    font-size: 16px;
+}
+
+QPushButton#CopyButton {
+    background: transparent;
+    border: none;
+}
+
+QPushButton#CopyButton:hover {
+    border: 1px solid {{ colors.mid }};
+}
+
+QPushButton#CopyButton:pressed {
+    background-color: {{ colors.mid }};
+}

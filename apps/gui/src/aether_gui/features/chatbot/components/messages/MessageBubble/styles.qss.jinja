@@ -1,10 +1,17 @@
 QTextBrowser {
+    color: {{ colors.brighttext }};
+    background: transparent;
+    border: none;
+}
+
+QTextBrowser#HorizontalScrollBar:horizontal {
+    width: 10px;
     background: transparent;
     border: none;
 }
 
 #UserBubble {
-    background-color: {{ colors.highlight }};
+    background-color: {{ colors.linkvisited }};
     border-top-left-radius: 12px;
     border-top-right-radius: 12px;
     border-bottom-left-radius: 12px;
@@ -12,23 +19,9 @@ QTextBrowser {
 }
 
 #AetherBubble {
-    background-color: {{ colors.mid }};
+    background-color: {{ colors.norole }};
     border-top-left-radius: 12px;
     border-top-right-radius: 12px;
     border-bottom-right-radius: 12px;
     border-bottom-left-radius: 2px;
-}
-
-QLabel#Timestamp {
-  color: {{ colors.placeholdertext }};
-  background-color: transparent;
-}
-
-#TimestampContainer {
-  background: transparent;
-}
-
-QLabel#MessageText {
-  color: {{ colors.text }};
-  background: transparent;
 }
