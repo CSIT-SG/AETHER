@@ -1,14 +1,12 @@
-from __future__ import annotations
-
 import json
 from pathlib import Path
-
-from pydantic import ValidationError
+from typing import Any
 
 from aether_utils.data_dir import get_data_dir
 from aether_utils.logger import get_logger
 
-from .models import AetherConfig
+from .constants import DEFAULT_CONFIG
+from .models import ConfigModel
 
 
 def get_config_file_path() -> Path:
@@ -17,37 +15,46 @@ def get_config_file_path() -> Path:
     return base / filename
 
 
-CONFIG_FILE = get_config_file_path()
+class ConfigManager:
+    def __init__(self) -> None:
+        self.logger = get_logger("config")
+        self.config_file = get_config_file_path()
+        self._config = self.load_config()
 
-# Logger for this module
-logger = get_logger("config")
+    @property
+    def config(self) -> ConfigModel:
+        return self._config
 
+    @config.setter
+    def config(self, config: ConfigModel) -> None:
+        self._write_config_file(config)
+        self._config = config
 
-def _write_config_file(config: AetherConfig, file_path: Path) -> bool:
-    try:
-        with open(file_path, "w", encoding="utf-8") as f:
-            json.dump(config.model_dump(), f, indent=2)
-        return True
-    except Exception as e:
-        logger.error("Error saving config file: %s", e)
-        return False
+    def _write_config_file(self, config: ConfigModel) -> bool:
+        try:
+            with open(self.config_file, "w", encoding="utf-8") as f:
+                json.dump(config.model_dump(), f, indent=2)
+            return True
+        except Exception as e:
+            self.logger.error("Error saving config file: %s", e)
+            return False
 
+    def load_config(self) -> ConfigModel:
+        if not self.config_file.is_file():
+            self.logger.info(
+                "Config file not found or unreadable at %s, using defaults", self.config_file
+            )
+            cfg = DEFAULT_CONFIG
+        else:
+            print("Loading config from %s", self.config_file)
+            with open(self.config_file, encoding="utf-8") as f:
+                raw = json.load(f)
 
-def load_config(config_file_path: Path = CONFIG_FILE) -> AetherConfig:
-    try:
-        with open(config_file_path, encoding="utf-8") as f:
-            raw = json.load(f)
-    except Exception:
-        logger.info("Config file not found or unreadable at %s, using defaults", config_file_path)
-        raw = {}
+            cfg = self.validate_config(raw)
 
-    try:
-        cfg = AetherConfig.model_validate(raw)
-    except ValidationError as e:
-        raise ValueError(f"Config validation error: {e}") from e
+        self.config = cfg
+        return cfg
 
-    try:
-        _write_config_file(cfg, config_file_path)
-    except Exception as e:
-        logger.error("Error writing default config file: %s", e)
-    return cfg
+    @staticmethod
+    def validate_config(raw: dict[str, Any]) -> ConfigModel:
+        return ConfigModel.model_validate(raw)

@@ -1,84 +1,125 @@
-from typing import Annotated, Self
+from enum import StrEnum
+from typing import Self
 
-from pydantic import BaseModel, Field, field_validator, model_validator
-
-from .constants import DEFAULT_MODEL_LIST, SUBAGENT_KEYS
-
-
-class Subagents(BaseModel):
-    model_config = {"populate_by_name": True}
-
-    gatherer_model: str | None = Field("")
-    annotator_model: str | None = Field("")
-    ai_decomp_model: str | None = Field("")
-    single_analysis_model: str | None = Field("")
-    struct_creator_model: str | None = Field("")
-    index_agent_model: str | None = Field("")
+from pydantic import BaseModel, Field, model_validator
 
 
-class AetherConfig(BaseModel):
-    model_config = {"populate_by_name": True}
+class ProviderType(StrEnum):
+    OPENROUTER = "openrouter"
+    OTHER = "other"
 
-    # API / connection
-    openai_api_key: str = Field("")
-    openai_model: str = Field("qwen/qwen3-coder")
-    openai_base_url: str = Field("https://openrouter.ai/api/v1")
-    openai_extra_body: dict[str, object] = Field(default_factory=dict)
-    mcp_server_url: str = Field("http://127.0.0.1:8744/sse")
 
-    # Grouped per-component model overrides under `subagents`.
-    # Empty string means "use openai_model"; resolved by validator.
-    subagents: Subagents = Field(default_factory=lambda: Subagents.model_validate({}))
-
-    # Limits / tuning
-    max_iterations: Annotated[int, Field(gt=0)] = Field(5)
-    prompt_token_warning: Annotated[int, Field(gt=0)] = Field(64000)
-    annotator_max_tokens: Annotated[int, Field(gt=0)] = Field(30000)
-    deobfuscator_max_tokens: Annotated[int, Field(gt=0)] = Field(16384)
-    chatbot_max_tokens: Annotated[int, Field(gt=0)] = Field(65536)
-
-    # Behaviour flags
-    system_prompt_at_bottom: bool = Field(False)
-    chatbot_idx_dialog: bool = Field(False)
-    always_prompt_model: bool = Field(True)
-    use_desc: bool = Field(True)
-    use_comments: bool = Field(True)
-    rename_vars: bool = Field(True)
-    rename_funcs: bool = Field(True)
-    rename_filter_enabled: bool = Field(True)
-    comment_every_line: bool = Field(False)
-    debug: bool = Field(False)
-
-    # TLS / certs
-    custom_ca_cert_path: str = Field("")
-    client_cert_path: str = Field("")
-    client_key_path: str = Field("")
-
-    # Model catalogue
-    model_list: dict[str, str] = Field(
-        default_factory=lambda: dict(DEFAULT_MODEL_LIST),
+class ProviderModel(BaseModel):
+    type: ProviderType = Field(
+        ..., description="The type of the provider, eg. 'openrouter', 'litellm', etc."
+    )
+    api_key: str = Field("", description="The API key for the provider.")
+    models: dict[str, str] = Field(
+        default_factory=dict,
+        description="A mapping of friendly names to model ids for this provider.",
+    )
+    default_model: str = Field(..., description="Friendly name of default model to fall back to.")
+    extra_body: dict[str, object] | None = Field(
+        default_factory=dict,
+        description="Any extra body parameters to include in requests to this provider.",
     )
 
-    @field_validator("model_list")
-    def validate_model_list(cls, v: dict[str, str]) -> dict[str, str]:
-        if not v:
-            raise ValueError("MODEL_LIST must not be empty")
-        for display_name, model_id in v.items():
-            if not display_name.strip():
-                raise ValueError(f"MODEL_LIST: blank display name for model '{model_id}'")
-            if not model_id.strip():
-                raise ValueError(f"MODEL_LIST: blank model ID for display name '{display_name}'")
-        return v
+    @model_validator(mode="after")
+    def resolve_default_model(self) -> Self:
+        keys = set(self.models.keys())
+        if self.default_model not in keys:
+            raise ValueError(f"Default model must be listed in the models provided: {keys}")
+        return self
+
+
+class SubagentsModel(BaseModel):
+    gatherer_model: str | None = Field(
+        default=None, description="Model override for the gatherer subagent."
+    )
+    annotator_model: str | None = Field(
+        default=None, description="Model override for the annotator subagent."
+    )
+    ai_decomp_model: str | None = Field(
+        default=None, description="Model override for the AI decomposition subagent."
+    )
+    single_analysis_model: str | None = Field(
+        default=None, description="Model override for the single analysis subagent."
+    )
+    struct_creator_model: str | None = Field(
+        default=None, description="Model override for the structure creator subagent."
+    )
+    index_agent_model: str | None = Field(
+        default=None, description="Model override for the index agent subagent."
+    )
+
+
+class FeaturesModel(BaseModel):
+    annotator: dict[str, object] | None = Field(
+        default=None,
+        description="Feature flags and parameters for the annotator component.",
+    )
+    deobfuscator: dict[str, object] | None = Field(
+        default=None,
+        description="Feature flags and parameters for the deobfuscator component.",
+    )
+    chatbot: dict[str, object] | None = Field(
+        default=None, description="Feature flags and parameters for the chatbot component."
+    )
+    gatherer: dict[str, object] | None = Field(
+        default=None, description="Feature flags and parameters for the gatherer component."
+    )
+    ai_decomp: dict[str, object] | None = Field(
+        default=None,
+        description="Feature flags and parameters for the AI decomposition component.",
+    )
+
+
+class TlsConfigModel(BaseModel):
+    custom_ca_cert_path: str = Field(
+        "", description="Path to a custom CA certificate, if needed for TLS connections."
+    )
+    client_cert_path: str = Field(
+        "",
+        description="Path to the client certificate for mutual TLS authentication, if required by the provider.",
+    )
+    client_key_path: str = Field(
+        "",
+        description="Path to the client private key for mutual TLS authentication, if required by the provider.",
+    )
+
+
+class ConfigModel(BaseModel):
+    model_config = {"populate_by_name": True}
+
+    provider: ProviderModel = Field(..., description="The language model provider configuration.")
+    subagents: SubagentsModel | None = Field(
+        default=None, description="Model overrides for specific subagents."
+    )
+    features: FeaturesModel | None = Field(
+        default=None, description="Feature flags and parameters for various components."
+    )
+    debug: bool | None = Field(
+        default=None,
+        description="Whether to enable debug mode, which may include more verbose logging and additional output for debugging purposes.",
+    )
+    tls: TlsConfigModel | None = Field(
+        default=None, description="TLS configuration for secure connections."
+    )
 
     @model_validator(mode="after")
     def resolve_subagents(self) -> Self:
-        valid_ids = set(self.model_list.values())
+        # if subagents is provided, ensure all fields are valid provider models
 
-        for key in SUBAGENT_KEYS:
-            value = getattr(self.subagents, key)
-            if not value:
-                object.__setattr__(self.subagents, key, self.openai_model)
-            elif value not in valid_ids:
-                raise ValueError(f"{key.upper()}: '{value}' is not listed in MODEL_LIST")
+        subagents = self.subagents
+        provider = self.provider
 
+        if not subagents:
+            return self
+
+        provider_models = set(provider.models.keys())
+        for field_name, subagent_model in subagents.model_dump().items():
+            if subagent_model is not None and subagent_model not in provider_models:
+                raise ValueError(
+                    f"Subagent '{field_name}' has model '{subagent_model}' which is not in the provider's model list."
+                )
         return self

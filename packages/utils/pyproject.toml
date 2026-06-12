@@ -11,3 +11,5 @@ dependencies = [
     "platformdirs>=4.10.0",
 ]
 
+[tool.mypy]
+plugins = ["pydantic.mypy"]

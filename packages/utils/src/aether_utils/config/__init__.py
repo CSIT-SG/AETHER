@@ -1,6 +1,3 @@
-from .config import CONFIG_FILE, load_config
+from .config_singleton import get_config_manager
 
-__all__ = [
-    "CONFIG_FILE",
-    "load_config",
-]
+__all__ = ["get_config_manager"]
