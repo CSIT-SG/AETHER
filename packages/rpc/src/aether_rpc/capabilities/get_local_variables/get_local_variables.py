@@ -1,8 +1,9 @@
-from typing import Any
+from typing import cast
 
 import ida_hexrays
 
 from ..base import Capability
+from ..types import LocalVar
 from ..utils import resolve_function_name
 
 
@@ -11,14 +12,14 @@ class GetLocalVariables(Capability):
     def name(self) -> str:
         return "get_local_variables"
 
-    def execute(self, function_name: str) -> list[dict[str, Any]] | None:
+    def execute(self, function_name: str) -> list[LocalVar] | None:
         """List all local variables in the pesudocode"""
         ea: int | None = resolve_function_name(function_name)
         if ea is None:
             self.logger.error(f"Symbol '{function_name}' not found")
             return None
         try:
-            cfunc: ida_hexrays.cfuncptr_t = ida_hexrays.decompile(ea)
+            cfunc = cast(ida_hexrays.cfuncptr_t | None, ida_hexrays.decompile(ea))
         except ida_hexrays.DecompilationFailure as e:
             self.logger.error(f"Failed to decompile {function_name}\n{e}")
             return None
@@ -28,7 +29,7 @@ class GetLocalVariables(Capability):
             return None
 
         lvars: ida_hexrays.lvars_t = cfunc.get_lvars()
-        lvar_ls: list[dict[str, Any]] = [
+        lvar_ls: list[LocalVar] = [
             {
                 "name": lvar.name,
                 "type": lvar.type(),
