@@ -1,15 +1,14 @@
 # type: ignore
-import pytest
 import rpyc
 
 
-#@pytest.mark.dependency(depends=["connection"], scope="session")
+# @pytest.mark.dependency(depends=["connection"], scope="session")
 class TestRenameLocalVariable:
     def test_renames_local_variable(self, ida_client: rpyc.Connection) -> None:
         func = ida_client.root.get_function_by_address(address="main")
         assert func is not None
 
-        lvars = ida_client.root.get_local_variables(address="main")
+        lvars = ida_client.root.get_local_variables(function_name="main")
         assert lvars is not None
         assert len(lvars) > 0
 
@@ -21,13 +20,13 @@ class TestRenameLocalVariable:
         )
         assert result is True
 
-        lvars_after = ida_client.root.get_local_variables(address="main")
+        lvars_after = ida_client.root.get_local_variables(function_name="main")
         names_after = [v["name"] for v in lvars_after]
         assert "test_renamed_var" in names_after
         assert original_name not in names_after
 
     def test_rename_is_reflected_in_decompilation(self, ida_client: rpyc.Connection) -> None:
-        lvars = ida_client.root.get_local_variables(address="main")
+        lvars = ida_client.root.get_local_variables(function_name="main")
         assert lvars is not None
         assert len(lvars) > 0
 
@@ -39,7 +38,7 @@ class TestRenameLocalVariable:
         )
         assert result is True
 
-        lvars_after = ida_client.root.get_local_variables(address="main")
+        lvars_after = ida_client.root.get_local_variables(function_name="main")
         names_after = [v["name"] for v in lvars_after]
         assert "test_decompile_var" in names_after
 
@@ -47,7 +46,7 @@ class TestRenameLocalVariable:
         func = ida_client.root.get_function_by_address(address="main")
         assert func is not None
 
-        lvars = ida_client.root.get_local_variables(address="main")
+        lvars = ida_client.root.get_local_variables(function_name="main")
         assert lvars is not None
         assert len(lvars) > 0
 
@@ -64,7 +63,7 @@ class TestRenameLocalVariable:
         func = ida_client.root.get_function_by_address(address="main")
         assert func is not None
 
-        lvars = ida_client.root.get_local_variables(address="main")
+        lvars = ida_client.root.get_local_variables(function_name="main")
         assert lvars is not None
         assert len(lvars) > 0
 
