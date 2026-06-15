@@ -52,15 +52,15 @@ class MessageArea(StyledComponent):
         self._messages_container = messages_container
         self._messages_layout = messages_layout
 
-    def append_message(self, message:Message):
+    def append_message(self, message: Message):
         card = MessageRow(message)
         messages_layout = cast(QVBoxLayout, self._messages_layout)
         messages_layout.addWidget(card)
 
         QtCore.QTimer.singleShot(
-                0,
-                self.scroll_to_bottom,
-            )
+            0,
+            self.scroll_to_bottom,
+        )
 
     # FIX: Scrollbar doesn't work yet
     def scroll_to_bottom(self, min_val, max_val) -> None:
@@ -69,7 +69,6 @@ class MessageArea(StyledComponent):
         # Scroll to bottom only if user is already close to bottom
         if scrollbar.value() >= max_val - 50:
             scrollbar.setValue(max_val)
-
 
     def style_file(self) -> Path | None:
         return Path(__file__).resolve().parent / "styles.qss.jinja"

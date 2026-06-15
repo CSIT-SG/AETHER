@@ -6,8 +6,10 @@ from enum import Enum
 
 class MessageRole(Enum):
     """Enum for Message Roles"""
+
     USER = "User"
     AETHER = "Aether"
+
 
 @dataclass
 class Message:
@@ -24,4 +26,3 @@ class Message:
             return self.timestamp.strftime("%#I:%M %p")
         else:
             return self.timestamp.strftime("%-I:%M %p")
-

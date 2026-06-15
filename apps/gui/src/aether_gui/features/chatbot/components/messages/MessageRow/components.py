@@ -18,6 +18,7 @@ from .utils import ButtonComponent
 
 class MessageRow(StyledComponent):
     """Message Card"""
+
     def __init__(self, message: Message, parent=None):
         self._message = message
         super().__init__(parent)
@@ -43,9 +44,9 @@ class MessageRow(StyledComponent):
 
         message_card_container = QWidget(self)
         message_card_container.setSizePolicy(
-                QSizePolicy.Policy.Expanding,
-                QSizePolicy.Policy.Preferred,
-                )
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Preferred,
+        )
 
         card_layout = QVBoxLayout(message_card_container)
         card_layout.setSpacing(0)
@@ -59,7 +60,7 @@ class MessageRow(StyledComponent):
         time_label = QLabel(self._message.formatted_timestamp)
         time_label.setObjectName("Timestamp")
         time_label_opacity = QGraphicsOpacityEffect(time_label)
-        time_label_opacity.setOpacity(0.60) # 60%
+        time_label_opacity.setOpacity(0.60)  # 60%
         time_label.setGraphicsEffect(time_label_opacity)
 
         self._timestamp = time_label
@@ -72,7 +73,6 @@ class MessageRow(StyledComponent):
                 header_layout.addWidget(time_label)
 
             case MessageRole.AETHER:
-
                 header_layout.addWidget(name_label)
                 header_layout.addWidget(time_label)
                 header_layout.addStretch()
@@ -99,11 +99,7 @@ class MessageRow(StyledComponent):
         footer_layout.setSpacing(4)
 
         # NOTE: Future Iteration should move buttons to a footer class which contains all footer buttons
-        copy_btn = ButtonComponent(
-                icon="\u29C9",
-                obj_name="CopyButton",
-                tooltip="Copy"
-                )
+        copy_btn = ButtonComponent(icon="\u29c9", obj_name="CopyButton", tooltip="Copy")
         copy_btn.clicked.connect(self._copy_message)
 
         self._copy_btn = copy_btn

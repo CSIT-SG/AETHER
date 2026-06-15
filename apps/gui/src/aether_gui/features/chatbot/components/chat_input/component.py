@@ -3,7 +3,7 @@ from typing import cast
 
 from aether_gui.utils.ui import StyledComponent
 from PySide6 import QtCore, QtWidgets
-from PySide6.QtGui import QTextOption, QShortcut, QKeySequence
+from PySide6.QtGui import QKeySequence, QShortcut, QTextOption
 
 
 class ChatInput(StyledComponent):
@@ -12,7 +12,10 @@ class ChatInput(StyledComponent):
     # Submit Signal
     submitted = QtCore.Signal(str)
 
-    def __init__(self, parent: QtWidgets.QWidget | None = None,) -> None:
+    def __init__(
+        self,
+        parent: QtWidgets.QWidget | None = None,
+    ) -> None:
         super().__init__(parent)
 
     def setup(self) -> None:
@@ -36,9 +39,8 @@ class ChatInput(StyledComponent):
         textbox.setMinimumHeight(40)
         textbox.setMaximumHeight(120)
         textbox.setSizePolicy(
-                QtWidgets.QSizePolicy.Policy.Expanding,
-                QtWidgets.QSizePolicy.Policy.Minimum
-                )
+            QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Minimum
+        )
 
         textbox.setWordWrapMode(QTextOption.WrapMode.WrapAtWordBoundaryOrAnywhere)
         textbox.setLineWrapMode(QtWidgets.QTextEdit.LineWrapMode.WidgetWidth)
@@ -55,7 +57,9 @@ class ChatInput(StyledComponent):
         submit_btn = QtWidgets.QPushButton("\u2191", self._textbox)
         submit_btn.clicked.connect(self._submit)
         submit_btn.setObjectName("SendButton")
-        layout.addWidget(submit_btn, 0, QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignBottom)
+        layout.addWidget(
+            submit_btn, 0, QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignBottom
+        )
         # Map "Ctrl+Enter" to submit_btn
         shortcut = QShortcut(QKeySequence("Ctrl+Return"), self)
         shortcut.activated.connect(submit_btn.animateClick)
@@ -68,20 +72,11 @@ class ChatInput(StyledComponent):
     def _adjust_height(self):
         textbox = cast(QtWidgets.QTextEdit, self._textbox)
 
-        document_height = (
-                 textbox.document()
-                .documentLayout()
-                .documentSize()
-                .height()
-                )
+        document_height = textbox.document().documentLayout().documentSize().height()
 
-        height = min(
-                max(40, int(document_height + 10)),
-                120
-                )
+        height = min(max(40, int(document_height + 10)), 120)
 
         textbox.setFixedHeight(height)
-
 
     def _submit(self) -> None:
         textbox = cast(QtWidgets.QTextEdit, self._textbox)
@@ -96,9 +91,9 @@ class ChatInput(StyledComponent):
 
         textbox.setFocus()
 
-
     def style_file(self) -> Path | None:
         return Path(__file__).with_name("styles.qss.jinja")
+
 
 def create_chat_input(parent: QtWidgets.QWidget | None = None) -> ChatInput:
     return ChatInput(parent=parent)

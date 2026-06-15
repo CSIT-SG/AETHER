@@ -1,5 +1,3 @@
 from .components import MessageArea
 
-__all__ = [
-        "MessageArea"
-        ]
+__all__ = ["MessageArea"]

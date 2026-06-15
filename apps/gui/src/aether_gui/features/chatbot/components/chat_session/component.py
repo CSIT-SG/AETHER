@@ -7,4 +7,3 @@ class ChatSession:
 
     def add_message(self, msg: Message) -> None:
         self.messages.append(msg)
-

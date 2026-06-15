@@ -1,6 +1,6 @@
-from .components import MessageRole, Message
+from .components import Message, MessageRole
 
 __all__ = [
-        "Message",
-        "MessageRole",
-        ]
+    "Message",
+    "MessageRole",
+]

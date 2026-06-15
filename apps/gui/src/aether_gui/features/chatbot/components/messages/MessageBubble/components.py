@@ -10,11 +10,8 @@ from ..Messages import Message, MessageRole
 
 class MessageBubble(StyledComponent):
     """Message Bubbles - contain markdown content"""
-    def __init__(
-            self,
-            message: Message,
-            parent=None
-            ) -> None:
+
+    def __init__(self, message: Message, parent=None) -> None:
         self._message = message
         super().__init__(parent)
 
@@ -38,15 +35,15 @@ class MessageBubble(StyledComponent):
 
         # Style
         md_browser.setSizePolicy(
-                QSizePolicy.Policy.Expanding,
-                QSizePolicy.Policy.Preferred,
-                )
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Preferred,
+        )
         md_browser.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
 
         md_browser.setReadOnly(True)
         md_browser.setOpenExternalLinks(True)
 
-        #TODO: Horizontal scrollbar should be in code blocks only
+        # TODO: Horizontal scrollbar should be in code blocks only
         md_browser.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         md_browser.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 
@@ -55,17 +52,15 @@ class MessageBubble(StyledComponent):
             QSizePolicy.Policy.Maximum,
         )
 
-        md_browser.setFrameShape(
-                QTextBrowser.Shape.NoFrame
-                )
+        md_browser.setFrameShape(QTextBrowser.Shape.NoFrame)
 
         html = markdown(
-                self._message.content,
-                extensions=[
-                    "fenced_code",
-                    "tables",
-                    ]
-                )
+            self._message.content,
+            extensions=[
+                "fenced_code",
+                "tables",
+            ],
+        )
 
         md_browser.setHtml(html)
 
@@ -94,9 +89,7 @@ class MessageBubble(StyledComponent):
         document = self._browser.document()
 
         # Force document width to match viewport width
-        document.setTextWidth(
-            self._browser.viewport().width()
-        )
+        document.setTextWidth(self._browser.viewport().width())
 
         height = int(document.size().height())
 

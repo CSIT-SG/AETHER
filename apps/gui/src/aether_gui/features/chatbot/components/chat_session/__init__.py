@@ -1,5 +1,3 @@
 from .component import ChatSession
 
-__all__ = [
-        "ChatSession"
-        ]
+__all__ = ["ChatSession"]

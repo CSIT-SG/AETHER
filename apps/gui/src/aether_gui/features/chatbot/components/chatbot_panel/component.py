@@ -14,6 +14,7 @@ from ..messages.Messages import Message, MessageRole
 
 class ChatbotPanel(StyledComponent):
     """Container that owns the chat layout and background styling."""
+
     def __init__(self, session: ChatSession, parent=None):
         self._session = session
         super().__init__(parent)
@@ -47,15 +48,11 @@ class ChatbotPanel(StyledComponent):
 
         self.load_message_history()
 
-
     def _on_message_submitted(self, user_input: str) -> None:
         """Display User Entered Message on MessageArea Widget"""
         message = Message(
-                id=str(uuid4()),
-                role=MessageRole.USER,
-                content=user_input,
-                timestamp=datetime.now()
-                )
+            id=str(uuid4()), role=MessageRole.USER, content=user_input, timestamp=datetime.now()
+        )
 
         message_area = cast(MessageArea, self._message_area)
         message_area.append_message(message)
@@ -72,11 +69,8 @@ class ChatbotPanel(StyledComponent):
     def display_response(self, response: str) -> None:
         """Display Response After LLM Finishes Processing"""
         message = Message(
-                id=str(uuid4()),
-                role=MessageRole.AETHER,
-                content=response,
-                timestamp=datetime.now()
-                )
+            id=str(uuid4()), role=MessageRole.AETHER, content=response, timestamp=datetime.now()
+        )
 
         message_area = cast(MessageArea, self._message_area)
         message_area.append_message(message)
@@ -92,7 +86,7 @@ class ChatbotPanel(StyledComponent):
         for msg in self._session.messages:
             message_area.append_message(msg)
 
-    #TODO:
+    # TODO:
     # ADD AUTO SCROLL TO BOTTOM FUNCTION HERE
     # ADD LOADING FEATURE WHILE LLM IS PROCESSING
 
@@ -101,5 +95,7 @@ class ChatbotPanel(StyledComponent):
         return Path(__file__).resolve().parent / "styles.qss.jinja"
 
 
-def create_chatbot_panel(session: ChatSession, parent: QtWidgets.QWidget | None = None) -> ChatbotPanel:
+def create_chatbot_panel(
+    session: ChatSession, parent: QtWidgets.QWidget | None = None
+) -> ChatbotPanel:
     return ChatbotPanel(session, parent)
