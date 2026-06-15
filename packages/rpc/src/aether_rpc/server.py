@@ -1,7 +1,5 @@
 import contextlib
-import json
 import threading
-from os import getpid
 
 from aether_utils.data_dir import get_data_dir
 from rpyc.utils.server import ThreadedServer
@@ -9,7 +7,6 @@ from rpyc.utils.server import ThreadedServer
 from .capabilities.base import Capability
 from .executors import IDAExecutor
 from .ida_service import IDAService
-
 from .registry import RPCFileRegistry
 
 
@@ -29,7 +26,6 @@ class RPCServer:
 
         self._id = id
         self._registry = RPCFileRegistry(get_data_dir("rpc") / f"{self._id}.json")
-
 
         self._server: ThreadedServer | None = None
         self._thread: threading.Thread | None = None
@@ -65,7 +61,9 @@ class RPCServer:
         )
 
         self._thread.start()
-        self._registry.register(instance_id=self._id, port=self._server.port if self._server else None)
+        self._registry.register(
+            instance_id=self._id, port=self._server.port if self._server else None
+        )
 
     def _run(self):
         if not self._server:

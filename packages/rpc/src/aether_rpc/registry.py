@@ -1,8 +1,8 @@
-from pathlib import Path
 from os import getpid
+from pathlib import Path
 
-from pydantic import BaseModel
 from aether_utils.logger import get_logger
+from pydantic import BaseModel
 
 
 class RPCRegistryEntry(BaseModel):
@@ -12,6 +12,7 @@ class RPCRegistryEntry(BaseModel):
 
 
 logger = get_logger("rpc_registry")
+
 
 class RPCFileRegistry:
     def __init__(self, data_file: Path) -> None:
