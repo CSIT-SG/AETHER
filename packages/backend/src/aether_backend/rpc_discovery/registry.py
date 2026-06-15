@@ -1,14 +1,13 @@
 import asyncio
-import json
 from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
+from aether_rpc.registry import RPCFileRegistry
 from aether_utils.data_dir import get_data_dir
 from aether_utils.logger import get_logger
 
 from .connection import RpcConnectionEntry, connect_with_backoff, ping, safe_close
-from aether_rpc.registry import RPCFileRegistry
 
 
 class RPCRegistry:
@@ -194,10 +193,10 @@ class RPCRegistry:
     def _load_configs(self) -> list[dict[str, Any]]:
         configs: list[dict[str, Any]] = []
         for path in self._directory.glob("*.json"):
-                entry = RPCFileRegistry.load(path)
-                if entry:
-                    configs.append(entry.model_dump())
-            
+            entry = RPCFileRegistry.load(path)
+            if entry:
+                configs.append(entry.model_dump())
+
         return configs
 
     def _close_stale(
