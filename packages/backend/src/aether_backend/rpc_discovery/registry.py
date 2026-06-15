@@ -114,7 +114,9 @@ class RpcRegistry:
             for cfg in configs
             if cfg["id"] not in existing
         }
-        results = dict(zip(tasks, await asyncio.gather(*tasks.values(), return_exceptions=False)))
+        results = dict(
+            zip(tasks, await asyncio.gather(*tasks.values(), return_exceptions=False), strict=True)
+        )
 
         async with self._lock:
             # Drop entries whose config files are gone
@@ -162,7 +164,7 @@ class RpcRegistry:
 
         reconnect: list[RpcConnectionEntry] = []
         async with self._lock:
-            for rpc_id, ok in zip(ping_tasks, ping_results):
+            for rpc_id, ok in zip(ping_tasks, ping_results, strict=True):
                 if ok is True:
                     continue
                 entry = snapshot[rpc_id]
