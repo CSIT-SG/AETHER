@@ -1,40 +1,12 @@
 import asyncio
 import functools
-from collections.abc import AsyncGenerator, Callable, Coroutine
-from dataclasses import dataclass
-from typing import Any, Literal, ParamSpec
+from collections.abc import Callable, Coroutine
+from typing import Any, ParamSpec
 
 from fastmcp.server.dependencies import get_context
 
-
-@dataclass
-class Progress:
-    current: int | float
-    total: int | float
-    message: str = ""
-
-
-@dataclass
-class Log:
-    message: str
-    level: Literal["debug", "info", "warning", "error"] = "info"
-
-
-@dataclass
-class Sleep:
-    seconds: float
-
-
-@dataclass
-class Return:
-    """Yield to return a value from the tool, terminating the stream."""
-
-    value: Any = None
-
-
-type Effect = Progress | Log | Sleep | Return
-type Program = AsyncGenerator[Effect, None]
-
+from .models import Log, Progress, Return, Sleep
+from .types import Program
 
 P = ParamSpec("P")
 
@@ -63,7 +35,7 @@ def effectful(
 
     @functools.wraps(fn)
     async def wrapper(*args: P.args, **kwargs: P.kwargs) -> Any:
-        ctx = get_context()  # request-scoped; must be here, not at decoration time
+        ctx = get_context()
         result: Any = None
         async for effect in fn(*args, **kwargs):
             match effect:
