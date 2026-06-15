@@ -10,6 +10,8 @@ from .capabilities.base import Capability
 from .executors import IDAExecutor
 from .ida_service import IDAService
 
+from .registry import RPCFileRegistry
+
 
 class RPCServer:
     def __init__(
@@ -26,7 +28,8 @@ class RPCServer:
         self._port = port
 
         self._id = id
-        self._data_file = get_data_dir("rpc") / f"{self._id}.json"
+        self._registry = RPCFileRegistry(get_data_dir("rpc") / f"{self._id}.json")
+
 
         self._server: ThreadedServer | None = None
         self._thread: threading.Thread | None = None
@@ -37,20 +40,6 @@ class RPCServer:
             raise RuntimeError("Server not started")
 
         return self._server.port
-
-    # we register ourselves in the file system when we start, and deregister when we stop.
-    def _register(self) -> None:
-
-        data = {
-            "id": str(self._id),
-            "port": self._server.port if self._server else None,
-            "pid": getpid(),
-        }
-
-        self._data_file.write_text(json.dumps(data))
-
-    def _deregister(self) -> None:
-        self._data_file.unlink(missing_ok=True)
 
     def start(self) -> None:
         self._executor.startup()
@@ -76,7 +65,7 @@ class RPCServer:
         )
 
         self._thread.start()
-        self._register()
+        self._registry.register(instance_id=self._id, port=self._server.port if self._server else None)
 
     def _run(self):
         if not self._server:
@@ -95,4 +84,4 @@ class RPCServer:
 
         self._executor.shutdown()
 
-        self._deregister()
+        self._registry.deregister()

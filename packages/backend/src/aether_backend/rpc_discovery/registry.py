@@ -8,9 +8,10 @@ from aether_utils.data_dir import get_data_dir
 from aether_utils.logger import get_logger
 
 from .connection import RpcConnectionEntry, connect_with_backoff, ping, safe_close
+from aether_rpc.registry import RPCFileRegistry
 
 
-class RpcRegistry:
+class RPCRegistry:
     """
     Maps RPC id → live RPyC connection root object.
 
@@ -193,14 +194,10 @@ class RpcRegistry:
     def _load_configs(self) -> list[dict[str, Any]]:
         configs: list[dict[str, Any]] = []
         for path in self._directory.glob("*.json"):
-            try:
-                with path.open("r", encoding="utf-8") as f:
-                    cfg = json.load(f)
-                if "id" not in cfg or "port" not in cfg:
-                    raise ValueError("Missing 'id' or 'port' key")
-                configs.append(cfg)
-            except Exception:
-                self._logger.exception("Invalid RPC config: %s", path)
+                entry = RPCFileRegistry.load(path)
+                if entry:
+                    configs.append(entry.model_dump())
+            
         return configs
 
     def _close_stale(
