@@ -1,4 +1,4 @@
-from aether_gui.features.chatbot.components.messages.Messages.components import Message
+from ..messages.Messages import Message
 
 
 class ChatSession:

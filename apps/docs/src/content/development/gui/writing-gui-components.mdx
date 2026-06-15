@@ -132,30 +132,30 @@ Then, you need to implement one of `style_file()` or `style()` in your component
 
 `ThemePlugin` will inject theme variables (namespaced under `colors`) into the template context, allowing you to use dynamic values in your styles.
 
-The following colors are supported:
-- `windowtext`
-- `button`
-- `light`
-- `midlight`
-- `dark`
-- `mid`
-- `text`
-- `brighttext`
-- `buttontext`
-- `base`
-- `window`
-- `shadow`
-- `highlight`
-- `highlightedtext`
-- `link`
-- `linkvisited`
-- `alternatebase`
-- `norole`
-- `tooltipbase`
-- `tooltiptext`
-- `placeholdertext`
-- `accent`
-- `ncolorroles`
+The following colors are supported (Light/Dark):
+- `windowtext` - `#000000`/`#dddddd`
+- `button` - `#f0f0f0`/`#363636`
+- `light` - `#ffffff`/`#ffffff`
+- `midlight` - `#e3e3e3`/`#e3e3e3`
+- `dark` - `#a0a0a0`/`#a0a0a0`
+- `mid` - `#a0a0a0`/`#a0a0a0`
+- `text` - `#000000`/`#dddddd`
+- `brighttext` - `#ffffff`/`#ffffff`
+- `buttontext` - `#dddddd`/`#dddddd`
+- `base` - `#ffffff`/`#363636`
+- `window` - `#f0f0f0`/`#363636`
+- `shadow` - `#696969`/`#696969`
+- `highlight` - `#0078d7`/`#0078d7`
+- `highlightedtext` - `#ffffff`/`#ffffff`
+- `link` - `#004275`/`#004275`
+- `linkvisited` - `#002642`/`#002642`
+- `alternatebase` - `#f5f5f5`/`#f5f5f5`
+- `norole` - `#000000`/`#000000`
+- `tooltipbase` - `#ffffdc`/`#ffffdc`
+- `tooltiptext` - `#000000`/`#000000`
+- `placeholdertext` - `#000000`/`#dddddd`
+- `accent` - `#005a9e`/`#005a9e`
+- `ncolorroles` - `#787878`/`#dddddd`
 
 Access them like this: `{{ colors.window }}` in your jinja template. They map to hex color values like `#000000`.
 

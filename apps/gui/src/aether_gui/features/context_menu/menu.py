@@ -1,8 +1,8 @@
 from typing import cast
 
-from aether_gui.features.chatbot.components.chat_session.component import ChatSession
 import ida_kernwin
 from aether_gui.features.chatbot import ChatbotHandler
+from aether_gui.features.chatbot.components.chat_session import ChatSession
 from aether_utils.logger import get_logger
 
 from .menu_item import ContextMenuItem
@@ -64,3 +64,4 @@ class AetherUIHooks(ida_kernwin.UI_Hooks):
                 logger.warning("Failed to unregister context menu item: %s", e)
 
         self.items.clear()
+        self.session = None

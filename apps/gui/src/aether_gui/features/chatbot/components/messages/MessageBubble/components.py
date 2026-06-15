@@ -1,11 +1,11 @@
 from pathlib import Path
 
-from aether_gui.features.chatbot.components.messages.Messages.components import Message, MessageRole
-from aether_gui.utils.ui.plugins.theme_plugin.types import Theme, ThemeColors
-from aether_gui.utils.ui.styled_component import StyledComponent
+from aether_gui.utils.ui import StyledComponent
 from markdown import markdown
 from PySide6 import QtCore
 from PySide6.QtWidgets import QSizePolicy, QTextBrowser, QTextEdit, QVBoxLayout
+
+from ..Messages import Message, MessageRole
 
 
 class MessageBubble(StyledComponent):
@@ -105,9 +105,3 @@ class MessageBubble(StyledComponent):
     def style_file(self) -> Path | None:
         """Return the QSS template that paints the panel background."""
         return Path(__file__).resolve().parent / "styles.qss.jinja"
-
-    ### DEBUGGING ###
-    def on_theme_change(self, *, theme: Theme, colors: ThemeColors) -> None:
-        print(f"Theme: {theme}")
-        print(f"Colors: {colors}")
-    ### END DEBUGGING ###

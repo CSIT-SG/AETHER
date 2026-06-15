@@ -2,12 +2,13 @@ from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
 
-from aether_gui.features.chatbot.components.chat_input.component import ChatInput
-from aether_gui.features.chatbot.components.chat_session.component import ChatSession
-from aether_gui.features.chatbot.components.messages.MessageArea.components import MessageArea
-from aether_gui.features.chatbot.components.messages.Messages.components import Message, MessageRole
 from aether_gui.utils.ui import StyledComponent
 from PySide6 import QtCore, QtWidgets
+
+from ..chat_input import ChatInput
+from ..chat_session import ChatSession
+from ..messages.MessageArea import MessageArea
+from ..messages.Messages import Message, MessageRole
 
 
 class ChatbotPanel(StyledComponent):

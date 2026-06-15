@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from aether_gui.utils.ui import StyledComponent
-from aether_gui.utils.ui.plugins.theme_plugin.types import Theme, ThemeColors
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtGui import QTextOption
 

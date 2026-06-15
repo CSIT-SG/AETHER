@@ -1,10 +1,19 @@
 from pathlib import Path
 
-from aether_gui.features.chatbot.components.messages.MessageBubble.components import MessageBubble
-from aether_gui.features.chatbot.components.messages.MessageRow.utils.ButtonComponent import ButtonComponent
-from aether_gui.features.chatbot.components.messages.Messages.components import Message, MessageRole
-from aether_gui.utils.ui.styled_component import StyledComponent
-from PySide6.QtWidgets import QApplication, QGraphicsOpacityEffect, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget
+from aether_gui.utils.ui import StyledComponent
+from PySide6.QtWidgets import (
+    QApplication,
+    QGraphicsOpacityEffect,
+    QHBoxLayout,
+    QLabel,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
+
+from ..MessageBubble import MessageBubble
+from ..Messages import Message, MessageRole
+from .utils import ButtonComponent
 
 
 class MessageRow(StyledComponent):
@@ -20,9 +29,12 @@ class MessageRow(StyledComponent):
         self._bubble = None
 
     def init_ui(self) -> None:
+        """
         # NEW LAYOUT BUILT IN FOLLOWING FORMAT
+        # HEADER - USER/AETHER AND TIMESTAMP
         # BODY - MARKDOWN CONTENT (MESSAGEBUBBLE)
-        # FOOTER - COPY BUTTON and future implementations
+        # FOOTER - COPY BUTTON and future button widget implementations
+        """
 
         # Layout
         main_layout = QHBoxLayout(self)
@@ -52,15 +64,14 @@ class MessageRow(StyledComponent):
 
         self._timestamp = time_label
 
+        name_label = QLabel(self._message.role.value)
         match self._message.role:
             case MessageRole.USER:
-                name_label = QLabel(self._message.role.value)
                 header_layout.addStretch()
                 header_layout.addWidget(name_label)
                 header_layout.addWidget(time_label)
 
             case MessageRole.AETHER:
-                name_label = QLabel(self._message.role.value)
 
                 header_layout.addWidget(name_label)
                 header_layout.addWidget(time_label)
@@ -102,15 +113,6 @@ class MessageRow(StyledComponent):
 
         card_layout.addWidget(footer_container)
         ### END FOOTER ###
-        print(
-            "row width:",
-            self.width(),
-        )
-
-        print(
-            "card width:",
-            message_card_container.width(),
-        )
 
         match self._message.role:
             case MessageRole.USER:

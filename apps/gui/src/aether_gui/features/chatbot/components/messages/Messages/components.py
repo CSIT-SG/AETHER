@@ -1,7 +1,8 @@
+import sys
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-import sys
+
 
 class MessageRole(Enum):
     """Enum for Message Roles"""
@@ -13,7 +14,7 @@ class Message:
     """Message modal for all layers"""
 
     id: str
-    role: str
+    role: MessageRole
     content: str
     timestamp: datetime
 

@@ -1,11 +1,11 @@
 from pathlib import Path
 
-from aether_gui.features.chatbot.components.messages.MessageBubble.components import MessageBubble
-from aether_gui.features.chatbot.components.messages.MessageRow.components import MessageRow
-from aether_gui.features.chatbot.components.messages.Messages.components import Message, MessageRole
-from aether_gui.utils.ui.styled_component import StyledComponent
+from aether_gui.utils.ui import StyledComponent
 from PySide6 import QtCore
 from PySide6.QtWidgets import QFrame, QScrollArea, QVBoxLayout, QWidget
+
+from ..MessageRow import MessageRow
+from ..Messages import Message
 
 
 class MessageArea(StyledComponent):
@@ -60,6 +60,7 @@ class MessageArea(StyledComponent):
                 self.scroll_to_bottom,
             )
 
+    # FIX: Scrollbar doesn't work yet
     def scroll_to_bottom(self, min_val, max_val) -> None:
         scrollbar = self._scroll_area.verticalScrollBar()
 
