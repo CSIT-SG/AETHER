@@ -1,8 +1,9 @@
 from pathlib import Path
+from typing import cast
 
 from aether_gui.utils.ui import StyledComponent
 from PySide6 import QtCore, QtWidgets
-from PySide6.QtGui import QTextOption
+from PySide6.QtGui import QTextOption, QShortcut, QKeySequence
 
 
 class ChatInput(StyledComponent):
@@ -47,14 +48,17 @@ class ChatInput(StyledComponent):
 
         textbox.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground, True)
         layout.addWidget(textbox, 1)
-        self._textbox = textbox
 
+        self._textbox = textbox
 
         # Submit Button
         submit_btn = QtWidgets.QPushButton("\u2191", self._textbox)
         submit_btn.clicked.connect(self._submit)
         submit_btn.setObjectName("SendButton")
         layout.addWidget(submit_btn, 0, QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignBottom)
+        # Map "Ctrl+Enter" to submit_btn
+        shortcut = QShortcut(QKeySequence("Ctrl+Return"), self)
+        shortcut.activated.connect(submit_btn.animateClick)
 
         self._send_button = submit_btn
 
@@ -62,8 +66,10 @@ class ChatInput(StyledComponent):
         self._adjust_height()
 
     def _adjust_height(self):
+        textbox = cast(QtWidgets.QTextEdit, self._textbox)
+
         document_height = (
-                self._textbox.document()
+                 textbox.document()
                 .documentLayout()
                 .documentSize()
                 .height()
@@ -74,20 +80,21 @@ class ChatInput(StyledComponent):
                 120
                 )
 
-        self._textbox.setFixedHeight(height)
+        textbox.setFixedHeight(height)
 
 
     def _submit(self) -> None:
-        text = self._textbox.toPlainText().strip()
+        textbox = cast(QtWidgets.QTextEdit, self._textbox)
+        text = textbox.toPlainText().strip()
 
         if not text:
             return
 
         self.submitted.emit(text)
 
-        self._textbox.clear()
+        textbox.clear()
 
-        self._textbox.setFocus()
+        textbox.setFocus()
 
 
     def style_file(self) -> Path | None:

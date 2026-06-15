@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import cast
 
 from aether_gui.utils.ui import StyledComponent
 from PySide6 import QtCore
@@ -12,9 +13,9 @@ class MessageArea(StyledComponent):
     """Message area where message bubbles are placed"""
 
     def setup(self) -> None:
-        self._scroll_area = None
-        self._messages_container = None
-        self._messages_layout = None
+        self._scroll_area: QScrollArea | None = None
+        self._messages_container: QWidget | None = None
+        self._messages_layout: QVBoxLayout | None = None
 
     def init_ui(self) -> None:
         """Builds scrollable message area and adds message bubbles"""
@@ -41,6 +42,9 @@ class MessageArea(StyledComponent):
         messages_layout = QVBoxLayout(messages_container)
         messages_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
 
+        messages_layout.addStretch()
+        messages_layout.setSpacing(12)
+
         scroll_area.setWidget(messages_container)
         layout.addWidget(scroll_area)
 
@@ -48,12 +52,10 @@ class MessageArea(StyledComponent):
         self._messages_container = messages_container
         self._messages_layout = messages_layout
 
-        self._messages_layout.addStretch()
-        self._messages_layout.setSpacing(12)
-
     def append_message(self, message:Message):
         card = MessageRow(message)
-        self._messages_layout.addWidget(card)
+        messages_layout = cast(QVBoxLayout, self._messages_layout)
+        messages_layout.addWidget(card)
 
         QtCore.QTimer.singleShot(
                 0,
@@ -62,7 +64,7 @@ class MessageArea(StyledComponent):
 
     # FIX: Scrollbar doesn't work yet
     def scroll_to_bottom(self, min_val, max_val) -> None:
-        scrollbar = self._scroll_area.verticalScrollBar()
+        scrollbar = cast(QScrollArea, self._scroll_area).verticalScrollBar()
 
         # Scroll to bottom only if user is already close to bottom
         if scrollbar.value() >= max_val - 50:

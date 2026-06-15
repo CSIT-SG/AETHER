@@ -5,4 +5,4 @@ class ButtonComponent(QPushButton):
         super().__init__(icon, parent)
 
         self.setObjectName(obj_name)
-        self.setToolTip(tooltip
+        self.setToolTip(tooltip)

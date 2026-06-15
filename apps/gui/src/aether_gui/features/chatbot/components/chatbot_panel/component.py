@@ -1,5 +1,6 @@
 from datetime import datetime
 from pathlib import Path
+from typing import cast
 from uuid import uuid4
 
 from aether_gui.utils.ui import StyledComponent
@@ -56,7 +57,8 @@ class ChatbotPanel(StyledComponent):
                 timestamp=datetime.now()
                 )
 
-        self._message_area.append_message(message)
+        message_area = cast(MessageArea, self._message_area)
+        message_area.append_message(message)
 
         self._session.add_message(message)
 
@@ -76,7 +78,8 @@ class ChatbotPanel(StyledComponent):
                 timestamp=datetime.now()
                 )
 
-        self._message_area.append_message(message)
+        message_area = cast(MessageArea, self._message_area)
+        message_area.append_message(message)
 
         self._session.add_message(message)
 
@@ -85,8 +88,9 @@ class ChatbotPanel(StyledComponent):
         if not self._session.messages:
             return
 
+        message_area = cast(MessageArea, self._message_area)
         for msg in self._session.messages:
-            self._message_area.append_message(msg)
+            message_area.append_message(msg)
 
     #TODO:
     # ADD AUTO SCROLL TO BOTTOM FUNCTION HERE
