@@ -11,7 +11,7 @@ from .types import Program
 P = ParamSpec("P")
 
 
-def effectful(
+def effectful(  # noqa: UP047
     fn: Callable[P, Program],
 ) -> Callable[P, Coroutine[Any, Any, Any]]:
     """

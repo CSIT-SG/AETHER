@@ -1,0 +1,46 @@
+import httpx
+from aether_backend.tools.effect import Log, Program, Progress, Return
+
+CHUNK_SIZE = 64 * 1024  # 64 KB
+
+
+async def fetch_url_stream(url: str) -> Program:
+    timeout = httpx.Timeout(30.0, connect=10.0)
+
+    async with (
+        httpx.AsyncClient(timeout=timeout, follow_redirects=True, verify=False) as client,
+        client.stream("GET", url) as resp,
+    ):
+        resp.raise_for_status()
+
+        total = resp.headers.get("Content-Length")
+        total = int(total) if total and total.isdigit() else 0
+
+        downloaded = 0
+        chunks: list[bytes] = []
+
+        yield Log(f"Fetching: {url}")
+
+        async for chunk in resp.aiter_bytes(CHUNK_SIZE):
+            if not chunk:
+                continue
+
+            chunks.append(chunk)
+            downloaded += len(chunk)
+
+            yield Progress(
+                current=downloaded,
+                total=total,
+                message="downloading",
+            )
+
+        yield Log("Fetch complete")
+
+        data = b"".join(chunks)
+
+        try:
+            text = data.decode("utf-8")
+        except UnicodeDecodeError:
+            text = data.decode("latin-1", errors="replace")
+
+        yield Return(text)
