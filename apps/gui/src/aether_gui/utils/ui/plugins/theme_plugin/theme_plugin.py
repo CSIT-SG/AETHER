@@ -119,8 +119,10 @@ class ThemePlugin(AbstractComponentPlugin):
         if not isValid(widget):
             self._disconnect_theme_handler()
             return
-        widget._apply_styles(theme=theme, colors=colors)
+
+        widget.theme, widget.colors = theme, colors
         widget.on_theme_change(theme=theme, colors=colors)
+        widget._apply_styles(theme=theme, colors=colors)
 
     def _disconnect_theme_handler(self) -> None:
         """Disconnect theme change handlers if connected."""
