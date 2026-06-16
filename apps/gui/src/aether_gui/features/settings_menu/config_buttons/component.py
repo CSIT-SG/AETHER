@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from typing import Any
 
 from aether_gui.utils.ui import StyledComponent
 from PySide6 import QtWidgets
@@ -15,14 +16,14 @@ class ButtonRow(StyledComponent):
 
     def init_ui(self) -> None:
         layout = QtWidgets.QHBoxLayout(self)
-        container = QtWidgets.QWidget()
-        layout.setContentsMargins(8,8,8,8)
+        container = QtWidgets.QWidget(self)
+        layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(8)
+        container.setLayout(layout)
         self._layout = layout
         self._container = container
 
-
-    def set_buttons(self, get_content: Callable[[],str], on_close: Callable) -> None:
+    def set_buttons(self, get_content: dict[str, Any], on_close: Callable) -> None:
         ok: OkButton = OkButton(get_content, on_close)
         apply: ApplyButton = ApplyButton(get_content)
         cancel: CancelButton = CancelButton(on_close)

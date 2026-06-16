@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from collections.abc import Callable
 from pathlib import Path
 
 from aether_gui.utils.ui import StyledComponent
@@ -7,9 +6,9 @@ from PySide6 import QtWidgets
 
 
 class ConfigButton(ABC, StyledComponent):
-    def __init__(self, label:str = "I AM NOT SET", on_action: Callable | None = None) -> None:
+    def __init__(self, label: str = "I AM NOT SET", parent: QtWidgets.QWidget | None = None) -> None:
         self._label: str = label
-        self._on_action = on_action
+        super().__init__(parent)
 
 
     def setup(self) -> None:

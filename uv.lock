@@ -98,7 +98,7 @@ requires-dist = [
     { name = "aether-core" },
     { name = "aether-utils", editable = "packages/utils" },
     { name = "jinja2" },
-    { name = "markdown" },
+    { name = "markdown", specifier = "==3.10.2" },
     { name = "markupsafe", specifier = "==2.0.1" },
     { name = "pyside6" },
 ]
@@ -107,6 +107,9 @@ requires-dist = [
 name = "aether-next"
 version = "0.1.0"
 source = { virtual = "." }
+dependencies = [
+    { name = "markdown" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -119,6 +122,7 @@ dev = [
 ]
 
 [package.metadata]
+requires-dist = [{ name = "markdown", specifier = ">=3.10.2" }]
 
 [package.metadata.requires-dev]
 dev = [

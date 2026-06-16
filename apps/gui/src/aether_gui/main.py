@@ -9,19 +9,32 @@ from aether_utils.is_headless_ida import is_headless_ida
 from aether_utils.logger import get_logger
 
 from aether_gui.features.context_menu import AetherUIHooks
+<<<<<<< HEAD
+=======
+from aether_gui.features.settings_menu import SettingsMenuHandler  #, SettingsMenuEntrypoint
+>>>>>>> b3c769a (feat(settings_menu): shit appears now lol)
 
 logger = get_logger("gui_plugin")
 
 
 class _Aether(idaapi.plugin_t):
+<<<<<<< HEAD
     flags = idaapi.PLUGIN_HIDE | idaapi.PLUGIN_UNL
     comment = wanted_name = "Aether"
     help = wanted_hotkey = ""
+=======
+    flags = idaapi.PLUGIN_KEEP
+    comment = "Settings Menu"
+    help = ""
+    wanted_name = "Aether_Config"
+    wanted_hotkey = ""
+>>>>>>> b3c769a (feat(settings_menu): shit appears now lol)
 
     def __init__(self):
         super().__init__()
         self._ui_hooks = None
         self._rpc_server = None
+        self._settings_handler = None
 
     def init(self) -> int:
         if is_headless_ida():
@@ -47,11 +60,15 @@ class _Aether(idaapi.plugin_t):
             self._ui_hooks.hook()
 
         self._rpc_server.start()
+<<<<<<< HEAD
 
+=======
+>>>>>>> b3c769a (feat(settings_menu): shit appears now lol)
         return idaapi.PLUGIN_KEEP
 
     def run(self, arg) -> None:
-        pass
+        dialog = SettingsMenuHandler()
+        dialog.exec()
 
     def term(self) -> None:
         # No global lookups. This object is guaranteed to exist right here.
@@ -66,6 +83,11 @@ class _Aether(idaapi.plugin_t):
                 self._ui_hooks = None
         if self._rpc_server:
             self._rpc_server.stop()
+<<<<<<< HEAD
+=======
+        ida_kernwin.detach_action_from_menu("Edit/Plugins/", ACTION_NAME)
+        ida_kernwin.unregister_action(ACTION_NAME)
+>>>>>>> b3c769a (feat(settings_menu): shit appears now lol)
 
 
 def PLUGIN_ENTRY() -> _Aether:
