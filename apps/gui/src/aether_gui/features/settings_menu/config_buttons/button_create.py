@@ -17,7 +17,12 @@ class ApplyButton(ConfigButton):
 
     def action(self) -> None:
         formatted: dict[str, Any] = json.loads(self._get_content())
-        set_config(formatted)
+        try:
+            super().reset_colour(self)
+            set_config(formatted)
+        except Exception as e:
+            print(e)
+            super().flash_red(self)
 
 
 class OkButton(ConfigButton):
@@ -33,8 +38,13 @@ class OkButton(ConfigButton):
 
     def action(self) -> None:
         formatted: dict[str, Any] = json.loads(self._get_content())
-        set_config(formatted)
-        self._on_close()
+        try:
+            super().reset_colour(self)
+            set_config(formatted)
+            self._on_close()
+        except Exception as e:
+            print(e)
+            super().flash_red(self)
 
 
 class CancelButton(ConfigButton):

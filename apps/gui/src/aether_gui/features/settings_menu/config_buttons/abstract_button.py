@@ -14,6 +14,15 @@ class ConfigButton(ABC, StyledComponent):
     def setup(self) -> None:
         self._button: QtWidgets.QPushButton
 
+    def flash_red(self, widget: QtWidgets.QWidget) -> None:
+        window = widget.window()
+        window.setStyleSheet("QDialog { background-color: #c0392b; }")
+
+    def reset_colour(self, widget: QtWidgets.QWidget) -> None:
+        """Restore the window background to its original stylesheet."""
+        window = widget.window()
+        window.setStyleSheet(window.property("_original_stylesheet") or "")
+
     def init_ui(self) -> None:
         button = QtWidgets.QPushButton(self._label, self)
         button.clicked.connect(self.action)

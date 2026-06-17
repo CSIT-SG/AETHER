@@ -2,6 +2,7 @@ from aether_utils.config import get_config
 from aether_utils.logger import get_logger
 from PySide6 import QtWidgets
 
+from .capture_stylesheet import capture_original_stylesheet
 from .config_box import ConfigBox
 from .config_buttons import ButtonRow
 
@@ -23,6 +24,7 @@ class SettingsMenuHandler(QtWidgets.QDialog):
         self.init_ui()
 
     def init_ui(self) -> None:
+        capture_original_stylesheet(self)
         layout = QtWidgets.QVBoxLayout(self)
         config_box = ConfigBox(self)
         buttons: ButtonRow = ButtonRow(config_box.get_content, self.close, parent=self)
