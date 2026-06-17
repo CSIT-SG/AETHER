@@ -27,9 +27,10 @@ class SettingsMenuHandler(QtWidgets.QDialog):
         config_box = ConfigBox(self)
         buttons: ButtonRow = ButtonRow(config_box.get_content, self.close, parent=self)
         config_box.setMinimumWidth(500)
+        config_box.setMinimumHeight(200)
         self._layout = layout
         self._config_box = config_box
         self._buttons = buttons
-        self._layout.addWidget(self._config_box, stretch=1)
-        self._layout.addWidget(self._buttons, stretch=1)
+        self._layout.addWidget(self._config_box)
+        self._layout.addWidget(self._buttons)
         self.setLayout(self._layout)

@@ -1,5 +1,6 @@
 import json
 
+import ida_kernwin
 import ida_nalt
 import idaapi
 from aether_rpc.gui_server import GUIRPCServer
@@ -10,6 +11,9 @@ from aether_utils.logger import get_logger
 
 from aether_gui.features.context_menu import AetherUIHooks
 from aether_gui.features.settings_menu import SettingsMenuHandler
+
+ACTION_NAME = "aether:open_settings"
+ACTION_LABEL = "Aether Settings"
 
 logger = get_logger("gui_plugin")
 

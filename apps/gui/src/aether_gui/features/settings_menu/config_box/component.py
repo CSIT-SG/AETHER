@@ -13,12 +13,9 @@ class ConfigBox(StyledComponent):
         self._output_box: QtWidgets.QPlainTextEdit
 
     def init_ui(self) -> None:
-        container = QtWidgets.QWidget(self)
         output_box = QtWidgets.QPlainTextEdit(self)
         layout = QtWidgets.QHBoxLayout(self)
         layout.addWidget(output_box)
-        container.setLayout(layout)
-        self._container = container
         self._output_box = output_box
         self._layout = layout
         self.set_box_content()
