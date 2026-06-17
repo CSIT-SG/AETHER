@@ -1,18 +1,10 @@
-from enum import StrEnum
 from typing import Self
 
 from pydantic import BaseModel, Field, model_validator
 
 
-class ProviderType(StrEnum):
-    OPENROUTER = "openrouter"
-    OTHER = "other"
-
-
 class ProviderModel(BaseModel):
-    type: ProviderType = Field(
-        ..., description="The type of the provider, eg. 'openrouter', 'litellm', etc."
-    )
+    gateway_url: str = Field(..., description="The base URL for the provider's API gateway.")
     api_key: str = Field("", description="The API key for the provider.")
     models: dict[str, str] = Field(
         default_factory=dict,
@@ -75,9 +67,6 @@ class FeaturesModel(BaseModel):
 
 
 class TlsConfigModel(BaseModel):
-    custom_ca_cert_path: str = Field(
-        "", description="Path to a custom CA certificate, if needed for TLS connections."
-    )
     client_cert_path: str = Field(
         "",
         description="Path to the client certificate for mutual TLS authentication, if required by the provider.",

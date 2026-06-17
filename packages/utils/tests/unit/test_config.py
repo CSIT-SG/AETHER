@@ -9,7 +9,7 @@ from pydantic import ValidationError
 
 VALID_MINIMAL = {
     "provider": {
-        "type": "openrouter",
+        "gateway_url": "https://openrouter.ai/api/v1",
         "api_key": "sk-test",
         "models": {"GPT-4o": "openai/gpt-4o"},
         "default_model": "GPT-4o",
@@ -18,7 +18,7 @@ VALID_MINIMAL = {
 
 VALID_FULL = {
     "provider": {
-        "type": "openrouter",
+        "gateway_url": "https://openrouter.ai/api/v1",
         "api_key": "sk-test",
         "models": {
             "GPT-4o": "openai/gpt-4o",
@@ -45,7 +45,6 @@ VALID_FULL = {
     },
     "debug": True,
     "tls": {
-        "custom_ca_cert_path": "/certs/ca.pem",
         "client_cert_path": "/certs/client.crt",
         "client_key_path": "/certs/client.key",
     },
@@ -53,7 +52,7 @@ VALID_FULL = {
 
 VALID_SUBAGENTS_ALL_NULL = {
     "provider": {
-        "type": "openrouter",
+        "gateway_url": "https://openrouter.ai/api/v1",
         "api_key": "sk-test",
         "models": {"GPT-4o": "openai/gpt-4o"},
         "default_model": "GPT-4o",
@@ -70,7 +69,7 @@ VALID_SUBAGENTS_ALL_NULL = {
 
 VALID_EXTRA_BODY_NULL = {
     "provider": {
-        "type": "other",
+        "gateway_url": "http://localhost:8080/v1",
         "api_key": "sk-test",
         "models": {"Local Model": "local/mistral-7b"},
         "default_model": "Local Model",
@@ -81,7 +80,7 @@ VALID_EXTRA_BODY_NULL = {
 # Two keys that differ only by case — both valid, default is the lowercase one
 VALID_CASE_SENSITIVE_KEYS = {
     "provider": {
-        "type": "openrouter",
+        "gateway_url": "https://openrouter.ai/api/v1",
         "api_key": "sk-test",
         "models": {
             "gpt-4o": "openai/gpt-4o",
@@ -95,7 +94,7 @@ VALID_CASE_SENSITIVE_KEYS = {
 
 INVALID_DEFAULT_IS_MODEL_ID = {
     "provider": {
-        "type": "openrouter",
+        "gateway_url": "https://openrouter.ai/api/v1",
         "api_key": "sk-test",
         "models": {"GPT-4o": "openai/gpt-4o"},
         "default_model": "openai/gpt-4o",  # ID, not key
@@ -104,7 +103,7 @@ INVALID_DEFAULT_IS_MODEL_ID = {
 
 INVALID_DEFAULT_NOT_IN_MODELS = {
     "provider": {
-        "type": "openrouter",
+        "gateway_url": "https://openrouter.ai/api/v1",
         "api_key": "",
         "models": {"GPT-4o": "openai/gpt-4o"},
         "default_model": "Claude Sonnet",  # not present
@@ -113,7 +112,7 @@ INVALID_DEFAULT_NOT_IN_MODELS = {
 
 INVALID_EMPTY_MODELS = {
     "provider": {
-        "type": "openrouter",
+        "gateway_url": "https://openrouter.ai/api/v1",
         "api_key": "",
         "models": {},
         "default_model": "GPT-4o",
@@ -122,7 +121,7 @@ INVALID_EMPTY_MODELS = {
 
 INVALID_SUBAGENT_NOT_IN_PROVIDER = {
     "provider": {
-        "type": "openrouter",
+        "gateway_url": "https://openrouter.ai/api/v1",
         "api_key": "sk-test",
         "models": {"GPT-4o": "openai/gpt-4o"},
         "default_model": "GPT-4o",
@@ -132,7 +131,7 @@ INVALID_SUBAGENT_NOT_IN_PROVIDER = {
 
 INVALID_SUBAGENT_USES_MODEL_ID = {
     "provider": {
-        "type": "openrouter",
+        "gateway_url": "https://openrouter.ai/api/v1",
         "api_key": "sk-test",
         "models": {"GPT-4o": "openai/gpt-4o"},
         "default_model": "GPT-4o",
@@ -140,12 +139,12 @@ INVALID_SUBAGENT_USES_MODEL_ID = {
     "subagents": {"gatherer_model": "openai/gpt-4o"},  # ID, not key
 }
 
-INVALID_PROVIDER_TYPE = {
+INVALID_MISSING_GATEWAY_URL = {
     "provider": {
-        "type": "unsupported_proxy",
         "api_key": "sk-test",
         "models": {"GPT-4o": "openai/gpt-4o"},
         "default_model": "GPT-4o",
+        # gateway_url omitted entirely
     }
 }
 
@@ -153,7 +152,7 @@ INVALID_MISSING_PROVIDER = {"debug": True}
 
 INVALID_MISSING_DEFAULT_MODEL_FIELD = {
     "provider": {
-        "type": "openrouter",
+        "gateway_url": "https://openrouter.ai/api/v1",
         "api_key": "",
         "models": {"GPT-4o": "openai/gpt-4o"},
         # default_model omitted entirely
@@ -162,7 +161,7 @@ INVALID_MISSING_DEFAULT_MODEL_FIELD = {
 
 INVALID_DEFAULT_WRONG_CASE = {
     "provider": {
-        "type": "openrouter",
+        "gateway_url": "https://openrouter.ai/api/v1",
         "api_key": "sk-test",
         "models": {"GPT-4o": "openai/gpt-4o"},
         "default_model": "gpt-4o",  # wrong case
@@ -183,7 +182,6 @@ class TestValidConfigs:
         cfg = ConfigModel.model_validate(VALID_FULL)
         assert cfg.debug is True
         assert cfg.tls is not None
-        assert cfg.tls.custom_ca_cert_path == "/certs/ca.pem"
         assert cfg.subagents is not None
         assert cfg.subagents.gatherer_model == "Claude Sonnet"
         assert cfg.subagents.ai_decomp_model is None
@@ -228,9 +226,10 @@ class TestInvalidConfigs:
         with pytest.raises(ValidationError, match="not in the provider's model list"):
             ConfigModel.model_validate(INVALID_SUBAGENT_USES_MODEL_ID)
 
-    def test_invalid_provider_type(self) -> None:
-        with pytest.raises(ValidationError):
-            ConfigModel.model_validate(INVALID_PROVIDER_TYPE)
+    def test_missing_gateway_url(self) -> None:
+        """gateway_url is required; omitting it must raise a ValidationError."""
+        with pytest.raises(ValidationError, match="gateway_url"):
+            ConfigModel.model_validate(INVALID_MISSING_GATEWAY_URL)
 
     def test_missing_provider_field(self) -> None:
         with pytest.raises(ValidationError, match="provider"):
@@ -256,7 +255,7 @@ class TestConfigManagerIO:
         with patch("aether_utils.config.config.get_config_file_path", return_value=config_file):
             manager = ConfigManager()
 
-        assert manager.config.provider.type == DEFAULT_CONFIG.provider.type
+        assert manager.config.provider.gateway_url == DEFAULT_CONFIG.provider.gateway_url
         assert manager.config.provider.default_model == DEFAULT_CONFIG.provider.default_model
 
     def test_valid_file_is_loaded(self, tmp_path: Path) -> None:
