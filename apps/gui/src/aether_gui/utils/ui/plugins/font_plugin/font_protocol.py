@@ -5,7 +5,7 @@ from PySide6.QtGui import QFont
 
 @runtime_checkable
 class FontPluginProtocol(Protocol):
-    fontstyles: QFont
+    fontstyles: QFont | None
 
     def _apply_styles(self, **kwargs) -> None:
         """Apply font styles for the update font changes.

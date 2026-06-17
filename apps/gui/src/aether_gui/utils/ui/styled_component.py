@@ -3,11 +3,9 @@ from collections.abc import Iterable
 from pathlib import Path
 
 from aether_utils.logger import get_logger
-from PySide6.QtGui import QFont
 
 from .plugins import (
     AbstractComponentPluginManager,
-    FontPlugin,
     JinjaPlugin,
     Theme,
     ThemeColors,
@@ -69,11 +67,13 @@ class StyledComponent(AbstractComponentPluginManager):
             parent: Optional Qt parent widget.
             plugins: Additional plugins to install after defaults.
         """
-        all_plugins = [FontPlugin(), ThemePlugin(), JinjaPlugin(), *(plugins or [])]
+
+        self.theme = self.colors = None
+
+        all_plugins = [ThemePlugin(), JinjaPlugin(), *(plugins or [])]
         super().__init__(parent, plugins=all_plugins)
 
         self.theme, self.colors = self._current_theme()
-        self.fontstyle = self._current_font()
 
         self.logger = get_logger(f"component.{type(self).__name__}")
 
@@ -149,20 +149,10 @@ class StyledComponent(AbstractComponentPluginManager):
 
         return self.get_plugin(JinjaPlugin).render_html(
             self,
-            colors=_ColorsProxy(self.colors),
+            colors=_ColorsProxy(self.colors), # type: ignore
             theme=self.theme,
-            fontstyle=self.fontstyle,
             **extra_context,
         )
-
-    def on_font_change(self, *, font: QFont) -> None:
-        """Handle imperative updates after a font change.
-
-        Args:
-            font: The new fontstyle
-        """
-
-        pass
 
     def on_theme_change(self, *, theme: Theme, colors: ThemeColors) -> None:
         """Handle imperative updates after a theme change.
@@ -183,8 +173,7 @@ class StyledComponent(AbstractComponentPluginManager):
         """
         qss = self.get_plugin(JinjaPlugin).render_qss(
             self,
-            fontstyle=self.fontstyle,
-            colors=_ColorsProxy(self.colors),
+            colors=_ColorsProxy(self.colors), # type: ignore
             theme=self.theme,
         )
         if qss.strip():
@@ -199,13 +188,3 @@ class StyledComponent(AbstractComponentPluginManager):
         """
 
         return self.get_plugin(ThemePlugin).current_theme
-
-    def _current_font(self) -> QFont:
-        """Return the current fontstyle.
-
-        Returns:
-            The active fontstyle, falling back to the shared manager
-            if the font plugin is unavailable.
-        """
-
-        return self.get_plugin(FontPlugin).current_font

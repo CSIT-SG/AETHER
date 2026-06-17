@@ -5,10 +5,10 @@ from .types import Theme, ThemeColors
 
 @runtime_checkable
 class ThemePluginProtocol(Protocol):
-    theme: Theme
-    colors: ThemeColors
+    theme: Theme | None
+    colors: ThemeColors | None
 
-    def _apply_styles(self, *, theme: Theme, colors: ThemeColors, **kwargs) -> None:
+    def _apply_styles(self, **kwargs) -> None:
         """Apply styles for the given theme and colors.
 
         Args:
