@@ -8,6 +8,15 @@ from PySide6 import QtWidgets
 from .abstract_button import ConfigButton
 
 
+def load_json(raw: Callable) -> dict[str, Any]:
+    try:
+        formatted: dict[str, Any] = json.loads(raw())
+        return formatted
+    except Exception as e:
+        print("invalid JSON")
+        print(e)
+        return {" ": " "}
+
 class ApplyButton(ConfigButton):
     def __init__(
         self, get_content: Callable[[], str], parent: QtWidgets.QWidget | None = None
@@ -16,7 +25,7 @@ class ApplyButton(ConfigButton):
         self._get_content = get_content
 
     def action(self) -> None:
-        formatted: dict[str, Any] = json.loads(self._get_content())
+        formatted = load_json(self._get_content)
         try:
             super().reset_colour(self)
             set_config(formatted)
@@ -37,7 +46,7 @@ class OkButton(ConfigButton):
         self._on_close = on_close
 
     def action(self) -> None:
-        formatted: dict[str, Any] = json.loads(self._get_content())
+        formatted = load_json(self._get_content)
         try:
             super().reset_colour(self)
             set_config(formatted)
