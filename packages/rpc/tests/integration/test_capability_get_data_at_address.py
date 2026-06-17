@@ -21,6 +21,7 @@ class TestGetDataAtAddress:
     def test_accept_valid_address(self, ida_client: rpyc.Connection) -> None:
         # Assert valid address returns valid symbol name
         address = ida_client.root.get_function_by_name(function_name="main")
+        assert address is not None
 
         data = ida_client.root.get_data_at_address(location=address["name"])
 

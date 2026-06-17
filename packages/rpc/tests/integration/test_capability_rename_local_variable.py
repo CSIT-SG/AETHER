@@ -6,7 +6,7 @@ import rpyc
 @pytest.mark.dependency(depends=["connection"], scope="session")
 class TestRenameLocalVariable:
     def test_renames_local_variable(self, ida_client: rpyc.Connection) -> None:
-        func = ida_client.root.get_function_by_address(address="main")
+        func = ida_client.root.get_function_by_name(function_name="main")
         assert func is not None
 
         lvars = ida_client.root.get_local_variables(function_name="main")
@@ -44,7 +44,7 @@ class TestRenameLocalVariable:
         assert "test_decompile_var" in names_after
 
     def test_accepts_integer_address(self, ida_client: rpyc.Connection) -> None:
-        func = ida_client.root.get_function_by_address(address="main")
+        func = ida_client.root.get_function_by_name(function_name="main")
         assert func is not None
 
         lvars = ida_client.root.get_local_variables(function_name="main")
@@ -61,7 +61,7 @@ class TestRenameLocalVariable:
         assert result is True
 
     def test_accepts_address_within_function_body(self, ida_client: rpyc.Connection) -> None:
-        func = ida_client.root.get_function_by_address(address="main")
+        func = ida_client.root.get_function_by_name(function_name="main")
         assert func is not None
 
         lvars = ida_client.root.get_local_variables(function_name="main")
