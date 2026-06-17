@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 T = TypeVar("T", bound=BaseModel)
 
+
 class ToolSchema(TypedDict):
     type: str
     name: str
@@ -19,7 +20,7 @@ class InternalToolRegistryEntry(Generic[T]):
     ):
         self.args = args
         self.execute = execute
-    
+
     @property
     def schema(self) -> ToolSchema:
         return {
@@ -28,4 +29,3 @@ class InternalToolRegistryEntry(Generic[T]):
             "description": self.execute.__doc__ or "",
             "parameters": self.args.model_json_schema(),
         }
-    
