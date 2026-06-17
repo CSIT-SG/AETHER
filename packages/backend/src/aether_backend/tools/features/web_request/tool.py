@@ -1,4 +1,4 @@
-from aether_backend.tools.effect import Program, effectful
+from aether_backend.utils.effect import Program, effectful
 from fastmcp.tools import tool
 
 from .web_request import fetch_url_stream
