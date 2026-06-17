@@ -1,3 +1,4 @@
+# type: ignore
 import pytest
 import rpyc
 
@@ -11,7 +12,9 @@ class TestGetDataAtAddress:
         data = ida_client.root.get_data_at_address(location="main")
 
         assert data is not None
-        assert isinstance(data, (dict, rpyc.core.netref.BaseNetref))
+        assert data["item_size"] > 0
+        assert data["raw_bytes"] is not None
+        assert data["name"] == "main"
 
         # Assert returned address correct/valid
         rtn_addr = ida_client.root.get_function_by_address(address=data["address"])
