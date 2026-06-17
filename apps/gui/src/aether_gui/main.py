@@ -19,7 +19,6 @@ logger = get_logger("gui_plugin")
 
 
 class _Aether(idaapi.plugin_t):
-
     flags = idaapi.PLUGIN_KEEP
     comment = "Settings Menu"
     help = ""

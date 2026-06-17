@@ -1,5 +1,3 @@
 from .component import ConfigBox
 
-__all__ = [
-    "ConfigBox"
-]
+__all__ = ["ConfigBox"]

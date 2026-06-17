@@ -9,10 +9,11 @@ from .abstract_button import ConfigButton
 
 
 class ApplyButton(ConfigButton):
-    def __init__(self, get_content: Callable[[], str], parent: QtWidgets.QWidget | None = None) -> None:
-        super().__init__("Apply", parent = parent)
+    def __init__(
+        self, get_content: Callable[[], str], parent: QtWidgets.QWidget | None = None
+    ) -> None:
+        super().__init__("Apply", parent=parent)
         self._get_content = get_content
-
 
     def action(self) -> None:
         formatted: dict[str, Any] = json.loads(self._get_content())
@@ -20,11 +21,15 @@ class ApplyButton(ConfigButton):
 
 
 class OkButton(ConfigButton):
-    def __init__(self, get_content: Callable[[], str], on_close: Callable, parent: QtWidgets.QWidget | None = None) -> None:
-        super().__init__("Ok", parent = parent)
+    def __init__(
+        self,
+        get_content: Callable[[], str],
+        on_close: Callable,
+        parent: QtWidgets.QWidget | None = None,
+    ) -> None:
+        super().__init__("Ok", parent=parent)
         self._get_content = get_content
         self._on_close = on_close
-
 
     def action(self) -> None:
         formatted: dict[str, Any] = json.loads(self._get_content())
@@ -34,7 +39,7 @@ class OkButton(ConfigButton):
 
 class CancelButton(ConfigButton):
     def __init__(self, on_close: Callable, parent: QtWidgets.QWidget | None = None) -> None:
-        super().__init__("Cancel", parent = parent)
+        super().__init__("Cancel", parent=parent)
         self._on_close: Callable = on_close
 
     def action(self) -> None:

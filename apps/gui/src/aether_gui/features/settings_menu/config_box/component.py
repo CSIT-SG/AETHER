@@ -4,7 +4,8 @@ from PySide6 import QtWidgets
 
 CONFIG_FILE = get_config()
 
-CONTENTS: str = CONFIG_FILE.model_dump_json(indent = 1)
+CONTENTS: str = CONFIG_FILE.model_dump_json(indent=1)
+
 
 class ConfigBox(StyledComponent):
     def setup(self) -> None:
@@ -24,7 +25,6 @@ class ConfigBox(StyledComponent):
     def set_box_content(self) -> None:
         """Load config file content into box"""
         self._output_box.setPlainText(CONTENTS)
-
 
     def get_content(self) -> str:
         extracted = self._output_box.toPlainText()
