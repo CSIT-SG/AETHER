@@ -6,7 +6,9 @@ import rpyc
 @pytest.mark.dependency(depends=["connection"], scope="session")
 class TestRenameFunction:
     def test_renames_function(self, ida_client: rpyc.Connection) -> None:
-        result = ida_client.root.rename_function(address="foo_rename_func", new_name="test_renamed_main")
+        result = ida_client.root.rename_function(
+            address="foo_rename_func", new_name="test_renamed_main"
+        )
         assert result is True
 
         func = ida_client.root.get_function_by_name(function_name="test_renamed_main")

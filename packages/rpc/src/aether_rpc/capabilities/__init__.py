@@ -1,11 +1,10 @@
+from .get_data_at_address import GetDataAtAddress
 from .get_function_by_address import GetFunctionByAddress
 from .get_function_by_name import GetFunctionByName
+from .get_function_pseudocode import GetFunctionPseudocode
 from .get_local_variables import GetLocalVariables
 from .rename_function import RenameFunction
 from .rename_local_variable import RenameLocalVariable
-from .get_data_at_address import GetDataAtAddress
-from .set_comment import SetComment
-from .get_function_pseudocode import GetFunctionPseudocode
 from .set_comment import SetComment
 
 # ONLY export the capability classes, never submodules or helper functions

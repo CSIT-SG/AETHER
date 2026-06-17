@@ -5,6 +5,7 @@ import rpyc
 @pytest.mark.dependency(depends=["connection"], scope="session")
 class TestGetDataAtAddress:
     """Tests for valid address & symbol name provided and invalid address & symbol name provided"""
+
     def test_accept_valid_symbol_name(self, ida_client: rpyc.Connection) -> None:
         # Assert valid symbol name returns dict type
         data = ida_client.root.get_data_at_address(location="main")
@@ -28,7 +29,6 @@ class TestGetDataAtAddress:
         assert data is not None
         assert data["name"] == "main"
 
-
     def test_non_existent_address(self, ida_client: rpyc.Connection) -> None:
         # Check address has no symbol name
         address = ida_client.root.get_function_by_address(address="0xB33F")
@@ -40,8 +40,7 @@ class TestGetDataAtAddress:
 
         assert data is None
 
-
-    def test_non_existent_symbol_name(self, ida_client:rpyc.Connection) -> None:
+    def test_non_existent_symbol_name(self, ida_client: rpyc.Connection) -> None:
         # Check symbol name does not exist
         func = ida_client.root.get_function_by_name(function_name="idontexistright")
 
@@ -51,4 +50,3 @@ class TestGetDataAtAddress:
         data = ida_client.root.get_data_at_address(location="idontexistright")
 
         assert data is None
-

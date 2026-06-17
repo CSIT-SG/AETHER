@@ -5,6 +5,7 @@ import rpyc
 @pytest.mark.dependency(depends=["connection"], scope="session")
 class TestGetFunctionPseudocode:
     """Tests for Getting Function Pseudocode"""
+
     def test_get_valid_func_pseuodocode(self, ida_client: rpyc.Connection) -> None:
         # Assert valid decompiled pseudocode
         data = ida_client.root.get_function_pseudocode(function_name="main")

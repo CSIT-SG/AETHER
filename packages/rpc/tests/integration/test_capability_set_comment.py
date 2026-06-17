@@ -5,6 +5,7 @@ import rpyc
 @pytest.mark.dependency(depends=["connection"], scope="session")
 class TestSetComment:
     """Testing SetComment Uses Separate custom function 'foo_comment' to avoid clashing with other test cases"""
+
     def test_set_header_comment(self, ida_client: rpyc.Connection) -> None:
         # Assert comment set at function header (start_ea)
         data = ida_client.root.get_function_by_name(function_name="foo_comment")
