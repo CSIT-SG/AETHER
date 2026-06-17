@@ -18,14 +18,13 @@ class ButtonRow(StyledComponent):
         self._apply: ApplyButton
         self._cancel: CancelButton
 
-
     def init_ui(self) -> None:
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(8, 8, 8, 8)
-        layout.setSpacing(0)
+        layout.setSpacing(8)
         self._layout = layout
+        self.setLayout(layout)
         self.set_buttons(self._get_content, self._on_close)
-        self.setLayout(self._layout)
 
     def set_buttons(self, get_content: Callable, on_close: Callable) -> None:
         ok: OkButton = OkButton(get_content, on_close)

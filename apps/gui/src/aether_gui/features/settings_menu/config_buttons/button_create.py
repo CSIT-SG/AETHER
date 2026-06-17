@@ -31,11 +31,11 @@ class OkButton(ConfigButton):
         set_config(formatted)
         self._on_close()
 
+
 class CancelButton(ConfigButton):
     def __init__(self, on_close: Callable, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__("Cancel", parent = parent)
         self._on_close: Callable = on_close
-
 
     def action(self) -> None:
         self._on_close()
