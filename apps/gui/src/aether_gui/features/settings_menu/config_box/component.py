@@ -25,7 +25,7 @@ class ConfigBox(StyledComponent):
         container = QtWidgets.QWidget(self)
         output_box = QtWidgets.QPlainTextEdit(self)
         layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(8, 8, 8, 8)
+        output_box.setMinimumWidth(270)
         layout.addWidget(output_box)
         container.setLayout(layout)
         self._container = container

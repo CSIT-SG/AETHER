@@ -16,13 +16,9 @@ class ConfigButton(ABC, StyledComponent):
 
 
     def init_ui(self) -> None:
-        button = QtWidgets.QPushButton(self._label)
+        button = QtWidgets.QPushButton(self._label, self)
         button.clicked.connect(self.action)
         self._button = button
-
-    def write_content(self, path: Path, content: str) ->None:
-        with open(path,'w') as f:
-            f.write(content)
 
     @abstractmethod
     def action(self) ->None:

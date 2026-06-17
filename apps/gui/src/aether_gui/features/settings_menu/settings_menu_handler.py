@@ -46,19 +46,17 @@ class SettingsMenuHandler(QtWidgets.QDialog):
         self._layout: QtWidgets.QVBoxLayout
         self._buttons: ButtonRow
         self._config_box: ConfigBox
-        self._test: QtWidgets.QPlainTextEdit
         self.init_ui()
 
     def init_ui(self) -> None:
-        print("init ui")
         layout = QtWidgets.QVBoxLayout(self)
         config_box = ConfigBox(self)
-        buttons: ButtonRow = ButtonRow(self)
-        buttons.set_buttons(get_content=CONTENTS, on_close=self.close)
+        buttons: ButtonRow = ButtonRow(config_box.get_content, self.close, parent=self)
+        config_box.setMinimumWidth(500)
         self._layout = layout
         self._config_box = config_box
         self._buttons = buttons
-        self._layout.addWidget(self._config_box)
-        self._layout.addWidget(self._buttons)
+        self._layout.addWidget(self._config_box, stretch=1)
+        self._layout.addWidget(self._buttons, stretch=1)
         self.setLayout(self._layout)
 >>>>>>> b3c769a (feat(settings_menu): shit appears now lol)
