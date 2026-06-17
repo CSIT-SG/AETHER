@@ -61,7 +61,7 @@ class TestRenameLocalVariable:
         assert result is True
 
     def test_accepts_address_within_function_body(self, ida_client: rpyc.Connection) -> None:
-        func = ida_client.root.get_function_by_name(function_name="main")
+        func = ida_client.root.get_function_by_address(function_name="main")
         assert func is not None
 
         lvars = ida_client.root.get_local_variables(function_name="main")
