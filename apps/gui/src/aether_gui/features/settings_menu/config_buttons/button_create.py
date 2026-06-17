@@ -3,19 +3,20 @@ from collections.abc import Callable
 from typing import Any
 
 from aether_utils.config import set_config
+from aether_utils.logger import get_logger
 from PySide6 import QtWidgets
 
 from .abstract_button import ConfigButton
 
+logger = get_logger("json_loader")
 
-def load_json(raw: Callable) -> dict[str, Any]:
+def load_json(raw: str) -> dict[str, Any] | None:
     try:
-        formatted: dict[str, Any] = json.loads(raw())
+        formatted: dict[str, Any] = json.loads(raw)
         return formatted
     except Exception as e:
-        print("invalid JSON")
-        print(e)
-        return {" ": " "}
+        logger.error("invalid JSON")
+        raise e
 
 class ApplyButton(ConfigButton):
     def __init__(
@@ -25,12 +26,14 @@ class ApplyButton(ConfigButton):
         self._get_content = get_content
 
     def action(self) -> None:
-        formatted = load_json(self._get_content)
+        formatted = load_json(self._get_content())
+        if formatted is None:
+            return
         try:
             super().reset_colour(self)
             set_config(formatted)
         except Exception as e:
-            print(e)
+            logger.error(e)
             super().flash_red(self)
 
 
@@ -46,13 +49,15 @@ class OkButton(ConfigButton):
         self._on_close = on_close
 
     def action(self) -> None:
-        formatted = load_json(self._get_content)
+        formatted = load_json(self._get_content())
+        if formatted is None:
+            return
         try:
             super().reset_colour(self)
             set_config(formatted)
             self._on_close()
         except Exception as e:
-            print(e)
+            logger.error(e)
             super().flash_red(self)
 
 

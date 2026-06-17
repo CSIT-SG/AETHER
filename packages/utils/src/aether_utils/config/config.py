@@ -50,9 +50,13 @@ class ConfigManager:
             self.config = cfg.model_dump()  # persist default to disk
         else:
             self.logger.info("Loading config from %s", self.config_file)
-            with open(self.config_file, encoding="utf-8") as f:
-                raw = json.load(f)
-            cfg = self.validate_config(raw)
+            try:
+                with open(self.config_file, encoding="utf-8") as f:
+                    raw = json.load(f)
+                cfg = self.validate_config(raw)
+            except Exception as e:
+                self.logger.warning("Config JSON erroneously modified on disk.")
+                raise e
         return cfg
 
     @staticmethod
