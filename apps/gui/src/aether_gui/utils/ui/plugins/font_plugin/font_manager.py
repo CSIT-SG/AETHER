@@ -1,29 +1,30 @@
-# font_manager.py
-
-import ida_kernwin
+# theme_manager.py
 from aether_utils.logger import get_logger
 from PySide6 import QtWidgets
 from PySide6.QtCore import QEvent, QObject, Signal
 from PySide6.QtGui import QFont
 
-logger = get_logger("font_manager")
+logger = get_logger("theme_manager")
 
 
 class FontManager(QObject):
     """
-    Manages font change events from Pseudocode viewer to ensure parity
+    Manages light/dark themes for the entire application by installing a
+    global event filter on QApplication. Detects theme changes by monitoring
+    QEvent.PaletteChange events.
     """
 
     font_change_event = Signal(QFont)
 
-    def __init__(self):
+    def __init__(self, window: QtWidgets.QWidget):
         """Initialize the font manager and read the current font."""
         super().__init__()
         self._installed = False
+        self._window = window
         self.current_font: QFont = self.detect_font()
 
     def eventFilter(self, obj, event) -> bool:
-        """Handle palette changes and emit font updates.
+        """Handle palette changes and emit theme updates.
 
         Args:
             obj: Qt object emitting the event.
@@ -36,14 +37,17 @@ class FontManager(QObject):
         if event.type() != QEvent.Type.FontChange:
             return False
 
-        if not isinstance(obj, QtWidgets.QWidget):
+        if self._window is None:
             return False
 
-        if self._category_of(obj) != ida_kernwin.BWN_DISASM:
+        # Only react if the event landed on our window itself.
+        # (Descendants also receive FontChange when the window's font changes,
+        # but reading win.font() once per real change is what we want.)
+        if obj is not self._window:
             return False
 
-        new_font = obj.font()
-        logger.debug("Font changed to %s %dpt", new_font.family(), new_font.pointSize())
+        new_font = self._window.font()
+
         self.font_change_event.emit(new_font)
         return False
 
@@ -70,39 +74,18 @@ class FontManager(QObject):
         self._get_app().installEventFilter(self)
         self._installed = True
 
-    def _category_of(self, widget: QtWidgets.QWidget) -> int | None:
-        w = widget
-        while w is not None:
-            name = w.objectName()
-            if name.startswith("TWidget["):
-                title = name.removeprefix("TWidget[").removesuffix("]")
-                tw = ida_kernwin.find_widget(title)
-                return ida_kernwin.get_widget_type(tw) if tw is not None else None
-            w = w.parentWidget()
-        return None
-
     def detect_font(self) -> QFont:
-        """Detect the current font from any widget of the watched category.
+        """Detect the current font from the active palette.
 
         Returns:
-            QFont of the watched category, or the application default if no
-            widget of that category is currently open.
+            FontInfo containing the current font styles
         """
-        try:
-            app = self._get_app()
-            for w in app.allWidgets():
-                if not isinstance(w, QtWidgets.QWidget):
-                    continue
-                if not w.objectName().startswith("TWidget["):
-                    continue
-                if self._category_of(w) != ida_kernwin.BWN_DISASM:
-                    continue
-                return QFont(w.font())
-            return QFont(app.font())
 
-        except Exception as e:
-            logger.warning("Failed to detect font, defaulting to app font: %s", e)
-            return QFont(self._get_app().font())
+        if self._window is not None:
+            return self._window.font()
+
+        # Fallback to application default font if window reference is missing
+        return self._get_app().font()
 
     def get_current_font(self) -> QFont:
         """Return the current font snapshot.

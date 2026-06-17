@@ -149,7 +149,7 @@ class StyledComponent(AbstractComponentPluginManager):
 
         return self.get_plugin(JinjaPlugin).render_html(
             self,
-            colors=_ColorsProxy(self.colors), # type: ignore
+            colors=_ColorsProxy(self.colors),  # type: ignore
             theme=self.theme,
             **extra_context,
         )
@@ -173,7 +173,7 @@ class StyledComponent(AbstractComponentPluginManager):
         """
         qss = self.get_plugin(JinjaPlugin).render_qss(
             self,
-            colors=_ColorsProxy(self.colors), # type: ignore
+            colors=_ColorsProxy(self.colors),  # type: ignore
             theme=self.theme,
         )
         if qss.strip():

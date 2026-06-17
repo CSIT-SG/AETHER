@@ -55,9 +55,9 @@ class FontPlugin(AbstractComponentPlugin):
         if not isinstance(widget, FontPluginProtocol):
             raise TypeError("Widget must implement FontPluginProtocol")
 
-        self._manager = get_shared_font_manager()
+        self._manager = get_shared_font_manager(widget.window())
 
-         # initial paint
+        # initial paint
         font = self._manager.get_current_font()
         self._notify(widget, font)
 

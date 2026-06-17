@@ -13,6 +13,7 @@ from aether_gui.features.context_menu import AetherUIHooks
 from aether_gui.features.settings_menu import SettingsMenuHandler
 
 ACTION_NAME = "aether:open_settings"
+from aether_gui.features.font_capture import AetherFontHook, FontEnablerHook
 
 logger = get_logger("gui_plugin")
 
@@ -27,6 +28,8 @@ class _Aether(idaapi.plugin_t):
     def __init__(self):
         super().__init__()
         self._ui_hooks = None
+        self._font_hook = None
+        self._font_enabler = None
         self._rpc_server = None
         self._settings_handler = None
 
@@ -53,6 +56,14 @@ class _Aether(idaapi.plugin_t):
             self._ui_hooks = AetherUIHooks()
             self._ui_hooks.hook()
 
+        if self._font_hook is None:
+            self._font_hook = AetherFontHook()
+            self._font_hook.hook()
+
+        if self._font_enabler is None:
+            self._font_enabler = FontEnablerHook()
+            self._font_enabler.hook()
+
         self._rpc_server.start()
         return idaapi.PLUGIN_KEEP
 
@@ -71,6 +82,24 @@ class _Aether(idaapi.plugin_t):
                 logger.warning("Failed to unhook AETHER UI hooks: %s", e)
             finally:
                 self._ui_hooks = None
+
+        if self._font_hook is not None:
+            try:
+                self._font_hook.unhook()
+                logger.info("AETHER font hook cleanly unhooked.")
+            except Exception as e:
+                logger.warning("Failed to unhook AETHER font hook: %s", e)
+            finally:
+                self._font_hook = None
+
+        if self._font_enabler is not None:
+            try:
+                self._font_enabler.unhook()
+            except Exception as e:
+                logger.warning("Failed to unhook font enabler: %s", e)
+            finally:
+                self._font_enabler = None
+
         if self._rpc_server:
             self._rpc_server.stop()
         ida_kernwin.detach_action_from_menu("Edit/Plugins/", ACTION_NAME)
