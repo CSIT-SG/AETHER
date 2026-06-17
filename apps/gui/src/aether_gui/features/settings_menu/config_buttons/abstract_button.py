@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from pathlib import Path
 
 from aether_gui.utils.ui import StyledComponent
 from PySide6 import QtWidgets
@@ -18,6 +17,11 @@ class ConfigButton(ABC, StyledComponent):
     def init_ui(self) -> None:
         button = QtWidgets.QPushButton(self._label, self)
         button.clicked.connect(self.action)
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addWidget(button)
+        self.setLayout(layout)
         self._button = button
 
     @abstractmethod

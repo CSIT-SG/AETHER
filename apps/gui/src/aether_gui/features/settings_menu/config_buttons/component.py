@@ -7,9 +7,9 @@ from .button_create import ApplyButton, CancelButton, OkButton
 
 
 class ButtonRow(StyledComponent):
-    def __init__(self, get_content: Callable, on_close: Callable, parent=None) -> None:
-        self._get_content: Callable = get_content
-        self._on_close: Callable = on_close
+    def __init__(self, get_content: Callable[[], str], on_close: Callable, parent=None) -> None:
+        self._get_content = get_content
+        self._on_close = on_close
         super().__init__(parent)
 
     def setup(self) -> None:
@@ -22,20 +22,16 @@ class ButtonRow(StyledComponent):
     def init_ui(self) -> None:
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(8, 8, 8, 8)
-        layout.setSpacing(8)
+        layout.setSpacing(0)
         self._layout = layout
-        self.setLayout(layout)
         self.set_buttons(self._get_content, self._on_close)
+        self.setLayout(self._layout)
 
     def set_buttons(self, get_content: Callable, on_close: Callable) -> None:
         ok: OkButton = OkButton(get_content, on_close)
         apply: ApplyButton = ApplyButton(get_content)
         cancel: CancelButton = CancelButton(on_close)
         self._get_content = get_content
-        self._ok = ok
-        self._apply = apply
-        self._cancel = cancel
-        self._layout.addWidget(self._ok)
-        self._layout.addWidget(self._apply)
-        self._layout.addWidget(self._cancel)
-        #self._container.setLayout(self._layout)
+        self._layout.addWidget(ok)
+        self._layout.addWidget(apply)
+        self._layout.addWidget(cancel)
