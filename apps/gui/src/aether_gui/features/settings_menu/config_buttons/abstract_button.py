@@ -26,5 +26,4 @@ class ConfigButton(ABC, StyledComponent):
 
     @abstractmethod
     def action(self) -> None:
-        print(f"ACTION NOT DEFINED BUTTON {self._label} DOES NOTHING")
-        raise NotImplementedError
+        raise NotImplementedError(f"ACTION NOT DEFINED BUTTON {self._label} DOES NOTHING")
