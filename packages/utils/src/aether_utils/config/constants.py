@@ -6,7 +6,7 @@ DEFAULT_MODEL_LIST = {
     "Qwen: Qwen3 Next 80B A3B Instruct": "qwen/qwen3-next-80b-a3b-instruct",
 }
 
-DEFAULT_OPENROUTER_GATEWAY_URL = "https://openrouter.ai/"
+DEFAULT_OPENROUTER_GATEWAY_URL = "https://openrouter.ai/api/v1"
 
 
 DEFAULT_CONFIG = ConfigModel(

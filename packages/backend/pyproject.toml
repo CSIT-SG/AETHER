@@ -9,6 +9,7 @@ dependencies = [
     "fastmcp>=3.0.0",
     "rpyc>=6.0.1",
     "aether_utils",
+    "openai-agents>=0.17.5",
 ]
 
 [tool.mypy]

@@ -15,7 +15,23 @@ class OpenAIGateway:
     ...
     await gateway.stop()  # immdiately close the connection and recreate the client for the next operation
     ```
-    
+
+    streaming:
+    ```python
+    gateway = OpenAIGateway(feature="my_feature")
+
+    try:
+        async with gateway.client.chat.completions.stream(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": "Hello!"}],
+        ) as stream:
+            async for chunk in stream:
+                delta = chunk.choices[0].delta.content
+                if delta:
+                    print(delta, end="", flush=True)
+    finally:
+        await gateway.stop(recreate=False)  # close the connection without recreating the client, since we won't be making any more requests
+    ```
     """
     def __init__(self, *, feature: str) -> None:
         self.config = get_config()
@@ -47,10 +63,11 @@ class OpenAIGateway:
             ),
         )
 
-    async def stop(self) -> None:
+    async def stop(self, recreate: bool = True) -> None:
         """Close the http connection. Ok to call when user cancels the operation."""
         await self.httpx_client.aclose()
 
         # recreate the client with a new httpx client for the next operation, since httpx clients cannot be reopened once closed.
-        self.httpx_client = self._create_httpx_client()
-        self.client = self._create_client()
+        if recreate:
+            self.httpx_client = self._create_httpx_client()
+            self.client = self._create_client()
