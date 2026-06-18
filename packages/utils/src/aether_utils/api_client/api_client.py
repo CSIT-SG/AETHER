@@ -45,7 +45,7 @@ def _create_httpx_client(client_cert_key: tuple[str, str] | None) -> httpx.Async
     return httpx.AsyncClient(cert=client_cert_key, verify=False, timeout=TIMEOUT)
 
 
-def _build_user_agent_header(feature: str) -> dict[str, str]:
+def _build_user_agent_header(feature: str | None) -> dict[str, str]:
     if feature:
         user_agent = f"AETHER (IDA)/alpha{VERSION}-{feature}"
     else:
@@ -92,7 +92,7 @@ def create_async_openai_client(
     api_key: str,
     base_url: str,
     httpx_client: httpx.AsyncClient,
-    feature: str = "",
+    feature: str | None = None,
 ) -> AsyncOpenAI:
     """Create an `AsyncOpenAI` client using an existing `httpx.AsyncClient`.
 

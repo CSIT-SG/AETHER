@@ -1,4 +1,3 @@
-
 from aether_utils.api_client import create_async_httpx_client, create_async_openai_client
 from aether_utils.config import get_config
 from agents import (
@@ -13,19 +12,20 @@ class OpenAIGateway:
 
     example usage:
     ```python
-    gateway = OpenAIGateway(feature="my_feature")
-    model = gateway.get_model(model_name="gpt-4")
+    gateway = OpenAIGateway()
+    model = gateway.get_model(model_name="gpt-4", feature="my_feature")
     agent = Agent(model=model)
     ```
     """
 
-    def __init__(self, *, feature: str) -> None:
+    def __init__(self) -> None:
         self.config = get_config()
-        self.feature = feature
 
     def get_model(
         self,
+        *,
         model_name: str | None = None,
+        feature: str | None = None,
     ) -> Model:
         """Create a Model with an OpenAI client configured according to the gateway's settings."""
         if self.config.tls:
@@ -40,7 +40,7 @@ class OpenAIGateway:
             api_key=self.config.provider.api_key,
             base_url=self.config.provider.gateway_url,
             httpx_client=httpx_client,
-            feature=self.feature,
+            feature=feature,
         )
 
         set_tracing_disabled(True)

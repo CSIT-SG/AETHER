@@ -1,6 +1,7 @@
 from collections import defaultdict
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Sequence
+from agents import FunctionTool
 
 from .constants import SubagentTool
 
@@ -15,8 +16,8 @@ def subagent_tool_tag(tool: SubagentTool) -> Callable[..., Any]:
     return decorator
 
 
-def get_subagent_tools(*tools: SubagentTool) -> set[Callable[..., Any]]:
+def get_subagent_tools(*tools: SubagentTool) -> Sequence[SubagentTool]:
     seen = set()
     for tool in tools:
         seen.update(_registry[tool])
-    return seen
+    return list(seen)
