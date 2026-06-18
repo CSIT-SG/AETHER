@@ -3,7 +3,7 @@ from typing import Any, cast
 from agents import function_tool
 
 from ..constants import SubagentTool
-from ..registry import subagent_tool_tag
+from .tags import subagent_tool_tag
 
 
 # setters
