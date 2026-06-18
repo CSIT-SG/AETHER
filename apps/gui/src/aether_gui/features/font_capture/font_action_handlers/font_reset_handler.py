@@ -1,6 +1,7 @@
 from typing import cast
 
 import ida_kernwin
+from aether_gui.utils.ui import get_shared_font_manager
 from PySide6 import QtWidgets
 from shiboken6 import wrapInstance
 
@@ -14,7 +15,13 @@ class FontSizeResetHandler(ida_kernwin.action_handler_t):
         if cur is None:
             return 0
         window = cast(QtWidgets.QWidget, wrapInstance(int(cur), QtWidgets.QWidget))
-        window.setFont(QtWidgets.QApplication.font())
+
+        mgr = get_shared_font_manager(window.windowTitle())
+
+        default = QtWidgets.QApplication.font()
+        window.setFont(default)
+        mgr.set_font(default)
+
         return 0
 
     def update(self, ctx) -> int:  # type: ignore[override]

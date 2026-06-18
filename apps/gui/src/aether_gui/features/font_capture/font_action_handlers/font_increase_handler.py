@@ -1,7 +1,9 @@
 from typing import cast
 
 import ida_kernwin
+from aether_gui.utils.ui import get_shared_font_manager
 from PySide6 import QtWidgets
+from PySide6.QtGui import QFont
 from shiboken6 import wrapInstance
 
 
@@ -15,10 +17,14 @@ class FontSizeIncreaseHandler(ida_kernwin.action_handler_t):
             return 0
         window = cast(QtWidgets.QWidget, wrapInstance(int(cur), QtWidgets.QWidget))
 
-        f = window.font()
+        mgr = get_shared_font_manager(window.windowTitle())
+
+        f = QFont(mgr.get_current_font())
         size = f.pointSize() if f.pointSize() > 0 else 10
         f.setPointSize(min(72, size + 1))
+
         window.setFont(f)
+        mgr.set_font(f)
 
         return 0
 
