@@ -22,3 +22,7 @@ class TestGetXrefsTo:
     def test_return_none_for_gibberish_address(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.get_xrefs_to(location="s;kjfhsdjksndkgn")
         assert result is None
+
+    def test_finds_orphaned_func(self, ida_client: rpyc.Connection) -> None:
+        result = ida_client.root.get_xrefs_to(location="im_orphaned")
+        assert result["xrefs"] is not None and result["count"] == 2

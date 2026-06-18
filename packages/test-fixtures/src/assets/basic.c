@@ -77,6 +77,11 @@ void foo_rename_func(pool *p) {
     p->head = c;
 }
 
+__attribute__((used))
+void im_orphaned(){
+    char yea[] = "I have no parents";
+}
+
 int main() {
     pool *p = baz_pool(4);
     qux_fill(p);
