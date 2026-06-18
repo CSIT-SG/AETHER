@@ -25,8 +25,15 @@ class SettingsMenuHandler(QtWidgets.QDialog):
         layout = QtWidgets.QVBoxLayout(self)
         config_box = ConfigBox(self)
         text_label = QtWidgets.QLabel("", self)
-        text_label.setContentsMargins(8,0,8,0)
-        buttons: ButtonRow = ButtonRow(config_box.get_content, self.close, self.show_error, self.clear_error,self.set_config, parent=self)
+        text_label.setContentsMargins(8, 0, 8, 0)
+        buttons: ButtonRow = ButtonRow(
+            config_box.get_content,
+            self.close,
+            self.show_error,
+            self.clear_error,
+            self.set_config,
+            parent=self,
+        )
         config_box.setMinimumWidth(500)
         config_box.setMinimumHeight(200)
         self._layout = layout
@@ -42,9 +49,9 @@ class SettingsMenuHandler(QtWidgets.QDialog):
         self._cfg_message.setText("Invalid config, check IDA output for more details")
         self._cfg_message.setStyleSheet("color: red")
 
-    def clear_error(self) ->None:
+    def clear_error(self) -> None:
         self._cfg_message.setText(" ")
 
-    def set_config(self)-> None:
+    def set_config(self) -> None:
         self._cfg_message.setText("Config successfully applied!")
         self._cfg_message.setStyleSheet("color: green")

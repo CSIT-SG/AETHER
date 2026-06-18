@@ -7,7 +7,15 @@ from .button_create import ApplyButton, CancelButton, OkButton
 
 
 class ButtonRow(StyledComponent):
-    def __init__(self, get_content: Callable[[], str], on_close: Callable,on_error: Callable[[], None], clear_error: Callable[[], None], set_config: Callable[[], None], parent=None) -> None:
+    def __init__(
+        self,
+        get_content: Callable[[], str],
+        on_close: Callable,
+        on_error: Callable[[], None],
+        clear_error: Callable[[], None],
+        set_config: Callable[[], None],
+        parent=None,
+    ) -> None:
         self._get_content = get_content
         self._on_close = on_close
         self._on_error = on_error
@@ -24,18 +32,28 @@ class ButtonRow(StyledComponent):
     def init_ui(self) -> None:
         layout = QtWidgets.QHBoxLayout(self)
         layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        layout.setContentsMargins(0,0,0,0)
+        layout.setContentsMargins(0, 0, 0, 0)
         self._layout = layout
-        self.set_buttons(self._get_content, self._on_close, self._on_error, self._clear_error, self._set_config)
+        self.set_buttons(
+            self._get_content, self._on_close, self._on_error, self._clear_error, self._set_config
+        )
         self.setLayout(self._layout)
 
-
-    def set_buttons(self, get_content: Callable, on_close: Callable, on_error: Callable[[], None], clear_error: Callable[[], None], set_config: Callable[[], None]) -> None:
+    def set_buttons(
+        self,
+        get_content: Callable,
+        on_close: Callable,
+        on_error: Callable[[], None],
+        clear_error: Callable[[], None],
+        set_config: Callable[[], None],
+    ) -> None:
         ok: OkButton = OkButton(get_content, on_close, on_error, clear_error)
         apply: ApplyButton = ApplyButton(get_content, on_error, clear_error, set_config)
         cancel: CancelButton = CancelButton(on_close)
         for btn in (ok, apply, cancel):
-            btn.setSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Fixed)
+            btn.setSizePolicy(
+                QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Fixed
+            )
         self._get_content = get_content
         self._layout.addWidget(ok)
         self._layout.addWidget(apply)

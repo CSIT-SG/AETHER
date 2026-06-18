@@ -10,13 +10,15 @@ from .abstract_button import ConfigButton
 
 logger = get_logger("json_loader")
 
+
 class ApplyButton(ConfigButton):
-    def __init__(self,
+    def __init__(
+        self,
         get_content: Callable[[], str],
-        on_error: Callable[[],None],
-        clear_error: Callable[[],None],
+        on_error: Callable[[], None],
+        clear_error: Callable[[], None],
         config_succ: Callable[[], None],
-        parent: QtWidgets.QWidget | None = None
+        parent: QtWidgets.QWidget | None = None,
     ) -> None:
         super().__init__("Apply", parent=parent)
         self._on_error = on_error
@@ -40,8 +42,8 @@ class OkButton(ConfigButton):
         self,
         get_content: Callable[[], str],
         on_close: Callable,
-        on_error: Callable[[],None],
-        clear_error: Callable[[],None],
+        on_error: Callable[[], None],
+        clear_error: Callable[[], None],
         parent: QtWidgets.QWidget | None = None,
     ) -> None:
         super().__init__("Ok", parent=parent)
@@ -59,7 +61,6 @@ class OkButton(ConfigButton):
         except Exception as e:
             self._on_error()
             logger.error(e)
-
 
 
 class CancelButton(ConfigButton):
