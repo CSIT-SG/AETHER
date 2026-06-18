@@ -1,4 +1,5 @@
 import ida_kernwin
+from aether_gui.utils.constants import WINDOW_PREFIX
 from aether_utils.logger import get_logger
 
 from .font_action_handlers import (
@@ -19,12 +20,11 @@ class AetherFontHook(ida_kernwin.UI_Hooks):
     def __init__(self) -> None:
         super().__init__()
 
-        self.prefix = "AETHER_"
         self.custom_font_actions: list[FontActionItem] = [
-            FontActionItem(self.prefix + "SetFont", SetFontHandler()),
-            FontActionItem(self.prefix + "FontSizeIncrease", FontSizeIncreaseHandler()),
-            FontActionItem(self.prefix + "FontSizeDecrease", FontSizeDecreaseHandler()),
-            FontActionItem(self.prefix + "FontSizeReset", FontSizeResetHandler()),
+            FontActionItem(WINDOW_PREFIX + "_" + "SetFont", SetFontHandler()),
+            FontActionItem(WINDOW_PREFIX + "_" + "FontSizeIncrease", FontSizeIncreaseHandler()),
+            FontActionItem(WINDOW_PREFIX + "_" + "FontSizeDecrease", FontSizeDecreaseHandler()),
+            FontActionItem(WINDOW_PREFIX + "_" + "FontSizeReset", FontSizeResetHandler()),
             ]
 
     def hook(self) -> bool:
@@ -46,12 +46,12 @@ class AetherFontHook(ida_kernwin.UI_Hooks):
         return super().unhook()
 
     def preprocess_action(self, name: str) -> int:
-        target = self.prefix + name
+        target = WINDOW_PREFIX + "_" + name
         if not any(item.action_name == target for item in self.custom_font_actions):
             return 0
 
         cur = ida_kernwin.get_current_widget()
-        if cur is None or ida_kernwin.get_widget_title(cur) != "AETHER ChatBot":
+        if cur is None or not ida_kernwin.get_widget_title(cur).startswith(WINDOW_PREFIX):
             return 0
 
         ida_kernwin.process_ui_action(target)
