@@ -88,7 +88,7 @@ class MessageRow(StyledComponent):
         ### END HEADER ###
 
         ### BODY - MARKDOWN CONTENT ###
-        bubble = MessageBubble(self._message)
+        bubble = MessageBubble(self._message, self)
         card_layout.addWidget(bubble)
         self._bubble = bubble
         ### END BODY ###

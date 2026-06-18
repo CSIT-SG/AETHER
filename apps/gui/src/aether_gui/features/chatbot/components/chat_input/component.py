@@ -1,9 +1,9 @@
 from pathlib import Path
 from typing import cast
 
-from aether_gui.utils.ui import StyledComponent
+from aether_gui.utils.ui import FontPlugin, StyledComponent
 from PySide6 import QtCore, QtWidgets
-from PySide6.QtGui import QKeySequence, QShortcut, QTextOption
+from PySide6.QtGui import QFont, QKeySequence, QShortcut, QTextOption
 
 
 class ChatInput(StyledComponent):
@@ -16,7 +16,7 @@ class ChatInput(StyledComponent):
         self,
         parent: QtWidgets.QWidget | None = None,
     ) -> None:
-        super().__init__(parent)
+        super().__init__(parent, plugins=[FontPlugin()])
 
     def setup(self) -> None:
         self._textbox: QtWidgets.QTextEdit | None = None
@@ -93,6 +93,19 @@ class ChatInput(StyledComponent):
 
     def style_file(self) -> Path | None:
         return Path(__file__).with_name("styles.qss.jinja")
+
+    def on_font_change(self, font: QFont) -> None:
+        pass
+
+    def _current_font(self) -> QFont:
+        """Return the current font.
+
+        Returns:
+            The active font, falling back to the shared manager
+            if the font plugin is unavailable.
+        """
+
+        return self.get_plugin(FontPlugin).current_font
 
 
 def create_chat_input(parent: QtWidgets.QWidget | None = None) -> ChatInput:

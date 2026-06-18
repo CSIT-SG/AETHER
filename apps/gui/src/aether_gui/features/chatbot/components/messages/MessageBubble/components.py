@@ -1,8 +1,9 @@
 from pathlib import Path
 
-from aether_gui.utils.ui import StyledComponent
+from aether_gui.utils.ui import FontPlugin, StyledComponent
 from markdown import markdown
 from PySide6 import QtCore
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QSizePolicy, QTextBrowser, QTextEdit, QVBoxLayout
 
 from ..Messages import Message, MessageRole
@@ -13,7 +14,7 @@ class MessageBubble(StyledComponent):
 
     def __init__(self, message: Message, parent=None) -> None:
         self._message = message
-        super().__init__(parent)
+        super().__init__(parent, plugins=[FontPlugin()])
 
     def setup(self) -> None:
         self._browser = None
@@ -98,3 +99,16 @@ class MessageBubble(StyledComponent):
     def style_file(self) -> Path | None:
         """Return the QSS template that paints the panel background."""
         return Path(__file__).resolve().parent / "styles.qss.jinja"
+
+    def on_font_change(self, font: QFont) -> None:
+        pass
+
+    def _current_font(self) -> QFont:
+        """Return the current font.
+
+        Returns:
+            The active font, falling back to the shared manager
+            if the font plugin is unavailable.
+        """
+
+        return self.get_plugin(FontPlugin).current_font
