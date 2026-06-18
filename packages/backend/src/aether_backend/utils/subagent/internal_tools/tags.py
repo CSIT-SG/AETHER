@@ -1,6 +1,8 @@
 from collections import defaultdict
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
+
+from agents import Tool
 
 from ..constants import SubagentTool
 
@@ -15,8 +17,10 @@ class SubagentToolRegistry:
             return func
         return decorator
 
-    def get_tools(self, *tools: SubagentTool) -> list[Callable[..., Any]]:
-        seen: set[Callable[..., Any]] = set()
+    def get_tools(self, *tools: SubagentTool) -> list[Tool]:
+        seen = []
         for tool in tools:
-            seen.update(self._registry[tool])
-        return list(seen)
+            for t in self._registry[tool]:
+                if t not in seen:
+                    seen.append(t)
+        return cast(list[Tool], seen)

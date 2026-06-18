@@ -1,3 +1,3 @@
-from .rpc import registry
+from .rpc import registry, ToolDependencies
 
-__all__ = ["registry"]
+__all__ = ["registry", "ToolDependencies"]
