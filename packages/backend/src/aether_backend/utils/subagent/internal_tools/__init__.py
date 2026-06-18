@@ -1,1 +1,3 @@
-from .rpc import *
+from .rpc import registry
+
+__all__ = ["registry"]

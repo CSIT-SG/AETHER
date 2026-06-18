@@ -4,7 +4,7 @@ from typing import Any
 from aether_backend.utils.subagent import (
     OpenAIGateway,
     SubagentTool,
-    get_subagent_tools,
+    internal_tool_registry,
 )
 from aether_backend.utils.effect import Log, Program, Return
 from aether_utils.config import get_config
@@ -20,7 +20,7 @@ async def annotate(service: Any, function_address: str | int) -> Program:
             model_name=config.subagents.annotator_model if config.subagents else None,
             feature="annotator",
         ),
-        tools=[partial(tool, service) for tool in get_subagent_tools(SubagentTool.ANNOTATOR)],  # type: ignore
+        tools=[partial(tool, service) for tool in internal_tool_registry.get_tools(SubagentTool.ANNOTATOR)],  # type: ignore
     )
     yield Log(f"Annotating function at address: {function_address}, tools: {agent.tools}")
     yield Return(None)
