@@ -35,7 +35,11 @@ class ButtonRow(StyledComponent):
         layout.setContentsMargins(0, 0, 0, 0)
         self._layout = layout
         self.set_buttons(
-            self._get_content, self._on_close, self._on_error, self._clear_message_box, self._set_config_message
+            self._get_content,
+            self._on_close,
+            self._on_error,
+            self._clear_message_box,
+            self._set_config_message,
         )
         self.setLayout(self._layout)
 
@@ -48,7 +52,9 @@ class ButtonRow(StyledComponent):
         set_config_message: Callable[[], None],
     ) -> None:
         ok: OkButton = OkButton(get_content, on_close, on_error, clear_message_box)
-        apply: ApplyButton = ApplyButton(get_content, on_error, clear_message_box, set_config_message)
+        apply: ApplyButton = ApplyButton(
+            get_content, on_error, clear_message_box, set_config_message
+        )
         cancel: CancelButton = CancelButton(on_close)
         for btn in (ok, apply, cancel):
             btn.setSizePolicy(
