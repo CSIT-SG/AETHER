@@ -32,7 +32,6 @@ class StyledComponent(AbstractComponentPluginManager):
     def __init__(
         self,
         parent=None,
-        window=None,
         *,
         plugins: Iterable[AbstractComponentPlugin] | None = None,
         states: dict[str, Any] | None = None,

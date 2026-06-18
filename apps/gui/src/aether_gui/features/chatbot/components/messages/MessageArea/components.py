@@ -53,7 +53,7 @@ class MessageArea(StyledComponent):
         self._messages_layout = messages_layout
 
     def append_message(self, message: Message):
-        card = MessageRow(message)
+        card = MessageRow(message, self)
         messages_layout = cast(QVBoxLayout, self._messages_layout)
         messages_layout.addWidget(card)
 

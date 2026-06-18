@@ -13,8 +13,7 @@ logger = get_logger("font_hook")
 
 
 class AetherFontHook(ida_kernwin.UI_Hooks):
-    """Detects IDA font actions on the chatbot tab and forwards them as a
-    Qt setFont() call on the chatbot window, which fires FontChange for
+    """Detects IDA font actions on the AETHER windows and calls custom actions that then call set_font on
     FontManager to pick up."""
 
     def __init__(self) -> None:
@@ -46,7 +45,7 @@ class AetherFontHook(ida_kernwin.UI_Hooks):
         self.custom_font_actions.clear()
         return super().unhook()
 
-    def preprocess_action(self, name) -> int:
+    def preprocess_action(self, name: str) -> int:
         target = self.prefix + name
         if not any(item.action_name == target for item in self.custom_font_actions):
             return 0

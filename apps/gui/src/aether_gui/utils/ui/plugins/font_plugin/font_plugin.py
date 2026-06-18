@@ -1,10 +1,10 @@
-# plugins/font_plugin.py
 from __future__ import annotations
 
 import weakref
 from collections.abc import Callable
 from types import SimpleNamespace
 
+from aether_gui.utils.constants import WINDOW_PREFIX
 from aether_utils.logger import get_logger
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QWidget
@@ -58,7 +58,15 @@ class FontPlugin(AbstractComponentPlugin):
         if not isinstance(widget, FontPluginProtocol):
             raise TypeError("Widget must implement FontPluginProtocol")
 
-        self._manager = get_shared_font_manager("AETHER ChatBot")
+        w = widget
+        title = widget.windowTitle()
+        while w is not None:
+            title = w.windowTitle()
+            if title.startswith(WINDOW_PREFIX):
+                break
+            w = w.parentWidget()
+
+        self._manager = get_shared_font_manager(title)
 
         # initial paint
         font = self._manager.get_current_font()

@@ -10,10 +10,10 @@ from aether_utils.is_headless_ida import is_headless_ida
 from aether_utils.logger import get_logger
 
 from aether_gui.features.context_menu import AetherUIHooks
+from aether_gui.features.font_capture import AetherFontHook, FontEnablerHook
 from aether_gui.features.settings_menu import SettingsMenuHandler
 
 ACTION_NAME = "aether:open_settings"
-from aether_gui.features.font_capture import AetherFontHook, FontEnablerHook
 
 logger = get_logger("gui_plugin")
 
@@ -27,10 +27,8 @@ class _Aether(idaapi.plugin_t):
 
     def __init__(self):
         super().__init__()
-        self._ui_hooks = None
-        self._font_hook = None
-        self._font_enabler = None
         self._rpc_server = None
+        self.hooks: dict[str, ida_kernwin.UI_Hooks]
         self._settings_handler = None
 
     def init(self) -> int:
@@ -52,17 +50,14 @@ class _Aether(idaapi.plugin_t):
             logger.error("Failed to load config: %s", e)
 
         # Initialize and hook into IDA using the instance memory space
-        if self._ui_hooks is None:
-            self._ui_hooks = AetherUIHooks()
-            self._ui_hooks.hook()
+        self.hooks = {
+            "ui": AetherUIHooks(),
+            "font": AetherFontHook(),
+            "font_enabler": FontEnablerHook(),
+        }
 
-        if self._font_hook is None:
-            self._font_hook = AetherFontHook()
-            self._font_hook.hook()
-
-        if self._font_enabler is None:
-            self._font_enabler = FontEnablerHook()
-            self._font_enabler.hook()
+        for name, hook in self.hooks.items():  # noqa: B007
+            hook.hook()
 
         self._rpc_server.start()
         return idaapi.PLUGIN_KEEP
@@ -73,32 +68,15 @@ class _Aether(idaapi.plugin_t):
 
     def term(self) -> None:
         # No global lookups. This object is guaranteed to exist right here.
-        if self._ui_hooks is not None:
+        for name, hook in self.hooks.items():
             try:
-                self._ui_hooks.unregister()
-                self._ui_hooks.unhook()
-                logger.info("AETHER UI hooks cleanly unhooked.")
+                unregister = getattr(hook, "unregister", None)
+                if callable(unregister):
+                    unregister()
+                hook.unhook()
             except Exception as e:
-                logger.warning("Failed to unhook AETHER UI hooks: %s", e)
-            finally:
-                self._ui_hooks = None
-
-        if self._font_hook is not None:
-            try:
-                self._font_hook.unhook()
-                logger.info("AETHER font hook cleanly unhooked.")
-            except Exception as e:
-                logger.warning("Failed to unhook AETHER font hook: %s", e)
-            finally:
-                self._font_hook = None
-
-        if self._font_enabler is not None:
-            try:
-                self._font_enabler.unhook()
-            except Exception as e:
-                logger.warning("Failed to unhook font enabler: %s", e)
-            finally:
-                self._font_enabler = None
+                logger.warning("Failed to unhook AETHER %s hook: %s", name, e)
+        self.hooks.clear()
 
         if self._rpc_server:
             self._rpc_server.stop()
