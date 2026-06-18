@@ -18,3 +18,7 @@ class TestGetXrefsTo:
         result = ida_client.root.get_xrefs_to(location="main")
         comp = ida_client.root.get_function_by_name(function_name="main")
         assert result["target_address"] == comp["start_address"]
+
+    def test_return_none_for_gibberish_address(self, ida_client: rpyc.Connection)-> None:
+        result = ida_client.root.get_xrefs_to(location="s;kjfhsdjksndkgn")
+        assert result is None
