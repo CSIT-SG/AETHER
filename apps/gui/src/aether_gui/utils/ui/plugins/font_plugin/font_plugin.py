@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import weakref
 from collections.abc import Callable
+from types import SimpleNamespace
 
+from aether_utils.logger import get_logger
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QWidget
 from shiboken6 import isValid
@@ -12,6 +14,7 @@ from ..abstract_component_plugin import AbstractComponentPlugin
 from .font_manager_singleton import get_shared_font_manager
 from .font_protocol import FontPluginProtocol
 
+logger = get_logger("font_plugin")
 
 class FontPlugin(AbstractComponentPlugin):
     """
@@ -55,7 +58,7 @@ class FontPlugin(AbstractComponentPlugin):
         if not isinstance(widget, FontPluginProtocol):
             raise TypeError("Widget must implement FontPluginProtocol")
 
-        self._manager = get_shared_font_manager(widget.window())
+        self._manager = get_shared_font_manager("AETHER ChatBot")
 
         # initial paint
         font = self._manager.get_current_font()
@@ -70,6 +73,7 @@ class FontPlugin(AbstractComponentPlugin):
             if target is None or not isValid(target):
                 self._disconnect_font_handler()
                 return
+
             self._notify(target, font)
 
         # store the handler on the instance so we can disconnect it later
@@ -94,7 +98,7 @@ class FontPlugin(AbstractComponentPlugin):
             try:
                 widget.destroyed.disconnect(handler)
             except RuntimeError as e:
-                self.logger.debug("Error occurred while disconnecting destroyed handler: %s", e)
+                logger.debug("Error occurred while disconnecting destroyed handler: %s", e)
 
     @property
     def current_font(self) -> QFont:
@@ -116,7 +120,7 @@ class FontPlugin(AbstractComponentPlugin):
             self._disconnect_font_handler()
             return
 
-        widget.fontstyles = font
+        widget.state["fontstyles"] = self._font_to_namespace(font)
         widget.on_font_change(font=font)
         widget._apply_styles()
 
@@ -129,6 +133,19 @@ class FontPlugin(AbstractComponentPlugin):
         try:
             manager.font_change_event.disconnect(handler)
         except RuntimeError as e:
-            self.logger.error("Error occurred while disconnecting font change event: %s", e)
+            logger.error("Error occurred while disconnecting font change event: %s", e)
         finally:
             self._font_change_handler = None
+
+    def _font_to_namespace(self, font: QFont) -> SimpleNamespace:
+        return SimpleNamespace(
+            family=font.family(),
+            size=font.pointSize() if font.pointSize() > 0 else font.pixelSize(),
+            point_size=font.pointSize(),
+            pixel_size=font.pixelSize(),
+            weight=int(font.weight()),
+            bold=font.bold(),
+            italic=font.italic(),
+            underline=font.underline(),
+            strikeout=font.strikeOut(),
+        )

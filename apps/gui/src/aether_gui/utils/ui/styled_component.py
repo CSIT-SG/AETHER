@@ -1,6 +1,8 @@
 from abc import abstractmethod
 from collections.abc import Iterable
 from pathlib import Path
+from types import SimpleNamespace
+from typing import Any
 
 from aether_utils.logger import get_logger
 
@@ -12,34 +14,6 @@ from .plugins import (
     ThemePlugin,
 )
 from .plugins.abstract_component_plugin import AbstractComponentPlugin
-
-
-class _ColorsProxy:
-    """Wraps ThemeColors dict as attribute access for Jinja templates.
-
-    Jinja2 resolves ``{{ colors.base }}`` via Python's ``getattr``, not dict
-    key access, so this proxy lets templates use ``{{ colors.base }}`` instead
-    of the more verbose ``{{ colors['base'] }}``.
-
-    Args:
-        colors: The ThemeColors dict to wrap.
-    """
-
-    def __init__(self, colors: ThemeColors):
-        """Initialize the proxy with a theme color mapping.
-
-        Args:
-            colors: Mapping of palette roles to hex color strings.
-        """
-        self.__dict__.update(colors)
-
-    def __repr__(self):
-        """Return a debug-friendly representation.
-
-        Returns:
-            Debug string showing the color mapping.
-        """
-        return f"<ThemeColors {self.__dict__}>"
 
 
 # implements JinjaPluginProtocol and ThemePluginProtocol implicitly
@@ -58,8 +32,10 @@ class StyledComponent(AbstractComponentPluginManager):
     def __init__(
         self,
         parent=None,
+        window=None,
         *,
         plugins: Iterable[AbstractComponentPlugin] | None = None,
+        states: dict[str, Any] | None = None,
     ) -> None:
         """Initialize the component and install plugins.
 
@@ -68,12 +44,12 @@ class StyledComponent(AbstractComponentPluginManager):
             plugins: Additional plugins to install after defaults.
         """
 
-        self.theme = self.colors = None
-
+        self.state = {"theme": None, "colors": None, **(states or {})}
         all_plugins = [ThemePlugin(), JinjaPlugin(), *(plugins or [])]
         super().__init__(parent, plugins=all_plugins)
 
-        self.theme, self.colors = self._current_theme()
+        theme, colors = self._current_theme()
+        self.state["theme"], self.state["colors"] = theme, SimpleNamespace(**colors)
 
         self.logger = get_logger(f"component.{type(self).__name__}")
 
@@ -149,8 +125,7 @@ class StyledComponent(AbstractComponentPluginManager):
 
         return self.get_plugin(JinjaPlugin).render_html(
             self,
-            colors=_ColorsProxy(self.colors),  # type: ignore
-            theme=self.theme,
+            **self.state,
             **extra_context,
         )
 
@@ -173,8 +148,7 @@ class StyledComponent(AbstractComponentPluginManager):
         """
         qss = self.get_plugin(JinjaPlugin).render_qss(
             self,
-            colors=_ColorsProxy(self.colors),  # type: ignore
-            theme=self.theme,
+            **self.state,
         )
         if qss.strip():
             self.setStyleSheet(qss)

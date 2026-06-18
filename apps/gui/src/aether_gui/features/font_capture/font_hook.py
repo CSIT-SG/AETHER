@@ -1,7 +1,12 @@
 import ida_kernwin
 from aether_utils.logger import get_logger
 
-from .font_action_handlers import SetFontHandler
+from .font_action_handlers import (
+    FontSizeDecreaseHandler,
+    FontSizeIncreaseHandler,
+    FontSizeResetHandler,
+    SetFontHandler,
+)
 from .font_action_item import FontActionItem
 
 logger = get_logger("font_hook")
@@ -18,7 +23,10 @@ class AetherFontHook(ida_kernwin.UI_Hooks):
         self.prefix = "AETHER_"
         self.custom_font_actions: list[FontActionItem] = [
             FontActionItem(self.prefix + "SetFont", SetFontHandler()),
-        ]
+            FontActionItem(self.prefix + "FontSizeIncrease", FontSizeIncreaseHandler()),
+            FontActionItem(self.prefix + "FontSizeDecrease", FontSizeDecreaseHandler()),
+            FontActionItem(self.prefix + "FontSizeReset", FontSizeResetHandler()),
+            ]
 
     def hook(self) -> bool:
         for item in self.custom_font_actions:

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import weakref
 from collections.abc import Callable
+from types import SimpleNamespace
 
 from PySide6.QtWidgets import QWidget
 from shiboken6 import isValid
@@ -120,9 +121,9 @@ class ThemePlugin(AbstractComponentPlugin):
             self._disconnect_theme_handler()
             return
 
-        widget.theme, widget.colors = theme, colors
+        widget.state["theme"], widget.state["colors"] = theme, SimpleNamespace(**colors)
         widget.on_theme_change(theme=theme, colors=colors)
-        widget._apply_styles(theme=theme, colors=colors)
+        widget._apply_styles()
 
     def _disconnect_theme_handler(self) -> None:
         """Disconnect theme change handlers if connected."""

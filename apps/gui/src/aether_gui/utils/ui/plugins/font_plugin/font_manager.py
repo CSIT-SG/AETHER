@@ -1,10 +1,10 @@
 # theme_manager.py
 from aether_utils.logger import get_logger
 from PySide6 import QtWidgets
-from PySide6.QtCore import QEvent, QObject, Signal
+from PySide6.QtCore import QEvent, QObject, QTimer, Signal
 from PySide6.QtGui import QFont
 
-logger = get_logger("theme_manager")
+logger = get_logger("font_manager")
 
 
 class FontManager(QObject):
@@ -16,40 +16,27 @@ class FontManager(QObject):
 
     font_change_event = Signal(QFont)
 
-    def __init__(self, window: QtWidgets.QWidget):
+    def __init__(self, window_title: str):
         """Initialize the font manager and read the current font."""
         super().__init__()
         self._installed = False
-        self._window = window
+        self._window_title = window_title
+        self._suppressed = False
         self.current_font: QFont = self.detect_font()
 
-    def eventFilter(self, obj, event) -> bool:
-        """Handle palette changes and emit theme updates.
+    def set_font(self, font: QFont) -> None:
+        """Update the current font and notify listeners.
+
+        Called by action handlers when the user picks a new font, bumps the
+        size, or resets. No-op if the font is unchanged.
 
         Args:
-            obj: Qt object emitting the event.
-            event: Qt event being filtered.
-
-        Returns:
-            True if the event is handled, otherwise False.
+            font: The new font to apply.
         """
-
-        if event.type() != QEvent.Type.FontChange:
-            return False
-
-        if self._window is None:
-            return False
-
-        # Only react if the event landed on our window itself.
-        # (Descendants also receive FontChange when the window's font changes,
-        # but reading win.font() once per real change is what we want.)
-        if obj is not self._window:
-            return False
-
-        new_font = self._window.font()
-
-        self.font_change_event.emit(new_font)
-        return False
+        if self.current_font == font:
+            return
+        self.current_font = QFont(font)
+        self.font_change_event.emit(self.current_font)
 
     def _get_app(self) -> QtWidgets.QApplication:
         """Return the active QApplication instance.
@@ -66,6 +53,12 @@ class FontManager(QObject):
         assert isinstance(app, QtWidgets.QApplication)
         return app
 
+    def _get_window(self) -> QtWidgets.QWidget | None:
+        for w in self._get_app().allWidgets():
+            if isinstance(w, QtWidgets.QWidget) and w.windowTitle() == self._window_title:
+                return w
+        return None
+
     def install_event_filter(self):
         """Install the global palette change event filter."""
 
@@ -81,11 +74,10 @@ class FontManager(QObject):
             FontInfo containing the current font styles
         """
 
-        if self._window is not None:
-            return self._window.font()
-
-        # Fallback to application default font if window reference is missing
-        return self._get_app().font()
+        window = self._get_window()
+        if window is not None:
+            return QFont(window.font())
+        return QFont(self._get_app().font())
 
     def get_current_font(self) -> QFont:
         """Return the current font snapshot.
