@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from jinja2 import BaseLoader, Environment, TemplateNotFound
+from jinja2 import BaseLoader, ChainableUndefined, Environment, TemplateNotFound
 
 from .abstract_jinja_base_loader import AbstractJinjaBaseLoader
 
@@ -53,6 +53,7 @@ class QSSStringLoader(AbstractJinjaBaseLoader):
 
         return Environment(
             loader=_Loader(),
+            undefined=ChainableUndefined,
             autoescape=False,  # QSS is never HTML
             keep_trailing_newline=True,
         )
@@ -121,6 +122,7 @@ class QSSFileLoader(AbstractJinjaBaseLoader):
 
         return Environment(
             loader=_Loader(),
+            undefined=ChainableUndefined,
             autoescape=False,
             keep_trailing_newline=True,
         )

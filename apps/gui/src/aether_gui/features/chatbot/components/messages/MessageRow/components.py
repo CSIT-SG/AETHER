@@ -22,7 +22,7 @@ class MessageRow(StyledComponent):
 
     def __init__(self, message: Message, parent=None):
         self._message = message
-        super().__init__(parent, plugins=[FontPlugin()], states={"fontstyles": None})
+        super().__init__(parent, plugins=[FontPlugin()])
 
     def setup(self) -> None:
         self._copy_btn = None

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from jinja2 import BaseLoader, Environment, TemplateNotFound, select_autoescape
+from jinja2 import BaseLoader, ChainableUndefined, Environment, TemplateNotFound, select_autoescape
 
 from .abstract_jinja_base_loader import AbstractJinjaBaseLoader
 
@@ -54,6 +54,7 @@ class HTMLStringLoader(AbstractJinjaBaseLoader):
 
         return Environment(
             loader=_Loader(),
+            undefined=ChainableUndefined,
             autoescape=select_autoescape(["html"]),  # XSS-safe by default
             keep_trailing_newline=True,
             trim_blocks=True,  # cleaner HTML output
@@ -126,6 +127,7 @@ class HTMLFileLoader(AbstractJinjaBaseLoader):
 
         return Environment(
             loader=_Loader(),
+            undefined=ChainableUndefined,
             autoescape=select_autoescape(["html"]),
             keep_trailing_newline=True,
             trim_blocks=True,

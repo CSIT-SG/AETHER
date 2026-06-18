@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from collections import defaultdict
 from collections.abc import Iterable
 from pathlib import Path
 from types import SimpleNamespace
@@ -34,7 +35,6 @@ class StyledComponent(AbstractComponentPluginManager):
         parent=None,
         *,
         plugins: Iterable[AbstractComponentPlugin] | None = None,
-        states: dict[str, Any] | None = None,
     ) -> None:
         """Initialize the component and install plugins.
 
@@ -43,7 +43,7 @@ class StyledComponent(AbstractComponentPluginManager):
             plugins: Additional plugins to install after defaults.
         """
 
-        self.state = {"theme": None, "colors": None, **(states or {})}
+        self.state: dict[str, Any] = defaultdict(lambda: None)
         all_plugins = [ThemePlugin(), JinjaPlugin(), *(plugins or [])]
         super().__init__(parent, plugins=all_plugins)
 
