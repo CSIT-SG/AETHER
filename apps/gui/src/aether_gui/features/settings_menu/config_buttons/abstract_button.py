@@ -18,8 +18,6 @@ class ConfigButton(ABC, StyledComponent):
         button = QtWidgets.QPushButton(self._label, self)
         button.clicked.connect(self.action)
         layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
         layout.addWidget(button)
         self.setLayout(layout)
         self._button = button

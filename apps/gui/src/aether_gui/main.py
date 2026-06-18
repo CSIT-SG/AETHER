@@ -13,7 +13,6 @@ from aether_gui.features.context_menu import AetherUIHooks
 from aether_gui.features.settings_menu import SettingsMenuHandler
 
 ACTION_NAME = "aether:open_settings"
-ACTION_LABEL = "Aether Settings"
 
 logger = get_logger("gui_plugin")
 
@@ -22,7 +21,7 @@ class _Aether(idaapi.plugin_t):
     flags = idaapi.PLUGIN_KEEP
     comment = "Settings Menu"
     help = ""
-    wanted_name = "Aether_Config"
+    wanted_name = "Aether"
     wanted_hotkey = ""
 
     def __init__(self):
