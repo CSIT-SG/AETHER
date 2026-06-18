@@ -1,7 +1,7 @@
 # theme_manager.py
 from aether_utils.logger import get_logger
 from PySide6 import QtWidgets
-from PySide6.QtCore import QEvent, QObject, QTimer, Signal
+from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QFont
 
 logger = get_logger("font_manager")
