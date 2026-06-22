@@ -23,47 +23,51 @@ import { Callout, Tabs } from 'nextra/components'
 
 ## Graphical User Interface (GUI)
 
-### Powershell
-
-Open powershell as **administrator** and change directory to `\AETHER-next\apps\gui\scripts\PS`.
-
-<Tabs items={['Production', 'Development']}>
+<Tabs items={['Windows', 'Linux']}>
     <Tabs.Tab>
-            ```
-            ./install-prod.ps1
-            ```
-            `install-prod.ps1` copies relevant files from the repo into the Ida plugins folder. Though not recommended, it is safe to delete the repo from your computer.
+
+        Open powershell as **administrator** and change directory to `\AETHER-next\apps\gui\scripts\PS`.
+
+        ### Standard Installation
+
+        ```powershell
+        ./install-prod.ps1
+        ```
+        `install-prod.ps1` copies relevant files from the repo into the Ida plugins folder. Though not recommended, it is safe to delete the repo from your computer.
+
+        ### Development
+
+        ```powershell
+        ./install-dev.ps1
+        ```
+        `install-dev.ps1` creates a symbolic link to the repo in the Ida. **DO NOT** delete the repo.
     </Tabs.Tab>
     <Tabs.Tab>
-            ```
-            ./install-dev.ps1
-            ```
-            `install-dev.ps1` creates a symbolic link to the repo in the Ida. **DO NOT** delete the repo.
+        ### Standard Installation
+        Open terminal with **sudo** privileges and navigate to `/AETHER-next/apps/gui/scripts/Bash`.
+
+        ```bash
+        ./install-prod.sh --plugins-dir /path/to/ida/plugins/dir
+        ```
+
+        `install-prod.sh` copies relevant files from the repo into the Ida plugins folder. Though not recommended, it is safe to delete the repo from your computer.
+        
+        #### Development
+
+        ```bash
+        ./install-dev.sh --plugins-dir /path/to/ida/plugins/dir
+        ```
+        `install-dev.sh` creates a symbolic link to the repo in the Ida. **DO NOT** delete the repo.
+
+        <Callout type ="info">
+            Ensure to set the `--plugins-dir` flag. Default installation directory is `/opt/ida-pro-9.X/plugins`.
+        </Callout>
     </Tabs.Tab>
 </Tabs>
 
-### Bash
 
-Open terminal with **sudo** privileges and navigate to `/AETHER-next/apps/gui/scripts/Bash`.
 
-<Tabs items={['Production', 'Development']}>
-    <Tabs.Tab>
-            ```
-            ./install-prod.sh --plugins-dir /path/to/ida/plugins/dir
-            ```
-            `install-prod.ps1` copies relevant files from the repo into the Ida plugins folder. Though not recommended, it is safe to delete the repo from your computer.
-    </Tabs.Tab>
-    <Tabs.Tab>
-            ```
-            ./install-dev.sh --plugins-dir /path/to/ida/plugins/dir
-            ```
-            `install-dev.ps1` creates a symbolic link to the repo in the Ida. **DO NOT** delete the repo.
-    </Tabs.Tab>
-</Tabs>
 
-<Callout type ="info">
-    Ensure to set the `--plugins-dir` flag. Default installation directory is `/opt/ida-pro-9.X/plugins`.
-</Callout>
 
 ### Headless Command-Line Interface (CLI)
 
