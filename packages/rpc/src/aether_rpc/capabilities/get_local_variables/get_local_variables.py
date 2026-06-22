@@ -4,6 +4,7 @@ import ida_hexrays
 
 from ..base import Capability
 from ..result import Result
+from ..types import LocalVar
 from ..utils import resolve_function_name
 
 

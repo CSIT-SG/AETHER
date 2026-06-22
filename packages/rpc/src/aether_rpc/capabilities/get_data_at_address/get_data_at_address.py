@@ -5,7 +5,7 @@ import ida_nalt
 import ida_name
 from idautils import XrefsFrom, XrefsTo
 
-from aether_rpc.capabilities.types import AddressData, PointerInfo, Result
+from aether_rpc.capabilities.types import AddressData, PointerInfo
 
 from ..base import Capability
 from ..result import Result
