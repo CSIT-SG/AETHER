@@ -7,13 +7,13 @@ import rpyc
 class TestGetLocalVariables:
     def test_returns_local_variables_for_main(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.get_local_variables(function_name="main")
-        assert result is not None
-        assert len(result) > 0
+        assert result.success is True
+        assert len(result.result["local_variables"]) > 0
 
     def test_metadata_shape(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.get_local_variables(function_name="main")
-        assert result is not None
-        for var in result:
+        assert result.success is True
+        for var in result.result["local_variables"]:
             assert "name" in var
             assert "type" in var
             assert "location" in var
@@ -24,24 +24,24 @@ class TestGetLocalVariables:
 
     def test_returns_none_for_unknown_function(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.get_local_variables(function_name="__nonexistent_symbol__")
-        assert result is None
+        assert result.success is False
 
     def test_returns_none_for_empty_name(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.get_local_variables(function_name="")
-        assert result is None
+        assert result.success is False
 
     def test_result_matches_rename_local_variable_targets(
         self, ida_client: rpyc.Connection
     ) -> None:
         """Variable names returned should be valid targets for rename_local_variable."""
         lvars = ida_client.root.get_local_variables(function_name="main")
-        assert lvars is not None
-        assert len(lvars) > 0
+        assert lvars.success is True
+        assert len(lvars.result["local_variables"]) > 0
 
-        original_name = lvars[0]["name"]
+        original_name = lvars.result["local_variables"][0]["name"]
         result = ida_client.root.rename_local_variable(
             function_address="main",
             old_var_name=original_name,
             new_var_name="test_cross_capability_var",
         )
-        assert result is True
+        assert result.success is True

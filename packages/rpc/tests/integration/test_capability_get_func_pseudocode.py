@@ -10,7 +10,8 @@ class TestGetFunctionPseudocode:
     def test_get_valid_func_pseuodocode(self, ida_client: rpyc.Connection) -> None:
         # Assert valid decompiled pseudocode
         data = ida_client.root.get_function_pseudocode(function_name="main")
-        pseudo = data["pseudocode"]
+        assert data.success is True
+        pseudo = data.result["pseudocode"]
 
         assert pseudo is not None
         assert "return 0" in pseudo
@@ -19,4 +20,4 @@ class TestGetFunctionPseudocode:
         # Assert invalid function decompilation
         data = ida_client.root.get_function_pseudocode(function_name="balls")
 
-        assert data is None
+        assert data.success is False

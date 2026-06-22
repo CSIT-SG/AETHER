@@ -9,48 +9,48 @@ class TestRenameFunction:
         result = ida_client.root.rename_function(
             address="foo_rename_func", new_name="test_renamed_main"
         )
-        assert result is True
+        assert result.success is True
 
         func = ida_client.root.get_function_by_name(function_name="test_renamed_main")
-        assert func is not None
-        assert func["name"] == "test_renamed_main"
+        assert func.success is True
+        assert func.result["name"] == "test_renamed_main"
 
     def test_rename_is_reflected_by_address_lookup(self, ida_client: rpyc.Connection) -> None:
         main_func = ida_client.root.get_function_by_address(address="test_renamed_main")
-        assert main_func is not None
+        assert main_func.success is True
 
-        func = ida_client.root.get_function_by_address(address=main_func["start_address"])
-        assert func is not None
-        assert func["name"] == "test_renamed_main"
+        func = ida_client.root.get_function_by_address(address=main_func.result["start_address"])
+        assert func.success is True
+        assert func.result["name"] == "test_renamed_main"
 
     def test_accepts_integer_address(self, ida_client: rpyc.Connection) -> None:
         main_func = ida_client.root.get_function_by_address(address="test_renamed_main")
-        assert main_func is not None
+        assert main_func.success is True
 
-        int_address = int(main_func["start_address"], 16)
+        int_address = int(main_func.result["start_address"], 16)
         result = ida_client.root.rename_function(
             address=int_address, new_name="test_int_addr_renamed"
         )
-        assert result is True
+        assert result.success is True
 
     def test_accepts_address_within_function_body(self, ida_client: rpyc.Connection) -> None:
         main_func = ida_client.root.get_function_by_address(address="test_int_addr_renamed")
-        assert main_func is not None
+        assert main_func.success is True
 
-        inner_address = hex(int(main_func["start_address"], 16) + 1)
+        inner_address = hex(int(main_func.result["start_address"], 16) + 1)
         result = ida_client.root.rename_function(
             address=inner_address, new_name="test_inner_renamed"
         )
-        assert result is True
+        assert result.success is True
 
-        func = ida_client.root.get_function_by_address(address=main_func["start_address"])
-        assert func is not None
-        assert func["name"] == "test_inner_renamed"
+        func = ida_client.root.get_function_by_address(address=main_func.result["start_address"])
+        assert func.success is True
+        assert func.result["name"] == "test_inner_renamed"
 
     def test_returns_false_for_invalid_address(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.rename_function(address="0xDEADBEEFDEADBEEF", new_name="test_bad")
-        assert result is False
+        assert result.success is False
 
     def test_returns_false_for_address_outside_function(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.rename_function(address="0x0", new_name="test_bad")
-        assert result is False
+        assert result.success is False
