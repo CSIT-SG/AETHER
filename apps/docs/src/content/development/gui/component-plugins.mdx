@@ -10,13 +10,30 @@ Then, add it to the constructor of any component (inheriting from `StyledCompone
 
 1. Create a class that implements `AbstractComponentPlugin`.
 2. Implement `name`, `install()`, and `uninstall()`.
-3. (Optional) Override `priority` to control install order.
-4. Pass the plugin instance when constructing your widget.
-
+3. (Optional) `Protocol` for component to follow.
+4. (Optional) Override `priority` to control install order.
+5. Pass the plugin instance when constructing your widget.
 
 ### Example: Label Plugin
 
 ```python
+from typing import Protocol, runtime_checkable
+
+from PySide6.QtWidgets import QLabel
+
+# Optional Protocol that ensures the component has implemented all the methods and attributes the plugin needs
+@runtime_checkable
+class HelloLabelProtocol(Protocol):
+    """Structural type for widgets that host a HelloLabelPlugin.
+
+    The plugin attaches a ``_hello_label`` attribute to the widget during
+    install. Code that interacts with hello-label-equipped widgets can
+    type-hint against this protocol to access the label without depending
+    on a specific class.
+    """
+
+    _hello_label: QLabel
+
 from PySide6.QtWidgets import QLabel, QWidget
 
 from aether_gui.utils.ui.plugins import AbstractComponentPlugin
@@ -27,7 +44,16 @@ class HelloLabelPlugin(AbstractComponentPlugin):
     def name(self) -> str:
         return "hello-label"
 
+    # Optional priority to order the plugins
+    @property
+    def priority(self):
+        return super().priority + 1 
+
     def install(self, widget: QWidget) -> None:
+
+        if not isinstance(widget, HelloLabelProtocol):
+            raise TypeError("Widget must implement HelloLabelProtocol")
+        
         widget._hello_label = QLabel("Hello", widget)
         widget._hello_label.move(8, 8)
 

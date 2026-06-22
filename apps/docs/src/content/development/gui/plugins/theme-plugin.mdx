@@ -1,0 +1,105 @@
+import { FileTree } from 'nextra/components'
+
+# Theme Plugin
+
+In order for our UI components to update their color palette according to IDA's theme, we need a theme plugin.
+
+This plugin checks for IDA theme changes and grabs the color palette before applying the changes to the component stylesheet.
+
+This will describe how the theme plugin functions, the following is the general structure of the plugin:
+
+<FileTree>
+  <FileTree.Folder name="theme_plugin" defaultOpen>
+    <FileTree.File name="__init__.py" />
+    <FileTree.File name="theme_manager_singleton.py" />
+	<FileTree.File name="theme_manager.py" />
+	<FileTree.File name="theme_plugin.py" />
+    <FileTree.File name="theme_protocol.py" />
+	<FileTree.File name="types.py" />
+  </FileTree.Folder>
+</FileTree>
+
+The files handle the following:
+
+- `__init__.py`: Exports the plugin and the types it uses
+- `theme_manager_singleton.py`: Exports a function that gets the theme manager singleton
+- `theme_manager.py`: Holds the main functional logic that detects theme changes and gets color palettes
+- `theme_plugin.py`: Handles the installation logic and is an interface between theme manager and the component
+- `theme_protocol.py`: Exports a protocol that component must follow for theme plugin to be installed
+- `types.py`: Holds the types used specific to the theme plugin
+
+## Theme Manager Singleton
+
+Since IDA theme changes are global, all components are connected to a Theme Manager Singleton.
+
+To get the singleton, `get_shared_theme_manager()` can be imported from `theme_manager_singleton.py`.
+
+The main use of the singleton is to allow components to reuse the same manager and also ensure coherency in palettes throughout.
+
+## Installation
+
+In order for the plugin to be installed onto a component, the component must implement the methods and attributes demanded by the `ThemePluginProtocol`
+
+The event filter is installed onto `QApplication` to detect `QEvents` throughout the IDA application
+
+## Event Filter
+
+Currently the theme plugin relies on IDA firing off a PaletteChange `QEvent`.
+
+The code for this can be found in `theme_manager.py`:
+
+```python
+def eventFilter(self, obj, event) -> bool:
+        """Handle palette changes and emit theme updates.
+
+        Args:
+            obj: Qt object emitting the event.
+            event: Qt event being filtered.
+
+        Returns:
+            True if the event is handled, otherwise False.
+        """
+        if event.type() != QEvent.Type.PaletteChange:
+            return False
+...
+```
+
+Upon detecting the QEvent, it emits a signal to the component plugin which will call `_apply_styles()` on the components
+
+## Reading palettes
+
+There are only two palettes implemented right now, "dark" and "light"
+
+To add more palettes, the following methods need to be modified:
+```python
+def detect_theme(self) -> Theme:
+        """Detect the current theme from the active palette.
+
+        Returns:
+            "dark" or "light" based on palette lightness.
+        """
+        try:
+            app = self._get_app()
+            window = app.activeWindow() or app.focusWidget()
+            palette = window.palette() if window else app.palette()
+            return "dark" if palette.color(QPalette.ColorRole.Text).lightness() > 128 else "light"
+...
+
+def _read_palette(self) -> ThemeColors:
+        """Read the current palette into a theme color mapping.
+
+        Returns:
+            Mapping of palette roles to hex color strings.
+        """
+        app = self._get_app()
+        window = app.activeWindow() or app.focusWidget()
+        palette = window.palette() if window else app.palette()
+
+        DEFAULT_COLOR = "#000000" if self.current_theme == "light" else "#FFFFFF"
+...
+```
+This will likely never happen but its good to know
+
+## Priority
+
+In the plugin list, the theme plugin is the first to be installed
