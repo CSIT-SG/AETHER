@@ -12,6 +12,7 @@ const workspaces = [
 	["apps", "gui"],
 	["packages", "utils"],
 	["packages", "rpc"],
+	["packages", "backend"],
 ];
 
 function run(cmd: string, args: string[]): Promise<void> {

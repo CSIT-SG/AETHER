@@ -38,9 +38,9 @@ The main use of the singleton is to allow components to reuse the same manager a
 
 ## Installation
 
-In order for the plugin to be installed onto a component, the component must implement the methods and attributes demanded by the `ThemePluginProtocol`
+In order for the plugin to be installed onto a component, the component must implement the methods and attributes demanded by the `ThemePluginProtocol`.
 
-The event filter is installed onto `QApplication` to detect `QEvents` throughout the IDA application
+The event filter is installed onto `QApplication` to detect `QEvents` throughout the IDA application.
 
 ## Event Filter
 
@@ -64,11 +64,11 @@ def eventFilter(self, obj, event) -> bool:
 ...
 ```
 
-Upon detecting the QEvent, it emits a signal to the component plugin which will call `_apply_styles()` on the components
+Upon detecting the QEvent, it emits a signal to the component plugin which will call `_apply_styles()` on the components.
 
 ## Reading palettes
 
-There are only two palettes implemented right now, "dark" and "light"
+There are only two palettes implemented right now, "dark" and "light".
 
 To add more palettes, the following methods need to be modified:
 ```python
@@ -98,8 +98,8 @@ def _read_palette(self) -> ThemeColors:
         DEFAULT_COLOR = "#000000" if self.current_theme == "light" else "#FFFFFF"
 ...
 ```
-This will likely never happen but its good to know
+This will likely never happen but its good to know.
 
 ## Priority
 
-In the plugin list, the theme plugin is the first to be installed
+In the plugin list, the theme plugin is the first to be installed.
