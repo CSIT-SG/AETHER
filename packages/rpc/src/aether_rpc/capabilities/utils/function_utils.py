@@ -1,7 +1,6 @@
 """Function context and metadata helpers for capabilities."""
 
 import ida_funcs
-import idc
 
 from ..types import FunctionInfo, FunctionMetadata
 
@@ -54,7 +53,7 @@ def get_function(ea: int) -> FunctionMetadata | None:
         return None
 
     return {
-        "name": idc.get_func_name(func.start_ea),
+        "name": ida_funcs.get_func_name(func.start_ea),
         "start_address": hex(func.start_ea),
         "end_address": hex(func.end_ea),
         "size_bytes": func.size(),

@@ -3,9 +3,9 @@ import ida_ida
 import ida_lines
 import ida_nalt
 import ida_name
-import idautils
+from idautils import XrefsFrom, XrefsTo
 
-from aether_rpc.capabilities.types import AddressData, PointerInfo
+from aether_rpc.capabilities.types import AddressData, PointerInfo, Result
 
 from ..base import Capability
 from ..utils import (
@@ -22,30 +22,30 @@ class GetDataAtAddress(Capability):
     def name(self) -> str:
         return "get_data_at_address"
 
-    def execute(self, location: str | int) -> AddressData | None:
+    def execute(self, location: str | int) -> Result:
         """Collect and return all available data at the given address or symbol.
 
         Args:
             location: Hex address or symbol name of the target.
 
         Returns:
-            A dictionary containing all collected data, or an error message
-            if the address could not be resolved.
+            Result whose payload lists all collected data, or a failure
+            message if the address could not be resolved or is not loaded.
         """
         ea = resolve_effective_address(location)
         if ea is None:
             self.logger.error("Error: Could not resolve '%s'.", location)
-            return None
+            return Result(success=False, result=f"Could not resolve '{location}'")
 
         if not ida_bytes.is_loaded(ea):
             self.logger.error("Address %s is not loaded in the database", hex(ea))
-            return None
+            return Result(success=False, result=f"Address {hex(ea)} is not loaded in the database")
 
         flags = ida_bytes.get_flags(ea)
         item_size = max(ida_bytes.get_item_size(ea), 1)
         raw = ida_bytes.get_bytes(ea, item_size)
 
-        result = AddressData(
+        data = AddressData(
             address=hex(ea),
             name=ida_name.get_name(ea) or None,
             function=function_info(ea),
@@ -56,11 +56,11 @@ class GetDataAtAddress(Capability):
             disassembly=self._get_disassembly(ea, flags),
             string=self._get_string(ea, flags),
             pointer=self._get_pointer(ea, flags),
-            xrefs_to=[collect_xrefs(x) for x in idautils.XrefsTo(ea)],
-            xrefs_from=[collect_xrefs(x) for x in idautils.XrefsFrom(ea)],
+            xrefs_to=[collect_xrefs(x) for x in XrefsTo(ea)],
+            xrefs_from=[collect_xrefs(x) for x in XrefsFrom(ea)],
         )
 
-        return result
+        return Result(success=True, result="\n".join(f"{key}: {value}" for key, value in data.items()))
 
     def _get_disassembly(self, ea: int, flags: int) -> str | None:
         """Return the disassembly line at ``ea``, or ``None`` if not code.

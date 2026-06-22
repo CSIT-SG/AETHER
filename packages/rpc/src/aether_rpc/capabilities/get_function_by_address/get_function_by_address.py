@@ -1,6 +1,5 @@
-from aether_rpc.capabilities.types import FunctionMetadata
-
 from ..base import Capability
+from ..types import Result
 from ..utils import get_function, resolve_effective_address
 
 
@@ -11,23 +10,25 @@ class GetFunctionByAddress(Capability):
     def name(self) -> str:
         return "get_function_by_address"
 
-    def execute(self, address: str | int) -> FunctionMetadata | None:
+    def execute(self, address: str | int) -> Result:
         """Look up the function enclosing the given address and return its metadata.
 
         Args:
             address: Hex or decimal string address anywhere within the target function.
 
         Returns:
-            Dict containing name, start/end address, size, and flags,
-            or None if no function bounds the given address.
+            Result whose payload lists the function name, start/end address,
+            size, and flags, or a failure message if no function bounds the
+            given address.
         """
         ea = resolve_effective_address(address)
         if ea is None:
             self.logger.error(f"Invalid address: {address}")
-            return None
+            return Result(success=False, result=f"Invalid address: {address}")
 
         func = get_function(ea)
         if func is None:
             self.logger.warning(f"No function found containing address {hex(ea)}")
+            return Result(success=False, result=f"No function found containing address {hex(ea)}")
 
-        return func
+        return Result(success=True, result="\n".join(f"{key}: {value}" for key, value in func.items()))

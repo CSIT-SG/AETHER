@@ -2,6 +2,7 @@ import ida_funcs
 import ida_name
 
 from ..base import Capability
+from ..types import Result
 from ..utils import resolve_effective_address
 
 
@@ -12,7 +13,7 @@ class RenameFunction(Capability):
     def name(self) -> str:
         return "rename_function"
 
-    def execute(self, address: str | int, new_name: str) -> bool:
+    def execute(self, address: str | int, new_name: str) -> Result:
         """Rename the function at the given address.
 
         Args:
@@ -20,21 +21,23 @@ class RenameFunction(Capability):
             new_name: The new name to assign to the function.
 
         Returns:
-            True if the rename succeeded, False otherwise.
+            Result indicating success or failure of the rename operation.
         """
         ea = resolve_effective_address(address)
         if ea is None:
             self.logger.error(f"Invalid address: {address}")
-            return False
+            success, message = False, f"Invalid address: {address}"
 
-        func = ida_funcs.get_func(ea)
-        if func is None:
+        elif (func := ida_funcs.get_func(ea)) is None:
             self.logger.error(f"No function found at {hex(ea)}")
-            return False
+            success, message = False, f"No function found at {hex(ea)}"
 
-        if ida_name.set_name(func.start_ea, new_name, ida_name.SN_NOWARN):
+        elif ida_name.set_name(func.start_ea, new_name, ida_name.SN_NOWARN):
             self.logger.info(f"Renamed function at {hex(func.start_ea)} to '{new_name}'")
-            return True
+            success, message = True, f"Renamed function at {hex(func.start_ea)} to '{new_name}'"
 
-        self.logger.error(f"Failed to rename function at {hex(func.start_ea)} to '{new_name}'")
-        return False
+        else:
+            self.logger.error(f"Failed to rename function at {hex(func.start_ea)} to '{new_name}'")
+            success, message = False, f"Failed to rename function at {hex(func.start_ea)} to '{new_name}'"
+
+        return Result(success=success, result=message)

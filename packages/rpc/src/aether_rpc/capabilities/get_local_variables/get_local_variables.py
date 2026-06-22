@@ -3,7 +3,7 @@ from typing import cast
 import ida_hexrays
 
 from ..base import Capability
-from ..types import LocalVar
+from ..types import Result
 from ..utils import resolve_function_name
 
 
@@ -12,32 +12,35 @@ class GetLocalVariables(Capability):
     def name(self) -> str:
         return "get_local_variables"
 
-    def execute(self, function_name: str) -> list[LocalVar] | None:
-        """List all local variables in the pesudocode"""
-        ea: int | None = resolve_function_name(function_name)
+    def execute(self, function_name: str) -> Result:
+        """List all local variables in the pseudocode of a function.
+
+        Args:
+            function_name: The symbolic name of the target function.
+
+        Returns:
+            Result whose payload is a newline-separated list of local
+            variables as ``<type> <name>``, or a failure message.
+        """
+        ea = resolve_function_name(function_name)
         if ea is None:
             self.logger.error(f"Symbol '{function_name}' not found")
-            return None
+            return Result(success=False, result=f"Symbol '{function_name}' not found")
+
         try:
             cfunc = cast(ida_hexrays.cfuncptr_t | None, ida_hexrays.decompile(ea))
         except ida_hexrays.DecompilationFailure as e:
             self.logger.error(f"Failed to decompile {function_name}\n{e}")
-            return None
+            return Result(success=False, result=f"Failed to decompile {function_name}")
 
         if cfunc is None:
-            self.logger.error("Decompilation returned no result for", function_name)
-            return None
+            self.logger.error(f"Decompilation returned no result for {function_name}")
+            return Result(
+                success=False, result=f"Decompilation returned no result for {function_name}"
+            )
 
-        lvars: ida_hexrays.lvars_t = cfunc.get_lvars()
-        lvar_ls: list[LocalVar] = [
-            {
-                "name": lvar.name,
-                "type": lvar.type(),
-                "location": lvar.location,
-                "is_arg_var": lvar.is_arg_var,
-                "is_stk_var": lvar.is_stk_var(),
-                "is_reg_var": lvar.is_reg_var(),
-            }
-            for lvar in lvars
-        ]
-        return lvar_ls
+        lvars = cfunc.get_lvars()
+        self.logger.info(f"{len(lvars)} local variables found in {function_name}")
+        return Result(
+            success=True, result="\n".join(f"{lvar.type()} {lvar.name}" for lvar in lvars)
+        )

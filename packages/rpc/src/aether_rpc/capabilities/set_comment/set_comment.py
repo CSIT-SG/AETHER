@@ -1,9 +1,9 @@
 import ida_bytes
 import ida_funcs
 import ida_hexrays
-import idc
 
 from ..base import Capability
+from ..types import Result
 from ..utils import refresh_pseudocode, resolve_effective_address
 
 
@@ -19,7 +19,7 @@ class SetComment(Capability):
     def name(self) -> str:
         return "set_comment"
 
-    def execute(self, address: str | int, comment: str) -> bool:
+    def execute(self, address: str | int, comment: str) -> Result:
         """Resolve the address and dispatch to the appropriate comment strategy.
 
         Args:
@@ -30,28 +30,29 @@ class SetComment(Capability):
         ea = resolve_effective_address(address)
         if ea is None:
             self.logger.error(f"Invalid address: {address}")
-            return False
+            return Result(success=False, result=f"Invalid address: {address}")
 
         func = ida_funcs.get_func(ea)
         if func is None:
             self.logger.error("Address %s is not inside a function", hex(ea))
-            return False
+            return Result(success=False, result=f"Address {hex(ea)} is not inside a function")
 
         if ea == func.start_ea:
-            success = self._set_function_header_comment(ea, comment)
+            success = self._set_function_header_comment(func, ea, comment)
         else:
             success = self._set_pseudocode_comment(func, ea, comment)
 
         if success:
             refresh_pseudocode(func.start_ea)
 
-        return success
+        return Result(success=success, result=f"Succesfully set comment at {address}")
 
-    def _set_function_header_comment(self, ea: int, comment: str) -> bool:
+    def _set_function_header_comment(self, func: ida_funcs.func_t, ea: int, comment: str) -> bool:
         """Write a comment that appears above the function signature in pseudocode.
 
         Args:
             func: The function whose header is being annotated.
+            ea: Effective address of the function head.
             comment: Text to write. Empty string clears the comment.
         """
 
@@ -61,7 +62,8 @@ class SetComment(Capability):
             self.logger.error("Failed to decompile function at %s", hex(ea))
             return False
 
-        idc.set_func_cmt(ea, comment, 1)
+        ida_funcs.set_func_cmt(func, comment, True)
+
         cfunc.refresh_func_ctext()
         return True
 
