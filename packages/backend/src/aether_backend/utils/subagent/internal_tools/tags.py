@@ -15,6 +15,7 @@ class SubagentToolRegistry:
         def decorator(func: Callable[..., Any]) -> Any:
             self._registry[tool].append(func)
             return func
+
         return decorator
 
     def get_tools(self, *tools: SubagentTool) -> list[Tool]:

@@ -1,13 +1,12 @@
-
 from typing import Any
 
+from aether_backend.utils.effect import Log, Program, Return
 from aether_backend.utils.subagent import (
     InternalToolDependencies,
     OpenAIGateway,
     SubagentTool,
     internal_tool_registry,
 )
-from aether_backend.utils.effect import Log, Program, Return
 from aether_utils.config import get_config
 from agents import Agent, Runner
 
@@ -40,14 +39,17 @@ It's possible for some binaries to roll their own cryptography. If through your 
 My examples are solely meant for guidance. You should take an exploratory approach in your thought process to perform substantial and meaningful analysis of the segment of the program given to you to make insightful improvements to the psuedocode.
         
         """,
-        tools=internal_tool_registry.get_tools(SubagentTool.ANNOTATOR), 
+        tools=internal_tool_registry.get_tools(SubagentTool.ANNOTATOR),
     )
     yield Log(f"Annotating function at address: {function_address}, tools: {agent.tools}")
 
-    result = Runner.run_streamed(agent, context=InternalToolDependencies(service), input=f"Analyze the function at address {function_address} and provide annotations for the psuedocode.")
+    result = Runner.run_streamed(
+        agent,
+        context=InternalToolDependencies(service),
+        input=f"Analyze the function at address {function_address} and provide annotations for the psuedocode.",
+    )
 
     async for event in result.stream_events():
-        
         yield Log(str(event))
 
     yield Return(None)
