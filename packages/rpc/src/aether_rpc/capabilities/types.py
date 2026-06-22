@@ -1,5 +1,7 @@
-from dataclasses import dataclass
 from typing import TypedDict
+
+import ida_hexrays
+from ida_typeinf import tinfo_t
 
 
 class FunctionInfo(TypedDict):
@@ -62,11 +64,18 @@ class XrefsResult(TypedDict):
     xrefs: list[XrefEntry]
 
 
-@dataclass
-class Result:
-    success: bool
-    result: str
+class FunctionPseudocode(TypedDict):
+    """Decompiled pseudocode for a function."""
 
-    def __str__(self) -> str:
-        status = "Success" if self.success else "Failure"
-        return f"[{status}] {self.result}"
+    name: str
+    start_address: str
+    pseudocode: str
+
+
+class LocalVar(TypedDict):
+    name: str
+    type: tinfo_t
+    location: ida_hexrays.vdloc_t
+    is_arg_var: bool
+    is_stk_var: bool
+    is_reg_var: bool

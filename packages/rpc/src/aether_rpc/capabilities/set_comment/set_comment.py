@@ -3,7 +3,7 @@ import ida_funcs
 import ida_hexrays
 
 from ..base import Capability
-from ..types import Result
+from ..result import Result
 from ..utils import refresh_pseudocode, resolve_effective_address
 
 
@@ -25,27 +25,39 @@ class SetComment(Capability):
         Args:
             address: Hex or decimal string address of the comment target.
             comment: Text to write. Pass an empty string to clear.
+
+        Returns:
+            A Result whose ``success`` reports whether the comment was written
+            and whose ``result`` carries the target address and comment.
         """
 
         ea = resolve_effective_address(address)
         if ea is None:
             self.logger.error(f"Invalid address: {address}")
-            return Result(success=False, result=f"Invalid address: {address}")
+            return Result(success=False, result={"error": f"Invalid address: {address}"})
 
         func = ida_funcs.get_func(ea)
         if func is None:
             self.logger.error("Address %s is not inside a function", hex(ea))
-            return Result(success=False, result=f"Address {hex(ea)} is not inside a function")
+            return Result(
+                success=False,
+                result={"error": f"Address {hex(ea)} is not inside a function"},
+            )
 
         if ea == func.start_ea:
             success = self._set_function_header_comment(func, ea, comment)
         else:
             success = self._set_pseudocode_comment(func, ea, comment)
 
-        if success:
-            refresh_pseudocode(func.start_ea)
+        if not success:
+            return Result(
+                success=False,
+                result={"error": f"Failed to set comment at {hex(ea)}"},
+            )
 
-        return Result(success=success, result=f"Succesfully set comment at {address}")
+        refresh_pseudocode(func.start_ea)
+
+        return Result(success=True, result={"address": hex(ea), "comment": comment})
 
     def _set_function_header_comment(self, func: ida_funcs.func_t, ea: int, comment: str) -> bool:
         """Write a comment that appears above the function signature in pseudocode.

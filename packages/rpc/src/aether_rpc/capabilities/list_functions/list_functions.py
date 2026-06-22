@@ -2,7 +2,7 @@ import ida_funcs
 import idautils
 
 from ..base import Capability
-from ..types import Result
+from ..result import Result
 
 
 class ListFunctions(Capability):
@@ -19,12 +19,15 @@ class ListFunctions(Capability):
         are not safe to invoke from background threads.
 
         Returns:
-            Result whose payload is a newline-separated list of function
-            names and addresses.
+            A Result whose ``result`` holds the list of functions (name and
+            address) and their count.
         """
         functions = [
             f"{ida_funcs.get_func_name(ea)} {hex(ea)}" for ea in idautils.Functions()
         ]
 
         self.logger.info(f"{len(functions)} functions found")
-        return Result(success=True, result="\n".join(functions))
+        return Result(
+            success=True,
+            result={"count": len(functions), "functions": functions},
+        )

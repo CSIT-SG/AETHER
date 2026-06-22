@@ -1,7 +1,7 @@
 import ida_hexrays
 
 from ..base import Capability
-from ..types import Result
+from ..result import Result
 from ..utils import resolve_function_name
 
 
@@ -22,25 +22,36 @@ class GetFunctionPseudocode(Capability):
             function_name: The symbolic name of the target function.
 
         Returns:
-            Result whose payload is the decompiled pseudocode, or a failure
-            message if the function cannot be resolved or decompiled.
+            A Result whose ``result`` holds the function name, start address, and
+            pseudocode string on success, or an error message on failure.
         """
 
         ea = resolve_function_name(function_name)
         if ea is None:
             self.logger.error(f"Symbol '{function_name}' not found")
-            return Result(success=False, result=f"Symbol '{function_name}' not found")
+            return Result(success=False, result={"error": f"Symbol '{function_name}' not found"})
 
         try:
             cfunc = ida_hexrays.decompile(ea)
         except ida_hexrays.DecompilationFailure as e:
             self.logger.error("Failed to decompile %r: %s", function_name, e)
-            return Result(success=False, result=f"Failed to decompile {function_name}")
+            return Result(
+                success=False,
+                result={"error": f"Failed to decompile {function_name!r}: {e}"},
+            )
 
         if cfunc is None:
             self.logger.error("Decompilation returned no result for %r", function_name)
             return Result(
-                success=False, result=f"Decompilation returned no result for {function_name}"
+                success=False,
+                result={"error": f"Decompilation returned no result for {function_name!r}"},
             )
 
-        return Result(success=True, result=f"{function_name} @ {hex(ea)}\n{cfunc}")
+        return Result(
+            success=True,
+            result={
+                "name": function_name,
+                "start_address": hex(ea),
+                "pseudocode": str(cfunc),
+            },
+        )

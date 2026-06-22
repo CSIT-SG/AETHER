@@ -1,5 +1,5 @@
 from ..base import Capability
-from ..types import Result
+from ..result import Result
 from ..utils import get_function, resolve_effective_address
 
 
@@ -17,18 +17,21 @@ class GetFunctionByAddress(Capability):
             address: Hex or decimal string address anywhere within the target function.
 
         Returns:
-            Result whose payload lists the function name, start/end address,
-            size, and flags, or a failure message if no function bounds the
-            given address.
+            A Result whose ``result`` holds the FunctionMetadata (name, start/end
+            address, size, flags) on success, or an error message if the address
+            is invalid or no function bounds it.
         """
         ea = resolve_effective_address(address)
         if ea is None:
             self.logger.error(f"Invalid address: {address}")
-            return Result(success=False, result=f"Invalid address: {address}")
+            return Result(success=False, result={"error": f"Invalid address: {address}"})
 
         func = get_function(ea)
         if func is None:
             self.logger.warning(f"No function found containing address {hex(ea)}")
-            return Result(success=False, result=f"No function found containing address {hex(ea)}")
+            return Result(
+                success=False,
+                result={"error": f"No function found containing address {hex(ea)}"},
+            )
 
-        return Result(success=True, result="\n".join(f"{key}: {value}" for key, value in func.items()))
+        return Result(success=True, result=dict(func))
