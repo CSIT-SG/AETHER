@@ -1,0 +1,59 @@
+# Subagents
+
+For some workflows, we want to spawn sub-agents with specific skills to analyze ida data. We do this via any `openai`-compatible router.
+
+The following are openai-compatible:
+- [openrouter](https://openrouter.ai/)
+- litellm (not tested)
+
+We use the [openai agents sdk](https://developers.openai.com/api/docs/guides/agents) to perform subagent orchestration. 
+
+Additionally, we inject tools (basically rpc functions) into the subagents to allow them to interact with the ida data. 
+
+## Example
+
+```python
+from typing import Any
+
+from aether_backend.utils.effect import Log, Program, Return
+from aether_backend.utils.subagent import (
+    InternalToolDependencies,
+    OpenAIGateway,
+    SubagentTool,
+    internal_tool_registry,
+)
+from aether_utils.config import get_config
+from agents import Agent, Runner
+
+config = get_config()
+
+
+async def annotate(service: Any, function_address: str | int) -> Program:
+    agent = Agent(
+        name="Annotator",
+        # give it a model to use. in this case it is the annotator model specified in the config if it exists. None falls back to the default model.
+        model=OpenAIGateway().get_model(
+            model_name=config.subagents.annotator_model if config.subagents else None,
+            feature="annotator",
+        ),
+        instructions="<system prompt>",
+        # get all the sub-tools that are tagged with the "ANNOTATOR" tag in the internal tool registry and give them to the agent.
+        tools=internal_tool_registry.get_tools(SubagentTool.ANNOTATOR),
+    )
+    yield Log(f"Annotating function at address: {function_address}, tools: {agent.tools}")
+
+    result = Runner.run_streamed(
+        agent,
+        # perform DI to obtain the tool dependencies for the agent, which in this case is just the service (rpc client) that the tools use to interact with the ida data.
+        context=InternalToolDependencies(service),
+        input=f"Analyze the function at address {function_address} and provide annotations for the psuedocode.",
+    )
+
+    # stream back the result
+    async for event in result.stream_events():
+        yield Log(str(event))
+
+    yield Return(result.final_output)
+```
+
+Each subagent needs an `Agent` and a `Runner` to run the agent. Read the docs for [the agent sdk](https://github.com/openai/openai-agents-python).

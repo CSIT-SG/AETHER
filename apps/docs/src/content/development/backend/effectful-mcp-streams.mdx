@@ -1,0 +1,168 @@
+import { Callout } from 'nextra/components'
+
+# Effectful MCP streams
+
+The MCP server is composed of several "tools", which expose logic to the LLM.
+
+The tool functions need to do multiple things:
+- Do actual work (query DB, call APIs)
+- Report progress to the user ("50% done...")
+- Log what's happening
+- Maybe pause execution
+- Return a final result
+
+Without a pattern, one would write business logic like so:
+
+```python
+async def process_items(p: int, conn: Connection):
+    await ctx.report_progress(0, p, "Starting...")
+    
+    for i in range(p):
+        result = conn.query(...)
+        await ctx.report_progress(i+1, p, f"Processed item {i}")
+        await ctx.log(f"Item {i} done", level="info")
+        if i % 5 == 0:
+            await asyncio.sleep(0.1)
+    
+    return {"items_processed": p}
+```
+
+**Problem**: Business logic is mixed with IO logic. `process_items` also does not need to know about its own transport layer (`conn: Connection`)!
+
+
+The `@effectful` decorator lets you write it differently:
+
+```python
+async def process_items_cb(p: int, db_conn: Connection, rpc_registry: Registry) -> Program:
+    """Pure business logic + effect descriptions."""
+    for i in range(p):
+        result = db_conn.query(...)
+        
+        # Just *describe* what you want to happen
+        yield Progress(current=i+1, total=p, message=f"Processed item {i}")
+        yield Log(message=f"Item {i} done", level="info")
+        
+        if i % 5 == 0:
+            yield Sleep(seconds=0.1)
+    
+    yield Return(value={"items_processed": p})
+```
+
+You `yield` effect objects, not actually *performing* them.
+
+## How It Works 
+### Write a generator that yields effects
+
+```python
+async def my_process(p: int, conn: Connection) -> Program:
+    yield Progress(current=1, total=3, message="Starting")
+    yield Return(value="done")
+```
+
+This function doesn't do anything yet. It just describes a sequence of effects.
+
+### Decorate it with the runtime
+
+```python
+@effectful
+async def my_process(p: int, conn: Connection):
+    # Same code as above
+```
+
+The decorator intercepts your generator and handles the effects (see below).
+
+```python
+async for effect in fn(*args, **kwargs):  # Your generator yields effects
+    match effect:
+        case Progress(...):
+            ctx.report_progress(...)
+        case Log(...):
+            ctx.log(...)
+        case Sleep(...):
+            ...
+        case Return(...):
+            # Extract the final result
+        ...
+    return result
+```
+
+For each thing the function yields, the runtime is able to transform it into an actual effect. The context transports the effect to the client via 
+the mcp [streamable HTTP protocol](https://modelcontextprotocol.io/specification/draft/basic/transports/streamable-http).
+
+
+## Motivation
+
+### Testability
+You can test the generator without mocking `ctx` or async I/O:
+
+```python
+async def test_process_items():
+    effects = []
+    async for effect in process_items_cb(3, mock_db, mock_registry):
+        effects.append(effect)
+    
+    # Verify the sequence
+    assert isinstance(effects[0], Progress)
+    assert effects[0].current == 1
+    assert isinstance(effects[-1], Return)
+    assert effects[-1].value == {"items_processed": 3}
+```
+
+### Reusability
+Different callers can handle effects differently:
+
+```python
+# In production: report via ctx
+@effectful
+async def my_process(...): ...
+
+# In a test: collect effects without side effects
+async def test_my_process(...):
+    effects = []
+    async for effect in process_items_cb(...):
+        effects.append(effect)
+```
+
+## A Complete Example
+
+```python
+# Step 1: Write your logic as a generator
+async def fetch_and_process_cb(items_to_fetch: int, db: Connection, api: API):
+    """Fetch items and process them."""
+    for i in range(items_to_fetch):
+        # Do real work
+        item = await api.fetch_item(i)
+        db.insert(item)
+        
+        # Describe effects you want
+        yield Progress(current=i+1, total=items_to_fetch)
+        yield Log(f"Fetched item {i}: {item.name}", level="info")
+    
+    yield Return(value={"fetched": items_to_fetch})
+
+# Step 2: Wrap it with @effectful
+@mcp.tool
+@effectful
+async def fetch_and_process(
+    items_to_fetch: int,
+    db: Connection = Depends(get_db),
+    api: API = Depends(get_api),
+):
+    """Fetch and process items with progress reporting."""
+    async for effect in fetch_and_process_cb(items_to_fetch, db, api):
+        yield effect
+
+# Step 3: When someone calls it, the decorator:
+#   - Calls your generator
+#   - Loops through each effect
+#   - Calls ctx.report_progress(), ctx.log(), etc. as needed
+#   - Returns the final result
+```
+
+<Callout>
+This is not a full implementation of a functional effect system. 
+It was intentionally designed to be a hybrid of effectful results and parameterised dependency injection for learning curve/maintainance purposes.
+
+That being said, read up on lambda calculus or the more concrete 
+[haskell implementation](https://stackoverflow.com/questions/33386622/what-exactly-does-effectful-mean) if you are interested.
+</Callout>
