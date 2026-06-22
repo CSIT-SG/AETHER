@@ -141,4 +141,3 @@ class MessageRow(StyledComponent):
         """
 
         return self.get_plugin(FontPlugin).current_font
-

@@ -16,6 +16,7 @@ from .font_protocol import FontPluginProtocol
 
 logger = get_logger("font_plugin")
 
+
 class FontPlugin(AbstractComponentPlugin):
     """
     Wires the host widget to the shared FontManager.

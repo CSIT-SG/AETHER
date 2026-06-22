@@ -25,7 +25,7 @@ class AetherFontHook(ida_kernwin.UI_Hooks):
             FontActionItem(WINDOW_PREFIX + "_" + "FontSizeIncrease", FontSizeIncreaseHandler()),
             FontActionItem(WINDOW_PREFIX + "_" + "FontSizeDecrease", FontSizeDecreaseHandler()),
             FontActionItem(WINDOW_PREFIX + "_" + "FontSizeReset", FontSizeResetHandler()),
-            ]
+        ]
 
     def hook(self) -> bool:
         for item in self.custom_font_actions:
