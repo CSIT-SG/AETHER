@@ -42,8 +42,10 @@ class GetFunctionPseudocode(Capability):
             self.logger.error("Decompilation returned no result for %r", function_name)
             return Err(result=f"Decompilation returned no result for {function_name!r}")
 
-        return Ok(result=FunctionPseudocode(
+        return Ok(
+            result=FunctionPseudocode(
                 name=function_name,
                 start_address=hex(ea),
                 pseudocode=str(cfunc),
-        ))
+            )
+        )

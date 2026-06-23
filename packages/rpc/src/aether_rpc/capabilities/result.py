@@ -11,6 +11,7 @@ class Ok[T]:
     def __str__(self) -> str:
         return json.dumps(asdict(self))
 
+
 @dataclass
 class Err:
     result: str
@@ -18,5 +19,6 @@ class Err:
 
     def __str__(self) -> str:
         return json.dumps(asdict(self))
+
 
 type Result[T] = Ok[T] | Err

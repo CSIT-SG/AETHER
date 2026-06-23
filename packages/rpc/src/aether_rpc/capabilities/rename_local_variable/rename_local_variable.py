@@ -14,7 +14,9 @@ class RenameLocalVariable(Capability):
     def name(self) -> str:
         return "rename_local_variable"
 
-    def execute(self, function_address: str | int, old_var_name: str, new_var_name: str) -> Result[RenameLocalVarResult]:
+    def execute(
+        self, function_address: str | int, old_var_name: str, new_var_name: str
+    ) -> Result[RenameLocalVarResult]:
         """Rename a local variable in the Hex-Rays decompiled view.
 
         Args:
@@ -51,7 +53,9 @@ class RenameLocalVariable(Capability):
             self.logger.error(
                 "No local variable named %r in function %r", old_var_name, hex(func.start_ea)
             )
-            return Err(result=f"No local variable named {old_var_name!r} in function {hex(func.start_ea)}")
+            return Err(
+                result=f"No local variable named {old_var_name!r} in function {hex(func.start_ea)}"
+            )
 
         if not ida_hexrays.rename_lvar(func.start_ea, old_var_name, new_var_name):
             self.logger.error(
@@ -60,13 +64,16 @@ class RenameLocalVariable(Capability):
                 new_var_name,
                 hex(func.start_ea),
             )
-            return Err(result=f"Failed to rename {old_var_name!r} to {new_var_name!r} in function {hex(func.start_ea)}")
+            return Err(
+                result=f"Failed to rename {old_var_name!r} to {new_var_name!r} in function {hex(func.start_ea)}"
+            )
 
         refresh_pseudocode(func.start_ea)
 
-        return Ok(result=RenameLocalVarResult(
-            function_address=hex(func.start_ea),
-            old_var_name=old_var_name,
-            new_var_name=new_var_name,
-        )
+        return Ok(
+            result=RenameLocalVarResult(
+                function_address=hex(func.start_ea),
+                old_var_name=old_var_name,
+                new_var_name=new_var_name,
+            )
         )
