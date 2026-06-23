@@ -4,7 +4,6 @@ from typing import Dict, Set
 import ida_kernwin
 
 from ainalyse.ssl_helper import create_openai_client_with_custom_ca
-from ainalyse.utils import check_and_add_intranet_headers
 
 from .parser import parse_ai_decomp_response_by_address
 from .storage import load_ai_decomp, save_ai_decomp
@@ -121,9 +120,6 @@ Remember, I cannot emphasise this enough, each and every function needs to be en
         
         if extra_body:
             request_params["extra_body"] = extra_body
-        
-        # Check for intranet.txt and add headers if needed
-        check_and_add_intranet_headers(request_params)
         
         stream = client.chat.completions.create(**request_params)
         

@@ -329,7 +329,7 @@ class AdvancedOptionsDialog(QtWidgets.QDialog):
             print(f"[AETHER] Error opening manual gatherer: {e}")
 
     def get_results(self):
-        
+
         results = {
             "gatherer_context": self.gatherer_textarea.toPlainText(),
             "annotator_context": self.annotator_textarea.toPlainText(),

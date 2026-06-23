@@ -1,36 +1,17 @@
 import os
 from typing import Any, Iterable, Callable
+import threading
 
 import ida_funcs
 import idaapi
 import ida_kernwin
 import ida_hexrays
+import ida_funcs
 
-def check_and_add_intranet_headers(request_params: dict) -> None:
-    """
-    Check if intranet.txt exists in ainalyse/ directory and add User-Agent header if it does.
-    
-    Args:
-        request_params: Dictionary of request parameters to modify in-place
-    """
-    intranet_file = os.path.join(os.path.dirname(__file__), "intranet.txt")
-    
-    if os.path.exists(intranet_file):
-        # Read version from version.txt
-        version_file = os.path.join(os.path.dirname(__file__), "version.txt")
-        version = "unknown"
-        try:
-            with open(version_file, "r") as ver_file:
-                version = ver_file.read().strip()
-        except Exception as e:
-            print(f"[AETHER] Warning: Could not read version file: {e}")
-        
-        # Add extra_headers to request_params
-        if "extra_headers" not in request_params:
-            request_params["extra_headers"] = {}
-        
-        request_params["extra_headers"]["User-Agent"] = f"AETHER (IDA)/alpha{version}"
-        print(f"[AETHER] Added intranet User-Agent header: AETHER (IDA)/alpha{version}")
+
+_REFRESH_GUARD_LOCK = threading.Lock()
+_REFRESH_IN_PROGRESS = False
+
 
 def _extract_function_eas(functions: Iterable[Any] | None) -> list[int]:
     """Extract function addresses from a list of dicts/strings/ints."""
@@ -53,6 +34,13 @@ def _extract_function_eas(functions: Iterable[Any] | None) -> list[int]:
 def refresh_functions(functions: Iterable[Any] | None = None, fallback_func_addr: str | int | None = None, log_prefix: str = "[AETHER]") -> int:
     """Refresh/decompile changed functions so IDA and Hex-Rays register updates."""
     refreshed_count = 0
+
+    global _REFRESH_IN_PROGRESS
+    with _REFRESH_GUARD_LOCK:
+        if _REFRESH_IN_PROGRESS:
+            print(f"{log_prefix} Skipping refresh: another refresh is already in progress.")
+            return 0
+        _REFRESH_IN_PROGRESS = True
 
     def _refresh_sync():
         nonlocal refreshed_count
@@ -77,27 +65,45 @@ def refresh_functions(functions: Iterable[Any] | None = None, fallback_func_addr
             except Exception:
                 pass
 
-        for function_ea in function_eas:
-            function = idaapi.get_func(function_ea)
-            if not function:
-                continue
+        old_batch = idaapi.cvar.batch
+        idaapi.cvar.batch = 1
 
-            start_ea = function.start_ea
-            if start_ea in seen_starts:
-                continue
-            seen_starts.add(start_ea)
+        try:
+            for function_ea in function_eas:
+                function = idaapi.get_func(function_ea)
+                if not function:
+                    continue
 
-            try:
-                ida_hexrays.mark_cfunc_dirty(start_ea)
-            except Exception:
-                pass
+                start_ea = function.start_ea
+                if start_ea in seen_starts:
+                    continue
+                seen_starts.add(start_ea)
 
-            try:
-                ida_hexrays.decompile(start_ea)
-            except Exception:
-                pass
+                try:
+                    # 1. Force completely flush the old broken cache out of memory
+                    # This gives the "restart IDA" effect natively without actually closing it.
+                    if hasattr(ida_hexrays, "clear_cached_cfunc"):
+                        ida_hexrays.clear_cached_cfunc(start_ea)
+                    else:
+                        ida_hexrays.mark_cfunc_dirty(start_ea)
+                except Exception:
+                    pass
 
-            refreshed_count += 1
+                try:
+                    # 2. Programmatically regenerate the AST fresh right now so background processes can see it
+                    flags = getattr(ida_hexrays, "DECOMP_NO_WAIT", 0x20)
+                    hf = ida_hexrays.hexrays_failure_t()
+                    df = ida_hexrays.decompile_func(ida_funcs.get_func(start_ea), hf, flags)
+                except Exception:
+                    pass
+
+                refreshed_count += 1
+
+            # Fix Print Order: Print inside the sync execution so it prints AFTER any potential inner HexRays logs are exhausted.
+            print(f"{log_prefix} Refreshed {refreshed_count} function(s) in IDA/Hex-Rays.")
+
+        finally:
+            idaapi.cvar.batch = old_batch
 
         try:
             ida_kernwin.refresh_idaview_anyway()
@@ -105,19 +111,26 @@ def refresh_functions(functions: Iterable[Any] | None = None, fallback_func_addr
             pass
 
         try:
+            # Only refresh view if IDA is not in a weird state
             widget = ida_kernwin.get_current_widget()
             if widget:
-                vu = ida_hexrays.get_widget_vdui(widget)
-                if vu:
-                    vu.refresh_view(True)
+                # Basic check to see if widget is still valid
+                if hasattr(ida_kernwin, "get_widget_type") and ida_kernwin.get_widget_type(widget) != ida_kernwin.BWN_UNKNOWN:
+                    vu = ida_hexrays.get_widget_vdui(widget)
+                    if vu and hasattr(vu, "refresh_view"):
+                        vu.refresh_view(True)
         except Exception:
             pass
 
         return refreshed_count
 
-    ida_kernwin.execute_sync(_refresh_sync, ida_kernwin.MFF_WRITE)
-    print(f"{log_prefix} Refreshed {refreshed_count} function(s) in IDA/Hex-Rays.")
-    return refreshed_count
+    try:
+        ida_kernwin.execute_sync(_refresh_sync, ida_kernwin.MFF_WRITE)
+        print(f"{log_prefix} Refreshed {refreshed_count} function(s) in IDA/Hex-Rays.")
+        return refreshed_count
+    finally:
+        with _REFRESH_GUARD_LOCK:
+            _REFRESH_IN_PROGRESS = False
 
 def prepare_activate_context(
     load_config_fn: Callable,
@@ -134,23 +147,41 @@ def prepare_activate_context(
     config = load_config_fn()
     is_valid, error_msg = validate_basic_config_fn(config)
     if not is_valid:
-        ida_kernwin.warning(error_msg)
+        def _show_config_error_sync():
+            ida_kernwin.warning(error_msg)
+            return 1
+
+        ida_kernwin.execute_sync(_show_config_error_sync, ida_kernwin.MFF_WRITE)
         return None, None, None
 
     config = load_config_fn()
     if config_updater:
         config_updater(config)
 
-    try:
-        ea = ida_kernwin.get_screen_ea()
-        func = idaapi.get_func(ea)
-        if not func:
-            ida_kernwin.warning("No function found at current location.")
-            return None, None, None
+    context = {"addr": None, "name": None, "error": None}
 
-        current_func_addr = hex(func.start_ea)
-        current_func_name = ida_funcs.get_func_name(func.start_ea)
-        return config, current_func_addr, current_func_name
-    except Exception as e:
-        ida_kernwin.warning(f"Unable to get current function information: {e}")
+    def _resolve_current_function_sync():
+        try:
+            ea = ida_kernwin.get_screen_ea()
+            func = idaapi.get_func(ea)
+            if not func:
+                context["error"] = "No function found at current location."
+                return 0
+
+            context["addr"] = hex(func.start_ea)
+            context["name"] = ida_funcs.get_func_name(func.start_ea)
+            return 1
+        except Exception as e:
+            context["error"] = f"Unable to get current function information: {e}"
+            return 0
+
+    ida_kernwin.execute_sync(_resolve_current_function_sync, ida_kernwin.MFF_READ)
+
+    if context["error"]:
+        def _show_context_error_sync():
+            ida_kernwin.warning(context["error"])
+            return 1
+
+        ida_kernwin.execute_sync(_show_context_error_sync, ida_kernwin.MFF_WRITE)
         return None, None, None
+    return config, context["addr"], context["name"]

@@ -1,6 +1,7 @@
 import os
 import re
 import traceback
+import logging
 from typing import Dict, List, Optional
 from urllib.parse import urlparse
 
@@ -12,6 +13,7 @@ from mcp.client.session import ClientSession
 from mcp.client.sse import sse_client
 
 # -- Internal Imports --
+from .log_gatherer_annotator import start_new_run_paths
 from .custom_set_cmt import custom_get_pseudocode
 
 # --- File Paths ---
@@ -19,14 +21,10 @@ from .custom_set_cmt import custom_get_pseudocode
 CTX_FILE_PATH = None
 VERBOSE_LOG_PATH = None
 
-def _init_paths():
-    """Initialize file paths lazily to avoid circular imports"""
+def _init_paths(config: Optional[dict] = None):
+    """Initialize per-run file paths for the manual gatherer session."""
     global CTX_FILE_PATH, VERBOSE_LOG_PATH
-    if CTX_FILE_PATH is None:
-        from ainalyse import get_data_directory
-        data_dir = get_data_directory()
-        CTX_FILE_PATH = os.path.join(data_dir, "ctx.txt")
-        VERBOSE_LOG_PATH = os.path.join(data_dir, "verbose.txt")
+    CTX_FILE_PATH, VERBOSE_LOG_PATH = start_new_run_paths(config)
 
 # --- Manual Gatherer Logic ---
 class Node:
@@ -130,7 +128,7 @@ async def mcp_get_tool_text_content(session: ClientSession, tool_name: str, para
 
 async def run_manual_gatherer_agent(config: dict):
     """Manual gatherer that processes user-selected functions without LLM."""
-    _init_paths()  # Initialize file paths lazily to avoid circular imports
+    _init_paths(config)
     
     server_url = config["MCP_SERVER_URL"]
     manual_functions = config.get("manual_functions", [])

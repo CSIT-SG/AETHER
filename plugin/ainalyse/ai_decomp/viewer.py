@@ -126,7 +126,12 @@ class AIDecompViewer(ida_kernwin.simplecustviewer_t):
         if existing_decomp and isinstance(existing_decomp, str) and len(existing_decomp) > 0:
             self.ShowDecompilation(existing_decomp)
         elif self.is_generating:
-            self.ShowMessage("Generating AI decompilation, please wait...\n\nThis may take a while for large functions or complex code.")
+            self.ShowMessage(
+                "Generating AI decompilation...\n"
+                "Please wait.\n\n"
+                "If a popup appears, it is expected: decompilation-related IDA work runs on the main thread, "
+                "while LLM indexing/sending runs in background."
+            )
         else:
             self.ShowMessage("No AI decompilation available for this function.\n\nUse 'AI-enhanced decompilation (slow!)' from the context menu to create one.")
 

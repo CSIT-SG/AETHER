@@ -1,0 +1,19 @@
+Analyze the following C pseudocode function. Use the provided context to inform your understanding of the function's behavior and to produce high-quality renames.
+
+### CALL TREE:
+{call_tree}
+
+### Context: Indexing Metadata
+{idx_info}
+
+### Context: Summaries of Called Functions (Callees)
+These functions are called by the current function. Use their summaries to understand how data is being processed.
+{child_summaries}
+
+### Target Function Code: {func_name}
+```c
+{c_code}
+```
+
+---
+Perform your analysis. Start with a START_THINK/END_THINK block and then call the required tools.

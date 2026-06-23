@@ -7,6 +7,7 @@ import json
 import os
 import sys
 import time
+import warnings
 from copy import deepcopy
 from urllib.parse import urlparse
 
@@ -16,15 +17,18 @@ from mcp.client.session import ClientSession
 from mcp.client.sse import sse_client
 
 from .async_manager import run_async_in_ida  # Re-export for backward compatibility
+from .env_context import BinaryEnvironment
 
 # --- Internal Imports ---
 from .ssl_helper import create_openai_client_with_custom_ca
 
 # Extra options prompt
-PROMPT_ANNOTATOR_OPTIONS = os.path.join(os.path.dirname(__file__), "prompts/annotator-comment-options.txt")
+PROMPT_ANNOTATOR_OPTIONS = os.path.join(os.path.dirname(__file__), "prompts/annotator-comment-options.json")
 
 # Re-export run_async_in_ida for backward compatibility
-__all__ = ['run_async_in_ida']
+__all__ = ["run_async_in_ida"]
+
+warnings.filterwarnings("ignore", category=RuntimeWarning, message="coroutine .* was never awaited")
 
 
 # --- Config ---
@@ -32,19 +36,20 @@ def get_config_file_path():
     """Get the appropriate configuration file path based on platform."""
     if sys.platform == "win32":
         # Use AppData/Local on Windows
-        appdata_local = os.environ.get('LOCALAPPDATA')
+        appdata_local = os.environ.get("LOCALAPPDATA")
         if appdata_local:
             config_dir = os.path.join(appdata_local, "AETHER-IDA")
         else:
             # Fallback if LOCALAPPDATA is not set
             config_dir = os.path.join(os.path.expanduser("~"), "AppData", "Local", "AETHER-IDA")
-        
+
         # Create directory if it doesn't exist
         os.makedirs(config_dir, exist_ok=True)
         return os.path.join(config_dir, "config.json")
     else:
         # Use the original location on non-Windows platforms
         return os.path.join(os.path.dirname(os.path.dirname(__file__)), "ainalyse-config.json")
+
 
 CONFIG_FILE = get_config_file_path()
 
@@ -59,23 +64,47 @@ DEFAULT_CONFIG = {
     "AI_DECOMP_MODEL": "",  # Falls back to OPENAI_MODEL if empty
     "SINGLE_ANALYSIS_MODEL": "",  # Falls back to OPENAI_MODEL if empty
     "STRUCT_CREATOR_MODEL": "",  # Falls back to OPENAI_MODEL if empty
-    "ANNOTATOR_MAX_TOKENS": 30000,
+    "INDEX_AGENT_MODEL": "",  # Falls back to OPENAI_MODEL if empty
+    "INDEXING_MODEL": "",  # Falls back to OPENAI_MODEL if empty
+    "INDEXING_BATCH_SIZE": 50,
+    "INDEXING_DECOMP_CHUNK_SIZE": 20,
+    "INDEXING_MAX_FUNC_SIZE_BYTES": 24576,
+    "INDEXING_DECOMP_MAX_FUNC_SIZE_BYTES": 12288,
+    "INDEXING_DECOMP_HEARTBEAT_INTERVAL_S": 5.0,
+    "INDEXING_STUCK_FUNCTION_THRESHOLD_S": 45,
+    "INDEXING_SLOW_DECOMP_THRESHOLD_S": 5,
+    "INDEXING_DEBUG_LOGS": True,
+    "INDEXING_FAILED_RETRY_MAX": 5,
+    "INDEXING_PSEUDOCODE_CACHE_ENABLED": True,
+    "INDEXING_PSEUDOCODE_CACHE_MAX_CHARS_PER_FUNC": 0,
+    "INDEXING_PSEUDOCODE_CACHE_MAX_TOTAL_CHARS": 0,
+    "INDEXING_MAX_TOKENS": 65536,
+    "ANALYSIS_MAX_TOKENS": 65536,
+    "SYSTEM_PROMPT_AT_BOTTOM": False,
+    "PROMPT_TOKEN_WARNING": 64000,
+    "ANNOTATOR_MAX_TOKENS": 65536,
+    "DEOBFUSCATOR_MAX_TOKENS": 65536,
     "CHATBOT_MAX_TOKENS": 65536,
+    "CHATBOT_IDX_DIALOG": False,
     "OPENAI_EXTRA_BODY": {},
     "CUSTOM_CA_CERT_PATH": "",
     "CLIENT_CERT_PATH": "",
     "CLIENT_KEY_PATH": "",
+    "DEBUG": "",
+    "ALWAYS_PROMPT_MODEL": True,
     "MODEL_LIST": {
         "Qwen: Qwen3 Coder 480B A35B": "qwen/qwen3-coder",
         "OpenAI: gpt-oss-120b": "openai/gpt-oss-120b",
-        "Qwen: Qwen3 Next 80B A3B Instruct": "qwen/qwen3-next-80b-a3b-instruct"
+        "Qwen: Qwen3 Next 80B A3B Instruct": "qwen/qwen3-next-80b-a3b-instruct",
     },
     "USE_DESC": True,
     "USE_COMMENTS": True,
     "RENAME_VARS": True,
     "RENAME_FUNCS": True,
     "RENAME_FILTER_ENABLED": True,
-    "COMMENT_EVERY_LINE": False
+    "COMMENT_EVERY_LINE": False,
+    "DEBUG": False,
+    "UNFLATTEN_ATTEMPTS": 3
 }
 
 MODEL_CONFIG_KEYS = (
@@ -85,7 +114,10 @@ MODEL_CONFIG_KEYS = (
     "AI_DECOMP_MODEL",
     "SINGLE_ANALYSIS_MODEL",
     "STRUCT_CREATOR_MODEL",
+    "INDEX_AGENT_MODEL",
+    "INDEXING_MODEL",
 )
+
 
 def create_default_config():
     """Create default config file if it doesn't exist."""
@@ -94,12 +126,13 @@ def create_default_config():
             # Ensure the directory exists (especially important for Windows AppData path)
             config_dir = os.path.dirname(CONFIG_FILE)
             os.makedirs(config_dir, exist_ok=True)
-            
+
             with open(CONFIG_FILE, "w", encoding="utf-8") as f:
                 json.dump(DEFAULT_CONFIG, f, indent=2)
             print(f"[AETHER] Created default config file at {CONFIG_FILE}")
         except Exception as e:
             print(f"[AETHER] Error creating config file: {e}")
+
 
 def _write_config_file(config: dict) -> bool:
     """Write configuration to disk."""
@@ -110,6 +143,7 @@ def _write_config_file(config: dict) -> bool:
     except Exception as e:
         print(f"[AETHER] Error saving config file: {e}")
         return False
+
 
 def _validate_value_against_default(key: str, value, default_value, model_options: set[str]) -> str | None:
     """Return an error string when value is invalid, otherwise None."""
@@ -148,17 +182,15 @@ def _validate_value_against_default(key: str, value, default_value, model_option
 
     return None
 
+
 def _get_model_options(config: dict) -> set[str]:
     """Extract valid model IDs from MODEL_LIST, with default fallback."""
     model_list_value = config.get("MODEL_LIST", DEFAULT_CONFIG["MODEL_LIST"])
     if not isinstance(model_list_value, dict):
         model_list_value = DEFAULT_CONFIG["MODEL_LIST"]
 
-    return {
-        model_id.strip()
-        for model_id in model_list_value.values()
-        if isinstance(model_id, str) and model_id.strip()
-    }
+    return {model_id.strip() for model_id in model_list_value.values() if isinstance(model_id, str) and model_id.strip()}
+
 
 def get_config_validation_issues(config) -> list[str]:
     """Validate config keys and values without mutating config."""
@@ -194,6 +226,7 @@ def get_config_validation_issues(config) -> list[str]:
 
     return issues
 
+
 def sanitize_config(config) -> tuple[dict, list[str]]:
     """Return sanitized config and the list of detected issues."""
     sanitized = deepcopy(DEFAULT_CONFIG)
@@ -222,9 +255,10 @@ def sanitize_config(config) -> tuple[dict, list[str]]:
     populate_missing_models(sanitized, save_if_updated=False)
     return sanitized, issues
 
+
 def load_config():
     try:
-        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+        with open(CONFIG_FILE, encoding="utf-8") as f:
             raw_cfg = json.load(f)
     except Exception:
         raw_cfg = deepcopy(DEFAULT_CONFIG)
@@ -235,14 +269,15 @@ def load_config():
 
     return sanitized_cfg
 
+
 def populate_missing_models(config: dict, save_if_updated: bool = True) -> bool:
     """Auto-populate missing model configurations from OPENAI_MODEL if available."""
     openai_model = config.get("OPENAI_MODEL", "")
     if not openai_model:
         return False  # Can't populate if OPENAI_MODEL is not set
-    
+
     updated = False
-    
+
     for model_key in MODEL_CONFIG_KEYS:
         if model_key == "OPENAI_MODEL":
             continue
@@ -250,7 +285,7 @@ def populate_missing_models(config: dict, save_if_updated: bool = True) -> bool:
             config[model_key] = openai_model
             print(f"[AETHER] Auto-populated {model_key} with '{openai_model}'")
             updated = True
-    
+
     # Save the updated config if any changes were made
     if updated and save_if_updated:
         try:
@@ -259,8 +294,9 @@ def populate_missing_models(config: dict, save_if_updated: bool = True) -> bool:
             print("[AETHER] Updated configuration saved with auto-populated models")
         except Exception as e:
             print(f"[AETHER] Warning: Could not save updated config: {e}")
-    
+
     return updated
+
 
 def save_config(config):
     """Save config to the global config file."""
@@ -271,6 +307,7 @@ def save_config(config):
             print(f"[AETHER] - Returned {issue} to default")
 
     return _write_config_file(sanitized_config)
+
 
 def show_config_error():
     """Show error dialog about missing config."""
@@ -284,37 +321,45 @@ At minimum, you need to set your OPENAI_API_KEY and all models.
 A default configuration has been created for you."""
     ida_kernwin.warning(msg)
 
+
 def get_data_directory():
     """Get the appropriate data directory path based on platform."""
     if sys.platform == "win32":
         # Use AppData/Local on Windows
-        appdata_local = os.environ.get('LOCALAPPDATA')
+        appdata_local = os.environ.get("LOCALAPPDATA")
         if appdata_local:
             data_dir = os.path.join(appdata_local, "AETHER-IDA")
         else:
             # Fallback if LOCALAPPDATA is not set
             data_dir = os.path.join(os.path.expanduser("~"), "AppData", "Local", "AETHER-IDA")
-        
+
         # Create directory if it doesn't exist
         os.makedirs(data_dir, exist_ok=True)
         return data_dir
     else:
         # Use the original location on non-Windows platforms (in ainalyse directory)
-        return os.path.dirname(__file__)
+        parent = os.path.dirname(__file__)
+        aetherida_local = os.path.join(parent, "AETHER-IDA")
+        os.makedirs(aetherida_local, exist_ok=True)
+        return aetherida_local
+
 
 # --- Netnode Storage for Analysis History and Custom Prompts ---
 NETNODE_NAME = "$ainalyse.analysis_history.v1"
 NETNODE_PROMPTS = "$ainalyse.custom_prompts.v1"
+
 
 def get_history_netnode():
     """Gets or creates the netnode for storing analysis history."""
     nn = idaapi.netnode(NETNODE_NAME, 0, True)
     return nn
 
+
 def get_prompts_netnode():
     """Gets or creates the netnode for storing custom prompts."""
     nn = idaapi.netnode(NETNODE_PROMPTS, 0, True)
     return nn
+
 
 def save_custom_prompts(gatherer_prompt: str, annotator_prompt: str):
     """Save custom prompts to netnode."""
@@ -322,51 +367,56 @@ def save_custom_prompts(gatherer_prompt: str, annotator_prompt: str):
     try:
         data = {"gatherer": gatherer_prompt, "annotator": annotator_prompt}
         json_string = json.dumps(data)
-        nn.setblob(json_string.encode('utf-8'), 0, 'B')
+        nn.setblob(json_string.encode("utf-8"), 0, "B")
         return True
     except Exception as e:
         print(f"[AETHER] Error saving custom prompts: {e}")
         return False
 
+
 def load_custom_prompts():
     """Load custom prompts from netnode."""
     nn = get_prompts_netnode()
-    blob = nn.getblob(0, 'B')
+    blob = nn.getblob(0, "B")
     if not blob:
         return "", ""
     try:
-        data = json.loads(blob.decode('utf-8'))
+        data = json.loads(blob.decode("utf-8"))
         return data.get("gatherer", ""), data.get("annotator", "")
     except Exception as e:
         print(f"[AETHER] Error loading custom prompts: {e}")
         return "", ""
 
+
 # --- Analysis History Functions ---
 def read_analysis_history():
     """Reads the analysis history from the netnode."""
     nn = get_history_netnode()
-    blob = nn.getblob(0, 'B')
+    blob = nn.getblob(0, "B")
     if not blob:
         return []
     try:
-        return json.loads(blob.decode('utf-8'))
+        return json.loads(blob.decode("utf-8"))
     except (json.JSONDecodeError, UnicodeDecodeError):
         print("[AETHER] Error: Could not decode analysis history from netnode.")
         return []
+
 
 def write_analysis_history(history):
     """Writes the analysis history to the netnode."""
     nn = get_history_netnode()
     try:
         json_string = json.dumps(history, indent=2)
-        nn.setblob(json_string.encode('utf-8'), 0, 'B')
+        nn.setblob(json_string.encode("utf-8"), 0, "B")
         return True
     except TypeError:
         print("[AETHER] Error: Could not serialize analysis history to JSON.")
         return False
 
+
 def add_analysis_entry(gatherer_output, annotator_output, starting_function, gatherer_prompt="", annotator_prompt="", structured_data=None):
     """Adds a new analysis entry to the history."""
+
     # Use the synchronous functions directly since they must run on main thread anyway
     def _add_entry_sync():
         history = read_analysis_history()
@@ -377,11 +427,11 @@ def add_analysis_entry(gatherer_output, annotator_output, starting_function, gat
             "annotator_output": annotator_output,
             "gatherer_prompt": gatherer_prompt,
             "annotator_prompt": annotator_prompt,
-            "commands": structured_data
+            "commands": structured_data,
         }
         history.append(entry)
         return write_analysis_history(history)
-    
+
     # Execute on main thread
     return ida_kernwin.execute_sync(_add_entry_sync, ida_kernwin.MFF_WRITE)
 
@@ -397,37 +447,49 @@ def get_current_function_name():
     except:
         return "unknown"
 
+
 async def test_mcp_connection(server_url: str) -> tuple[bool, str]:
     """Test MCP server connection and metadata retrieval."""
     if urlparse(server_url).scheme not in ("http", "https"):
         return False, "Invalid MCP server URL - must start with http:// or https://"
-    
+
     try:
         # Test connection with timeout - use the original working pattern
         async with sse_client(server_url) as streams:
             async with ClientSession(streams[0], streams[1]) as session:
                 await session.initialize()
-                
+
                 # Test metadata retrieval
                 try:
                     from .gatherer import mcp_get_tool_text_content
+
                     metadata = await mcp_get_tool_text_content(session, "get_metadata")
                     if metadata and "Connection refused" not in metadata:
                         print(f"[AETHER] [Test] Retrieved metadata: {metadata[:200]}...")  # Print first 200 chars
                         return True, f"Successfully connected to MCP server and retrieved IDB metadata:\n{metadata[:500]}..."
-                        
-                    return False, "Connected to MCP server but could not retrieve IDB metadata. Please check that IDA Pro MCP plugin is installed and running (Ctrl+Alt+M)"
+
+                    return (
+                        False,
+                        "Connected to MCP server but could not retrieve IDB metadata. Please check that IDA Pro MCP plugin is installed and running (Ctrl+Alt+M)",
+                    )
                 except Exception as e:
                     error_msg = str(e)
                     if "Connection refused" in error_msg:
-                        return False, f"Connected to MCP server, but MCP server cannot connect to IDA Pro. Please ensure:\n1. IDA Pro MCP plugin is installed (Ctrl+Alt+M)\n2. IDA Pro MCP plugin is running and listening\n3. No firewall is blocking the connection\n\nError: {error_msg}"
+                        return (
+                            False,
+                            f"Connected to MCP server, but MCP server cannot connect to IDA Pro. Please ensure:\n1. IDA Pro MCP plugin is installed (Ctrl+Alt+M)\n2. IDA Pro MCP plugin is running and listening\n3. No firewall is blocking the connection\n\nError: {error_msg}",
+                        )
                     else:
-                        return False, f"Connected to MCP server but metadata test failed: {error_msg}. Please check IDA Pro MCP plugin installation and status."
-                    
+                        return (
+                            False,
+                            f"Connected to MCP server but metadata test failed: {error_msg}. Please check IDA Pro MCP plugin installation and status.",
+                        )
+
     except asyncio.TimeoutError:
         return False, f"Connection timeout to MCP server. Please ensure server is running with: ida-pro-mcp --transport {server_url}"
     except Exception as e:
-        return False, f"Failed to connect to MCP server: {str(e)}. Please ensure server is running with: ida-pro-mcp --transport {server_url}"
+        return False, f"Failed to connect to MCP server: {e!s}. Please ensure server is running with: ida-pro-mcp --transport {server_url}"
+
 
 async def validate_analysis_config(config: dict) -> tuple[bool, str]:
     """Validate configuration before running analysis."""
@@ -435,17 +497,17 @@ async def validate_analysis_config(config: dict) -> tuple[bool, str]:
     mcp_success, mcp_msg = await test_mcp_connection(config["MCP_SERVER_URL"])
     if not mcp_success:
         return False, mcp_msg
-    
+
     # Test OpenAI API
     if not config.get("OPENAI_API_KEY"):
         return False, "OPENAI_API_KEY is not set in configuration"
-    
-    try:        
+
+    try:
         custom_ca_cert_path = config.get("CUSTOM_CA_CERT_PATH", "")
         if custom_ca_cert_path:
             if not os.path.exists(custom_ca_cert_path):
                 return False, f"Custom CA certificate file not found at: {custom_ca_cert_path}"
-        
+
         client_cert_path = config.get("CLIENT_CERT_PATH", "")
         client_key_path = config.get("CLIENT_KEY_PATH", "")
         if client_cert_path or client_key_path:
@@ -455,56 +517,51 @@ async def validate_analysis_config(config: dict) -> tuple[bool, str]:
                 return False, f"Client certificate file not found at: {client_cert_path}"
             if not os.path.exists(client_key_path):
                 return False, f"Client key file not found at: {client_key_path}"
-        
+
         feature = "verify"
         client = create_openai_client_with_custom_ca(
-            config["OPENAI_API_KEY"], 
-            config["OPENAI_BASE_URL"],
-            custom_ca_cert_path,
-            client_cert_path,
-            client_key_path,
-            feature
+            config["OPENAI_API_KEY"], config["OPENAI_BASE_URL"], custom_ca_cert_path, client_cert_path, client_key_path, feature
         )
         models = client.models.list()
         model_ids = [model.id for model in models.data]
-        
+
         if config["OPENAI_MODEL"] not in model_ids:
             return False, f"Model '{config['OPENAI_MODEL']}' not found in available models: {model_ids[:5]}..."
-            
+
         return True, "Configuration validated successfully"
     except Exception as e:
-        return False, f"OpenAI API validation failed: {str(e)}"
+        return False, f"OpenAI API validation failed: {e!s}"
+
 
 def validate_basic_config(config: dict) -> tuple[bool, str]:
     """Validate basic configuration requirements (no network calls)."""
     issues = get_config_validation_issues(config)
     if issues:
         issue_lines = "\n".join(f"- {issue}" for issue in issues)
-        return False, (
-            "Configuration contains missing or invalid items:\n"
-            f"{issue_lines}\n\n"
-            f"Please edit the configuration file at:\n{CONFIG_FILE}"
-        )
+        return False, (f"Configuration contains missing or invalid items:\n{issue_lines}\n\nPlease edit the configuration file at:\n{CONFIG_FILE}")
 
     # Check for required API key
     if not config.get("OPENAI_API_KEY"):
-        return False, f"OPENAI_API_KEY is not set in configuration.\n\nPlease edit the configuration file at:\n{CONFIG_FILE}\n\nOr use the Plugin Settings editor."
-    
+        return (
+            False,
+            f"OPENAI_API_KEY is not set in configuration.\n\nPlease edit the configuration file at:\n{CONFIG_FILE}\n\nOr use the Plugin Settings editor.",
+        )
+
     # Check for required model settings
     missing_models = []
-    
+
     for model_key in MODEL_CONFIG_KEYS:
         if not config.get(model_key):
             missing_models.append(model_key)
-    
+
     if missing_models:
         return False, f"Missing required model configuration: {', '.join(missing_models)}\n\nPlease edit the configuration file at:\n{CONFIG_FILE}"
-    
+
     # Check file paths if provided
     custom_ca_cert_path = config.get("CUSTOM_CA_CERT_PATH", "")
     if custom_ca_cert_path and not os.path.exists(custom_ca_cert_path):
         return False, f"Custom CA certificate file not found at: {custom_ca_cert_path}"
-    
+
     client_cert_path = config.get("CLIENT_CERT_PATH", "")
     client_key_path = config.get("CLIENT_KEY_PATH", "")
     if client_cert_path or client_key_path:
@@ -514,48 +571,77 @@ def validate_basic_config(config: dict) -> tuple[bool, str]:
             return False, f"Client certificate file not found at: {client_cert_path}"
         if not os.path.exists(client_key_path):
             return False, f"Client key file not found at: {client_key_path}"
-    
+
     return True, "Basic configuration is valid"
+
 
 def get_model_for_component(config: dict, component: str) -> str:
     """Get the appropriate model for a specific component (gatherer, annotator, ai_decomp)."""
     component_model_key = f"{component.upper()}_MODEL"
     component_model = config.get(component_model_key, "")
-    
     # Fall back to OPENAI_MODEL if component-specific model is not set
     if not component_model:
         return config.get("OPENAI_MODEL", "")
-    
     return component_model
 
-def finalize_prompt(base_prompt, config = None):
+
+def finalize_prompt(base_prompt, config=None):
     """
-    Combines the base RE prompt with dynamic constraints derived from config.
-    Swaps STATE placeholders with ENABLED or DISABLED.
+    Combines the base RE prompt with dynamic constraints and binary metadata.
     """
     if not config:
         config = load_config()
 
-    def get_status(key):
-        return "ENABLED" if config.get(key, True) else "DISABLED"
-    
-    extra_prompt = ""
-    with open(PROMPT_ANNOTATOR_OPTIONS, "r", encoding="utf-8") as f:
-        extra_prompt = f.read()
-    
-    if not extra_prompt:
-        print("FAIL")
-        return base_prompt
+    # 1. Get Binary Context (Technical Dossier)
+    binary_context = BinaryEnvironment.get_summary()
 
-    formatted_extra = extra_prompt.format(
-        desc_state=get_status('USE_DESC'),
-        comm_state=get_status('USE_COMMENTS'),
-        vars_state=get_status('RENAME_VARS'),
-        funcs_state=get_status('RENAME_FUNCS'),
-        line_state=get_status('COMMENT_EVERY_LINE')
-    )
+    # 2. Load the JSON options/instructions
+    def is_enabled(key):
+        return bool(config.get(key, True))
 
-    return f"{base_prompt}\n{formatted_extra}"
+    try:
+        with open(PROMPT_ANNOTATOR_OPTIONS, encoding="utf-8") as f:
+            prompt_data = json.load(f)
+    except Exception as e:
+        print(f"FAIL: Could not load JSON options. Error: {e}")
+        return f"{base_prompt}\n\n{binary_context}"
+
+    def get_block(key):
+        return "\n".join(prompt_data.get(key, []))
+
+    # 3. Build instruction blocks
+    prompt_parts = []
+    prompt_parts.append(get_block("base_header"))
+
+    if is_enabled("USE_DESC"):
+        prompt_parts.append(get_block("use_desc"))
+    if is_enabled("USE_COMMENTS"):
+        prompt_parts.append(get_block("use_comments"))
+        if is_enabled("COMMENT_EVERY_LINE"):
+            prompt_parts.append(get_block("comment_every_line_true"))
+        else:
+            prompt_parts.append(get_block("comment_every_line_false"))
+
+    if is_enabled("RENAME_VARS"):
+        prompt_parts.append(get_block("rename_vars"))
+
+    if is_enabled("RENAME_FUNCS"):
+        prompt_parts.append(get_block("rename_funcs"))
+
+    prompt_parts.append(get_block("base_footer"))
+    formatted_extra = "\n\n".join([p for p in prompt_parts if p.strip()])
+
+    # 4. Final Assembly (Goal -> Environment -> Constraints)
+    final_output = [base_prompt, binary_context, formatted_extra]
+    final_prompt_string = "\n\n".join([str(p) for p in final_output if p and str(p).strip()])
+
+    # --- Debug print, uncomment to see the final prompt in the console ---
+    # print("\n" + "=" * 30 + " DEBUG: FINALIZED PROMPT " + "=" * 30)
+    # print(final_prompt_string)
+    # print("=" * 85 + "\n")
+
+    return final_prompt_string
+
 
 def check_config_and_show_error_if_invalid(config: dict) -> bool:
     """Common function to check config and show error dialog if invalid."""

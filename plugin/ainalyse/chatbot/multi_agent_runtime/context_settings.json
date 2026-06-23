@@ -1,0 +1,26 @@
+{
+  "budget": {
+    "max_tokens": 128000,
+    "system_reserve": 2000,
+    "summary_reserve": 3000,
+    "memories_reserve": 5000,
+    "tool_buffer_reserve": 10000,
+    "summarize_trigger": 0.6,
+    "truncate_trigger": 0.7,
+    "hard_limit": 0.8
+  },
+  "tool_buffer": {
+    "max_records": 100,
+    "max_tokens": 20000
+  },
+  "block_buffer": {
+    "max_raw_blocks": 20,
+    "max_tokens_ratio_of_working_buffer": 0.5,
+    "variable_summary_threshold": 3000,
+    "session_summary_target": 2500
+  },
+  "summarizer": {
+    "keep_raw_turns": 15,
+    "max_summary_tokens": 3000
+  }
+}

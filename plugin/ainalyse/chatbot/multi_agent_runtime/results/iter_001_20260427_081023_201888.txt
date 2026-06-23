@@ -1,0 +1,23 @@
+[1] role=system
+content:
+system
+
+[2] role=user
+content:
+do work
+
+=== ASSISTANT RESPONSE ===
+role: assistant
+content:
+done
+
+
+=== STORED CONVERSATION HISTORY AFTER STEP ===
+iteration: 1
+done: True
+final_analysis_len: 4
+tool_results_this_step: 0
+
+[1] role=assistant
+content:
+done

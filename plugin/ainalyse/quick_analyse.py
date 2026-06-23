@@ -103,17 +103,19 @@ class QuickAnalyseHandler(ida_kernwin.action_handler_t):
                 except Exception as e:
                     print(f"[AETHER] Error running AETHER: {e}")
                     import traceback
-                    traceback.print_exc()
+                    import logging
+                    logging.exception('Unhandled exception')
                 finally:
                     QuickAnalyseHandler.is_running = False
                 print("[AETHER] Done.")
             if start_pipeline(quick_analysis_thread(config, current_func_addr, current_func_name)) is False:
-                print(f"[AETHER] Error running Quick Analysis: Other function currently being executed")
+                print(f"[AETHER] Error running Quick Analysis: Another function is currently being executed")
                 QuickAnalyseHandler.is_running = False
         except Exception as e:
             print(f"[AETHER] Error running AETHER: {e}")
             import traceback
-            traceback.print_exc()
+            import logging
+            logging.exception('Unhandled exception')
             QuickAnalyseHandler.is_running = False
         return 1
 

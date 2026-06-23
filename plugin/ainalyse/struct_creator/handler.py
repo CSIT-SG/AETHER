@@ -58,7 +58,7 @@ def run_struct_pipeline(vdui,variable) -> bool:
                         declare_c_struct(name,[],size)
                         return True
                     except Exception as e:
-                        print(f"[AETHER] Error creating type {struct_name}: {e}")
+                        print(f"[AETHER] Error creating type {name}: {e}")
                         return False 
                 ida_kernwin.execute_sync(_declare_c_struct_sync, ida_kernwin.MFF_WRITE)
                 created_struct.add(name)
@@ -72,11 +72,11 @@ def run_struct_pipeline(vdui,variable) -> bool:
                             declare_c_struct(s,[],0)
                             return True
                         except Exception as e:
-                            print(f"[AETHER] Error creating type {struct_name}: {e}")
+                            print(f"[AETHER] Error creating type {s}: {e}")
                             return False 
 
                     ida_kernwin.execute_sync(_declare_c_struct_sync1, ida_kernwin.MFF_WRITE)
-                    created_struct.add(name)
+                    created_struct.add(s)
 
             for struct_name,size in declared_struct[-1::-1]:
                 print(f"[AETHER] Calling Annotator for {struct_name}")

@@ -77,11 +77,14 @@ The plugin leverages the IDA Pro Model Context Protocol (MCP) to communicate wit
    - Fast analysis mode for quick function insights
    - Real-time annotation with LLM-generated corrections
    - Streaming analysis for immediate feedback
+   - Smart Select analysis for LLM-guided function selection
 
 ### 4. **Structural Analysis**
    - Automatic structure creation and identification
    - Structure annotation and field naming
    - Structure member analysis and documentation
+   - Struct update and refinement support for existing structs
+   - Struct agent tooling to apply inferred structs to variables or addresses
 
 ### 5. **Customizable Analysis**
    - User-defined custom prompts for specific analysis needs
@@ -89,16 +92,26 @@ The plugin leverages the IDA Pro Model Context Protocol (MCP) to communicate wit
    - Configuration management for different analysis profiles
    - Retry analysis with different parameters
 
-### 6. **Batching & Automation**
+### 6. **Batching, Indexing & Automation**
    - Analyze multiple functions in batch mode
    - Automated context selection and gathering
    - Efficient token usage through context management
+   - Full-binary function indexing with resumable background processing
+   - Searchable function index for chatbot-assisted triage and lookup
+   - Python script generation for IDAPython automation and deobfuscation tasks
 
 ### 7. **Copilot - Interactive AI Assistant**
    - **Multi-turn Conversation**: Inquire LLM for clarifications and follow-up questions
    - **Context Management**: Select functions as context for intelligent analysis
    - **Code Summarization**: Get concise summaries of complex code sections
    - **Natural Language Queries**: Ask questions about function behavior and logic
+   - **Tool Controls**: Choose which chatbot tools are available for a session
+   - **Index Agent**: Ask questions against a pre-built function index
+
+### 8. **Experimental Analysis Tools**
+   - **Report Generator**: Generate Markdown malware-analysis reports for selected function context
+   - **AI Unflatten**: Deobfuscate flattened control flow and display cleaned pseudocode in a dedicated viewer
+   - **Auto-Analyze Binary**: Start broader automated analysis workflows from the pseudocode context menu
 
 ---
 
@@ -168,7 +181,7 @@ chmod +x install.sh
 
 After running the installation script:
 
-1. **Start the MCP Server** in a new terminal/console and run: `ida-pro-mcp --transport http://127.0.0.1:8744/sse`
+1. **Start the MCP Server** in a new terminal/console and run: ida-pro-mcp --transport http://127.0.0.1:8744/sse
 2. **Open IDA Pro** and load any binary file 
 3. **Open Pseudocode View** (Press `Tab`)
 4. **Right-click** and select `AETHER AI-RE > Plugin settings`
@@ -223,9 +236,16 @@ For developers or advanced users who prefer manual setup:
 
 In IDA Pro, navigate to the Pseudocode View (Tab key) and right-click to access AETHER features:
 
-- **Annotate Function**: Add AI-generated comments and variable names
-- **Fast Analysis**: Quick real-time analysis of current function
-- **Batch Analysis**: Analyze multiple functions at once
+- **Fast Analysis**: Quickly annotate only the current function for rapid triage
+- **Batch Analysis**: Analyze a function tree or manually selected function set, and annotate selected functions
+- **Smart Select Analysis**: Let AI pick out more important functions to analyze that are related to current function for annotation
+- **Struct Creator**: Infer and create a struct for the highlighted variable, then apply it in IDA
+- **Experimental > Report Generator**: Generate a report on the current function
+- **Experimental > AI Unflatten**: Deobfuscate flattened control flow and present cleaner pseudocode for review
+- **Experimental > Auto-Analyze Binary**: Start wider automated binary analysis workflows
+- **Indexing Binary**: Build a searchable function index with categories and importance levels for faster context retrieval
+- **Chatbot**: Use natural-language queries with tool-assisted lookups and indexed context for interactive analysis (for index, index binary before running chatbot for best effect)
+- **Python Script Generation**: Chatbot can call upon tool `generate_python_script` to create scripts for deobfuscation or other purposes
 - **Settings**: Configure API keys and analysis parameters
 
 ---
@@ -247,7 +267,45 @@ In IDA Pro, navigate to the Pseudocode View (Tab key) and right-click to access 
 
 1. Right-click on a function in Pseudocode View
 2. Use `AETHER AI-RE > Annotate function tree with default selection` to build call tree
+3. Select functions within the call tree that should be excluded/included
 4. AETHER processes the entire call chain with intelligent context management
+
+### Indexing a Binary and Reviewing Results
+
+1. Right-click in Pseudocode View and open `AETHER AI-RE > Indexing > Index Binary`
+2. Wait for indexing to complete. A completion popup will show how many functions were classified.
+3. Open `AETHER AI-RE > Indexing > Index Statistics` to review:
+   - Total indexed functions
+   - Batch progress and token usage
+   - Importance/category breakdown
+   - The exact `Index file:` path at the bottom of the statistics dialog
+4. To find the index file on disk:
+   - Copy the path shown in `Index Statistics` and open it with your file manager/editor, or
+   - Go to the default index directory:
+     - Windows: `%LOCALAPPDATA%\\AETHER-IDA\\indexes\\`
+     - Linux/macOS: `~/.idapro/ainalyse-indexes/`
+   - The file is stored as `<program_identifier>.json`.
+5. If the binary changes significantly or tags look outdated, run `AETHER AI-RE > Indexing > Re-index Binary`.
+   - This clears the previous index and rebuilds it from scratch.
+6. If indexing is interrupted, use `Resume Indexing` to continue from saved progress.
+
+### Generating a Report
+
+1. Right-click in Pseudocode View and open `AETHER AI-RE > Experimental > Generate Report on this function`
+2. AETHER gathers the selected function context and asks the configured LLM to produce a Markdown report.
+3. Review the generated report beside the binary and validate any detection logic before operational use.
+
+### AI Unflatten
+
+1. Right-click in Pseudocode View and open `AETHER AI-RE > Experimental > AI Unflatten`
+2. AETHER sends the current function pseudocode through the unflattening workflow.
+3. Review the generated cleaned pseudocode in the AI Unflattener viewer.
+
+### Python Script Generation from Chatbot
+
+1. Open `AETHER AI-RE > Open AI Chatbot`
+2. Ask the chatbot to generate an IDAPython script for a specific function and objective.
+3. The `generate_python_script` tool opens an interactive script window where generated code can be reviewed, regenerated, and run.
 
 ### Custom Prompt Analysis
 
@@ -291,6 +349,8 @@ In IDA Pro, navigate to the Pseudocode View (Tab key) and right-click to access 
    - Get pseudocode with `get_function_pseudocode`
    - Retrieve data at addresses with `get_data_at_address`
    - Find cross-references with `get_xrefs_to`
+   - Query indexed function metadata with `ask_index_agent`
+   - Launch Python script generation with `generate_python_script`
 6. **Manage Conversation** - Create action plans and tasks:
    - LLM creates action plans for complex analysis
    - Track tasks as "Not Started", "In Progress", "Completed", or "Failed"
@@ -430,6 +490,6 @@ AETHER is made possible through the dedication of Cyber Specialists under the Di
 
 ---
 
-**Last Updated**: 02/03/2026
+**Last Updated**: 23/06/2026
 
-**Version**: 2026.1
+**Version**: 2026.2

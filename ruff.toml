@@ -2,8 +2,17 @@ line-length = 150
 
 [lint]
 extend-select = [
-    "E501", # line-too-long
-    "C901", # too-complex
-    "I001", # unsorted-imports
-    "I002", # missing-required-import
+    "E",      # pycodestyle (Error)
+    "F",      # Pyflakes
+    "W",      # pycodestyle (Warning)
+    "I",      # isort (Import sorting)
+    "B",      # flake8-bugbear (Common bugs)
+    "UP",     # pyupgrade (Upgrade syntax for modern Python)
+    "N",      # pep8-naming (Naming conventions)
+    "RUF",    # Ruff-specific rules
+    "C901",   # too-complex (From your snippet)
+]
+
+ignore = [
+    "N802",   # 
 ]

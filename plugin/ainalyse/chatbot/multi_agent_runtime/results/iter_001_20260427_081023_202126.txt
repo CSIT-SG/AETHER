@@ -1,0 +1,35 @@
+[1] role=system
+content:
+system
+
+[2] role=user
+content:
+do work
+
+=== ASSISTANT RESPONSE ===
+role: assistant
+tool_calls:
+[
+  "<tests.test_executor_reasoning.DummyToolCall object at 0x7f6f1d412a50>"
+]
+content:
+
+
+=== STORED CONVERSATION HISTORY AFTER STEP ===
+iteration: 1
+done: False
+final_analysis_len: 0
+tool_results_this_step: 1
+
+[1] role=assistant
+tool_calls:
+[
+  "<tests.test_executor_reasoning.DummyToolCall object at 0x7f6f1d412a50>"
+]
+content:
+
+
+[2] role=tool
+tool_call_id: call_1
+content:
+echo:hello

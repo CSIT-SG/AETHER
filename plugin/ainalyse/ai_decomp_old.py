@@ -167,7 +167,12 @@ class AIDecompViewer(ida_kernwin.simplecustviewer_t):
         if existing_decomp and isinstance(existing_decomp, str) and len(existing_decomp) > 0:
             self.ShowDecompilation(existing_decomp)
         elif self.is_generating:
-            self.ShowMessage("Generating AI decompilation, please wait...")
+            self.ShowMessage(
+                "Generating AI decompilation...\n"
+                "Please wait.\n\n"
+                "If a popup appears, it is expected: decompilation-related IDA work runs on the main thread, "
+                "while LLM indexing/sending runs in background."
+            )
         else:
             self.ShowMessage("No AI decompilation available for this function.\nUse 'Generate AI decompilations' from the context menu to create one.")
 
@@ -279,7 +284,8 @@ def show_or_update_ai_decomp_tab(func_addr: str):
         except Exception as e:
             print(f"[AETHER] [AI Decomp] Error in _show_update_sync: {e}")
             import traceback
-            traceback.print_exc()
+            import logging
+            logging.exception('Unhandled exception')
             return False
     
     # Always use execute_sync
@@ -288,7 +294,8 @@ def show_or_update_ai_decomp_tab(func_addr: str):
     except Exception as e:
         print(f"[AETHER] [AI Decomp] Error in show_or_update_ai_decomp_tab: {e}")
         import traceback
-        traceback.print_exc()
+        import logging
+        logging.exception('Unhandled exception')
 
 def parse_ai_decomp_response(response_text: str) -> Dict[str, str]:
     """Parse AI decompilation response and extract function decompilations."""
@@ -698,7 +705,8 @@ async def run_ai_decomp_for_current_function(config: dict, func_addr: str) -> bo
     except Exception as e:
         print(f"[AETHER] [AI Decomp] Unexpected error: {e}")
         import traceback
-        traceback.print_exc()
+        import logging
+        logging.exception('Unhandled exception')
         def _error_final():
             viewer_instance = g_ai_decomp_viewers.get(AI_DECOMP_VIEW_TITLE)
             if viewer_instance:

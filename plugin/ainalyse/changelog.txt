@@ -1,9 +1,37 @@
 =====
+2026.2 - SECOND RELEASE
+=====
+
+- Report generator
+  - Generate a Markdown analysis report for the current function and related context
+  - Includes detection-oriented output such as SNORT, behavior-based detection, and YARA sections where applicable
+- Chatbot
+  - Fastlook annotation and custom annotation from Chatbot
+  - Updated and patched Stop Prompt feature
+  - Added tool selection controls and indexed-context workflows
+  - Added Python script generation tool flow for IDAPython automation and deobfuscation tasks
+- Annotations
+  - Annotation feature with Smart Select
+  - Improved refresh behavior after applying AI comments, function renames, and variable renames
+- AI Unflatten
+  - Added AI-assisted deobfuscation for flattened control flow
+  - Stores and displays unflattened pseudocode in a dedicated viewer
+- Function indexing
+  - Added full-binary indexing with resumable background processing
+  - Added index statistics, re-index, cancel, and chatbot index-agent lookup support
+- Struct workflows
+  - Added struct update/refinement support for existing structs
+  - Added struct agent/tooling support for applying inferred structs to variables or addresses
+- Installer and configuration
+  - Improved Windows and Linux installer support
+  - Added per-user configuration paths and chatbot tool configuration persistence
+
+=====
 2026.1.3 - PATCH
 =====
 
 - Improved install script functionality
-- Fix streaming issues, regex filter, config key, and scheduling 
+- Fixed streaming issues, regex filter, config key handling, and scheduling
 
 =====
 2026.1.2 - PATCH

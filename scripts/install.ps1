@@ -76,27 +76,57 @@ else
 }
 
 # --- IDA CHECK ---
-$idaExe = Get-ChildItem -Path $IDA_PATHS -Filter "ida.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+$idaExes = Get-ChildItem -Path $IDA_PATHS -Include "ida.exe", "ida64.exe" -Recurse -ErrorAction SilentlyContinue | Group-Object { $_.DirectoryName } | ForEach-Object { $_.Group[0] }
 
-if ($idaExe) {
-    $idaVersion = $idaExe.VersionInfo.FileVersion
-    Write-Host "Located IDA $idaVersion ('$($idaExe.DirectoryName)')"
+if ($idaExes) {
+    # Check if IDA is running
+    $idaProcesses = Get-Process -Name "ida", "ida64" -ErrorAction SilentlyContinue
+    if ($idaProcesses) {
+        Write-Host "Warning: IDA Pro is currently running. Please close all IDA instances before proceeding to avoid file access errors." -ForegroundColor Yellow
+        $confirm = Read-Host "Close running IDA processes automatically? (y/n/skip)"
+        if ($confirm -eq "y") {
+            Write-Host "Closing IDA processes..." -ForegroundColor Cyan
+            Stop-Process -Name "ida", "ida64" -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 2
+        } elseif ($confirm -eq "skip") {
+             Write-Host "Proceeding with caution. Installation may fail if files are locked." -ForegroundColor Yellow
+        } else {
+            Write-Host "Installation aborted by user." -ForegroundColor Red
+            exit
+        }
+    }
+
+    foreach ($ida in $idaExes) {
+        $idaVersion = $ida.VersionInfo.FileVersion
+        Write-Host "Located IDA $idaVersion ('$($ida.DirectoryName)')"
+    }
 } else {
     Write-Host "IDA is not installed on this system."
     Write-Host "Please install IDA Pro 9.0 or higher."
     exit
 }
 
-Write-Host "`n"
-Write-Host "========================================"
-Write-Host "Installing dependencies..."
-Write-Host "========================================"
-
 if (-not (Test-Path $REQUIREMENTS_FILE)) {
     Write-Host "Cannot find requirements file at $REQUIREMENTS_FILE" -ForegroundColor Red
     Write-Host "Please ensure you run this installer from the repository or that requirements.txt exists." -ForegroundColor Yellow
     exit 1
 }
+
+# 1. Download embedding model and tiktoken
+$EMBEDDINGS_FILE = Join-Path $PSScriptRoot "embedding_requirements.ps1"
+if (Test-Path $EMBEDDINGS_FILE) {
+    Write-Host "`n"
+    Write-Host "========================================"
+    Write-Host "Configuring Vector RAG Resources..."
+    Write-Host "========================================"
+    & ($EMBEDDINGS_FILE)
+}
+
+# 2. Install Python dependencies
+Write-Host "`n"
+Write-Host "========================================"
+Write-Host "Installing Python dependencies..."
+Write-Host "========================================"
 
 # Get Python Scripts directory
 $pyScripts = python -c "import sysconfig, os; print(os.path.join(sysconfig.get_path('scripts')))"
@@ -129,9 +159,13 @@ $requiredPackages = @(
     "mcp",
     "openai",
     "psutil",
+    "tiktoken",
     "PyQt5",
+    "PySide6",
+    "yara-python",
     "pydantic",
-    "python-dotenv"
+    "python-dotenv",
+    "scikit-learn"
 )
 
 foreach ($pkg in $requiredPackages) {
@@ -194,42 +228,54 @@ Write-Host "========================================"
 # Install ida_pro_mcp
 ida-pro-mcp --install
 
-# Enable PyQt5 shim in IDA cfg to support plugin UI compatibility.
+# Enable PyQt5 shim in user IDA cfg to support plugin UI compatibility.
 Write-Host "`n"
 Write-Host "========================================"
-Write-Host "Patching IDA cfg to enable ..."
+Write-Host "Patching user idapython.cfg to enable PyQt5 shim..."
 Write-Host "========================================"
 
-$idaCfgDir = Join-Path $idaExe.DirectoryName "cfg"
-if (-not (Test-Path $idaCfgDir)) {
-    Write-Host "IDA cfg directory not found at '$idaCfgDir'. Skipping cfg patch." -ForegroundColor Yellow
-} else {
-    $cfgTargets = Get-ChildItem -Path $idaCfgDir -Filter "*.cfg" -File -ErrorAction SilentlyContinue
-    $patched = $false
+function Write-Utf8NoBom {
+    param(
+        [string]$Path,
+        [string]$Content
+    )
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText($Path, $Content, $utf8NoBom)
+}
 
-    foreach ($cfgFile in $cfgTargets) {
-        $rawContent = Get-Content -Path $cfgFile.FullName -Raw -ErrorAction SilentlyContinue
-        if (-not $rawContent) {
-            continue
-        }
+$userIdaCfgDir = Join-Path $env:APPDATA "Hex-Rays\IDA Pro\cfg"
+$idapythonCfg = Join-Path $userIdaCfgDir "idapython.cfg"
 
-        if ($rawContent -match "IDAPYTHON_USE_PYQT5_SHIM") {
-            $updatedContent = $rawContent
-            $updatedContent = $updatedContent -replace '(?m)^\s*//\s*IDAPYTHON_USE_PYQT5_SHIM\s*=\s*0\s*$', 'IDAPYTHON_USE_PYQT5_SHIM = 1'
-            $updatedContent = $updatedContent -replace '(?m)^\s*IDAPYTHON_USE_PYQT5_SHIM\s*=\s*0\s*$', 'IDAPYTHON_USE_PYQT5_SHIM = 1'
+if (-not (Test-Path $userIdaCfgDir)) {
+    New-Item -ItemType Directory -Path $userIdaCfgDir -Force | Out-Null
+}
 
-            if ($updatedContent -ne $rawContent) {
-                Set-Content -Path $cfgFile.FullName -Value $updatedContent -Encoding UTF8
-                Write-Host "Updated '$($cfgFile.Name)': IDAPYTHON_USE_PYQT5_SHIM = 1" -ForegroundColor Green
-                $patched = $true
-                break
+try {
+    $rawContent = ""
+    if (Test-Path $idapythonCfg) {
+        $rawContent = Get-Content -Path $idapythonCfg -Raw -ErrorAction SilentlyContinue
+    }
+
+    if ($rawContent -match '(?m)^\s*IDAPYTHON_USE_PYQT5_SHIM\s*=\s*1\b') {
+        Write-Host "User cfg already has IDAPYTHON_USE_PYQT5_SHIM = 1 at '$idapythonCfg'." -ForegroundColor Green
+    } else {
+        $updatedContent = $rawContent
+        $updatedContent = $updatedContent -replace '(?m)^\s*//\s*IDAPYTHON_USE_PYQT5_SHIM\s*=\s*.*$', 'IDAPYTHON_USE_PYQT5_SHIM = 1'
+        $updatedContent = $updatedContent -replace '(?m)^\s*IDAPYTHON_USE_PYQT5_SHIM\s*=\s*.*$', 'IDAPYTHON_USE_PYQT5_SHIM = 1'
+
+        if ($updatedContent -eq $rawContent) {
+            if ([string]::IsNullOrWhiteSpace($updatedContent)) {
+                $updatedContent = "IDAPYTHON_USE_PYQT5_SHIM = 1`r`n"
+            } else {
+                $updatedContent = $updatedContent.TrimEnd("`r", "`n") + "`r`nIDAPYTHON_USE_PYQT5_SHIM = 1`r`n"
             }
         }
-    }
 
-    if (-not $patched) {
-        Write-Host "No matching 'IDAPYTHON_USE_PYQT5_SHIM = 0' line found in '$idaCfgDir'." -ForegroundColor Yellow
+        Write-Utf8NoBom -Path $idapythonCfg -Content $updatedContent
+        Write-Host "Set IDAPYTHON_USE_PYQT5_SHIM = 1 in '$idapythonCfg'." -ForegroundColor Green
     }
+} catch {
+    Write-Host "Error updating '$idapythonCfg': $($_.Exception.Message)" -ForegroundColor Red
 }
 
 Write-Host "`n"

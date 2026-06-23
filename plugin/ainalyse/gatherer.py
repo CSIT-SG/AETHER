@@ -3,6 +3,7 @@ import json
 import os
 import re
 import traceback
+import logging
 from typing import Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
@@ -12,8 +13,8 @@ from mcp.client.sse import sse_client
 from PyQt5 import QtCore, QtWidgets
 
 from ainalyse.ssl_helper import create_openai_client_with_custom_ca
-from ainalyse.utils import check_and_add_intranet_headers
 
+from .log_gatherer_annotator import start_new_run_paths
 from .custom_set_cmt import custom_get_pseudocode
 
 # --- File Paths ---
@@ -23,14 +24,10 @@ PROMPT_GATHERER = os.path.join(os.path.dirname(__file__), "prompts/gatherer-prom
 CTX_FILE_PATH = None
 VERBOSE_LOG_PATH = None
 
-def _init_paths():
-    """Initialize file paths lazily to avoid circular imports"""
+def _init_paths(config: Optional[dict] = None):
+    """Initialize per-run file paths for the gatherer session."""
     global CTX_FILE_PATH, VERBOSE_LOG_PATH
-    if CTX_FILE_PATH is None:
-        from ainalyse import get_data_directory
-        data_dir = get_data_directory()
-        CTX_FILE_PATH = os.path.join(data_dir, "ctx.txt")
-        VERBOSE_LOG_PATH = os.path.join(data_dir, "verbose.txt")
+    CTX_FILE_PATH, VERBOSE_LOG_PATH = start_new_run_paths(config)
 
 # --- Gatherer Logic ---
 class Node:
@@ -131,9 +128,6 @@ def call_openai_llm_gatherer(prompt_content: str, api_key: str, model: str, base
         # Add extra_body if provided
         if extra_body:
             request_params["extra_body"] = extra_body
-        
-        # Check for intranet.txt and add headers if needed
-        check_and_add_intranet_headers(request_params)
         
         response = client.chat.completions.create(**request_params)
         return response.choices[0].message.content.strip()
@@ -269,8 +263,6 @@ class GatheringResultsDialog(QtWidgets.QDialog):
         return self.user_choice
 
 async def run_gatherer_agent(config: dict):
-    _init_paths()  # Initialize file paths lazily to avoid circular imports
-    
     server_url = config["MCP_SERVER_URL"]
     api_key = config["OPENAI_API_KEY"]
     model = config["GATHERER_MODEL"]
@@ -290,6 +282,7 @@ async def run_gatherer_agent(config: dict):
         return False
 
     custom_user_prompt = config.get("custom_user_prompt", "").strip()
+    _init_paths(config)
 
     # --- Function Filter List is now imported from shared module ---
     while True:
@@ -375,7 +368,7 @@ async def run_gatherer_agent(config: dict):
                                 vf.write(current_prompt_content)
                                 vf.write("\n--- END PROMPT ---\n")
                         except Exception as e:
-                            print(f"[AETHER] Error writing to verbose.txt: {e}")
+                            print(f"[AETHER] Error writing to verbose log: {e}")
 
                         # Print the function call tree to the IDA console after each iteration
                         print(f"[AETHER] [Gatherer] Function call tree after iteration {i+1}:\n{tree_str}")
@@ -407,6 +400,7 @@ async def run_gatherer_agent(config: dict):
                                     continue
                                     
                                 func_details = await mcp_get_tool_json_content(session, "get_function_by_name", {"name": func_to_add_name_llm})
+                                # func_details is not retrieving the correct current function names
                                 if not func_details or "address" not in func_details:
                                     print(f"[AETHER] [Gatherer] Could not get details for '{func_to_add_name_llm}'. Skipping.")
                                     continue
@@ -500,10 +494,15 @@ async def run_gatherer_agent(config: dict):
                     
                     def show_results_dialog():
                         try:
+                            app = QtWidgets.QApplication.instance()
+                            if app is None or app.closingDown():
+                                dialog_result_container["choice"] = "continue"
+                                dialog_result_container["completed"] = True
+                                return False
+
                             dlg = GatheringResultsDialog(final_tree_str, pseudocode_store)
                             
                             # Connect to the main application to ensure proper parenting
-                            app = QtWidgets.QApplication.instance()
                             if app:
                                 dlg.setParent(None)  # No parent for top-level dialog
                                 dlg.setWindowFlags(QtCore.Qt.Dialog | QtCore.Qt.WindowStaysOnTopHint)

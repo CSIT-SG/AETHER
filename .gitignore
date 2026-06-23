@@ -77,3 +77,5 @@ Desktop.ini
 
 # Others
 AETHER.zip
+*.tiktoken
+*.gguf

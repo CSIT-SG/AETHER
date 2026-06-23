@@ -11,7 +11,6 @@ from mcp.client.session import ClientSession
 from mcp.client.sse import sse_client
 from ainalyse.ssl_helper import create_openai_client_with_custom_ca
 from ainalyse.custom_set_cmt import scmt  # Import custom set_comment implementation
-from ainalyse.utils import check_and_add_intranet_headers
 
 from .tools import declare_c_struct
 from .util import extract_pseudocode
@@ -64,9 +63,6 @@ def call_openai_llm_annotator(system_prompt: str, user_prompt: str, api_key: str
         # Add extra_body if provided
         if extra_body:
             request_params["extra_body"] = extra_body
-        
-        # Check for intranet.txt and add headers if needed
-        check_and_add_intranet_headers(request_params)
         
         response = client.chat.completions.create(**request_params)
         return response.choices[0].message.content.strip()
@@ -298,9 +294,6 @@ async def run_identifier_agent(config: dict, variable_name:str):
                     if extra_body:
                         request_params["extra_body"] = extra_body
                     
-                    # Check for intranet.txt and add headers if needed
-                    check_and_add_intranet_headers(request_params)
-                    
                     stream = client.chat.completions.create(**request_params)
                     print("[AETHER] [Annotator] Streaming LLM response and collecting suggestions...")
                     
@@ -309,7 +302,7 @@ async def run_identifier_agent(config: dict, variable_name:str):
 
                     # Collect full response first, then parse all at once
                     for chunk in stream:
-                        if hasattr(chunk, "usage") and chunk.usage:  # Usage may arrive on every chunk, not just the final one
+                        if hasattr(chunk, "usage") and chunk.usage: # Final chunk with usage info
                             prompt_tokens = chunk.usage.prompt_tokens
                             completion_tokens = chunk.usage.completion_tokens
                             total_tokens = chunk.usage.total_tokens
@@ -317,9 +310,7 @@ async def run_identifier_agent(config: dict, variable_name:str):
                             print(f"[AETHER] [Annotator] Prompt tokens: {prompt_tokens}")
                             print(f"[AETHER] [Annotator] Completion tokens: {completion_tokens}")
                             print(f"[AETHER] [Annotator] Total tokens: {total_tokens}")
-
-                        if not hasattr(chunk, "choices") or len(chunk.choices) == 0:
-                            continue
+                            continue  # skip further processing for final chunk
 
                         content = getattr(chunk.choices[0].delta, "content", None)
                         if content is None:
