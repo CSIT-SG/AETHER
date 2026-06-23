@@ -96,9 +96,11 @@ class SetCommentResult(TypedDict):
     address: str
     comment: str
 
+
 class FuncNameAddr(TypedDict):
     function_name: str
     address: str
+
 
 class ListFunctionResult(TypedDict):
     count: int
