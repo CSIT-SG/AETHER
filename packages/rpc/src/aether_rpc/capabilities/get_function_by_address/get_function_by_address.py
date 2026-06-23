@@ -1,5 +1,6 @@
 from ..base import Capability
-from ..result import Result
+from ..result import Err, Ok, Result
+from ..types import FunctionMetadata
 from ..utils import get_function, resolve_effective_address
 
 
@@ -10,7 +11,7 @@ class GetFunctionByAddress(Capability):
     def name(self) -> str:
         return "get_function_by_address"
 
-    def execute(self, address: str | int) -> Result:
+    def execute(self, address: str | int) -> Result[FunctionMetadata]:
         """Look up the function enclosing the given address and return its metadata.
 
         Args:
@@ -24,14 +25,11 @@ class GetFunctionByAddress(Capability):
         ea = resolve_effective_address(address)
         if ea is None:
             self.logger.error(f"Invalid address: {address}")
-            return Result(success=False, result={"error": f"Invalid address: {address}"})
+            return Err(result=f"Invalid address: {address}")
 
         func = get_function(ea)
         if func is None:
             self.logger.warning(f"No function found containing address {hex(ea)}")
-            return Result(
-                success=False,
-                result={"error": f"No function found containing address {hex(ea)}"},
-            )
+            return Err(result=f"No function found containing address {hex(ea)}")
 
-        return Result(success=True, result=dict(func))
+        return Ok(result=FunctionMetadata(func))

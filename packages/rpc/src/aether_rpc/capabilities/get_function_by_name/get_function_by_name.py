@@ -1,7 +1,8 @@
 from aether_rpc.capabilities.utils import get_function, resolve_function_name
 
 from ..base import Capability
-from ..result import Result
+from ..result import Err, Ok, Result
+from ..types import FunctionMetadata
 
 
 class GetFunctionByName(Capability):
@@ -11,7 +12,7 @@ class GetFunctionByName(Capability):
     def name(self) -> str:
         return "get_function_by_name"
 
-    def execute(self, function_name: str) -> Result:
+    def execute(self, function_name: str) -> Result[FunctionMetadata]:
         """Look up a function by name and return its metadata.
 
         Args:
@@ -25,12 +26,9 @@ class GetFunctionByName(Capability):
         ea = resolve_function_name(function_name)
         if ea is None:
             self.logger.error(f"Symbol '{function_name}' not found")
-            return Result(success=False, result={"error": f"Symbol '{function_name}' not found"})
+            return Err(result=f"Symbol '{function_name}' not found")
         func = get_function(ea)
         if func is None:
             self.logger.error(f"Symbol '{function_name}' at {hex(ea)} is not a function")
-            return Result(
-                success=False,
-                result={"error": f"Symbol '{function_name}' at {hex(ea)} is not a function"},
-            )
-        return Result(success=True, result=dict(func))
+            return Err(result=f"Symbol '{function_name}' at {hex(ea)} is not a function")
+        return Ok(result=FunctionMetadata(func))

@@ -79,3 +79,20 @@ class LocalVar(TypedDict):
     is_arg_var: bool
     is_stk_var: bool
     is_reg_var: bool
+
+class RenameFuncResult(TypedDict):
+    address: str
+    new_name: str
+
+class RenameLocalVarResult(TypedDict):
+    function_address: str
+    old_var_name: str
+    new_var_name: str
+
+class SetCommentResult(TypedDict):
+    address: str
+    comment: str
+
+class ListFunctionResult(TypedDict):
+    count: int
+    functions: list[str]

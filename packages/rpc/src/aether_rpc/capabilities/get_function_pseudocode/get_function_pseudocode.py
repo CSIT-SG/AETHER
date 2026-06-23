@@ -1,7 +1,8 @@
 import ida_hexrays
 
 from ..base import Capability
-from ..result import Result
+from ..result import Err, Ok, Result
+from ..types import FunctionPseudocode
 from ..utils import resolve_function_name
 
 
@@ -12,7 +13,7 @@ class GetFunctionPseudocode(Capability):
     def name(self) -> str:
         return "get_function_pseudocode"
 
-    def execute(self, function_name: str) -> Result:
+    def execute(self, function_name: str) -> Result[FunctionPseudocode]:
         """Decompile a function and return its pseudocode as a string.
 
         Runs decompilation on the main thread via execute_sync since
@@ -29,29 +30,20 @@ class GetFunctionPseudocode(Capability):
         ea = resolve_function_name(function_name)
         if ea is None:
             self.logger.error(f"Symbol '{function_name}' not found")
-            return Result(success=False, result={"error": f"Symbol '{function_name}' not found"})
+            return Err(result=f"Symbol '{function_name}' not found")
 
         try:
             cfunc = ida_hexrays.decompile(ea)
         except ida_hexrays.DecompilationFailure as e:
             self.logger.error("Failed to decompile %r: %s", function_name, e)
-            return Result(
-                success=False,
-                result={"error": f"Failed to decompile {function_name!r}: {e}"},
-            )
+            return Err(result=f"Failed to decompile {function_name!r}: {e}")
 
         if cfunc is None:
             self.logger.error("Decompilation returned no result for %r", function_name)
-            return Result(
-                success=False,
-                result={"error": f"Decompilation returned no result for {function_name!r}"},
-            )
+            return Err(result=f"Decompilation returned no result for {function_name!r}")
 
-        return Result(
-            success=True,
-            result={
-                "name": function_name,
-                "start_address": hex(ea),
-                "pseudocode": str(cfunc),
-            },
-        )
+        return Ok(result=FunctionPseudocode(
+                name=function_name,
+                start_address=hex(ea),
+                pseudocode=str(cfunc),
+        ))

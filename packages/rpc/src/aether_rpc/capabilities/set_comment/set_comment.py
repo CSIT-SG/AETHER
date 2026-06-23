@@ -3,7 +3,8 @@ import ida_funcs
 import ida_hexrays
 
 from ..base import Capability
-from ..result import Result
+from ..result import Err, Ok, Result
+from ..types import SetCommentResult
 from ..utils import refresh_pseudocode, resolve_effective_address
 
 
@@ -19,7 +20,7 @@ class SetComment(Capability):
     def name(self) -> str:
         return "set_comment"
 
-    def execute(self, address: str | int, comment: str) -> Result:
+    def execute(self, address: str | int, comment: str) -> Result[SetCommentResult]:
         """Resolve the address and dispatch to the appropriate comment strategy.
 
         Args:
@@ -34,15 +35,12 @@ class SetComment(Capability):
         ea = resolve_effective_address(address)
         if ea is None:
             self.logger.error(f"Invalid address: {address}")
-            return Result(success=False, result={"error": f"Invalid address: {address}"})
+            return Err(result=f"Invalid address: {address}")
 
         func = ida_funcs.get_func(ea)
         if func is None:
             self.logger.error("Address %s is not inside a function", hex(ea))
-            return Result(
-                success=False,
-                result={"error": f"Address {hex(ea)} is not inside a function"},
-            )
+            return Err(result=f"Address {hex(ea)} is not inside a function")
 
         if ea == func.start_ea:
             success = self._set_function_header_comment(func, ea, comment)
@@ -50,14 +48,11 @@ class SetComment(Capability):
             success = self._set_pseudocode_comment(func, ea, comment)
 
         if not success:
-            return Result(
-                success=False,
-                result={"error": f"Failed to set comment at {hex(ea)}"},
-            )
+            return Err(result=f"Failed to set comment at {hex(ea)}")
 
         refresh_pseudocode(func.start_ea)
 
-        return Result(success=True, result={"address": hex(ea), "comment": comment})
+        return Ok(result=SetCommentResult(address=hex(ea), comment=comment))
 
     def _set_function_header_comment(self, func: ida_funcs.func_t, ea: int, comment: str) -> bool:
         """Write a comment that appears above the function signature in pseudocode.

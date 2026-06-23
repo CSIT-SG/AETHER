@@ -5,10 +5,9 @@ import ida_nalt
 import ida_name
 from idautils import XrefsFrom, XrefsTo
 
-from aether_rpc.capabilities.types import AddressData, PointerInfo
-
 from ..base import Capability
-from ..result import Result
+from ..result import Err, Ok, Result
+from ..types import AddressData, PointerInfo
 from ..utils import (
     collect_xrefs,
     function_info,
@@ -23,7 +22,7 @@ class GetDataAtAddress(Capability):
     def name(self) -> str:
         return "get_data_at_address"
 
-    def execute(self, location: str | int) -> Result:
+    def execute(self, location: str | int) -> Result[AddressData]:
         """Collect and return all available data at the given address or symbol.
 
         Args:
@@ -36,14 +35,11 @@ class GetDataAtAddress(Capability):
         ea = resolve_effective_address(location)
         if ea is None:
             self.logger.error("Error: Could not resolve '%s'.", location)
-            return Result(success=False, result={"error": f"Could not resolve '{location}'"})
+            return Err(result=f"Could not resolve '{location}'")
 
         if not ida_bytes.is_loaded(ea):
             self.logger.error("Address %s is not loaded in the database", hex(ea))
-            return Result(
-                success=False,
-                result={"error": f"Address {hex(ea)} is not loaded in the database"},
-            )
+            return Err(result=f"Address {hex(ea)} is not loaded in the database")
 
         flags = ida_bytes.get_flags(ea)
         item_size = max(ida_bytes.get_item_size(ea), 1)
@@ -64,7 +60,7 @@ class GetDataAtAddress(Capability):
             xrefs_from=[collect_xrefs(x) for x in XrefsFrom(ea)],
         )
 
-        return Result(success=True, result=dict(data))
+        return Ok(result=data)
 
     def _get_disassembly(self, ea: int, flags: int) -> str | None:
         """Return the disassembly line at ``ea``, or ``None`` if not code.

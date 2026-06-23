@@ -2,7 +2,8 @@ import ida_funcs
 import ida_name
 
 from ..base import Capability
-from ..result import Result
+from ..result import Err, Ok, Result
+from ..types import RenameFuncResult
 from ..utils import resolve_effective_address
 
 
@@ -13,7 +14,7 @@ class RenameFunction(Capability):
     def name(self) -> str:
         return "rename_function"
 
-    def execute(self, address: str | int, new_name: str) -> Result:
+    def execute(self, address: str | int, new_name: str) -> Result[RenameFuncResult]:
         """Rename the function at the given address.
 
         Args:
@@ -27,23 +28,15 @@ class RenameFunction(Capability):
         ea = resolve_effective_address(address)
         if ea is None:
             self.logger.error(f"Invalid address: {address}")
-            return Result(success=False, result={"error": f"Invalid address: {address}"})
+            return Err(result=f"Invalid address: {address}")
 
         elif (func := ida_funcs.get_func(ea)) is None:
             self.logger.error(f"No function found at {hex(ea)}")
-            return Result(success=False, result={"error": f"No function found at {hex(ea)}"})
+            return Err(result=f"No function found at {hex(ea)}")
 
         elif ida_name.set_name(func.start_ea, new_name, ida_name.SN_NOWARN):
             self.logger.info(f"Renamed function at {hex(func.start_ea)} to '{new_name}'")
-            return Result(
-                success=True,
-                result={"address": hex(func.start_ea), "new_name": new_name},
-            )
+            return Ok(result=RenameFuncResult(address=hex(func.start_ea), new_name=new_name))
 
         self.logger.error(f"Failed to rename function at {hex(func.start_ea)} to '{new_name}'")
-        return Result(
-            success=False,
-            result={
-                "error": f"Failed to rename function at {hex(func.start_ea)} to '{new_name}'"
-            },
-        )
+        return Err(result=f"Failed to rename function at {hex(func.start_ea)} to '{new_name}'")

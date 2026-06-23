@@ -37,7 +37,6 @@ For another example:
 It's possible for some binaries to roll their own cryptography. If through your analysis you determine that a function may be performing certain recognisable encryption or decryption, appropriate annotations may follow.
 
 My examples are solely meant for guidance. You should take an exploratory approach in your thought process to perform substantial and meaningful analysis of the segment of the program given to you to make insightful improvements to the psuedocode.
-        
         """,
         tools=internal_tool_registry.get_tools(SubagentTool.ANNOTATOR),
     )
@@ -50,6 +49,11 @@ My examples are solely meant for guidance. You should take an exploratory approa
     )
 
     async for event in result.stream_events():
-        yield Log(str(event))
+        if event.type != "run_item_stream_event":
+            continue
+
+        item = event.item
+        if item.type == "tool_call_output_item":
+            yield Log(f"tool output: {item.output}")
 
     yield Return(None)

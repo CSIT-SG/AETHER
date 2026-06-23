@@ -4,7 +4,7 @@ import idautils
 from aether_rpc.capabilities.types import XrefsResult
 
 from ..base import Capability
-from ..result import Result
+from ..result import Err, Ok, Result
 from ..utils import collect_xrefs, resolve_effective_address
 
 
@@ -15,7 +15,7 @@ class GetXrefsTo(Capability):
     def name(self) -> str:
         return "get_xrefs_to"
 
-    def execute(self, location: str | int) -> Result:
+    def execute(self, location: str | int) -> Result[XrefsResult]:
         """Find all locations that reference the given address or symbol name.
 
         Args:
@@ -29,9 +29,13 @@ class GetXrefsTo(Capability):
         ea = resolve_effective_address(location)
         if ea is None:
             self.logger.error(f"Invalid location: {location}")
-            return Result(success=False, result={"error": f"Invalid location: {location}"})
+            return Err(result=f"Invalid location: {location}")
 
-        xrefs = [collect_xrefs(x) for x in idautils.XrefsTo(ea)]
+        try:
+            xrefs = [collect_xrefs(x) for x in idautils.XrefsTo(ea)]
+        except Exception as e:
+            self.logger.exception("Failed to collect xrefs at %s: %s", hex(ea), e)
+            return Err(result=f"Failed to collect xrefs at {hex(ea)}: {e}")
 
         data = XrefsResult(
             target_address=hex(ea),
@@ -40,4 +44,4 @@ class GetXrefsTo(Capability):
             xrefs=xrefs,
         )
 
-        return Result(success=True, result=dict(data))
+        return Ok(result=data)
