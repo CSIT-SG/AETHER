@@ -8,9 +8,8 @@ This is the high-level architecture of Aether. The main components are:
 
 - **IDA Pro**
 - **AETHER rpc**: Provides a low level interface to IDA Pro's API, exposing it as a JSON-RPC server.
-- **AETHER backend**: Manages connections between the many IDA Pro instances and implements tool call logic, exposing a higher level API to the LLM. 
+- **AETHER backend**: Manages connections between the many IDA Pro instances and implements agentic tool call logic, exposing a higher level API to the LLM. 
     Also manages chatbot memory and holds system prompts.
-- **Agents**: A collection of subagents that spawn from aether_backend. 
 - **AETHER gui**: A gui client.
 - **AETHER cli**: A command line client.
 
@@ -30,34 +29,31 @@ In the future, we may support other reverse engineering tools (e.g. Ghidra).
 
 We expose low level access to IDA Pro's API via an RPC server. We use [rpyc](https://rpyc.readthedocs.io/en/latest/) for this.
 
-There is one RPC server per IDA Pro instance. On IDA startup, it will register itself with the MCP controller server.
+There is one RPC server per IDA Pro instance. On IDA startup, it will register itself with the MCP controller server by writing its port and id to a shared file.
 
-The only responsibility of this server is to forward low level IDA calls to the Aether MCP server.
+The only responsibility of this server is to forward low level IDA calls to the Aether backend.
 
 <Callout type="warning">
 Do not directly expose ida api calls. Use a wrapper to expose specific functionalities.
 </Callout>
 
-### Aether MCP
+### Aether Backend
 
-The MCP server is the core of the system. It manages all the IDA Pro instances and implements the logic for calling tools and agents.
+Aether backend manages all the IDA Pro instances and implements the logic for calling tools and agents.
 
-We implement agent specific logic here, eg. memory management, system prompts, tool call logic, etc.
+We implement agent specific logic here, eg. memory management, system prompts, tool call logic, etc. For example,
+a tool call may spawn a subagent that in turn calls rpc functions. 
 
 Under the hood, tool calls are routed to the appropriate RPC server.
 
 
-### LLM and Agents
-
-For each task, we have a collection of agents that can be called. Each agent has a specific role and set of tools it can call.
-
 ### Clients
 
-We have two clients: a GUI and a CLI. Both clients are able to spawn agents (which then in turn call the mcp server) and display the results.
+We have two clients: a GUI and a CLI.
 
 #### Aether GUI
 
-We request the mcp server to spawn an LLM agent for each call. We just act as the client that sends requests and displays responses.
+We act as a graphical entrypoint and a mcp client to connect to our backend. 
 
 #### Aether CLI
 
