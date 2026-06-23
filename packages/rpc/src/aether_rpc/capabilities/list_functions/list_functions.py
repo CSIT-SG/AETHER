@@ -3,7 +3,7 @@ import idautils
 
 from ..base import Capability
 from ..result import Err, Ok, Result
-from ..types import ListFunctionResult
+from ..types import FuncNameAddr, ListFunctionResult
 
 
 class ListFunctions(Capability):
@@ -24,7 +24,7 @@ class ListFunctions(Capability):
             address) and their count.
         """
         try:
-            functions = [f"{ida_funcs.get_func_name(ea)} {hex(ea)}" for ea in idautils.Functions()]
+            functions = [FuncNameAddr(function_name=ida_funcs.get_func_name(ea), address=hex(ea)) for ea in idautils.Functions()]
         except Exception as e:
             self.logger.exception("Failed to list functions: %s", e)
             return Err(result=f"Failed to list functions: {e}")
