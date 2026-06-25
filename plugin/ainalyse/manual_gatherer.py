@@ -13,6 +13,7 @@ from mcp.client.session import ClientSession
 from mcp.client.sse import sse_client
 
 # -- Internal Imports --
+from ainalyse import is_debug_enabled
 from .log_gatherer_annotator import start_new_run_paths
 from .custom_set_cmt import custom_get_pseudocode
 
@@ -129,6 +130,7 @@ async def mcp_get_tool_text_content(session: ClientSession, tool_name: str, para
 async def run_manual_gatherer_agent(config: dict):
     """Manual gatherer that processes user-selected functions without LLM."""
     _init_paths(config)
+    debug = is_debug_enabled(config)
     
     server_url = config["MCP_SERVER_URL"]
     manual_functions = config.get("manual_functions", [])
@@ -305,14 +307,14 @@ async def run_manual_gatherer_agent(config: dict):
                         f.write("\n\nFINAL PSEUDOCODE LISTING:\n")
                         f.write(final_pseudocode_listing_str)
                     
-                    # Log to verbose file
-                    with open(VERBOSE_LOG_PATH, "a", encoding="utf-8") as vf:
-                        vf.write("\n--- Manual Gatherer Session ---\n")
-                        vf.write(f"Root Function: {root_func_name} at {root_func_addr}\n")
-                        vf.write(f"Selected Functions: {[f['name'] for f in manual_functions]}\n")
-                        vf.write("Final Call Tree:\n")
-                        vf.write(final_tree_str)
-                        vf.write("\n--- END Manual Gatherer Session ---\n")
+                    if debug:
+                        with open(VERBOSE_LOG_PATH, "a", encoding="utf-8") as vf:
+                            vf.write("\n--- Manual Gatherer Session ---\n")
+                            vf.write(f"Root Function: {root_func_name} at {root_func_addr}\n")
+                            vf.write(f"Selected Functions: {[f['name'] for f in manual_functions]}\n")
+                            vf.write("Final Call Tree:\n")
+                            vf.write(final_tree_str)
+                            vf.write("\n--- END Manual Gatherer Session ---\n")
                         
                 except Exception as e:
                     print(f"[AETHER] [Manual Gatherer] Error writing output files: {e}")

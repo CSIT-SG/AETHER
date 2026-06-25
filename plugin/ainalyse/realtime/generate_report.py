@@ -247,8 +247,9 @@ async def run_generate_report_common(config: dict, current_func_name: str, curre
                         else:
                             print("[AETHER] [Yara] Yara rules succeeded in detecting Binary. Proceeding...")
                             break
-                with open(binary_name + "_code_" + current_func_name + ".txt", "w", encoding='utf-8') as outputfile:
-                    outputfile.write(context)
+                if debug:
+                    with open(binary_name + "_code_" + current_func_name + ".txt", "w", encoding='utf-8') as outputfile:
+                        outputfile.write(context)
                 with open(binary_name + "_report_" + current_func_name + ".md", "w", encoding='utf-8') as outputfile:
                     outputfile.write(llm_response.replace("func_", "aire_"))
                 elapsed_time = time.time() - start_time

@@ -1787,7 +1787,7 @@ def _index_binary_thread(
         decomp_heartbeat_interval_s = float(config.get("INDEXING_DECOMP_HEARTBEAT_INTERVAL_S", DEFAULT_DECOMP_HEARTBEAT_INTERVAL_S))
         stuck_threshold_s = int(config.get("INDEXING_STUCK_FUNCTION_THRESHOLD_S", DEFAULT_STUCK_FUNCTION_THRESHOLD_S))
         slow_decomp_threshold_s = int(config.get("INDEXING_SLOW_DECOMP_THRESHOLD_S", DEFAULT_SLOW_DECOMP_THRESHOLD_S))
-        enable_debug_logs = bool(config.get("INDEXING_DEBUG_LOGS", DEFAULT_INDEXING_DEBUG_LOGS))
+        enable_debug_logs = bool(config.get("DEBUG", False)) and bool(config.get("INDEXING_DEBUG_LOGS", DEFAULT_INDEXING_DEBUG_LOGS))
         failed_retry_max = int(config.get("INDEXING_FAILED_RETRY_MAX", DEFAULT_INDEXING_FAILED_RETRY_MAX))
         cache_enabled = bool(config.get("INDEXING_PSEUDOCODE_CACHE_ENABLED", DEFAULT_PSEUDOCODE_CACHE_ENABLED))
         cache_max_chars_per_func = int(config.get(
@@ -2276,7 +2276,7 @@ def _resume_indexing_thread(
         decomp_heartbeat_interval_s = float(config.get("INDEXING_DECOMP_HEARTBEAT_INTERVAL_S", DEFAULT_DECOMP_HEARTBEAT_INTERVAL_S))
         stuck_threshold_s = int(config.get("INDEXING_STUCK_FUNCTION_THRESHOLD_S", DEFAULT_STUCK_FUNCTION_THRESHOLD_S))
         slow_decomp_threshold_s = int(config.get("INDEXING_SLOW_DECOMP_THRESHOLD_S", DEFAULT_SLOW_DECOMP_THRESHOLD_S))
-        enable_debug_logs = bool(config.get("INDEXING_DEBUG_LOGS", DEFAULT_INDEXING_DEBUG_LOGS))
+        enable_debug_logs = bool(config.get("DEBUG", False)) and bool(config.get("INDEXING_DEBUG_LOGS", DEFAULT_INDEXING_DEBUG_LOGS))
         failed_retry_max = int(config.get("INDEXING_FAILED_RETRY_MAX", DEFAULT_INDEXING_FAILED_RETRY_MAX))
         cache_enabled = bool(config.get("INDEXING_PSEUDOCODE_CACHE_ENABLED", DEFAULT_PSEUDOCODE_CACHE_ENABLED))
         cache_max_chars_per_func = int(config.get(

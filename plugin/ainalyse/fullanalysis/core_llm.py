@@ -178,7 +178,7 @@ class LLMClient:
         self.config = config
         self.api_key = config.get("OPENAI_API_KEY", "")
         self.model = config.get("OPENAI_MODEL", "") 
-        self.gatherer_model = config.get("OPENAI_GATHERER_MODEL", self.model)
+        self.gatherer_model = config.get("GATHERER_MODEL") or self.model
         self.base_url = config.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
         
         # SSL and Certs

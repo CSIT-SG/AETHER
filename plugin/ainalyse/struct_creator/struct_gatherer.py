@@ -13,6 +13,7 @@ import ida_kernwin
 from openai import OpenAI
 from mcp.client.session import ClientSession
 from mcp.client.sse import sse_client
+from ainalyse import is_debug_enabled
 from ainalyse.ssl_helper import create_openai_client_with_custom_ca
 
 from ainalyse.custom_set_cmt import custom_get_pseudocode
@@ -279,6 +280,7 @@ async def run_gatherer_agent(config: dict,variable_name: str):
     custom_ca_cert_path = config.get("CUSTOM_CA_CERT_PATH", "")
     client_cert_path = config.get("CLIENT_CERT_PATH", "")
     client_key_path = config.get("CLIENT_KEY_PATH", "")
+    debug = is_debug_enabled(config)
 
     if urlparse(server_url).scheme not in ("http", "https"):
         print("[AETHER] Error: MCP_SERVER_URL must start with http:// or https://")
@@ -368,14 +370,14 @@ async def run_gatherer_agent(config: dict,variable_name: str):
                                 "---\n"
                             )
 
-                        # --- VERBOSE LOGGING ---
-                        try:
-                            with open(VERBOSE_LOG_PATH, "a", encoding="utf-8") as vf:
-                                vf.write(f"\n--- Iteration {i+1} ---\n")
-                                vf.write(current_prompt_content)
-                                vf.write("\n--- END PROMPT ---\n")
-                        except Exception as e:
-                            print(f"[AETHER] Error writing to verbose.txt: {e}")
+                        if debug:
+                            try:
+                                with open(VERBOSE_LOG_PATH, "a", encoding="utf-8") as vf:
+                                    vf.write(f"\n--- Iteration {i+1} ---\n")
+                                    vf.write(current_prompt_content)
+                                    vf.write("\n--- END PROMPT ---\n")
+                            except Exception as e:
+                                print(f"[AETHER] Error writing to verbose.txt: {e}")
 
                         # Print the function call tree to the IDA console after each iteration
                         print(f"[AETHER] [Gatherer] Function call tree after iteration {i+1}:\n{tree_str}")

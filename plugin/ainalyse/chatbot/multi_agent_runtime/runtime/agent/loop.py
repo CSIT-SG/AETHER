@@ -158,7 +158,7 @@ class AgentLoopExecutor:
         plan_manager: Any,
         memory_store: Any,
         track_file_callback: Any = None,
-        verbose_output_dir: str = "results",
+        verbose_output_dir: str | None = "results",
         copy_reasoning_to_content: bool = False,
         llm_retry_count: int = 2,
         llm_retry_base_delay_sec: float = 1.0,
@@ -286,6 +286,8 @@ class AgentLoopExecutor:
         return "\n".join(lines).rstrip() + "\n"
 
     def _write_verbose_prompt_log(self, state: AgentLoopState, messages: list[dict[str, Any]], assistant_message: Any = None) -> str | None:
+        if not self.verbose_output_dir:
+            return None
         try:
             os.makedirs(self.verbose_output_dir, exist_ok=True)
             now = datetime.now()

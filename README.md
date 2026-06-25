@@ -425,6 +425,7 @@ powershell -executionpolicy bypass -file .\install.ps1 -Verbose
 
 For more detailed information:
 - See [docs/](./docs/) folder for additional documentation
+- View [docs/indexing_feature_writeup.md](./docs/indexing_feature_writeup.md) for write up on indexing feature
 - Check [docs/BUGS.md](./docs/BUGS.md) for known issues and bug reports
 - View [docs/FAQ.md](./docs/FAQ.md) for common issues and fixes
 - Refer to inline code comments for implementation details
@@ -490,6 +491,6 @@ AETHER is made possible through the dedication of Cyber Specialists under the Di
 
 ---
 
-**Last Updated**: 23/06/2026
+**Last Updated**: 25/06/2026
 
-**Version**: 2026.2
+**Version**: 2026.2.1

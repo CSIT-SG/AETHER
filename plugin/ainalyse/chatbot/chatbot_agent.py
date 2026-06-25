@@ -682,7 +682,7 @@ class ChatbotAgent:
         max_tool_calls: int | None = None,
         max_cumulative_tool_output: int | None = None,
         feature: str = "chatbot",
-        verbose_output_dir: str = "results",
+        verbose_output_dir: str | None = "results",
     ) -> AgentLoopExecutor:
         retry_count, retry_base_delay_sec = self._get_retry_settings()
         client = _ChatbotClientDefaults(

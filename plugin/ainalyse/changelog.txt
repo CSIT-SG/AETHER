@@ -1,4 +1,22 @@
 =====
+2026.2.1 - PATCH
+=====
+
+- Debug and logging
+  - Added DEBUG control for verbose prompt, response, indexing, chatbot, Python generation, and report sidecar log files
+  - Added startup messaging to show whether debug log files will be written
+  - Reduced unnecessary file writes when DEBUG is disabled
+- Chatbot and generated scripts
+  - Added README file link update
+  - Fixed duplicate setting cleanup
+- AI Unflatten
+  - Added more logging for unflatten workflows
+  - Added individual unflattened tabs for each function
+  - Increased visibility of the last generated code when unflattening does not fully validate
+- Project cleanup
+  - Added ruff rule updates
+
+=====
 2026.2 - SECOND RELEASE
 =====
 

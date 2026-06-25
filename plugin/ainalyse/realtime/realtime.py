@@ -206,8 +206,6 @@ async def mcp_execute_realtime_action(session: ClientSession, action_type: str, 
 def strip_and_reformat_pseudocode_for_realtime(pseudocode: str) -> str:
     """Clean pseudocode for realtime analysis."""
     import re
-    config = load_config()
-    comment_every_line = config.get("COMMENT_EVERY_LINE", False)
     # Path 1
     lines = pseudocode.splitlines()
     result = []

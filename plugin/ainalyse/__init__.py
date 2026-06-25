@@ -73,7 +73,7 @@ DEFAULT_CONFIG = {
     "INDEXING_DECOMP_HEARTBEAT_INTERVAL_S": 5.0,
     "INDEXING_STUCK_FUNCTION_THRESHOLD_S": 45,
     "INDEXING_SLOW_DECOMP_THRESHOLD_S": 5,
-    "INDEXING_DEBUG_LOGS": True,
+    "INDEXING_DEBUG_LOGS": True,  # Only writes files when DEBUG is also enabled
     "INDEXING_FAILED_RETRY_MAX": 5,
     "INDEXING_PSEUDOCODE_CACHE_ENABLED": True,
     "INDEXING_PSEUDOCODE_CACHE_MAX_CHARS_PER_FUNC": 0,
@@ -117,6 +117,13 @@ MODEL_CONFIG_KEYS = (
     "INDEX_AGENT_MODEL",
     "INDEXING_MODEL",
 )
+
+
+def is_debug_enabled(config: dict | None = None) -> bool:
+    """Return whether optional debug/trace file writing is enabled."""
+    if config is None:
+        config = load_config()
+    return bool(config.get("DEBUG", False))
 
 
 def create_default_config():

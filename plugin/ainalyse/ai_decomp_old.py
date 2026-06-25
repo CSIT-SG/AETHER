@@ -12,6 +12,7 @@ import idaapi
 from mcp.client.session import ClientSession
 from mcp.client.sse import sse_client
 
+from ainalyse import is_debug_enabled
 from ainalyse.ssl_helper import create_openai_client_with_custom_ca
 
 # --- File Paths ---
@@ -484,6 +485,7 @@ async def run_ai_decomp_for_current_function(config: dict, func_addr: str) -> bo
     custom_ca_cert_path = config.get("CUSTOM_CA_CERT_PATH", "")
     client_cert_path = config.get("CLIENT_CERT_PATH", "")
     client_key_path = config.get("CLIENT_KEY_PATH", "")
+    debug = is_debug_enabled(config)
 
     if urlparse(server_url).scheme not in ("http", "https"):
         print("[AETHER] [AI Decomp] Error: MCP_SERVER_URL must start with http:// or https://")
@@ -601,16 +603,16 @@ async def run_ai_decomp_for_current_function(config: dict, func_addr: str) -> bo
                 # Prepare the full prompt
                 context = f"CALL TREE:\n{final_tree_str}\n\n{final_pseudocode_listing_str}"
                 
-                # Log verbose
-                try:
-                    with open(VERBOSE_LOG_PATH, "a", encoding="utf-8") as vf:
-                        vf.write("\n--- AI Decompilation Prompt ---\n")
-                        vf.write(ai_decomp_prompt)
-                        vf.write("\n--- AI Decompilation Context ---\n")
-                        vf.write(context)
-                        vf.write("\n--- END AI Decompilation Input ---\n")
-                except Exception as e:
-                    print(f"[AETHER] [AI Decomp] Error writing to verbose.txt: {e}")
+                if debug:
+                    try:
+                        with open(VERBOSE_LOG_PATH, "a", encoding="utf-8") as vf:
+                            vf.write("\n--- AI Decompilation Prompt ---\n")
+                            vf.write(ai_decomp_prompt)
+                            vf.write("\n--- AI Decompilation Context ---\n")
+                            vf.write(context)
+                            vf.write("\n--- END AI Decompilation Input ---\n")
+                    except Exception as e:
+                        print(f"[AETHER] [AI Decomp] Error writing to verbose.txt: {e}")
 
                 print("[AETHER] [AI Decomp] Requesting AI decompilation from LLM...")
                 
@@ -667,18 +669,18 @@ async def run_ai_decomp_for_current_function(config: dict, func_addr: str) -> bo
                         else:
                             print(f"[AETHER] [AI Decomp] Final save: Failed to save AI decompilation for {func_addr_final}")
                     
-                    # Log the full response
-                    try:
-                        with open(VERBOSE_LOG_PATH, "a", encoding="utf-8") as vf:
-                            vf.write("\n--- AI Decompilation LLM Response ---\n")
-                            vf.write(full_response)
-                            vf.write("\n--- END AI Decompilation Response ---\n")
-                            vf.write(f"\n--- AI Decompilation Summary ---\n")
-                            vf.write(f"Total functions processed: {len(final_decompilations)}\n")
-                            vf.write(f"Function addresses: {list(final_decompilations.keys())}\n")
-                            vf.write("--- END AI Decompilation Summary ---\n")
-                    except Exception as e:
-                        print(f"[AETHER] [AI Decomp] Error writing LLM response to verbose.txt: {e}")
+                    if debug:
+                        try:
+                            with open(VERBOSE_LOG_PATH, "a", encoding="utf-8") as vf:
+                                vf.write("\n--- AI Decompilation LLM Response ---\n")
+                                vf.write(full_response)
+                                vf.write("\n--- END AI Decompilation Response ---\n")
+                                vf.write(f"\n--- AI Decompilation Summary ---\n")
+                                vf.write(f"Total functions processed: {len(final_decompilations)}\n")
+                                vf.write(f"Function addresses: {list(final_decompilations.keys())}\n")
+                                vf.write("--- END AI Decompilation Summary ---\n")
+                        except Exception as e:
+                            print(f"[AETHER] [AI Decomp] Error writing LLM response to verbose.txt: {e}")
 
                     print(f"[AETHER] [AI Decomp] AI decompilation completed successfully. Processed {len(final_decompilations)} functions.")
                     

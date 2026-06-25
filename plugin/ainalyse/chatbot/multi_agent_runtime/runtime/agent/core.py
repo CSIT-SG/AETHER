@@ -73,7 +73,7 @@ class GenericBackboneAgent:
         memory_store: MemoryStore | None = None,
         plan_manager: PlanManager | None = None,
         context_manager: ContextManager | None = None,
-        verbose_output_dir: str = "results",
+        verbose_output_dir: str | None = "results",
     ):
         self.prompt_composer = PromptComposer()
         self.prompt_config = self._build_prompt_config(prompt_config)

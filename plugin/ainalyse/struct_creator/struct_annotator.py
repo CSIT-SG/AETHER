@@ -9,6 +9,7 @@ import ida_kernwin
 from mcp.client.session import ClientSession
 from mcp.client.sse import sse_client
 
+from ainalyse import is_debug_enabled
 from ainalyse.custom_set_cmt import scmt  # Import custom set_comment implementation
 from ainalyse.ssl_helper import create_openai_client_with_custom_ca
 
@@ -177,7 +178,7 @@ async def run_annotator_agent(config: dict, struct_name:str, func_graph:dict, st
 
     server_url = config["MCP_SERVER_URL"]
     api_key = config["OPENAI_API_KEY"]
-    model = config["ANNOTATOR_MODEL"]
+    model = config["STRUCT_CREATOR_MODEL"]
     base_url = config["OPENAI_BASE_URL"]
     rename_filter_enabled = config.get("rename_filter_enabled", False)
     fast_mode = config.get("fast_mode", False)
@@ -187,6 +188,7 @@ async def run_annotator_agent(config: dict, struct_name:str, func_graph:dict, st
     custom_ca_cert_path = config.get("CUSTOM_CA_CERT_PATH", "")
     client_cert_path = config.get("CLIENT_CERT_PATH", "")
     client_key_path = config.get("CLIENT_KEY_PATH", "")
+    debug = is_debug_enabled(config)
 
     if urlparse(server_url).scheme not in ("http", "https"):
         print("[AETHER] Error: MCP_SERVER_URL must start with http:// or https://")
@@ -242,16 +244,16 @@ async def run_annotator_agent(config: dict, struct_name:str, func_graph:dict, st
             "---\n"
         )
 
-    # --- VERBOSE LOGGING for Annotator ---
-    try:
-        with open(VERBOSE_LOG_PATH, "a", encoding="utf-8") as vf:
-            vf.write("\n--- Annotator System Prompt ---\n")
-            vf.write(annotator_system_prompt)
-            vf.write("\n--- Annotator User Prompt (Context) ---\n")
-            vf.write(functions_array_str)
-            vf.write("\n--- END Annotator Prompts ---\n")
-    except Exception as e:
-        print(f"[AETHER] [Annotator] Error writing prompts to verbose.txt: {e}")
+    if debug:
+        try:
+            with open(VERBOSE_LOG_PATH, "a", encoding="utf-8") as vf:
+                vf.write("\n--- Annotator System Prompt ---\n")
+                vf.write(annotator_system_prompt)
+                vf.write("\n--- Annotator User Prompt (Context) ---\n")
+                vf.write(functions_array_str)
+                vf.write("\n--- END Annotator Prompts ---\n")
+        except Exception as e:
+            print(f"[AETHER] [Annotator] Error writing prompts to verbose.txt: {e}")
 
     print("[AETHER] [Annotator] Requesting annotations from LLM...")
 
@@ -339,14 +341,14 @@ async def run_annotator_agent(config: dict, struct_name:str, func_graph:dict, st
                     # Fallback: batch mode
                     llm_response_text = call_openai_llm_annotator(annotator_system_prompt, functions_array_str, api_key, model, base_url, max_tokens, extra_body, custom_ca_cert_path, client_cert_path, client_key_path)
                     llm_full_response = llm_response_text  # For logging
-                    # --- VERBOSE LOGGING for Annotator Response ---
-                    try:
-                        with open(VERBOSE_LOG_PATH, "a", encoding="utf-8") as vf:
-                            vf.write("\n--- Annotator LLM Response ---\n")
-                            vf.write(llm_response_text if llm_response_text else "No response from LLM.")
-                            vf.write("\n--- END Annotator LLM Response ---\n")
-                    except Exception as e:
-                        print(f"[AETHER] [Annotator] Error writing LLM response to verbose.txt: {e}")
+                    if debug:
+                        try:
+                            with open(VERBOSE_LOG_PATH, "a", encoding="utf-8") as vf:
+                                vf.write("\n--- Annotator LLM Response ---\n")
+                                vf.write(llm_response_text if llm_response_text else "No response from LLM.")
+                                vf.write("\n--- END Annotator LLM Response ---\n")
+                        except Exception as e:
+                            print(f"[AETHER] [Annotator] Error writing LLM response to verbose.txt: {e}")
 
                     if not llm_response_text:
                         print("[AETHER] [Annotator] No response from LLM.")
@@ -384,14 +386,14 @@ async def run_annotator_agent(config: dict, struct_name:str, func_graph:dict, st
 
                     print("[AETHER] Changes applied successfully. You may need to refresh (F5) to see updated variable names and comments.")
 
-                # --- Always log the full LLM response after annotation ---
-                try:
-                    with open(VERBOSE_LOG_PATH, "a", encoding="utf-8") as vf:
-                        vf.write("\n--- Annotator LLM Response ---\n")
-                        vf.write(llm_full_response if llm_full_response else "No response from LLM.")
-                        vf.write("\n--- END Annotator LLM Response ---\n")
-                except Exception as e:
-                    print(f"[AETHER] [Annotator] Error writing LLM response to verbose.txt: {e}")
+                if debug:
+                    try:
+                        with open(VERBOSE_LOG_PATH, "a", encoding="utf-8") as vf:
+                            vf.write("\n--- Annotator LLM Response ---\n")
+                            vf.write(llm_full_response if llm_full_response else "No response from LLM.")
+                            vf.write("\n--- END Annotator LLM Response ---\n")
+                    except Exception as e:
+                        print(f"[AETHER] [Annotator] Error writing LLM response to verbose.txt: {e}")
 
 
                 print("[AETHER] [Annotator] Annotation complete.")

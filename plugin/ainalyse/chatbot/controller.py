@@ -60,8 +60,9 @@ class ChatbotController:
         self.message_queue = asyncio.Queue()
         self.is_running = True
         self.exposed_tools = {name for name, is_enabled in TOOL_CONFIG.items() if is_enabled}
+        self.debug_file_writes = bool(config.get("DEBUG", False))
         session = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.verbose_output_dir = os.path.join(VERBOSE_OUTPUT_ROOT, "agent_loop", session)
+        self.verbose_output_dir = os.path.join(VERBOSE_OUTPUT_ROOT, "agent_loop", session) if self.debug_file_writes else None
         self.logger.info(
             "Initialized chatbot controller max_tokens=%s base_prompt_len=%s verbose_dir=%s",
             self.max_tokens,

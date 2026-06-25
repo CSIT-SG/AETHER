@@ -12,6 +12,7 @@ from mcp.client.session import ClientSession
 from mcp.client.sse import sse_client
 from PyQt5 import QtCore, QtWidgets
 
+from ainalyse import is_debug_enabled
 from ainalyse.ssl_helper import create_openai_client_with_custom_ca
 
 from .log_gatherer_annotator import start_new_run_paths
@@ -282,6 +283,7 @@ async def run_gatherer_agent(config: dict):
         return False
 
     custom_user_prompt = config.get("custom_user_prompt", "").strip()
+    debug = is_debug_enabled(config)
     _init_paths(config)
 
     # --- Function Filter List is now imported from shared module ---
@@ -361,14 +363,14 @@ async def run_gatherer_agent(config: dict):
                                 "---\n"
                             )
 
-                        # --- VERBOSE LOGGING ---
-                        try:
-                            with open(VERBOSE_LOG_PATH, "a", encoding="utf-8") as vf:
-                                vf.write(f"\n--- Iteration {i+1} ---\n")
-                                vf.write(current_prompt_content)
-                                vf.write("\n--- END PROMPT ---\n")
-                        except Exception as e:
-                            print(f"[AETHER] Error writing to verbose log: {e}")
+                        if debug:
+                            try:
+                                with open(VERBOSE_LOG_PATH, "a", encoding="utf-8") as vf:
+                                    vf.write(f"\n--- Iteration {i+1} ---\n")
+                                    vf.write(current_prompt_content)
+                                    vf.write("\n--- END PROMPT ---\n")
+                            except Exception as e:
+                                print(f"[AETHER] Error writing to verbose log: {e}")
 
                         # Print the function call tree to the IDA console after each iteration
                         print(f"[AETHER] [Gatherer] Function call tree after iteration {i+1}:\n{tree_str}")

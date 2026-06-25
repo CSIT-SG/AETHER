@@ -301,6 +301,7 @@ I will provide RAG-based candidates for your request.
                 return "Operation cancelled."
 
             config = load_config()
+            debug = bool(config.get("DEBUG", False))
             print(f"[DEBUG] OpenRouterQuery.send: config loaded, API_KEY len={len(config.get('OPENAI_API_KEY', ''))}")
             
             client = create_openai_client_with_custom_ca(
@@ -313,25 +314,24 @@ I will provide RAG-based candidates for your request.
             )
             print("[DEBUG] OpenRouterQuery.send: OpenAI client created")
 
-            # Detailed debug logging
-            log_dir = os.path.join(get_data_directory(), "chatbot", "debug")
-            os.makedirs(log_dir, exist_ok=True)
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            log_file = os.path.join(log_dir, f"pygen_prompt_{timestamp}.json")
+            if debug:
+                log_dir = os.path.join(get_data_directory(), "chatbot", "debug")
+                os.makedirs(log_dir, exist_ok=True)
+                log_file = os.path.join(log_dir, f"pygen_prompt_{timestamp}.json")
 
-            try:
-                with open(log_file, 'w', encoding='utf-8') as f:
-                    json.dump(messages, f, indent=4)
-                print(f"[DEBUG] Python script generation prompt logged to {log_file}")
-            except Exception as e:
-                print(f"[DEBUG] Failed to log prompt: {e}")
+                try:
+                    with open(log_file, 'w', encoding='utf-8') as f:
+                        json.dump(messages, f, indent=4)
+                    print(f"[DEBUG] Python script generation prompt logged to {log_file}")
+                except Exception as e:
+                    print(f"[DEBUG] Failed to log prompt: {e}")
 
-            # FOR DEBUG/HISTORY
-            try:
-                with open('convo.json', 'w') as f:
-                    json.dump(LLMContext.messages, f, indent=4)
-            except Exception:
-                pass
+                try:
+                    with open('convo.json', 'w') as f:
+                        json.dump(LLMContext.messages, f, indent=4)
+                except Exception:
+                    pass
 
             if self.is_cancelled:
                 print("[DEBUG] OpenRouterQuery.send: cancelled before completions.create")
@@ -385,15 +385,15 @@ I will provide RAG-based candidates for your request.
             
             LLMContext.add("assistant", response_text)
 
-            # Log the response as well
-            log_dir = os.path.join(get_data_directory(), "chatbot", "pygen_output")
-            os.makedirs(log_dir, exist_ok=True)
-            resp_file = os.path.join(log_dir, f"pygen_response_{timestamp}.txt")
-            try:
-                with open(resp_file, 'w', encoding='utf-8') as f:
-                    f.write(response_text)
-            except Exception:
-                pass
+            if debug:
+                log_dir = os.path.join(get_data_directory(), "chatbot", "pygen_output")
+                os.makedirs(log_dir, exist_ok=True)
+                resp_file = os.path.join(log_dir, f"pygen_response_{timestamp}.txt")
+                try:
+                    with open(resp_file, 'w', encoding='utf-8') as f:
+                        f.write(response_text)
+                except Exception:
+                    pass
 
             return response_text
 
@@ -622,15 +622,16 @@ class LLMChatForm(ida_kernwin.PluginForm):
         
         python_code = python_codes[0]
 
-        data_dir = get_data_directory()
-        log_dir = os.path.join(data_dir, "chatbot", "debug")
-        os.makedirs(log_dir, exist_ok=True)
-        python_filename = datetime.datetime.now().strftime("%d-%m-%Y_%H-%M-%S.pytmp")
-        try:
-            with open(os.path.join(log_dir, python_filename), 'w', encoding='utf-8') as f:
-                f.write(python_code)
-        except Exception as e:
-            print(f"[-] Warning: Failed to save debug script: {e}")
+        if bool(load_config().get("DEBUG", False)):
+            data_dir = get_data_directory()
+            log_dir = os.path.join(data_dir, "chatbot", "debug")
+            os.makedirs(log_dir, exist_ok=True)
+            python_filename = datetime.datetime.now().strftime("%d-%m-%Y_%H-%M-%S.pytmp")
+            try:
+                with open(os.path.join(log_dir, python_filename), 'w', encoding='utf-8') as f:
+                    f.write(python_code)
+            except Exception as e:
+                print(f"[-] Warning: Failed to save debug script: {e}")
         
         # Risk scan (AST)
         risks = _scan_risks(python_code)

@@ -14,5 +14,6 @@ extend-select = [
 ]
 
 ignore = [
-    "N802",   # 
+    "E501",  # Pycodestyle - line too long
+    "N802",  # pep8-naming - invalid function name
 ]

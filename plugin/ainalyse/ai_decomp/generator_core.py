@@ -3,6 +3,7 @@ from typing import Dict, Set
 
 import ida_kernwin
 
+from ainalyse import is_debug_enabled
 from ainalyse.ssl_helper import create_openai_client_with_custom_ca
 
 from .parser import parse_ai_decomp_response_by_address
@@ -67,6 +68,7 @@ async def stream_and_save_ai_decompilation(config: dict, ai_decomp_prompt: str, 
     custom_ca_cert_path = config.get("CUSTOM_CA_CERT_PATH", "")
     client_cert_path = config.get("CLIENT_CERT_PATH", "")
     client_key_path = config.get("CLIENT_KEY_PATH", "")
+    debug = is_debug_enabled(config)
 
     if use_prompt_b:
         context += """
@@ -90,17 +92,18 @@ Remember, I cannot emphasise this enough, each and every function needs to be en
 /no_think
 """
 
-    try:
-        with open(VERBOSE_LOG_PATH, "a", encoding="utf-8") as vf:
-            vf.write("\n--- AI Decompilation Prompt ---\n")
-            vf.write(ai_decomp_prompt)
-            vf.write("\n--- AI Decompilation Context ---\n")
-            vf.write(context)
-            vf.write("\n--- Functions List ---\n")
-            vf.write(functions_list_str)
-            vf.write("\n--- END AI Decompilation Input ---\n")
-    except Exception as e:
-        print(f"[AETHER] [AI Decomp] Error writing to verbose.txt: {e}")
+    if debug:
+        try:
+            with open(VERBOSE_LOG_PATH, "a", encoding="utf-8") as vf:
+                vf.write("\n--- AI Decompilation Prompt ---\n")
+                vf.write(ai_decomp_prompt)
+                vf.write("\n--- AI Decompilation Context ---\n")
+                vf.write(context)
+                vf.write("\n--- Functions List ---\n")
+                vf.write(functions_list_str)
+                vf.write("\n--- END AI Decompilation Input ---\n")
+        except Exception as e:
+            print(f"[AETHER] [AI Decomp] Error writing to verbose.txt: {e}")
 
     print(f"[AETHER] [AI Decomp] Requesting AI decompilation from LLM for functions: {functions_list_str}")
 
@@ -147,17 +150,18 @@ Remember, I cannot emphasise this enough, each and every function needs to be en
             else:
                 print(f"[AETHER] [AI Decomp] Final save: Failed to save AI decompilation for {func_addr_final}")
         
-        try:
-            with open(VERBOSE_LOG_PATH, "a", encoding="utf-8") as vf:
-                vf.write("\n--- AI Decompilation LLM Response ---\n")
-                vf.write(full_response)
-                vf.write("\n--- END AI Decompilation Response ---\n")
-                vf.write("\n--- AI Decompilation Summary ---\n")
-                vf.write(f"Total functions processed: {len(final_decompilations)}\n")
-                vf.write(f"Function addresses: {list(final_decompilations.keys())}\n")
-                vf.write("--- END AI Decompilation Summary ---\n")
-        except Exception as e:
-            print(f"[AETHER] [AI Decomp] Error writing LLM response to verbose.txt: {e}")
+        if debug:
+            try:
+                with open(VERBOSE_LOG_PATH, "a", encoding="utf-8") as vf:
+                    vf.write("\n--- AI Decompilation LLM Response ---\n")
+                    vf.write(full_response)
+                    vf.write("\n--- END AI Decompilation Response ---\n")
+                    vf.write("\n--- AI Decompilation Summary ---\n")
+                    vf.write(f"Total functions processed: {len(final_decompilations)}\n")
+                    vf.write(f"Function addresses: {list(final_decompilations.keys())}\n")
+                    vf.write("--- END AI Decompilation Summary ---\n")
+            except Exception as e:
+                print(f"[AETHER] [AI Decomp] Error writing LLM response to verbose.txt: {e}")
 
         print(f"[AETHER] [AI Decomp] AI decompilation completed successfully. Processed {len(final_decompilations)} functions.")
         return True

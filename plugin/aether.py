@@ -170,7 +170,7 @@ class AdvancedAnalyseHandler(ida_kernwin.action_handler_t):
             config["custom_user_prompt"] = annotator_context
             manual_mode = results["manual_mode"]
             manual_functions = results["manual_functions"]
-            extra_option = ["USE_DESC", "USE_COMMENTS", "USE_RENAME_VARS", "USE_RENAME_FUNCS"]
+            extra_option = ["USE_DESC", "USE_COMMENTS", "RENAME_VARS", "RENAME_FUNCS", "COMMENT_EVERY_LINE"]
             config.update({k: results[k] for k in extra_option if k in results})
 
             if manual_mode and not manual_functions:
@@ -1128,10 +1128,15 @@ class AETHERPlugin(ida_idaapi.plugin_t):
             f"[AETHER] Plugin initialized with models: OPENAI_MODEL='{config.get('OPENAI_MODEL', '')}', "
             f"GATHERER_MODEL='{config.get('GATHERER_MODEL', '')}', "
             f"ANNOTATOR_MODEL='{config.get('ANNOTATOR_MODEL', '')}', "
+            f"STRUCT_CREATOR_MODEL='{config.get('STRUCT_CREATOR_MODEL', '')}', "
             f"AI_DECOMP_MODEL='{config.get('AI_DECOMP_MODEL', '')}', "
             f"SINGLE_ANALYSIS_MODEL='{config.get('SINGLE_ANALYSIS_MODEL', '')}', "
             f"INDEX_AGENT_MODEL='{config.get('INDEX_AGENT_MODEL', '')}'"
         )
+        if config.get("DEBUG", False):
+            print("[AETHER] DEBUG is enabled; debug and verbose log files will be written.")
+        else:
+            print("[AETHER] DEBUG is disabled; debug and verbose log files will not be written until DEBUG is set to true.")
 
         # Initialize async worker pool after plugin startup to avoid import-time thread side effects.
         ensure_async_pool(allow_reinit=True)
