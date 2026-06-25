@@ -19,5 +19,5 @@ __all__ = [
     "GetLocalVariables",
     "GetDataAtAddress",
     "GetFunctionPseudocode",
-    "GetXrefsTo",
+    "GetXrefsTo"
 ]

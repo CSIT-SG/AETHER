@@ -3,22 +3,36 @@ from functools import partial
 from typing import Any
 
 import ida_kernwin
+from aether_utils.logger import get_logger
 
 from .base import IDAExecutor
 
 
+class _CaptureCallable:
+    """wrapper for execution, returns result in result property"""
+    def __init__(self, func: Callable[..., Any], args: dict[str, Any]):
+        self._apply = partial(func, **args)
+        self.result: Any = None
+
+    def __call__(self) -> None:
+        self.result = self._apply()
+
+
 class GUIExecutor(IDAExecutor):
+    logger = get_logger("TEST_LOG")
     def execute(
         self,
         callback: Callable[..., Any],
         arguments: dict[str, Any],
     ) -> Any:
-        apply = partial(callback, **arguments)
-
-        return ida_kernwin.execute_sync(
-            apply,
-            ida_kernwin.MFF_FAST,
-        )
+        result = None
+        self.logger.debug(str(callback))
+        self.logger.warning(str(arguments))
+        func_call = _CaptureCallable(callback,arguments)
+        ida_kernwin.execute_sync(func_call, ida_kernwin.MFF_FAST)
+        result = func_call.result
+        self.logger.debug(result)
+        return result
 
     def startup(self) -> None:
         pass
