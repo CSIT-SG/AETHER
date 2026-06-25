@@ -1,7 +1,7 @@
 from typing import cast
 
 from aether_backend.utils.effect import Program, effectful
-from aether_backend.utils.rpc_discovery import RPCRegistry
+from aether_backend.utils.rpc_discovery import RPC_REGISTRY_KEY, RPCRegistry
 from fastmcp.dependencies import CurrentContext
 from fastmcp.server.context import Context
 from fastmcp.tools import tool
@@ -15,6 +15,6 @@ async def list_rpc_connections(ctx: Context = CurrentContext()) -> Program:
     """List all active connection ids to the IDA remote procedure call servers.
     Each id is formatted `<file_name>_<date>-<time>`.
     """
-    registry = cast(RPCRegistry, ctx.lifespan_context["rpc_registry"])
+    registry = cast(RPCRegistry, ctx.lifespan_context[RPC_REGISTRY_KEY])
     async for effect in list_rpc_connections_cb(await registry.ids()):
         yield effect

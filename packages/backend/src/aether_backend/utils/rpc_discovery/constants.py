@@ -11,3 +11,5 @@ RPYC_CONFIG: dict[str, Any] = {
     "allow_pickle": True,
     "sync_request_timeout": CONNECT_TIMEOUT,
 }
+
+RPC_REGISTRY_KEY: str = "rpc_registry"

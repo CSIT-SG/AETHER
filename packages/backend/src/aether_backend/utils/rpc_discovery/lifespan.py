@@ -3,6 +3,7 @@ from typing import Any
 
 from fastmcp.server.lifespan import lifespan
 
+from .constants import RPC_REGISTRY_KEY
 from .registry import RPCRegistry
 
 
@@ -11,6 +12,6 @@ async def rpc_lifespan(_server: Any) -> AsyncIterator[dict[str, RPCRegistry]]:
     registry = RPCRegistry()
     try:
         await registry.start()
-        yield {"rpc_registry": registry}
+        yield {RPC_REGISTRY_KEY: registry}
     finally:
         await registry.stop()
