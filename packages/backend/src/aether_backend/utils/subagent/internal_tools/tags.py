@@ -1,5 +1,6 @@
 from collections import defaultdict
 from collections.abc import Callable
+from itertools import chain
 from typing import Any, cast
 
 from agents import Tool
@@ -28,9 +29,5 @@ class SubagentToolRegistry:
         return cast(list[Tool], seen)
 
     def get_all_tools(self) -> list[Tool]:
-        seen = []
-        for tool in self._registry:
-            for t in self._registry[tool]:
-                if t not in seen:
-                    seen.append(t)
-        return cast(list[Tool], seen)
+        unique = set(chain.from_iterable(self._registry.values()))
+        return cast(list[Tool], list(unique))
