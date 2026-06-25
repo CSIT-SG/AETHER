@@ -1,6 +1,8 @@
 from typing import cast
 
 from aether_backend.utils.subagent.constants import SubagentTool
+from aether_rpc.capabilities.result import Result
+from aether_rpc.capabilities.types import RenameLocalVarResult
 from agents import RunContextWrapper, function_tool
 
 from .tags import ToolDependencies, registry
@@ -14,11 +16,8 @@ async def rename_local_variable(
     function_address: str | int,
     old_var_name: str,
     new_var_name: str,
-) -> bool:
+) -> Result[RenameLocalVarResult]:
     service = ctx.context.service
-    return cast(
-        bool,
-        service.rename_local_variable(
-            function_address=function_address, old_var_name=old_var_name, new_var_name=new_var_name
-        ),
+    return service.rename_local_variable(
+        function_address=function_address, old_var_name=old_var_name, new_var_name=new_var_name
     )

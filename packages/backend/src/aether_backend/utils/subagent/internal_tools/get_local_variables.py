@@ -1,6 +1,6 @@
-from typing import Any, cast
-
 from aether_backend.utils.subagent.constants import SubagentTool
+from aether_rpc.capabilities.result import Result
+from aether_rpc.capabilities.types import LocalVar
 from agents import RunContextWrapper, function_tool
 
 from .tags import ToolDependencies, registry
@@ -10,8 +10,6 @@ from .tags import ToolDependencies, registry
 @function_tool
 async def get_local_variables(
     ctx: RunContextWrapper[ToolDependencies], *, function_name: str
-) -> list[dict[str, Any]] | None:
+) -> Result[list[LocalVar]]:
     service = ctx.context.service
-    return cast(
-        list[dict[str, Any]] | None, service.get_local_variables(function_name=function_name)
-    )
+    return service.get_local_variables(function_name=function_name)

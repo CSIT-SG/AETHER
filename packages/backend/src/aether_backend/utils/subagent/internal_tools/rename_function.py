@@ -1,6 +1,6 @@
-from typing import cast
-
 from aether_backend.utils.subagent.constants import SubagentTool
+from aether_rpc.capabilities.result import Result
+from aether_rpc.capabilities.types import RenameFuncResult
 from agents import RunContextWrapper, function_tool
 
 from .tags import ToolDependencies, registry
@@ -10,6 +10,6 @@ from .tags import ToolDependencies, registry
 @function_tool
 async def rename_function(
     ctx: RunContextWrapper[ToolDependencies], *, address: str | int, new_name: str
-) -> bool:
+) -> Result[RenameFuncResult]:
     service = ctx.context.service
-    return cast(bool, service.rename_function(address=address, new_name=new_name))
+    return service.rename_function(address=address, new_name=new_name)
