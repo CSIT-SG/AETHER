@@ -1,5 +1,6 @@
 from typing import cast
 
+from aether_backend.constants import ToolTags
 from aether_backend.utils.effect import Program, effectful
 from aether_backend.utils.rpc_discovery import RPCRegistry
 from fastmcp.dependencies import CurrentContext
@@ -9,7 +10,7 @@ from fastmcp.tools import tool
 from .tester_agent import test
 
 
-@tool  # tool is untyped in fastmcp
+@tool(tags={ToolTags.DEBUG})  # tool is untyped in fastmcp
 @effectful  # type: ignore
 async def test_function(
     rpc_id: str, rpc_tool: str, arguments: dict, ctx: Context = CurrentContext()
