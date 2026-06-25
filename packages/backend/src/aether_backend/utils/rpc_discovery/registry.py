@@ -12,23 +12,7 @@ from .connection import RpcConnectionEntry, connect_with_backoff, ping, safe_clo
 
 class RPCRegistry:
     """
-    Maps RPC id → live RPyC connection root object.
-
-    Each JSON file under *directory* must contain at least::
-
-        { "id": "service_name", "port": 12345 }
-
-    * **Parallel connect** - all services in a refresh cycle are connected
-      concurrently via ``asyncio.gather``.
-    * **Exponential back-off with jitter** - per-service retries follow
-      a capped, jittered exponential schedule so thundering-herd spikes are
-      avoided on restarts.
-    * **Heartbeat with per-connection ping** - dead connections are detected
-      and replaced individually without tearing down healthy peers.
-    * **Graceful lifecycle** - ``start`` / ``stop`` are safe to call more than
-      once; cancellation is handled cleanly.
-    * **Thread-safe reads** - all public accessors acquire the asyncio lock
-      so callers in concurrent coroutines never see a half-updated map.
+    Maps RPC id -> live RPyC connection root object.
     """
 
     def __init__(
@@ -46,15 +30,12 @@ class RPCRegistry:
         self._started = False
         self._logger = get_logger("rpc-registry")
 
-    # ------------------------------------------------------------------
     # Lifecycle
-    # ------------------------------------------------------------------
 
     async def start(self) -> None:
         if self._started:
             return
         self._started = True
-        await self.refresh()
         self._heartbeat_task = asyncio.create_task(
             self._heartbeat_loop(),
             name="rpc-registry-heartbeat",
@@ -73,9 +54,7 @@ class RPCRegistry:
 
         await self._close_all()
 
-    # ------------------------------------------------------------------
-    # Public accessors (all async to keep the lock contract uniform)
-    # ------------------------------------------------------------------
+    # Public accessors
 
     async def get(self, rpc_id: str) -> Any | None:
         async with self._lock:
@@ -94,119 +73,90 @@ class RPCRegistry:
         async with self._lock:
             return {k: v.root for k, v in self._entries.items()}
 
-    # ------------------------------------------------------------------
-    # Refresh - full rebuild, all services connected in parallel
-    # ------------------------------------------------------------------
-
-    async def refresh(self) -> None:
-        configs = self._load_configs()
-        if not configs:
-            self._logger.warning("No RPC config files found in %s", self._directory)
-
-        live_ids = {cfg["id"] for cfg in configs}
-
-        # Connect only services not already connected
-        async with self._lock:
-            existing = dict(self._entries)
-
-        tasks = {
-            cfg["id"]: connect_with_backoff(cfg["id"], cfg["port"])
-            for cfg in configs
-            if cfg["id"] not in existing
-        }
-        results = dict(
-            zip(tasks, await asyncio.gather(*tasks.values(), return_exceptions=False), strict=True)
-        )
-
-        async with self._lock:
-            # Drop entries whose config files are gone
-            for rpc_id in list(self._entries):
-                if rpc_id not in live_ids:
-                    self._logger.info("RPC service %r deregistered (config removed)", rpc_id)
-                    safe_close(self._entries.pop(rpc_id).conn)
-
-            # Add newly connected entries
-            for rpc_id, entry in results.items():
-                if entry is not None:
-                    self._entries[rpc_id] = entry
-
-        self._logger.info(
-            "RPC registry refreshed: %d services connected %s",
-            len(self._entries),
-            sorted(self._entries),
-        )
-
-    # ------------------------------------------------------------------
-    # Heartbeat - ping each live connection, replace dead ones
-    # ------------------------------------------------------------------
+    # Heartbeat
 
     async def _heartbeat_loop(self) -> None:
         while True:
             try:
-                await asyncio.sleep(self._refresh_interval)
                 await self._check_connections()
                 self._logger.debug("RPC registry heartbeat check complete")
+                await asyncio.sleep(self._refresh_interval)
             except asyncio.CancelledError:
                 raise
             except Exception:
                 self._logger.exception("RPC registry heartbeat error")
 
     async def _check_connections(self) -> None:
+
+        # ping all connections concurrently
         async with self._lock:
             snapshot = dict(self._entries)
-
-        live_ids = {cfg["id"] for cfg in self._load_configs()}
 
         ping_tasks = {
             rpc_id: asyncio.create_task(ping(entry)) for rpc_id, entry in snapshot.items()
         }
         ping_results = await asyncio.gather(*ping_tasks.values(), return_exceptions=True)
 
-        reconnect: list[RpcConnectionEntry] = []
+        # check for dead connections and new configs
+        configs = self._load_configs()
+        live_ids = set(configs)
+
+        to_reconnect: list[tuple[str, int]] = []
+
         async with self._lock:
             for rpc_id, ok in zip(ping_tasks, ping_results, strict=True):
                 if ok is True:
+                    if rpc_id not in live_ids:
+                        self._logger.info("RPC service %r decommissioned (config removed)", rpc_id)
+                        safe_close(snapshot[rpc_id].conn)
+                        self._entries.pop(rpc_id, None)
+                    # in any case, we don't need to reconnect
                     continue
-                entry = snapshot[rpc_id]
-                safe_close(entry.conn)
+
+                # connection is dead or ping failed, so we remove it from the registry
+                safe_close(snapshot[rpc_id].conn)
                 self._entries.pop(rpc_id, None)
+
+                # we queue a reconnect if the config still exists
                 if rpc_id in live_ids:
-                    reconnect.append(entry)
+                    port, _ = configs[rpc_id]
+                    to_reconnect.append((rpc_id, port))
                 else:
                     self._logger.info("RPC service %r removed (config gone)", rpc_id)
 
-        if not reconnect:
+            # we found new configs that we don't have connections for, so we queue them for reconnect
+            for rpc_id in live_ids - set(self._entries) - {r for r, _ in to_reconnect}:
+                self._logger.info("RPC service %r discovered (new config)", rpc_id)
+                port, _ = configs[rpc_id]
+                to_reconnect.append((rpc_id, port))
+
+        if not to_reconnect:
             return
 
+        # reconnect all queued connections concurrently
         new_entries = await asyncio.gather(
-            *[connect_with_backoff(e.rpc_id, e.port) for e in reconnect],
+            *[connect_with_backoff(rpc_id, port) for rpc_id, port in to_reconnect],
             return_exceptions=False,
         )
+        # update the registry with the new connections, removing any zombies that failed to reconnect
         async with self._lock:
-            for entry in filter(None, new_entries):
-                self._entries[entry.rpc_id] = entry
+            for (rpc_id, _), entry in zip(to_reconnect, new_entries, strict=True):
+                if entry is not None:
+                    self._entries[entry.rpc_id] = entry
+                else:
+                    self._logger.warning("RPC service %r unreachable — removing config", rpc_id)
+                    _, path = configs[rpc_id]
+                    path.unlink(missing_ok=True)
 
-    # ------------------------------------------------------------------
     # Internal helpers
-    # ------------------------------------------------------------------
 
-    def _load_configs(self) -> list[dict[str, Any]]:
-        configs: list[dict[str, Any]] = []
+    def _load_configs(self) -> dict[str, tuple[int, Path]]:  # {rpc_id: (port, path)}
+        """Returns {rpc_id: (port, path)}"""
+        result = {}
         for path in self._directory.glob("*.json"):
-            entry = RPCFileRegistry.load(path)
-            if entry:
-                configs.append(entry.model_dump())
-
-        return configs
-
-    def _close_stale(
-        self,
-        old: dict[str, RpcConnectionEntry],
-        new: dict[str, RpcConnectionEntry],
-    ) -> None:
-        for rpc_id, entry in old.items():
-            if rpc_id not in new or new[rpc_id].conn is not entry.conn:
-                safe_close(entry.conn)
+            if entry := RPCFileRegistry.load(path):
+                result[entry.id] = (entry.port, path)
+        return result
 
     async def _close_all(self) -> None:
         async with self._lock:
