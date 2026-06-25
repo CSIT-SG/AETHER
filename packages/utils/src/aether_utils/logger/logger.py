@@ -1,7 +1,9 @@
 import logging
+
 from aether_utils.config import get_config
 
 LEVEL = logging.DEBUG if get_config().debug else logging.INFO
+
 
 class NamespacedLogger(logging.Logger):
     """
