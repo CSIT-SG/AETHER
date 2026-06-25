@@ -6,8 +6,8 @@ from agents import RunContextWrapper, function_tool
 from .tags import ToolDependencies, registry
 
 
-@registry.tag(SubagentTool.ANNOTATOR)
 @function_tool
+@registry.tag(SubagentTool.ANNOTATOR)
 async def rename_function(
     ctx: RunContextWrapper[ToolDependencies], *, address: str | int, new_name: str
 ) -> Result[RenameFuncResult]:

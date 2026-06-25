@@ -6,8 +6,8 @@ from agents import RunContextWrapper, function_tool
 from .tags import ToolDependencies, registry
 
 
-@registry.tag(SubagentTool.ANNOTATOR)
 @function_tool
+@registry.tag(SubagentTool.ANNOTATOR)
 async def set_comment(
     ctx: RunContextWrapper[ToolDependencies], *, address: str | int, comment: str
 ) -> Result[SetCommentResult]:

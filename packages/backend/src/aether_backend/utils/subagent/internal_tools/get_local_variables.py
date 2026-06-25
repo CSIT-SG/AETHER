@@ -6,8 +6,8 @@ from agents import RunContextWrapper, function_tool
 from .tags import ToolDependencies, registry
 
 
-@registry.tag(SubagentTool.ANNOTATOR)
 @function_tool
+@registry.tag(SubagentTool.ANNOTATOR)
 async def get_local_variables(
     ctx: RunContextWrapper[ToolDependencies], *, function_name: str
 ) -> Result[list[LocalVar]]:
