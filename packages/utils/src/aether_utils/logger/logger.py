@@ -26,7 +26,7 @@ class NamespacedLogger(logging.Logger):
 
 def get_logger(namespace: str | None = None, level: int = logging.DEBUG) -> NamespacedLogger:
     """Convenience factory — mirrors logging.getLogger() but returns a NamespacedLogger."""
-    
+
     internal_name = f"aether.{namespace}" if namespace else "aether"
     logger = NamespacedLogger(internal_name, namespace=namespace, level=level)
     return logger
