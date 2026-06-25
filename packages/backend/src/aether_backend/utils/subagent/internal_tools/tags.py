@@ -1,5 +1,6 @@
 from collections import defaultdict
 from collections.abc import Callable
+from dataclasses import dataclass
 from itertools import chain
 from typing import Any, cast
 
@@ -31,3 +32,11 @@ class SubagentToolRegistry:
     def get_all_tools(self) -> list[Tool]:
         unique = set(chain.from_iterable(self._registry.values()))
         return cast(list[Tool], list(unique))
+
+
+registry = SubagentToolRegistry()
+
+
+@dataclass
+class ToolDependencies:
+    service: Any

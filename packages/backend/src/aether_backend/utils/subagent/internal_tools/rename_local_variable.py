@@ -3,7 +3,7 @@ from typing import cast
 from aether_backend.utils.subagent.constants import SubagentTool
 from agents import RunContextWrapper, function_tool
 
-from .base import ToolDependencies, registry
+from .tags import ToolDependencies, registry
 
 
 @registry.tag(SubagentTool.ANNOTATOR)
