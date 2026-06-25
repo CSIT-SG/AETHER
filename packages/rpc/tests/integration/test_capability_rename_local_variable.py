@@ -11,9 +11,9 @@ class TestRenameLocalVariable:
 
         lvars = ida_client.root.get_local_variables(function_name="main")
         assert lvars.success is True
-        assert len(lvars.result["local_variables"]) > 0
+        assert len(lvars.result) > 0
 
-        original_name = lvars.result["local_variables"][0]["name"]
+        original_name = lvars.result[0]["name"]
         result = ida_client.root.rename_local_variable(
             function_address="main",
             old_var_name=original_name,
@@ -22,16 +22,16 @@ class TestRenameLocalVariable:
         assert result.success is True
 
         lvars_after = ida_client.root.get_local_variables(function_name="main")
-        names_after = [v["name"] for v in lvars_after.result["local_variables"]]
+        names_after = [v["name"] for v in lvars_after.result]
         assert "test_renamed_var" in names_after
         assert original_name not in names_after
 
     def test_rename_is_reflected_in_decompilation(self, ida_client: rpyc.Connection) -> None:
         lvars = ida_client.root.get_local_variables(function_name="main")
         assert lvars.success is True
-        assert len(lvars.result["local_variables"]) > 0
+        assert len(lvars.result) > 0
 
-        original_name = lvars.result["local_variables"][0]["name"]
+        original_name = lvars.result[0]["name"]
         result = ida_client.root.rename_local_variable(
             function_address="main",
             old_var_name=original_name,
@@ -40,7 +40,7 @@ class TestRenameLocalVariable:
         assert result.success is True
 
         lvars_after = ida_client.root.get_local_variables(function_name="main")
-        names_after = [v["name"] for v in lvars_after.result["local_variables"]]
+        names_after = [v["name"] for v in lvars_after.result]
         assert "test_decompile_var" in names_after
 
     def test_accepts_integer_address(self, ida_client: rpyc.Connection) -> None:
@@ -49,10 +49,10 @@ class TestRenameLocalVariable:
 
         lvars = ida_client.root.get_local_variables(function_name="main")
         assert lvars.success is True
-        assert len(lvars.result["local_variables"]) > 0
+        assert len(lvars.result) > 0
 
         int_address = int(func.result["start_address"], 16)
-        original_name = lvars.result["local_variables"][0]["name"]
+        original_name = lvars.result[0]["name"]
         result = ida_client.root.rename_local_variable(
             function_address=int_address,
             old_var_name=original_name,
@@ -66,10 +66,10 @@ class TestRenameLocalVariable:
 
         lvars = ida_client.root.get_local_variables(function_name="main")
         assert lvars.success is True
-        assert len(lvars.result["local_variables"]) > 0
+        assert len(lvars.result) > 0
 
         inner_address = hex(int(func.result["start_address"], 16) + 1)
-        original_name = lvars.result["local_variables"][0]["name"]
+        original_name = lvars.result[0]["name"]
         result = ida_client.root.rename_local_variable(
             function_address=inner_address,
             old_var_name=original_name,

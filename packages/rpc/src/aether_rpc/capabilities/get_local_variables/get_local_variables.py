@@ -33,8 +33,8 @@ class GetLocalVariables(Capability):
         lvar_ls: list[LocalVar] = [
             {
                 "name": lvar.name,
-                "type": lvar.type(),
-                "location": lvar.location,
+                "type": str(lvar.type()),
+                "location": str(lvar.location),
                 "is_arg_var": lvar.is_arg_var,
                 "is_stk_var": lvar.is_stk_var(),
                 "is_reg_var": lvar.is_reg_var(),

@@ -1,11 +1,8 @@
 from dataclasses import dataclass
 from typing import Any
 
-from agents import RunContextWrapper, function_tool
-
-from ..constants import SubagentTool
-from .result import Result
-from .rpc_types import (
+from aether_rpc.capabilities.result import Result
+from aether_rpc.capabilities.types import (
     AddressData,
     FunctionPseudocode,
     LocalVar,
@@ -13,6 +10,9 @@ from .rpc_types import (
     RenameLocalVarResult,
     SetCommentResult,
 )
+from agents import RunContextWrapper, function_tool
+
+from ..constants import SubagentTool
 from .tags import SubagentToolRegistry
 
 registry = SubagentToolRegistry()
@@ -43,8 +43,8 @@ async def rename_local_variable(
 ) -> Result[RenameLocalVarResult]:
     service = ctx.context.service
     return service.rename_local_variable(
-            function_address=function_address, old_var_name=old_var_name, new_var_name=new_var_name
-        )
+        function_address=function_address, old_var_name=old_var_name, new_var_name=new_var_name
+    )
 
 
 @registry.tag(SubagentTool.ANNOTATOR)

@@ -23,6 +23,7 @@ name = "aether-backend"
 version = "0.1.0"
 source = { editable = "packages/backend" }
 dependencies = [
+    { name = "aether-rpc" },
     { name = "aether-utils" },
     { name = "fastmcp" },
     { name = "openai-agents" },
@@ -32,6 +33,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "aether-rpc", editable = "packages/rpc" },
     { name = "aether-utils", editable = "packages/utils" },
     { name = "fastmcp", specifier = ">=3.0.0" },
     { name = "openai-agents", specifier = ">=0.17.5" },

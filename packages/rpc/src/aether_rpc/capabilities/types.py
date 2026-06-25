@@ -1,8 +1,5 @@
 from typing import TypedDict
 
-import ida_hexrays
-from ida_typeinf import tinfo_t
-
 
 class FunctionInfo(TypedDict):
     """Brief identifying info for a function (name + entry point)."""
@@ -74,8 +71,8 @@ class FunctionPseudocode(TypedDict):
 
 class LocalVar(TypedDict):
     name: str
-    type: tinfo_t
-    location: ida_hexrays.vdloc_t
+    type: str
+    location: str
     is_arg_var: bool
     is_stk_var: bool
     is_reg_var: bool
