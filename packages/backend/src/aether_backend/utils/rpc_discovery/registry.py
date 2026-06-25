@@ -8,6 +8,7 @@ from aether_utils.data_dir import get_data_dir
 from aether_utils.logger import get_logger
 
 from .connection import RpcConnectionEntry, connect_with_backoff, ping, safe_close
+from .constants import DISCOVERY_REFRESH_INTERVAL
 
 
 class RPCRegistry:
@@ -18,7 +19,7 @@ class RPCRegistry:
     def __init__(
         self,
         directory: Path = get_data_dir("rpc"),
-        refresh_interval: int = 60,
+        refresh_interval: int = DISCOVERY_REFRESH_INTERVAL,
     ) -> None:
         self._directory = directory
         self._refresh_interval = refresh_interval

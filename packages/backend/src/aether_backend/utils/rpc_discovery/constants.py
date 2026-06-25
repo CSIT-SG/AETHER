@@ -13,3 +13,4 @@ RPYC_CONFIG: dict[str, Any] = {
 }
 
 RPC_REGISTRY_KEY: str = "rpc_registry"
+DISCOVERY_REFRESH_INTERVAL: int = 10  # seconds between registry refreshes
