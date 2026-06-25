@@ -1,9 +1,5 @@
 import logging
 
-from aether_utils.config import get_config
-
-LEVEL = logging.DEBUG if get_config().debug else logging.INFO
-
 
 class NamespacedLogger(logging.Logger):
     """
@@ -28,8 +24,9 @@ class NamespacedLogger(logging.Logger):
         self.propagate = False  # prevent double-printing to root logger
 
 
-def get_logger(namespace: str | None = None) -> NamespacedLogger:
+def get_logger(namespace: str | None = None, level: int = logging.DEBUG) -> NamespacedLogger:
     """Convenience factory — mirrors logging.getLogger() but returns a NamespacedLogger."""
+    
     internal_name = f"aether.{namespace}" if namespace else "aether"
-    logger = NamespacedLogger(internal_name, namespace=namespace, level=LEVEL)
+    logger = NamespacedLogger(internal_name, namespace=namespace, level=level)
     return logger
