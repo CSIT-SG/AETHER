@@ -1,4 +1,5 @@
 import argparse
+import importlib
 import signal
 import sys
 import threading
@@ -28,7 +29,10 @@ def main(
     from aether_rpc.server import RPCServer
 
     executor = HeadlessExecutor(idb_path, ida_install_dir)
-    capabilities = [getattr(caps, c)() for c in caps.__all__]
+    capabilities = [
+        getattr(importlib.import_module(module_path, caps.__name__), name)()
+        for name, module_path in caps.EXPORTS.items()
+    ]
 
     server = RPCServer(file_id(idb_path), executor, capabilities, host=host, port=port)
     server.start()  # calls executor.startup() on this (main) thread

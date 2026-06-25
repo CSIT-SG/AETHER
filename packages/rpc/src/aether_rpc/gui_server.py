@@ -1,10 +1,15 @@
+import importlib
+
 from aether_utils.logger import get_logger
 
 import aether_rpc.capabilities as caps
 from aether_rpc.executors.gui_executor import GUIExecutor
 from aether_rpc.server import RPCServer
 
-CAPABILITIES = [getattr(caps, c)() for c in caps.__all__]
+CAPABILITIES = [
+    getattr(importlib.import_module(module_path, caps.__name__), name)()
+    for name, module_path in caps.EXPORTS.items()
+]
 executor = GUIExecutor()
 
 logger = get_logger("rpc_gui_plugin")
