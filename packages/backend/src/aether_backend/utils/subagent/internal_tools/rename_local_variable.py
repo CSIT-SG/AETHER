@@ -1,5 +1,3 @@
-from typing import cast
-
 from aether_backend.utils.subagent.constants import SubagentTool
 from aether_rpc.capabilities.result import Result
 from aether_rpc.capabilities.types import RenameLocalVarResult
