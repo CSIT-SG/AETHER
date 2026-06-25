@@ -49,11 +49,21 @@ My examples are solely meant for guidance. You should take an exploratory approa
     )
 
     async for event in result.stream_events():
+
+        if event.type == "run_item_stream_event":
+            item = event.item
+            if item.type == "message_output_item":
+                raw = item.raw_item
+                if raw.content[0].type == "output_text":
+                    yield Log(str(raw.content[0].text))
+        continue
+        """
         if event.type != "run_item_stream_event":
             continue
 
         item = event.item
         if item.type == "tool_call_output_item":
             yield Log(f"tool output: {item.output}")
+        """
 
     yield Return(None)
