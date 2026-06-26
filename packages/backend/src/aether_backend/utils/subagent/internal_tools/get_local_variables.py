@@ -13,10 +13,6 @@ async def get_local_variables(
 ) -> Result[list[LocalVar]]:
     """List all local variables in the decompiled pseudocode of a function.
 
-    Resolves the given function name to an address, decompiles it using
-    IDA Hex-Rays, and returns metadata for each local variable found,
-    including arguments and stack/register variables.
-
     Args:
         function_name (str): The name of the function to inspect.
 
