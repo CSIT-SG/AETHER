@@ -4,7 +4,7 @@ import ida_name
 from ..base import Capability
 from ..result import Err, Ok, Result
 from ..types import RenameFuncResult
-from ..utils import resolve_effective_address
+from ..utils import refresh_pseudocode, resolve_effective_address
 
 
 class RenameFunction(Capability):
@@ -35,6 +35,7 @@ class RenameFunction(Capability):
             return Err(result=f"No function found at {hex(ea)}")
 
         elif ida_name.set_name(func.start_ea, new_name, ida_name.SN_NOWARN):
+            refresh_pseudocode(func.start_ea)
             self.logger.info(f"Renamed function at {hex(func.start_ea)} to '{new_name}'")
             return Ok(result=RenameFuncResult(address=hex(func.start_ea), new_name=new_name))
 
