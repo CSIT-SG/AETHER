@@ -13,15 +13,36 @@ async def get_data_at_address(
 ) -> Result[AddressData]:
     """Collect and return all available data at the given address or symbol.
 
+    Resolves the location to an effective address and collects all available
+    context including raw bytes, disassembly, string literals, pointer targets,
+    and cross-references. The address must be loaded in the IDA database.
+
     Args:
-        location (str | int): Hex address or symbol name of the target.
+        location (str | int): Hex address string or symbol name of the target.
 
     Returns:
-        Ok[AddressData]: Contains address, name, function info, raw bytes,
-            disassembly, string, pointer, and xrefs.
-        Err[str]: If the address could not be resolved or is not loaded.
+        Ok[AddressData]: A structured object containing:
+            - address (str): The resolved hex address string.
+            - name (str | None): The symbol name at the address, if any.
+            - function (dict | None): Info about the containing function, if any.
+            - item_size (int): The size in bytes of the item at the address.
+            - raw_bytes (str): The raw bytes at the address as a hex string.
+            - is_code (bool): Whether the address is marked as code.
+            - is_data (bool): Whether the address is marked as data.
+            - disassembly (str | None): The plain-text disassembly line at the address, if code.
+            - string (str | None): The decoded string literal at the address, if explicitly defined as one in the database.
+            - pointer (PointerInfo | None): Pointer value and symbol it resolves to. Contains:
+                - value (str): Value of the pointer e.g. 0xDEADBEEF
+                - name (str): Name of the symbol it resolves to e.g. dynamic_buffer_allocation
+            - xrefs_to (list): Cross-references pointing to this address.
+            - xrefs_from (list): Cross-references originating from this address.
+        Err[str]: An error message string in the following cases:
+            - The location could not be resolved to a valid effective address.
+            - The resolved address is not loaded in the IDA database.
 
-    Example: get_data_at_address(0xDEADBEEF)
+    Examples:
+        get_data_at_address(0xDEADBEEF)
+        get_data_at_address("my_func")
     """
     service = ctx.context.service
     return service.get_data_at_address(location=location)
