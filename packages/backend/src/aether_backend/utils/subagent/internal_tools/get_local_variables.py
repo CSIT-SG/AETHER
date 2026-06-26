@@ -33,10 +33,6 @@ async def get_local_variables(
             - IDA Hex-Rays raised a DecompilationFailure during decompilation.
             - Decompilation succeeded but returned no result.
 
-    Raises:
-        ida_hexrays.DecompilationFailure: Caught internally if Hex-Rays
-            fails to decompile the function; returned as an Err result.
-
     Examples:
             get_local_variables("dynamic_buffer")
             get_local_variables("sub_DEADBEEF")

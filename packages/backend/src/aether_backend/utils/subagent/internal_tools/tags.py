@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from itertools import chain
 from typing import Any, cast
 
-from agents import Tool, FunctionTool
+from agents import FunctionTool, Tool
 
 from ..constants import SubagentTool
 

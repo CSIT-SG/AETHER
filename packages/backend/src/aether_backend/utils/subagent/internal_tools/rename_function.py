@@ -30,9 +30,6 @@ async def rename_function(
             - No function exists at or containing the resolved address.
             - IDA's naming API rejected the new name or the rename otherwise failed.
 
-    Raises:
-        None: All errors are caught internally and returned as Err results.
-
     Example:
         rename_function(0xDEADBEEF, "find_strlen")
     """

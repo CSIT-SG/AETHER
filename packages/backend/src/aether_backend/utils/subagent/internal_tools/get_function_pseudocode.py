@@ -13,10 +13,6 @@ async def get_function_pseudocode(
 ) -> Result[FunctionPseudocode]:
     """Decompile a function and return its pseudocode.
 
-    Resolves the given function name to an address and decompiles it using
-    IDA Hex-Rays, returning the pseudocode as a structured object containing
-    the function name, entry point, and full pseudocode text.
-
     Args:
         function_name (str): The symbolic name of the target function.
 
@@ -29,10 +25,6 @@ async def get_function_pseudocode(
             - The symbol could not be resolved to a known address.
             - IDA Hex-Rays raised a DecompilationFailure during decompilation.
             - Decompilation succeeded but returned no result.
-
-    Raises:
-        ida_hexrays.DecompilationFailure: Caught internally if Hex-Rays
-            fails to decompile the function; returned as an Err result.
 
     Examples:
             get_function_pseudocode("assign_buffer")

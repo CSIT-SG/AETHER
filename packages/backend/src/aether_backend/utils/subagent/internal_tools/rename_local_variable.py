@@ -17,11 +17,6 @@ async def rename_local_variable(
 ) -> Result[RenameLocalVarResult]:
     """Rename a local variable in the Hex-Rays decompiled view.
 
-    Resolves the function address, decompiles it using IDA Hex-Rays, locates
-    the variable by its current name among the function's local variables, and
-    renames it using the Hex-Rays API. Refreshes the pseudocode view after a
-    successful rename.
-
     Args:
         function_address (str | int): Hex or decimal address inside the target function.
         old_var_name (str): Current name of the variable to rename.
@@ -39,10 +34,6 @@ async def rename_local_variable(
             - Decompilation succeeded but returned no result.
             - No local variable with the given name exists in the function.
             - The Hex-Rays rename API call failed.
-
-    Raises:
-        ida_hexrays.DecompilationFailure: Caught internally if Hex-Rays
-            fails to decompile the function; returned as an Err result.
 
     Example:
         rename_local_variable(0xDEADBEEF, "v1", "buffer")

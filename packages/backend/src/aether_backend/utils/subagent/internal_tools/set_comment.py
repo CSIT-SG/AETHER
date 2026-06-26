@@ -34,11 +34,6 @@ async def set_comment(
             - The comment could not be written due to a decompilation failure
                 or an internal IDA API error.
 
-    Raises:
-        ida_hexrays.DecompilationFailure: Caught internally if Hex-Rays
-            fails to decompile the function when writing an inline comment;
-            returned as an Err result.
-
     Example:
         set_comment(0xDEADBEEF, "determines required buffer size")
     """

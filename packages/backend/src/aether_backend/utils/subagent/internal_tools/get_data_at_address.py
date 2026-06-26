@@ -13,10 +13,6 @@ async def get_data_at_address(
 ) -> Result[AddressData]:
     """Collect and return all available data at the given address or symbol.
 
-    Resolves the location to an effective address and collects all available
-    context including raw bytes, disassembly, string literals, pointer targets,
-    and cross-references. The address must be loaded in the IDA database.
-
     Args:
         location (str | int): Hex address string or symbol name of the target.
 
