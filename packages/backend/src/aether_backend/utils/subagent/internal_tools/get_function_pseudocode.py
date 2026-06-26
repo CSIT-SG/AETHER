@@ -20,6 +20,11 @@ async def get_function_pseudocode(
         Ok[FunctionPseudocode]: Contains the function name, start address,
             and pseudocode string.
         Err[str]: If the symbol is not found, or decompilation fails.
+
+    Examples:
+            get_function_pseudocode("assign_buffer")
+            get_function_pseudocode("sub_DEADBEEF")
+
     """
     service = ctx.context.service
     return service.get_function_pseudocode(function_name=function_name)

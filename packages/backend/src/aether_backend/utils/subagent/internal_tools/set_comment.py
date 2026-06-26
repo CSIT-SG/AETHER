@@ -20,6 +20,9 @@ async def set_comment(
     Returns:
         Ok[SetCommentResult]: Contains the target address and comment text.
         Err[str]: If the address is invalid, not inside a function, or the comment fails.
+
+    Example:
+        set_comment(0xDEADBEEF, "determines required buffer size")
     """
     service = ctx.context.service
     return service.set_comment(address=address, comment=comment)

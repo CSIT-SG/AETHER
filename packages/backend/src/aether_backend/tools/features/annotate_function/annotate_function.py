@@ -49,7 +49,6 @@ My examples are solely meant for guidance. You should take an exploratory approa
     )
 
     async for event in result.stream_events():
-
         if event.type == "run_item_stream_event":
             item = event.item
             if item.type == "message_output_item":

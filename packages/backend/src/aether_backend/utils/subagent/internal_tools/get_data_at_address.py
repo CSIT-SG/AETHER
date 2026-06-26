@@ -20,6 +20,8 @@ async def get_data_at_address(
         Ok[AddressData]: Contains address, name, function info, raw bytes,
             disassembly, string, pointer, and xrefs.
         Err[str]: If the address could not be resolved or is not loaded.
+
+    Example: get_data_at_address(0xDEADBEEF)
     """
     service = ctx.context.service
     return service.get_data_at_address(location=location)

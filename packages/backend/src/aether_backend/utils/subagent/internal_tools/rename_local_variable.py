@@ -25,6 +25,9 @@ async def rename_local_variable(
     Returns:
         Ok[RenameLocalVarResult]: Contains the function address and both old and new variable names.
         Err[str]: If the address is invalid, decompilation fails, or the variable is not found.
+
+    Example:
+        rename_local_variable(0xDEADBEEF, "v1", "buffer")
     """
     service = ctx.context.service
     return service.rename_local_variable(

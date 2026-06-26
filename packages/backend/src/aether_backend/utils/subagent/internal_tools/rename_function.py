@@ -20,6 +20,9 @@ async def rename_function(
     Returns:
         Ok[RenameFuncResult]: Contains the function address and new name.
         Err[str]: If the address is invalid, no function is found, or the rename fails.
+
+    Example:
+        rename_function(0xDEADBEEF, "find_strlen")
     """
     service = ctx.context.service
     return service.rename_function(address=address, new_name=new_name)

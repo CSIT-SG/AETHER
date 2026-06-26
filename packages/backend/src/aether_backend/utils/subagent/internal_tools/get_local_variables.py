@@ -16,10 +16,15 @@ async def get_local_variables(
     Args:
         function_name (str): The name of the function to inspect.
 
+
     Returns:
         Ok[list[LocalVar]]: Local variables with name, type, location,
             is_arg_var, is_stk_var, and is_reg_var fields.
         Err[str]: If the symbol is not found, or decompilation fails.
+
+    Examples:
+            get_local_variables("dynamic_buffer")
+            get_local_variables("sub_DEADBEEF")
     """
     service = ctx.context.service
     return service.get_local_variables(function_name=function_name)
