@@ -6,7 +6,6 @@ from agents import RunContextWrapper, function_tool
 from .tags import ToolDependencies, registry
 
 
-
 @registry.tag(SubagentTool.ANNOTATOR)
 @function_tool
 async def get_function_pseudocode(
