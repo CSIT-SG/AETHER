@@ -10,7 +10,7 @@ from fastmcp.tools import tool
 from .test_tool import test
 
 
-@tool(tags={ToolTags.DEBUG})  # tool is untyped in fastmcp
+@tool()  # tool is untyped in fastmcp
 @effectful  # type: ignore
 async def test_tool(
     rpc_id: str, func_name: str, arguments: dict, ctx: Context = CurrentContext()
