@@ -11,11 +11,15 @@ from .tags import ToolDependencies, registry
 async def set_comment(
     ctx: RunContextWrapper[ToolDependencies], *, address: str | int, comment: str
 ) -> Result[SetCommentResult]:
-    """Resolve the address and dispatch to the appropriate comment strategy.
+    """Set a comment at the given address in the Hex-Rays decompiler view.
 
-        Args:
-            address: Hex or decimal string address of the comment target.
-            comment: Text to write. Pass an empty string to clear.
+    Args:
+        address (str | int): Hex or decimal address of the comment target.
+        comment (str): Text to write. Pass an empty string to clear.
+
+    Returns:
+        Ok[SetCommentResult]: Contains the target address and comment text.
+        Err[str]: If the address is invalid, not inside a function, or the comment fails.
     """
     service = ctx.context.service
     return service.set_comment(address=address, comment=comment)

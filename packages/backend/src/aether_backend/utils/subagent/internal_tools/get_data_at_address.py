@@ -12,10 +12,15 @@ from .tags import ToolDependencies, registry
 async def get_data_at_address(
     ctx: RunContextWrapper[ToolDependencies], *, location: str | int
 ) -> Result[AddressData]:
-    """ Retrieves raw data, disassembly, string, pointer, and xref context at a given address.
+    """Collect and return all available data at the given address or symbol.
 
     Args:
-        location: Hex address or symbol name of the target.
+        location (str | int): Hex address or symbol name of the target.
+
+    Returns:
+        Ok[AddressData]: Contains address, name, function info, raw bytes,
+            disassembly, string, pointer, and xrefs.
+        Err[str]: If the address could not be resolved or is not loaded.
     """
     service = ctx.context.service
     return service.get_data_at_address(location=location)

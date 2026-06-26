@@ -13,9 +13,13 @@ async def rename_function(
 ) -> Result[RenameFuncResult]:
     """Rename the function at the given address.
 
-        Args:
-            address: Hex or decimal string address within the target function.
-            new_name: The new name to assign to the function.
+    Args:
+        address (str | int): Hex or decimal address within the target function.
+        new_name (str): The new name to assign to the function.
+
+    Returns:
+        Ok[RenameFuncResult]: Contains the function address and new name.
+        Err[str]: If the address is invalid, no function is found, or the rename fails.
     """
     service = ctx.context.service
     return service.rename_function(address=address, new_name=new_name)

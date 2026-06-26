@@ -12,10 +12,15 @@ from .tags import ToolDependencies, registry
 async def get_function_pseudocode(
     ctx: RunContextWrapper[ToolDependencies], *, function_name: str
 ) -> Result[FunctionPseudocode]:
-    """"Retrieves the Hex-Rays decompiled pseudocode for a function by name.
+    """Decompile a function and return its pseudocode.
 
     Args:
-        function_name: The symbolic name of the target function.
+        function_name (str): The symbolic name of the target function.
+
+    Returns:
+        Ok[FunctionPseudocode]: Contains the function name, start address,
+            and pseudocode string.
+        Err[str]: If the symbol is not found, or decompilation fails.
     """
     service = ctx.context.service
     return service.get_function_pseudocode(function_name=function_name)

@@ -11,10 +11,15 @@ from .tags import ToolDependencies, registry
 async def get_local_variables(
     ctx: RunContextWrapper[ToolDependencies], *, function_name: str
 ) -> Result[list[LocalVar]]:
-    """Get a list of all local variables in the pesudocode
+    """List all local variables in the decompiled pseudocode of a function.
 
     Args:
-        function_name: The symbolic name of the target function.
+        function_name (str): The name of the function to inspect.
+
+    Returns:
+        Ok[list[LocalVar]]: Local variables with name, type, location,
+            is_arg_var, is_stk_var, and is_reg_var fields.
+        Err[str]: If the symbol is not found, or decompilation fails.
     """
     service = ctx.context.service
     return service.get_local_variables(function_name=function_name)

@@ -17,10 +17,14 @@ async def rename_local_variable(
 ) -> Result[RenameLocalVarResult]:
     """Rename a local variable in the Hex-Rays decompiled view.
 
-        Args:
-            function_address: Hex or decimal string address inside or at the function start.
-            old_var_name: Current name of the variable to rename.
-            new_var_name: New name to assign.
+    Args:
+        function_address (str | int): Hex or decimal address inside the target function.
+        old_var_name (str): Current name of the variable to rename.
+        new_var_name (str): New name to assign.
+
+    Returns:
+        Ok[RenameLocalVarResult]: Contains the function address and both old and new variable names.
+        Err[str]: If the address is invalid, decompilation fails, or the variable is not found.
     """
     service = ctx.context.service
     return service.rename_local_variable(
