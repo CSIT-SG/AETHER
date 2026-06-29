@@ -1,11 +1,10 @@
 import httpx
 from aether_backend.utils.effect import Log, Program, Progress, Return
 
-CHUNK_SIZE = 64 * 1024  # 64 KB
-
+from .constants import CHUNK_SIZE, CONNECT_TIMEOUT_SECONDS, TIMEOUT_SECONDS
 
 async def fetch_url_stream(url: str) -> Program:
-    timeout = httpx.Timeout(30.0, connect=10.0)
+    timeout = httpx.Timeout(TIMEOUT_SECONDS, connect=CONNECT_TIMEOUT_SECONDS)
 
     async with (
         httpx.AsyncClient(timeout=timeout, follow_redirects=True, verify=False) as client,
