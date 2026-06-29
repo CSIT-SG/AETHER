@@ -45,8 +45,9 @@ class OpenAIGateway:
 
         set_tracing_disabled(True)
 
-        resolved_model_name = (
-            model_name or self.config.provider.models[self.config.provider.default_model]
-        )
+        if model_name is not None:
+            resolved_model_name = self.config.provider.models[model_name]
+        else:
+            resolved_model_name = self.config.provider.models[self.config.provider.default_model]
 
         return OpenAIChatCompletionsModel(model=resolved_model_name, openai_client=client)

@@ -5,7 +5,7 @@ import ida_hexrays
 from ..base import Capability
 from ..result import Err, Ok, Result
 from ..types import SetCommentResult
-from ..utils import refresh_pseudocode, resolve_effective_address
+from ..utils import resolve_effective_address
 
 
 class SetComment(Capability):
@@ -49,8 +49,6 @@ class SetComment(Capability):
 
         if not success:
             return Err(result=f"Failed to set comment at {hex(ea)}")
-
-        refresh_pseudocode(func.start_ea)
 
         return Ok(result=SetCommentResult(address=hex(ea), comment=comment))
 

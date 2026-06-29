@@ -4,7 +4,7 @@ import ida_hexrays
 from ..base import Capability
 from ..result import Err, Ok, Result
 from ..types import RenameLocalVarResult
-from ..utils import refresh_pseudocode, resolve_effective_address
+from ..utils import resolve_effective_address
 
 
 class RenameLocalVariable(Capability):
@@ -67,8 +67,6 @@ class RenameLocalVariable(Capability):
             return Err(
                 result=f"Failed to rename {old_var_name!r} to {new_var_name!r} in function {hex(func.start_ea)}"
             )
-
-        refresh_pseudocode(func.start_ea)
 
         return Ok(
             result=RenameLocalVarResult(

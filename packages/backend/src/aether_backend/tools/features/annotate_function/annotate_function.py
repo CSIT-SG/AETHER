@@ -14,6 +14,7 @@ config = get_config()
 
 
 async def annotate(service: Any, function_address: str | int) -> Program:
+    print(config.subagents.annotator_model if config.subagents else None)
     agent = Agent(
         name="Annotator",
         model=OpenAIGateway().get_model(
@@ -37,15 +38,22 @@ For another example:
 It's possible for some binaries to roll their own cryptography. If through your analysis you determine that a function may be performing certain recognisable encryption or decryption, appropriate annotations may follow.
 
 My examples are solely meant for guidance. You should take an exploratory approach in your thought process to perform substantial and meaningful analysis of the segment of the program given to you to make insightful improvements to the psuedocode.
+
+Be succint in your comments and do not over explain.
+
+Before moving on to other functions, make sure that your changes are reflected in the pseudocode.
+This includes renaming of both variables and functions, as well as comments being set.
+
+When done, get the functions pseudocode as a last check
         """,
         tools=internal_tool_registry.get_tools(SubagentTool.ANNOTATOR),
     )
-    yield Log(f"Annotating function at address: {function_address}, tools: {agent.tools}")
 
     result = Runner.run_streamed(
         agent,
         context=InternalToolDependencies(service),
         input=f"Analyze the function at address {function_address} and provide annotations for the psuedocode.",
+        max_turns=None,
     )
 
     async for event in result.stream_events():
@@ -53,12 +61,15 @@ My examples are solely meant for guidance. You should take an exploratory approa
             RunItem = event.item
             if RunItem.type == "tool_call_item":
                 yield Log(str(RunItem.tool_name))
+                yield Log(str(RunItem))
             elif RunItem.type == "tool_call_output_item":
                 yield Log(str(RunItem.output))
             elif RunItem.type == "reasoning_item":
-                yield Log(str(RunItem))
-            elif RunItem.type == "message_output_item":
-                yield Log(str(RunItem.raw_item))
+                content = RunItem.raw_item.content
+                if content is not None:
+                    yield Log(content[0].text)
         continue
+
+    service.refresh_pseudocode(function_address=function_address)
 
     yield Return(result.final_output)

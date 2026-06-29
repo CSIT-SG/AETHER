@@ -11,4 +11,5 @@ EXPORTS: dict[str, str] = {
     "RenameLocalVariable": ".rename_local_variable",
     "SetComment": ".set_comment",
     "ExecuteIDAPython": ".execute_idapython",
+    "RefreshPseudocode": ".refresh_pseudocode"
 }
