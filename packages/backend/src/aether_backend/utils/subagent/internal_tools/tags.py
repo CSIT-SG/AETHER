@@ -13,11 +13,12 @@ from ..constants import SubagentTool
 class ToolDependencies:
     service: Any
 
+
 class SubagentToolRegistry:
     def __init__(self) -> None:
         self._registry: defaultdict[SubagentTool, list[FunctionTool]] = defaultdict(list)
 
-    def tag(self, *tools: SubagentTool) -> Callable[[FunctionTool],FunctionTool]:
+    def tag(self, *tools: SubagentTool) -> Callable[[FunctionTool], FunctionTool]:
         def decorator(func: FunctionTool) -> FunctionTool:
             for tool in tools:
                 self._registry[tool].append(func)
@@ -46,5 +47,6 @@ class SubagentToolRegistry:
             if tool.name == name:
                 return tool
         return None
+
 
 registry = SubagentToolRegistry()
