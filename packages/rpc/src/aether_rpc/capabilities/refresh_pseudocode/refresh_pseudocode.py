@@ -38,12 +38,14 @@ class RefreshPseudocode(Capability):
         headless = is_headless_ida()
 
         if not headless:
-            self.logger.info(f"Refreshing UI and pseudocode view for function at {hex(func.start_ea)}")
+            self.logger.info(
+                f"Refreshing UI and pseudocode view for function at {hex(func.start_ea)}"
+            )
             ida_kernwin.refresh_idaview_anyway()
             ida_hexrays.open_pseudocode(func.start_ea, ida_hexrays.OPF_REUSE)
         else:
-            self.logger.debug(f"Skipping UI refresh for {hex(func.start_ea)} (running in headless mode)")
+            self.logger.debug(
+                f"Skipping UI refresh for {hex(func.start_ea)} (running in headless mode)"
+            )
 
-        return Ok(
-            result=hex(func.start_ea)
-        )
+        return Ok(result=hex(func.start_ea))
