@@ -1,6 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, cast
 
 from aether_utils.logger import get_logger
 
@@ -8,7 +8,7 @@ from aether_utils.logger import get_logger
 class Capability(ABC):
     @property
     def logger(self) -> logging.Logger:
-        return get_logger(self.name)
+        return cast(logging.Logger, get_logger(f"rpc.{self.name}"))
 
     @property
     @abstractmethod

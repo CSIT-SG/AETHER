@@ -1,3 +1,5 @@
+# map exactly: capability name to module name
+# this will be dynamically loaded by the RPC server to register capabilities
 EXPORTS: dict[str, str] = {
     "GetDataAtAddress": ".get_data_at_address",
     "GetFunctionByAddress": ".get_function_by_address",
@@ -8,4 +10,5 @@ EXPORTS: dict[str, str] = {
     "RenameFunction": ".rename_function",
     "RenameLocalVariable": ".rename_local_variable",
     "SetComment": ".set_comment",
+    "ExecuteIDAPython": ".execute_idapython",
 }
