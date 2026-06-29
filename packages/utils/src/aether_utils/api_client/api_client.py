@@ -114,6 +114,12 @@ def create_async_openai_client(
     """
     custom_headers = _build_user_agent_header(feature)
 
+    if not api_key:
+        logger.warning("API key not provided! Set one in the AETHER config.")
+
+    if not base_url:
+        logger.warning("Base URL not provided! Set one in the AETHER config.")
+
     client = AsyncOpenAI(
         api_key=api_key,
         base_url=base_url,
