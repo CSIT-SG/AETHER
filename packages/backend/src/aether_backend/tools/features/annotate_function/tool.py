@@ -12,7 +12,7 @@ from .constants import TIMEOUT_SECONDS
 
 
 @tool(
-    annotations=ToolAnnotations(title="Annotator Subagent", destructiveHint=True),
+    annotations=ToolAnnotations(title="Annotator Function", destructiveHint=True),
     timeout=TIMEOUT_SECONDS,
 )  # tool is untyped in fastmcp
 @effectful  # type: ignore

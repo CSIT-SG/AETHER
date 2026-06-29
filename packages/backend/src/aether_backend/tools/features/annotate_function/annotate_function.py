@@ -14,7 +14,6 @@ from agents import Agent, Runner
 
 config = get_config()
 SYSTEM_PROMPT = get_content(Path(__file__).parent, "prompt.md")
-SYSTEM_INPUT = get_content(Path(__file__).parent, "input.md")
 
 
 async def annotate(service: Any, function_address: str | int) -> Program:
@@ -31,25 +30,21 @@ async def annotate(service: Any, function_address: str | int) -> Program:
     result = Runner.run_streamed(
         agent,
         context=InternalToolDependencies(service),
-        input=SYSTEM_INPUT.format(function_address=function_address),
+        input="Analyze the function at address {function_address} and provide annotations for the psuedocode.",
         max_turns=None,
     )
 
     async for event in result.stream_events():
-        if event.type == "run_item_stream_event":
-            RunItem = event.item
-            if RunItem.type == "tool_call_item":
-                yield Log(str(RunItem.tool_name))
-                if hasattr(RunItem.raw_item, "arguments"):
-                    yield Log(str(RunItem.raw_item.arguments))  # type: ignore
+        if event.type != "run_item_stream_event":
+            continue
 
-            elif RunItem.type == "tool_call_output_item":
-                yield Log(str(RunItem.output))
-            elif RunItem.type == "reasoning_item":
-                content = RunItem.raw_item.content
-                if content is not None:
-                    yield Log(content[0].text)
-        continue
+        RunItem = event.item
+        if RunItem.type == "tool_call_item":
+            args = getattr(RunItem.raw_item, "arguments", "")
+            yield Log(f"{RunItem.tool_name}({args})")
+
+        elif RunItem.type == "tool_call_output_item":
+            yield Log(str(RunItem.output))
 
     service.refresh_pseudocode(function_address=function_address)
 
