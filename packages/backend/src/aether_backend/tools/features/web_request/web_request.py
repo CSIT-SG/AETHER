@@ -3,6 +3,7 @@ from aether_backend.utils.effect import Log, Program, Progress, Return
 
 from .constants import CHUNK_SIZE, CONNECT_TIMEOUT_SECONDS, TIMEOUT_SECONDS
 
+
 async def fetch_url_stream(url: str) -> Program:
     timeout = httpx.Timeout(TIMEOUT_SECONDS, connect=CONNECT_TIMEOUT_SECONDS)
 

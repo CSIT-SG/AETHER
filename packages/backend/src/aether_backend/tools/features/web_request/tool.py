@@ -1,13 +1,12 @@
 from aether_backend.utils.effect import Program, effectful
 from fastmcp.tools import tool
-
-from .web_request import fetch_url_stream
 from mcp.types import ToolAnnotations
 
+from .web_request import fetch_url_stream
+
+
 @tool(
-    annotations=ToolAnnotations(
-        title="Fetch URL", readOnlyHint=True, destructiveHint=False
-    ),
+    annotations=ToolAnnotations(title="Fetch URL", readOnlyHint=True, destructiveHint=False),
 )  # tool is untyped in fastmcp
 @effectful  # type: ignore
 async def fetch_url(url: str) -> Program:
