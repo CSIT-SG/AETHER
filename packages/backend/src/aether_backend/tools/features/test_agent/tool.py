@@ -12,10 +12,10 @@ from .tester_agent import test
 
 @tool(tags={ToolTags.DEBUG})  # tool is untyped in fastmcp
 @effectful  # type: ignore
-async def test_function(
+async def test_agent(
     rpc_id: str, rpc_tool: str, arguments: dict[str, Any], ctx: Context = CurrentContext()
 ) -> Program:
-    """Test a function with the given arguments."""
+    """Test agent spawning by calling an rpc function with the given arguments."""
     registry = cast(RPCRegistry, ctx.lifespan_context[RPC_REGISTRY_KEY])
     async for effect in test(await registry.get(rpc_id), rpc_tool, **arguments):
         yield effect
