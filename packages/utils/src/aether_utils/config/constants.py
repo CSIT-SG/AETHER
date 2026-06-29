@@ -1,4 +1,4 @@
-from .models import ConfigModel, ProviderModel
+from .models import ConfigModel, ProviderModel, SubagentsModel
 
 DEFAULT_MODEL_LIST = {
     "Qwen: Qwen3 Coder 480B A35B": "qwen/qwen3-coder",
@@ -15,5 +15,8 @@ DEFAULT_CONFIG = ConfigModel(
         api_key="",
         models=DEFAULT_MODEL_LIST,
         default_model="OpenAI: gpt-oss-120b",
+    ),
+    subagents=SubagentsModel(
+        annotator_model="Qwen: Qwen3 Next 80B A3B Instruct"
     ),
 )

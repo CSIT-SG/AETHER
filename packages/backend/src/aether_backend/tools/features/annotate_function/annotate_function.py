@@ -30,7 +30,7 @@ async def annotate(service: Any, function_address: str | int) -> Program:
     result = Runner.run_streamed(
         agent,
         context=InternalToolDependencies(service),
-        input="Analyze the function at address {function_address} and provide annotations for the psuedocode.",
+        input=f"Analyze the function at address {function_address} and provide annotations for the psuedocode.",
         max_turns=None,
     )
 
