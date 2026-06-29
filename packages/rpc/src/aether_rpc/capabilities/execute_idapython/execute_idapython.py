@@ -32,4 +32,4 @@ class ExecuteIDAPython(Capability):
             return Ok(sysout.getvalue())
         except Exception as e:
             self.logger.exception("Failed to execute IDAPython code: %s", e)
-            return Err(f"Failed to execute IDAPython code: {e}")
+            return Err(str(e))
