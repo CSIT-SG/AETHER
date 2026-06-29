@@ -1,4 +1,5 @@
 import contextlib
+from typing import cast
 import threading
 
 from aether_utils.data_dir import get_data_dir
@@ -35,7 +36,7 @@ class RPCServer:
         if self._server is None:
             raise RuntimeError("Server not started")
 
-        return self._server.port
+        return cast(int, self._server.port)
 
     def start(self) -> None:
         self._executor.startup()
@@ -65,7 +66,7 @@ class RPCServer:
             instance_id=self._id, port=self._server.port if self._server else None
         )
 
-    def _run(self):
+    def _run(self) -> None:
         if not self._server:
             raise RuntimeError("Server not initialized")
         self._server.start()

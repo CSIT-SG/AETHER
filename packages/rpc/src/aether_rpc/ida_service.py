@@ -1,4 +1,5 @@
 from functools import wraps
+from typing import Any, Callable
 
 from rpyc import Service
 
@@ -21,9 +22,9 @@ class IDAService(Service):  # type: ignore[misc]
                 self._wrap(cap),
             )
 
-    def _wrap(self, cap: Capability):
+    def _wrap(self, cap: Capability) -> Callable[..., Any]:
         @wraps(cap.execute)
-        def _handler(**kwargs):
+        def _handler(**kwargs: dict[str, Any]) -> Any:
             return self._executor.execute(
                 cap.execute,
                 kwargs,
