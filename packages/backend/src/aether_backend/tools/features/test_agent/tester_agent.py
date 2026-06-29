@@ -13,7 +13,7 @@ from agents import Agent, Runner
 config = get_config()
 
 
-async def test(service: Any, rpc_tool: str, **args) -> Program:
+async def test(service: Any, rpc_tool: str, **kwargs: Any) -> Program:
     agent = Agent(
         name="RPC Tester",
         model=OpenAIGateway().get_model(
@@ -59,12 +59,12 @@ If the user's request is missing the tool name, the arguments dictionary, or if 
 """,
         tools=internal_tool_registry.get_tools(SubagentTool.ANNOTATOR),
     )
-    yield Log(f"Testing {rpc_tool} at address: {dict(args)}")
+    yield Log(f"Testing {rpc_tool} at address: {kwargs}")
 
     result = Runner.run_streamed(
         agent,
         context=InternalToolDependencies(service),
-        input=f"Call {rpc_tool} using these arguments,{dict(args)}.",
+        input=f"Call {rpc_tool} using these arguments: {kwargs}.",
     )
 
     async for event in result.stream_events():

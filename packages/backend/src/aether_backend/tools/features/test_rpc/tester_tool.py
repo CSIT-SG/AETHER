@@ -3,7 +3,7 @@ from typing import Any
 from aether_backend.utils.effect import Program, Return
 
 
-async def test(service: Any, func_name: str, **kwargs) -> Program:
+async def test(service: Any, func_name: str, **kwargs: Any) -> Program:
     if hasattr(service, func_name):
         tool = getattr(service, func_name)
         yield Return(tool(**kwargs))
