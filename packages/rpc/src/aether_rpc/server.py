@@ -1,6 +1,6 @@
 import contextlib
-from typing import cast
 import threading
+from typing import cast
 
 from aether_utils.data_dir import get_data_dir
 from rpyc.utils.server import ThreadedServer

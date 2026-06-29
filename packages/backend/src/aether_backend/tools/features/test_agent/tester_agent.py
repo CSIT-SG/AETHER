@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any
 
 from aether_backend.utils.effect import Log, Program, Return
@@ -8,14 +9,13 @@ from aether_backend.utils.subagent import (
     SubagentTool,
     internal_tool_registry,
 )
-from pathlib import Path
 from aether_utils.config import get_config
 from agents import Agent, Runner
 
 config = get_config()
 
 INSTRUCTIONS = get_content(Path(__file__).parent, "prompt.md")
-    
+
 
 async def test(service: Any, rpc_tool: str, **kwargs: Any) -> Program:
     agent = Agent(
