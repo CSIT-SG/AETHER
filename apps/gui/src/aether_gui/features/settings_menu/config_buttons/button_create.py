@@ -17,21 +17,21 @@ class ApplyButton(ConfigButton):
         get_content: Callable[[], str],
         on_error: Callable[[], None],
         clear_message_box: Callable[[], None],
-        set_config_message: Callable[[], None],
+        on_success: Callable[[], None],
         parent: QtWidgets.QWidget | None = None,
     ) -> None:
         super().__init__("Apply", parent=parent)
         self._on_error = on_error
         self._clear_message_box = clear_message_box
         self._get_content = get_content
-        self._set_config_message = set_config_message
+        self._on_success = on_success
 
     def action(self) -> None:
         self._clear_message_box()
         try:
             formatted: dict[str, Any] = json.loads(self._get_content())
             set_config(formatted)
-            self._set_config_message()
+            self._on_success()
         except Exception as e:
             self._on_error()
             logger.error(e)

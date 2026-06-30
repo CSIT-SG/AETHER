@@ -13,14 +13,14 @@ class ButtonRow(StyledComponent):
         on_close: Callable,
         on_error: Callable[[], None],
         clear_message_box: Callable[[], None],
-        set_config: Callable[[], None],
+        on_success: Callable[[], None],
         parent=None,
     ) -> None:
         self._get_content = get_content
         self._on_close = on_close
         self._on_error = on_error
         self._clear_message_box = clear_message_box
-        self._set_config_message = set_config
+        self._on_success = on_success
         super().__init__(parent)
 
     def setup(self) -> None:
@@ -39,7 +39,7 @@ class ButtonRow(StyledComponent):
             self._on_close,
             self._on_error,
             self._clear_message_box,
-            self._set_config_message,
+            self._on_success,
         )
         self.setLayout(self._layout)
 
@@ -49,12 +49,10 @@ class ButtonRow(StyledComponent):
         on_close: Callable,
         on_error: Callable[[], None],
         clear_message_box: Callable[[], None],
-        set_config_message: Callable[[], None],
+        on_success: Callable[[], None],
     ) -> None:
         ok: OkButton = OkButton(get_content, on_close, on_error, clear_message_box)
-        apply: ApplyButton = ApplyButton(
-            get_content, on_error, clear_message_box, set_config_message
-        )
+        apply: ApplyButton = ApplyButton(get_content, on_error, clear_message_box, on_success)
         cancel: CancelButton = CancelButton(on_close)
         for btn in (ok, apply, cancel):
             btn.setSizePolicy(

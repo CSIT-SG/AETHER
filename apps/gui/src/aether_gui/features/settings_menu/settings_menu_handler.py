@@ -1,19 +1,16 @@
-from aether_utils.config import get_config
 from aether_utils.logger import get_logger
 from PySide6 import QtWidgets
 
 from .config_box import ConfigBox
 from .config_buttons import ButtonRow
 
-CONTENTS = get_config().model_dump()
-
-logger = get_logger("test_setting_menu")
+logger = get_logger("settings_menu")
 
 
 class SettingsMenuHandler(QtWidgets.QDialog):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
-        self.setWindowTitle("Aether")
+        self.setWindowTitle("AETHER Settings")
         self.resize(600, 350)
         self._layout: QtWidgets.QVBoxLayout
         self._buttons: ButtonRow
@@ -31,7 +28,7 @@ class SettingsMenuHandler(QtWidgets.QDialog):
             self.close,
             self.show_error_message,
             self.clear_message_box,
-            self.set_config_message,
+            self.show_success_message,
             parent=self,
         )
         config_box.setMinimumWidth(500)
@@ -52,6 +49,6 @@ class SettingsMenuHandler(QtWidgets.QDialog):
     def clear_message_box(self) -> None:
         self._cfg_message.setText(" ")
 
-    def set_config_message(self) -> None:
+    def show_success_message(self) -> None:
         self._cfg_message.setText("Config successfully applied!")
         self._cfg_message.setStyleSheet("color: green")

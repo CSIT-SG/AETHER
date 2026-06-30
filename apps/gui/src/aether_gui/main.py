@@ -22,7 +22,7 @@ class _Aether(idaapi.plugin_t):
     flags = idaapi.PLUGIN_KEEP
     comment = "Settings Menu"
     help = ""
-    wanted_name = "Aether"
+    wanted_name = "AETHER Settings"
     wanted_hotkey = ""
 
     def __init__(self):

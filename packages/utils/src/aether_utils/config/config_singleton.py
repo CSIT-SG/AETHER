@@ -13,8 +13,9 @@ def get_config() -> ConfigModel:
     return _config_manager.config
 
 
-def set_config(raw: dict[str, Any]) -> None:
+def set_config(raw: dict[str, Any]) -> ConfigModel:
     global _config_manager
     if _config_manager is None:
         _config_manager = ConfigManager()
     _config_manager.config = raw
+    return _config_manager.config
