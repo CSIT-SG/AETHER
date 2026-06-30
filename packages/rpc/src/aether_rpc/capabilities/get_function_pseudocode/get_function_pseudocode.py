@@ -1,4 +1,5 @@
 import ida_hexrays
+import ida_lines
 
 from ..base import Capability
 from ..result import Err, Ok, Result
@@ -42,10 +43,31 @@ class GetFunctionPseudocode(Capability):
             self.logger.error("Decompilation returned no result for %r", function_name)
             return Err(result=f"Decompilation returned no result for {function_name!r}")
 
+        pseudocode = cfunc.get_pseudocode()
+        rendered_lines = []
+
+        for i in range(len(pseudocode)):
+            sl = pseudocode[i]
+            item = ida_hexrays.ctree_item_t()
+            addr_str = ""
+
+            dummy_head = ida_hexrays.ctree_item_t()
+            dummy_anchor = ida_hexrays.ctree_item_t()
+            if cfunc.get_line_item(sl.line, 0, False, dummy_head, item, dummy_anchor):
+                citem = item.it
+                line_ea = citem.ea if citem else None
+                if line_ea is not None and line_ea < 0xFFFFFFFFFFFFFFFE:
+                    addr_str = hex(line_ea)
+
+            line_text = ida_lines.tag_remove(sl.line)
+            rendered_lines.append(f"{addr_str.ljust(12)} {line_text}")
+
+        pseudocode_text = "\n".join(rendered_lines)
+
         return Ok(
             result=FunctionPseudocode(
                 name=function_name,
                 start_address=hex(ea),
-                pseudocode=str(cfunc),
+                pseudocode=pseudocode_text,
             )
         )

@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import ida_bytes
 import ida_funcs
 import ida_hexrays
@@ -7,6 +9,19 @@ from ..result import Err, Ok, Result
 from ..types import SetCommentResult
 from ..utils import resolve_effective_address
 
+_OP_TO_ITP: defaultdict[int, int] = defaultdict(
+    lambda: ida_hexrays.ITP_SEMI,
+    {
+        ida_hexrays.cit_if:     ida_hexrays.ITP_BLOCK1,
+        ida_hexrays.cit_while:  ida_hexrays.ITP_BLOCK1,
+        ida_hexrays.cit_for:    ida_hexrays.ITP_BLOCK1,
+        ida_hexrays.cit_do:     ida_hexrays.ITP_BLOCK1,
+        ida_hexrays.cit_switch: ida_hexrays.ITP_BLOCK1,
+        ida_hexrays.cit_block:  ida_hexrays.ITP_BRACE1,
+        ida_hexrays.cit_return: ida_hexrays.ITP_SEMI,
+        ida_hexrays.cit_expr:   ida_hexrays.ITP_SEMI,
+    },
+)
 
 class SetComment(Capability):
     """Attaches or updates a comment at a given address in the IDA decompiler view.
@@ -93,9 +108,21 @@ class SetComment(Capability):
             )
             return False
 
+        itp = ida_hexrays.ITP_SEMI
+        pseudocode = cfunc.get_pseudocode()
+        for i in range(len(pseudocode)):
+            sl = pseudocode[i]
+            item = ida_hexrays.ctree_item_t()
+            dummy_head = ida_hexrays.ctree_item_t()
+            dummy_anchor = ida_hexrays.ctree_item_t()
+            if cfunc.get_line_item(sl.line, 0, False, dummy_head, item, dummy_anchor):
+                citem = item.it
+                if citem and citem.ea == ea:
+                    itp = _OP_TO_ITP[citem.op]
+
         tl = ida_hexrays.treeloc_t()
         tl.ea = ea
-        tl.itp = ida_hexrays.ITP_SEMI
+        tl.itp = itp
         cfunc.set_user_cmt(tl, comment)
         cfunc.save_user_cmts()
         cfunc.refresh_func_ctext()

@@ -15,7 +15,8 @@ It's possible for some binaries to roll their own cryptography. If through your 
 
 My examples are solely meant for guidance. You should take an exploratory approach in your thought process to perform substantial and meaningful analysis of the segment of the program given to you to make insightful improvements to the psuedocode.
 
-Be succinct in your comments and do not over explain.
+Set inline comments using the address prefixes before every line.
+Be succinct with your comments and do not over explain.
 
 Before moving on to other functions, make sure that your changes are reflected in the pseudocode.
 This includes renaming of both variables and functions, as well as comments being set.
