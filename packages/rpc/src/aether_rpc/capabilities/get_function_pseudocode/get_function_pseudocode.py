@@ -1,5 +1,6 @@
 import ida_hexrays
 import ida_lines
+import idaapi
 
 from ..base import Capability
 from ..result import Err, Ok, Result
@@ -56,7 +57,7 @@ class GetFunctionPseudocode(Capability):
             if cfunc.get_line_item(sl.line, 0, False, dummy_head, item, dummy_anchor):
                 citem = item.it
                 line_ea = citem.ea if citem else None
-                if line_ea is not None and line_ea < 0xFFFFFFFFFFFFFFFE:
+                if line_ea is not None and line_ea != idaapi.BADADDR:
                     addr_str = hex(line_ea)
 
             line_text = ida_lines.tag_remove(sl.line)

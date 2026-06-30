@@ -9,6 +9,8 @@ from ..result import Err, Ok, Result
 from ..types import SetCommentResult
 from ..utils import resolve_effective_address
 
+# Used to map statement opcode to correct comment anchor position
+# Documentation can be found at ida_hexrays docs
 _OP_TO_ITP: defaultdict[int, int] = defaultdict(
     lambda: ida_hexrays.ITP_SEMI,
     {

@@ -38,13 +38,13 @@ async def annotate(service: Any, function_address: str | int) -> Program:
         if event.type != "run_item_stream_event":
             continue
 
-        RunItem = event.item
-        if RunItem.type == "tool_call_item":
-            args = getattr(RunItem.raw_item, "arguments", "")
-            yield Log(f"{RunItem.tool_name}({args})")
+        run_item = event.item
+        if run_item.type == "tool_call_item":
+            args = getattr(run_item.raw_item, "arguments", "")
+            yield Log(f"{run_item.tool_name}({args})")
 
-        elif RunItem.type == "tool_call_output_item":
-            yield Log(str(RunItem.output))
+        elif run_item.type == "tool_call_output_item":
+            yield Log(str(run_item.output))
 
     service.refresh_pseudocode(function_address=function_address)
 
