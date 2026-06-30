@@ -1,0 +1,84 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 1.2.3). Defaults to the contents of VERSION if omitted.'
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.0
+        with:
+          fetch-depth: 0  # full history needed for auto-generated release notes
+
+      - name: Resolve release version
+        id: version
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          python-version: 3.12
+
+      - name: Install dependencies
+        run: uv sync --all-packages
+
+      - name: Build wheels
+        run: |
+          for toml in $(find apps packages -name pyproject.toml); do
+            if grep -q '^\[build-system\]' "$toml"; then
+              dir=$(dirname "$toml")
+              name=$(uv run python3 -c "
+          import tomllib, pathlib
+          d = tomllib.load(open('$toml', 'rb'))
+          print(d['project']['name'])
+          ")
+              echo "Building $name..."
+              uv build --package "$name"
+            fi
+          done
+
+      - name: Build docs Docker image
+        run: docker build -f apps/docs/Dockerfile -t aether-docs:${{ steps.version.outputs.version }} .
+        # sanity-check that docs still build cleanly before cutting a release;
+        # not extracted/uploaded here since this isn't a release asset
+
+      - name: Create Git tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          VERSION="v${{ steps.version.outputs.version }}"
+          REMOTE="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+
+          if git ls-remote --tags "$REMOTE" "$VERSION" | grep -q "$VERSION"; then
+            echo "::error::Tag $VERSION already exists. Bump the version in VERSION file or pass a different version input."
+            exit 1
+          fi
+
+          git tag "$VERSION"
+          git push "$REMOTE" "$VERSION"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3.0.1
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Release v${{ steps.version.outputs.version }}
+          files: dist/**/*.whl
+          generate_release_notes: true
+          #draft: true # <-- delete the draft after verifying the release notes are correct, then publish the release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
