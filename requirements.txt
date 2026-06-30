@@ -4,7 +4,6 @@ openai
 psutil
 tiktoken
 PyQt5
-PySide6
 yara-python
 scikit-learn
 

@@ -178,7 +178,6 @@ REQUIRED_PACKAGES=(
     "psutil"
     "tiktoken"
     "PyQt5"
-    "PySide6"
     "yara-python"
     "pydantic"
     "python-dotenv"

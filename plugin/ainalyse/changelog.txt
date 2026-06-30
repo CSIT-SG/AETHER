@@ -1,4 +1,12 @@
 =====
+2026.2.2 - PATCH
+=====
+
+- Installer and configuration
+  - Removed PySide6 from pip-installed dependencies because IDA 9 provides the Qt 6 bindings at runtime
+  - Kept PyQt5 compatibility checks for IDA shim-based plugin UI support
+
+=====
 2026.2.1 - PATCH
 =====
 

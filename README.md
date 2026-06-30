@@ -493,4 +493,4 @@ AETHER is made possible through the dedication of Cyber Specialists under the Di
 
 **Last Updated**: 25/06/2026
 
-**Version**: 2026.2.1
+**Version**: 2026.2.2
