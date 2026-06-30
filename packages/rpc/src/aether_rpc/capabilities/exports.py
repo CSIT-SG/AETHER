@@ -13,4 +13,5 @@ EXPORTS: dict[str, str] = {
     "ExecuteIDAPython": ".execute_idapython",
     "RefreshPseudocode": ".refresh_pseudocode",
     "TakeSnapshot": ".take_snapshot",
+    "CollectFunctionsWithDefaultCriteria": ".collect_functions_with_default_criteria",
 }
