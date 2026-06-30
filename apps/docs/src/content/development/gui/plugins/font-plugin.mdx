@@ -1,3 +1,5 @@
+import { FileTree } from 'nextra/components'
+
 # Font Plugin
 In order to give our UI components the ability to change font, we need a font plugin.
 
@@ -28,11 +30,104 @@ The files handle the following:
 ## Font Manager Singleton
 The font manager singleton is connected to all components used by `AETHER`
 
-However, since fonts are applied on a window basis in IDA, the singleton is more so a container for a bunch of font managers
+However, since fonts are applied on a window basis in `IDA`, the singleton is more so a container for a bunch of font managers
 
-The main use of the singleton is to allow components to reuse the same manager, ensuring coherency in fontstyles, while also maintaining the window-based system IDA has.
+The main use of the singleton is to allow components to reuse the same manager, ensuring coherency in fontstyles, while also maintaining the window-based system `IDA` has.
 
 ## Installation
-In order for the plugin to be installed onto a component, the component must implement the methods and attributes demanded by the FontPluginProtocol
+In order for the plugin to be installed onto a component, the component must implement the methods and attributes demanded by the `FontPluginProtocol`
 
+We also register our custom font action handlers onto `IDA` but more on that later.
 
+## Font Hook
+Instead of listening to `QEvents`, our font plugin uses font hooks to directly set fonts.
+
+This is because in IDA, font change events can be called from not just font changes, but also theme changes.
+
+Therefore we have a font hook that intercepts IDA's font actions and calls our own custom handlers
+
+```python
+def preprocess_action(self, name: str) -> int:
+  """Intercepts IDA actions and calls custom handlers.
+
+  Args:
+    name: Name of action called.
+  
+  Returns:
+    0 if not font action, 1 if font action
+  """
+  target = WINDOW_PREFIX + "_" + name
+  if not any(item.action_name == target for item in self.custom_font_actions):
+      return 0
+
+  cur = ida_kernwin.get_current_widget()
+  if cur is None or not ida_kernwin.get_widget_title(cur).startswith(WINDOW_PREFIX):
+      return 0
+
+  ida_kernwin.process_ui_action(target)
+  return 1
+```
+
+Our hook intercepts actions dependent on whether or not the focus window is an `AETHER` window and if the action called is a font action.
+
+If the action called is relevant, then we return a '1' to tell IDA that the action has been handle, otherwise a '0' allows the original action to continue.
+
+### Font Handlers
+These are the handlers called in replacement of IDA's font actions.
+
+For example:
+```python
+class SetFontHandler(ida_kernwin.action_handler_t):
+  def __init__(self):
+    super().__init__()
+
+  def activate(self, ctx) -> int:  # type: ignore[override]
+    ...
+    mgr = get_shared_font_manager(window.windowTitle())
+
+    ...
+    if ok:
+        ...
+        mgr.set_font(font)
+
+    return 0
+
+  def update(self, ctx) -> int:  # type: ignore[overrride]
+    return ida_kernwin.AST_ENABLE_ALWAYS
+
+```
+
+Important things to note that the font handlers directly call the `set_font()` method on the font manager.
+
+This is the same across all handlers as the most reliable way to get the font change signal across to the font manager.
+
+### Limitations
+Due to the limitations of working in IDA, we can only rely on the window title to identify which windows belong to `AETHER`.
+
+This means all `AETHER` windows will need to have titles with the prefix `"AETHER_"`.
+
+Similarly, the font handlers are also just the original actions name, registered with a prefix `"AETHER_"`.
+
+## Font Enabler Hook
+Because IDA does not enable natural font support for custom windows, we need to enable it on our windows.
+
+This hook allows us to reenable the font option when our windows are in focus.
+
+```python
+class FontEnablerHook(ida_kernwin.UI_Hooks):
+    _ACTIONS = ("SetFont", "FontSizeIncrease", "FontSizeDecrease", "FontSizeReset")
+
+    def current_widget_changed(self, widget, prev_widget):
+        if widget is None:
+            logger.debug("focus changed: widget is none")
+            return
+
+        if ida_kernwin.get_widget_title(widget).startswith(WINDOW_PREFIX):
+            for a in self._ACTIONS:
+                ida_kernwin.update_action_state(a, ida_kernwin.AST_ENABLE_ALWAYS)
+```
+
+It just does a simple check on whether it's an `AETHER` window before enabling the font option.
+
+## Priority
+In the plugin list, the theme plugin is the second to be installed, though its to be determined.
