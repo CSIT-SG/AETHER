@@ -1,5 +1,76 @@
+import { Callout } from 'nextra/components'
+
 # Configuration
 
-In IDA, go to `Edit` -> `Plugins` -> `AETHER` to configure the plugin. You can set the following options:
+In IDA, go to **Edit -> Plugins -> AETHER Settings** to configure the plugin.
 
-TODO!!!
+The configuration is structured as a set of nested sections. Each section and its fields are described below.
+
+
+## `provider` (required)
+
+Configures the language model provider that AETHER communicates with. 
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `gateway_url` | `string` | Yes | The base URL for the provider's API gateway. |
+| `api_key` | `string` | No | The API key for the provider. Take note that you must set this field for most features to work. Defaults to an empty string. |
+| `models` | `object` | No | A mapping of friendly names to model IDs for this provider (e.g. `{"fast": "gpt-4o-mini", "smart": "gpt-4o"}`). |
+| `default_model` | `string` | Yes | The friendly name of the model to use when no other model is specified. Must be a key present in `models`. eg. if `models` contains `"fast": "gpt-4o-mini"`, then `default_model` can be `"fast"`. |
+| `extra_body` | `object` | No | Any additional body parameters to include in every request to this provider. |
+
+<Callout>
+  The `default_model` must be one of the keys defined in `models`. AETHER will raise an error on startup if this constraint is violated.
+</Callout>
+
+## `subagents` (optional)
+
+Overrides the model used for specific internal subagents. Each field accepts a friendly model name that must exist as a key in [`provider.models`](#provider-required). 
+If a field is omitted, the subagent falls back to [`provider.default_model`](#provider-required).
+
+| Field | Type | Description |
+|---|---|---|
+| `gatherer_model` | `string \| null` | Model override for the **gatherer** subagent. |
+| `annotator_model` | `string \| null` | Model override for the **annotator** subagent. |
+| `ai_decomp_model` | `string \| null` | Model override for the **AI decompiler** subagent. |
+| `single_analysis_model` | `string \| null` | Model override for the **single analysis** subagent. |
+| `struct_creator_model` | `string \| null` | Model override for the **structure creator** subagent. |
+| `index_agent_model` | `string \| null` | Model override for the **index agent** subagent. |
+
+<Callout>
+  Any non-null model name must be a key defined in `provider.models`.
+</Callout>
+
+## `features` (optional)
+
+Controls feature flags and component-level parameters. Each sub-key accepts a free-form object whose supported fields depend on the component.
+
+<Callout type="warning">
+    Not yet fully implemented/documented.
+</Callout>
+
+| Field | Type | Description |
+|---|---|---|
+| `annotator` | `object \| null` | Feature flags and parameters for the **annotator** component. |
+| `deobfuscator` | `object \| null` | Feature flags and parameters for the **deobfuscator** component. |
+| `chatbot` | `object \| null` | Feature flags and parameters for the **chatbot** component. |
+| `gatherer` | `object \| null` | Feature flags and parameters for the **gatherer** component. |
+| `ai_decomp` | `object \| null` | Feature flags and parameters for the **AI decompiler** component. |
+
+
+## `tls` (optional)
+
+Configures mutual TLS (mTLS) for providers that require client certificate authentication.
+
+| Field | Type | Description |
+|---|---|---|
+| `client_cert_path` | `string` | Path to the client certificate file. Defaults to an empty string (disabled). |
+| `client_key_path` | `string` | Path to the client private key file. Defaults to an empty string (disabled). |
+
+
+## `debug` (optional)
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `debug` | `boolean \| null` | `null` | When `true`, enables debug mode with verbose logging and additional diagnostic output. |
+
