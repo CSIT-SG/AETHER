@@ -14,16 +14,17 @@ from ..utils import resolve_effective_address
 _OP_TO_ITP: defaultdict[int, int] = defaultdict(
     lambda: ida_hexrays.ITP_SEMI,
     {
-        ida_hexrays.cit_if:     ida_hexrays.ITP_BLOCK1,
-        ida_hexrays.cit_while:  ida_hexrays.ITP_BLOCK1,
-        ida_hexrays.cit_for:    ida_hexrays.ITP_BLOCK1,
-        ida_hexrays.cit_do:     ida_hexrays.ITP_BLOCK1,
+        ida_hexrays.cit_if: ida_hexrays.ITP_BLOCK1,
+        ida_hexrays.cit_while: ida_hexrays.ITP_BLOCK1,
+        ida_hexrays.cit_for: ida_hexrays.ITP_BLOCK1,
+        ida_hexrays.cit_do: ida_hexrays.ITP_BLOCK1,
         ida_hexrays.cit_switch: ida_hexrays.ITP_BLOCK1,
-        ida_hexrays.cit_block:  ida_hexrays.ITP_BRACE1,
+        ida_hexrays.cit_block: ida_hexrays.ITP_BRACE1,
         ida_hexrays.cit_return: ida_hexrays.ITP_SEMI,
-        ida_hexrays.cit_expr:   ida_hexrays.ITP_SEMI,
+        ida_hexrays.cit_expr: ida_hexrays.ITP_SEMI,
     },
 )
+
 
 class SetComment(Capability):
     """Attaches or updates a comment at a given address in the IDA decompiler view.

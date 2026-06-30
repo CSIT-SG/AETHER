@@ -16,7 +16,5 @@ DEFAULT_CONFIG = ConfigModel(
         models=DEFAULT_MODEL_LIST,
         default_model="OpenAI: gpt-oss-120b",
     ),
-    subagents=SubagentsModel(
-        annotator_model="Qwen: Qwen3 Next 80B A3B Instruct"
-    ),
+    subagents=SubagentsModel(annotator_model="Qwen: Qwen3 Next 80B A3B Instruct"),
 )
