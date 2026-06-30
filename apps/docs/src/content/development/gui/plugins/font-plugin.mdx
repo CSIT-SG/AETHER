@@ -1,0 +1,38 @@
+# Font Plugin
+In order to give our UI components the ability to change font, we need a font plugin.
+
+This plugin checks for IDA font changes and gets the correct fontstyles.
+
+This will describe how the font plugin works, the following is the general structure of the plugin:
+
+<FileTree>
+  <FileTree.Folder name="font_plugin" defaultOpen>
+    <FileTree.File name="__init__.py" />
+    <FileTree.File name="font_manager_singleton.py" />
+	<FileTree.File name="font_manager.py" />
+	<FileTree.File name="font_plugin.py" />
+    <FileTree.File name="font_protocol.py" />
+	<FileTree.File name="types.py" />
+  </FileTree.Folder>
+</FileTree>
+
+The files handle the following:
+
+- `__init__.py`: Exports the plugin and the types it uses
+- `font_manager_singleton.py`: Exports a function that gets the font manager singleton
+- `font_manager.py`: Holds the main functional logic that detects font changes and gets fontstyles
+- `font_plugin.py`: Handles the installation logic and is an interface between font manager and the component
+- `font_protocol.py`: Exports a protocol that component must follow for font plugin to be installed
+- `types.py`: Holds the types used specific to the font plugin
+
+## Font Manager Singleton
+The font manager singleton is connected to all components used by `AETHER`
+
+However, since fonts are applied on a window basis in IDA, the singleton is more so a container for a bunch of font managers
+
+The main use of the singleton is to allow components to reuse the same manager, ensuring coherency in fontstyles, while also maintaining the window-based system IDA has.
+
+## Installation
+In order for the plugin to be installed onto a component, the component must implement the methods and attributes demanded by the FontPluginProtocol
+
+
