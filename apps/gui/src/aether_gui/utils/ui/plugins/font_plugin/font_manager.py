@@ -58,14 +58,6 @@ class FontManager(QObject):
                 return w
         return None
 
-    def install_event_filter(self):
-        """Install the global palette change event filter."""
-
-        if self._installed:
-            return
-        self._get_app().installEventFilter(self)
-        self._installed = True
-
     def detect_font(self) -> QFont:
         """Detect the current font from the active palette.
 
