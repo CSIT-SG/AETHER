@@ -6,9 +6,6 @@ import rpyc
 @pytest.mark.dependency(depends=["connection"], scope="session")
 class TestRefreshPseudocode:
     """Tests for refreshing the pseudocode view.
-
-    The headless server skips the actual UI/pseudocode refresh, but the capability
-    still validates the address and returns the resolved function start address.
     """
 
     def test_refresh_by_name(self, ida_client: rpyc.Connection) -> None:
