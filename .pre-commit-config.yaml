@@ -15,3 +15,10 @@ repos:
         language: system
         types: [python]
         require_serial: true
+      
+      - id: docs-format
+        name: bun format (apps/docs)
+        entry: bash -c 'cd apps/docs && bun run format'
+        language: system
+        pass_filenames: false
+        files: ^apps/docs/
