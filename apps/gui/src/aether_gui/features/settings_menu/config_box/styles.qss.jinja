@@ -1,0 +1,96 @@
+QGroupBox {
+    border: 1px solid {{ colors.mid }};
+    border-radius: 6px;
+    margin-top: 14px;
+    padding: 8px;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 10px;
+    padding: 0 4px;
+    color: {{ colors.text }};
+    font-weight: bold;
+}
+
+QLabel[settingsRole="title"] {
+    color: {{ colors.text }};
+    font-weight: bold;
+}
+
+QLabel[settingsRole="description"] {
+    color: {{ colors.placeholdertext }};
+    font-weight: normal;
+}
+
+QLineEdit, QPlainTextEdit {
+    background-color: {{ colors.base }};
+    color: {{ colors.text }};
+    border: 1px solid {{ colors.midlight }};
+    border-radius: 4px;
+    padding: 4px;
+}
+
+QLineEdit#SettingsSearch {
+    padding: 6px 8px;
+    margin: 2px;
+}
+
+QListWidget#SettingsNav {
+    background-color: {{ colors.window }};
+    color: {{ colors.text }};
+    border: none;
+    border-right: 1px solid {{ colors.mid }};
+    outline: 0;
+    padding-top: 4px;
+}
+
+QListWidget#SettingsNav::item {
+    padding: 8px 12px;
+    margin: 3px 6px;
+    border-radius: 6px;
+    color: {{ colors.text }};
+}
+
+/* Hover and selected use guaranteed-contrasting palette pairs so the label text
+   stays readable on top of the highlight background. */
+QListWidget#SettingsNav::item:hover {
+    background-color: {{ colors.button }};
+    color: {{ colors.buttontext }};
+}
+
+QListWidget#SettingsNav::item:selected,
+QListWidget#SettingsNav::item:selected:hover {
+    background-color: {{ colors.highlight }};
+    color: {{ colors.highlightedtext }};
+}
+
+QLineEdit:focus, QPlainTextEdit:focus {
+    border: 1px solid {{ colors.highlight }};
+}
+
+QCheckBox {
+    color: {{ colors.text }};
+}
+
+QLabel#SettingsCount {
+    color: {{ colors.placeholdertext }};
+    padding: 0 6px;
+}
+
+QPushButton#JsonToggle, QPushButton#JsonBack {
+    background-color: {{ colors.button }};
+    color: {{ colors.buttontext }};
+    border: 1px solid {{ colors.mid }};
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-weight: bold;
+}
+
+QPushButton#JsonToggle:hover, QPushButton#JsonBack:hover {
+    border: 1px solid {{ colors.highlight }};
+}
+
+QPlainTextEdit#SettingsJson {
+    font-family: "Consolas", "Courier New", monospace;
+}

@@ -13,7 +13,11 @@ class ProviderModel(BaseModel):
     default_model: str = Field(..., description="Friendly name of default model to fall back to.")
     extra_body: dict[str, object] | None = Field(
         default_factory=dict,
-        description="Any extra body parameters to include in requests to this provider.",
+        description=(
+            "Any extra body parameters to include in requests to this provider, "
+            'e.g. {"reasoning": {"effort": "high"}} or {"transforms": ["middle-out"]}.'
+        ),
+        examples=[{"reasoning": {"effort": "high"}}],
     )
 
     @model_validator(mode="after")

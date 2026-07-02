@@ -58,7 +58,11 @@ class ButtonRow(StyledComponent):
             btn.setSizePolicy(
                 QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Fixed
             )
-        self._get_content = get_content
+        self._apply = apply
         self._layout.addWidget(ok)
         self._layout.addWidget(apply)
         self._layout.addWidget(cancel)
+
+    @property
+    def apply_button(self) -> ApplyButton:
+        return self._apply

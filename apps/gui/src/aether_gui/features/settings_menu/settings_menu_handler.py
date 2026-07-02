@@ -11,7 +11,8 @@ class SettingsMenuHandler(QtWidgets.QDialog):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.setWindowTitle("AETHER Settings")
-        self.resize(600, 350)
+        self.resize(900, 600)
+        self.setMinimumSize(700, 450)
         self._layout: QtWidgets.QVBoxLayout
         self._buttons: ButtonRow
         self._config_box: ConfigBox
@@ -28,9 +29,12 @@ class SettingsMenuHandler(QtWidgets.QDialog):
             self.close,
             self.show_error_message,
             self.clear_message_box,
-            self.show_success_message,
+            self.on_success,
             parent=self,
         )
+        # Apply is actionable only while the form has unsaved edits.
+        buttons.apply_button.setEnabled(config_box.is_dirty())
+        config_box.dirtyChanged.connect(buttons.apply_button.setEnabled)
         config_box.setMinimumWidth(500)
         config_box.setMinimumHeight(200)
         self._layout = layout
@@ -49,6 +53,9 @@ class SettingsMenuHandler(QtWidgets.QDialog):
     def clear_message_box(self) -> None:
         self._cfg_message.setText(" ")
 
-    def show_success_message(self) -> None:
-        self._cfg_message.setText("Config successfully applied!")
+    def on_success(self) -> None:
+        # Runs after a successful Apply: clear the dirty state (which disables the
+        # Apply button) and report success without closing the dialog.
+        self._config_box.mark_saved()
+        self._cfg_message.setText("Config applied!")
         self._cfg_message.setStyleSheet("color: green")
