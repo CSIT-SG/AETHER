@@ -64,6 +64,6 @@ jobs:
           tag_name: v${{ steps.version.outputs.version }}
           name: Release v${{ steps.version.outputs.version }}
           generate_release_notes: true
-          draft: ${{ env.ACT == 'true' }}  # local `act` runs create a draft; real GitHub publishes
+          draft: ${{ env.ACT == 'true' }}  # act automatically sets ACT=true. https://nektosact.com/usage/index.html?highlight=env.ACT#skipping-steps
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
