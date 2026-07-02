@@ -51,6 +51,8 @@ class GetFunctionPseudocode(Capability):
             item = ida_hexrays.ctree_item_t()
             addr_str = ""
 
+            # Dummy items are needed here to satisfy type check
+            # get_line_item() requires output ctree items but we don't need them therefore the dummies
             dummy_head = ida_hexrays.ctree_item_t()
             dummy_anchor = ida_hexrays.ctree_item_t()
             if cfunc.get_line_item(sl.line, 0, False, dummy_head, item, dummy_anchor):
