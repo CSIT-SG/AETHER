@@ -12,7 +12,3 @@ dependencies = [
     "markupsafe==2.0.1",
     "markdown==3.10.2",
 ]
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"

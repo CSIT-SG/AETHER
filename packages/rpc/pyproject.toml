@@ -16,7 +16,3 @@ plugins = ["pydantic.mypy"]
 
 [tool.uv.sources]
 aether_test_fixtures = { workspace = true }
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"

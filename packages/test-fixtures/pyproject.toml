@@ -9,7 +9,3 @@ dependencies = []
 
 [project.entry-points."pytest11"]
 aether-test-fixtures = "aether_test_fixtures.plugin"
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"

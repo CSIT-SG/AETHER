@@ -10,6 +10,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false  # never abort a release mid-tag-push; let the second run wait
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -23,38 +27,20 @@ jobs:
         id: version
         run: |
           if [ -n "${{ inputs.version }}" ]; then
-            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+            RAW="${{ inputs.version }}"
           else
-            echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+            RAW="$(cat VERSION)"
           fi
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
-        with:
-          python-version: 3.12
+          # strip all surrounding/embedded whitespace (guards against trailing newline in VERSION)
+          VERSION_CLEAN="$(printf '%s' "$RAW" | tr -d '[:space:]')"
 
-      - name: Install dependencies
-        run: uv sync --all-packages
+          if ! printf '%s' "$VERSION_CLEAN" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([-+.][0-9A-Za-z.-]+)?$'; then
+            echo "::error::Resolved version '$VERSION_CLEAN' is not valid semver (expected e.g. 1.2.3)."
+            exit 1
+          fi
 
-      - name: Build wheels
-        run: |
-          for toml in $(find apps packages -name pyproject.toml); do
-            if grep -q '^\[build-system\]' "$toml"; then
-              dir=$(dirname "$toml")
-              name=$(uv run python3 -c "
-          import tomllib, pathlib
-          d = tomllib.load(open('$toml', 'rb'))
-          print(d['project']['name'])
-          ")
-              echo "Building $name..."
-              uv build --package "$name"
-            fi
-          done
-
-      - name: Build docs Docker image
-        run: docker build -f apps/docs/Dockerfile -t aether-docs:${{ steps.version.outputs.version }} .
-        # sanity-check that docs still build cleanly before cutting a release;
-        # not extracted/uploaded here since this isn't a release asset
+          echo "version=$VERSION_CLEAN" >> "$GITHUB_OUTPUT"
 
       - name: Create Git tag
         run: |
@@ -77,8 +63,7 @@ jobs:
         with:
           tag_name: v${{ steps.version.outputs.version }}
           name: Release v${{ steps.version.outputs.version }}
-          files: dist/**/*.whl
           generate_release_notes: true
-          #draft: true # <-- delete the draft after verifying the release notes are correct, then publish the release
+          draft: ${{ env.ACT == 'true' }}  # local `act` runs create a draft; real GitHub publishes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
