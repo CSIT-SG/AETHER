@@ -10,7 +10,7 @@ from aether_backend.utils.subagent import (
     internal_tool_registry,
 )
 from aether_utils.config import get_config
-from agents import Agent, Runner
+from agents import Agent, ModelSettings, Runner
 
 config = get_config()
 SYSTEM_PROMPT = get_content(Path(__file__).parent, "prompt.md")
@@ -25,6 +25,7 @@ async def annotate(service: Any, function_address: str | int) -> Program:
         ),
         instructions=SYSTEM_PROMPT,
         tools=internal_tool_registry.get_tools(SubagentTool.ANNOTATOR),
+        model_settings=ModelSettings(parallel_tool_calls=False),
     )
 
     result = Runner.run_streamed(

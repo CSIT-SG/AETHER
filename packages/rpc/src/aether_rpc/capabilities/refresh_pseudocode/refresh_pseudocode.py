@@ -1,7 +1,4 @@
 import ida_funcs
-import ida_hexrays
-import ida_kernwin
-from aether_utils.is_headless_ida import is_headless_ida
 
 from ..base import Capability
 from ..result import Err, Ok, Result
@@ -35,15 +32,17 @@ class RefreshPseudocode(Capability):
             self.logger.error(f"No function found at {hex(ea)}")
             return Err(result=f"No function found at {hex(ea)}")
 
-        headless = is_headless_ida()
-
-        if not headless:
+        try:
             self.logger.info(
                 f"Refreshing UI and pseudocode view for function at {hex(func.start_ea)}"
             )
+            import ida_hexrays
+            import ida_kernwin
+
             ida_kernwin.refresh_idaview_anyway()
             ida_hexrays.open_pseudocode(func.start_ea, ida_hexrays.OPF_REUSE)
-        else:
+
+        except ImportError:
             self.logger.debug(
                 f"Skipping UI refresh for {hex(func.start_ea)} (running in headless mode)"
             )

@@ -5,8 +5,7 @@ import rpyc
 
 @pytest.mark.dependency(depends=["connection"], scope="session")
 class TestRefreshPseudocode:
-    """Tests for refreshing the pseudocode view.
-    """
+    """Tests for refreshing the pseudocode view."""
 
     def test_refresh_by_name(self, ida_client: rpyc.Connection) -> None:
         # Accepts a function name and reports the resolved function start address.
