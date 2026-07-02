@@ -16,10 +16,10 @@ class TimestampedModel(BaseModel):
     def model_post_init(self, _context: Any) -> None:
         self._initialized = True
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def _auto_update_timestamp(self) -> Self:
         if self._initialized:
-            object.__setattr__(self, 'updated_at', now())
+            object.__setattr__(self, "updated_at", now())
         return self
 
 
@@ -27,7 +27,6 @@ class ObjectiveModel(TimestampedModel):
     id: str = Field(default_factory=new_id, description="Server-generated unique id.")
     text: str = Field(..., description="Text description of the objective.")
     status: ObjectiveStatus = Field(default=ObjectiveStatus.PENDING, description="Current status.")
-
 
 
 class PlanModel(TimestampedModel):
@@ -38,4 +37,3 @@ class PlanModel(TimestampedModel):
     objectives: list[ObjectiveModel] = Field(
         default_factory=list, description="Objectives for the plan."
     )
-
