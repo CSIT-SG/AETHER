@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 import ida_bytes
 import ida_funcs
 import ida_hexrays
@@ -8,22 +6,7 @@ from ..base import Capability
 from ..result import Err, Ok, Result
 from ..types import SetCommentResult
 from ..utils import resolve_effective_address
-
-# Used to map statement opcode to correct comment anchor position
-# Documentation can be found at ida_hexrays docs
-_OP_TO_ITP: defaultdict[int, int] = defaultdict(
-    lambda: ida_hexrays.ITP_SEMI,
-    {
-        ida_hexrays.cit_if: ida_hexrays.ITP_BLOCK1,
-        ida_hexrays.cit_while: ida_hexrays.ITP_BLOCK1,
-        ida_hexrays.cit_for: ida_hexrays.ITP_BLOCK1,
-        ida_hexrays.cit_do: ida_hexrays.ITP_BLOCK1,
-        ida_hexrays.cit_switch: ida_hexrays.ITP_BLOCK1,
-        ida_hexrays.cit_block: ida_hexrays.ITP_BRACE1,
-        ida_hexrays.cit_return: ida_hexrays.ITP_SEMI,
-        ida_hexrays.cit_expr: ida_hexrays.ITP_SEMI,
-    },
-)
+from .constants import OP_TO_ITP
 
 
 class SetComment(Capability):
@@ -113,15 +96,14 @@ class SetComment(Capability):
 
         itp = ida_hexrays.ITP_SEMI
         pseudocode = cfunc.get_pseudocode()
-        for i in range(len(pseudocode)):
-            sl = pseudocode[i]
+        for sl in pseudocode:
             item = ida_hexrays.ctree_item_t()
             dummy_head = ida_hexrays.ctree_item_t()
             dummy_anchor = ida_hexrays.ctree_item_t()
             if cfunc.get_line_item(sl.line, 0, False, dummy_head, item, dummy_anchor):
                 citem = item.it
                 if citem and citem.ea == ea:
-                    itp = _OP_TO_ITP[citem.op]
+                    itp = OP_TO_ITP[citem.op]
 
         tl = ida_hexrays.treeloc_t()
         tl.ea = ea

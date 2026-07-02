@@ -47,8 +47,7 @@ class GetFunctionPseudocode(Capability):
         pseudocode = cfunc.get_pseudocode()
         rendered_lines = []
 
-        for i in range(len(pseudocode)):
-            sl = pseudocode[i]
+        for sl in pseudocode:
             item = ida_hexrays.ctree_item_t()
             addr_str = ""
 
