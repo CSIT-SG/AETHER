@@ -72,7 +72,6 @@ class FunctionPseudocode(TypedDict):
 class LocalVar(TypedDict):
     name: str
     type: str
-    location: str
     is_arg_var: bool
     is_stk_var: bool
     is_reg_var: bool
