@@ -3,6 +3,7 @@ from PySide6 import QtWidgets
 
 from .config_box import ConfigBox
 from .config_buttons import ButtonRow
+from .config_message import ConfigMessage
 
 logger = get_logger("settings_menu")
 
@@ -16,14 +17,13 @@ class SettingsMenuHandler(QtWidgets.QDialog):
         self._layout: QtWidgets.QVBoxLayout
         self._buttons: ButtonRow
         self._config_box: ConfigBox
-        self._cfg_message: QtWidgets.QLabel
+        self._cfg_message: ConfigMessage
         self.init_ui()
 
     def init_ui(self) -> None:
         layout = QtWidgets.QVBoxLayout(self)
         config_box = ConfigBox(self)
-        text_label = QtWidgets.QLabel("", self)
-        text_label.setContentsMargins(8, 0, 8, 0)
+        text_label = ConfigMessage(self)
         buttons: ButtonRow = ButtonRow(
             config_box.get_content,
             self.close,
@@ -47,15 +47,13 @@ class SettingsMenuHandler(QtWidgets.QDialog):
         self.setLayout(self._layout)
 
     def show_error_message(self) -> None:
-        self._cfg_message.setText("Invalid config, check IDA output for more details")
-        self._cfg_message.setStyleSheet("color: red")
+        self._cfg_message.show_error("Invalid config, check IDA output for more details")
 
     def clear_message_box(self) -> None:
-        self._cfg_message.setText(" ")
+        self._cfg_message.clear()
 
     def on_success(self) -> None:
         # Runs after a successful Apply: clear the dirty state (which disables the
         # Apply button) and report success without closing the dialog.
         self._config_box.mark_saved()
-        self._cfg_message.setText("Config applied!")
-        self._cfg_message.setStyleSheet("color: green")
+        self._cfg_message.show_success("Config applied!")

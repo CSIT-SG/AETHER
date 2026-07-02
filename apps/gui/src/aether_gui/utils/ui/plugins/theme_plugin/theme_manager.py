@@ -97,13 +97,21 @@ class ThemeManager(QObject):
         palette = window.palette() if window else app.palette()
 
         DEFAULT_COLOR = "#000000" if self.current_theme == "light" else "#FFFFFF"
+        
+        SEMANTIC_COLORS: dict[Theme, dict[str, str]] = {
+            "light": {"error": "#c0392b", "success": "#1e7e34", "warning": "#b26a00"},
+            "dark": {"error": "#ff6b6b", "success": "#5cb85c", "warning": "#ffb74d"},
+        }
 
-        return {
+        colors: ThemeColors = {
             role.name.lower(): (
                 palette.color(role).name() if palette.color(role).isValid() else DEFAULT_COLOR
             )
             for role in QPalette.ColorRole
         }
+        
+        colors.update(SEMANTIC_COLORS.get(self.current_theme, {}))
+        return colors
 
     def get_current_theme(self) -> tuple[Theme, ThemeColors]:
         """Return the current theme snapshot.
