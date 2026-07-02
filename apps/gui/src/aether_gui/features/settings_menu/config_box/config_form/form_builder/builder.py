@@ -14,12 +14,13 @@ from typing import Any
 from pydantic import BaseModel
 from PySide6 import QtWidgets
 
-from ..fields import BoolField, FieldWidget, JsonField, StringField
-from .introspection import example_placeholder, iter_fields
-from .types import GENERAL_CATEGORY, Getter, ResolvedField, Row, SettingsForm
-
-# Fields whose text input should be masked.
-_SECRET_FIELDS = {"api_key"}
+from ..fields import FieldWidget
+from .field_factory import make_leaf_field
+from .introspection import iter_fields
+from .resolved_field import ResolvedField
+from .sections import section_group, section_header
+from .settings_form import GENERAL_CATEGORY, Getter, Row, SettingsForm
+from .values import make_getter
 
 
 def build_settings_form(model_cls: type[BaseModel], data: dict[str, Any] | None) -> SettingsForm:
@@ -44,7 +45,7 @@ def build_settings_form(model_cls: type[BaseModel], data: dict[str, Any] | None)
     rows: list[Row] = []
     getters: dict[str, Callable[[], Any]] = {}
 
-    general_group = QtWidgets.QGroupBox(GENERAL_CATEGORY)
+    general_group = section_group(GENERAL_CATEGORY)
     general_layout = QtWidgets.QVBoxLayout(general_group)
     has_general = False
     model_sections: list[tuple[str, QtWidgets.QWidget]] = []
@@ -68,7 +69,7 @@ def build_settings_form(model_cls: type[BaseModel], data: dict[str, Any] | None)
         layout.addWidget(section_widget)
     layout.addStretch(1)
 
-    return SettingsForm(container, _make_getter(getters), sections, rows)
+    return SettingsForm(container, make_getter(getters), sections, rows)
 
 
 def _build_group_body(
@@ -89,17 +90,17 @@ def _build_group_body(
         else:
             _add_leaf(layout, getters, rows, fld, category)
 
-    return container, _make_getter(getters)
+    return container, make_getter(getters)
 
 
 def _build_model_section(
     fld: ResolvedField, rows: list[Row], category: str
 ) -> tuple[QtWidgets.QGroupBox, Getter]:
     """Build a titled group box for a nested-model field."""
-    group = QtWidgets.QGroupBox(fld.title)
+    group = section_group(fld.title)
     group_layout = QtWidgets.QVBoxLayout(group)
     if fld.description:
-        group_layout.addWidget(_section_header(fld.description))
+        group_layout.addWidget(section_header(fld.description))
     body, getter = _build_group_body(
         fld.base, fld.value if isinstance(fld.value, dict) else {}, rows, category
     )
@@ -115,44 +116,7 @@ def _add_leaf(
     category: str,
 ) -> None:
     """Create a leaf control, add it to ``layout`` and register its value + search row."""
-    widget = _make_leaf(fld)
+    widget = make_leaf_field(fld)
     layout.addWidget(widget)
     getters[fld.name] = widget.value
     rows.append((f"{category} {fld.title} {fld.description} {fld.name}".lower(), widget, category))
-
-
-def _make_leaf(fld: ResolvedField) -> FieldWidget:
-    """Build the right control for a single (non-model) field."""
-    placeholder = example_placeholder(fld.info)
-    if fld.base is bool:
-        return BoolField(fld.title, fld.description, fld.value)
-    if fld.base is str:
-        return StringField(
-            fld.title,
-            fld.description,
-            fld.value,
-            optional=fld.optional,
-            secret=fld.name in _SECRET_FIELDS,
-            placeholder=placeholder,
-        )
-    # dict fields and any unrecognized annotation fall back to JSON editing.
-    return JsonField(
-        fld.title, fld.description, fld.value, optional=fld.optional, placeholder=placeholder
-    )
-
-
-def _section_header(description: str) -> QtWidgets.QLabel:
-    """A wrapping, muted description label shown under a section title."""
-    label = QtWidgets.QLabel(description)
-    label.setProperty("settingsRole", "description")
-    label.setWordWrap(True)
-    return label
-
-
-def _make_getter(getters: dict[str, Callable[[], Any]]) -> Getter:
-    """Bundle per-field value callables into a single nested-dict getter."""
-
-    def getter() -> dict[str, Any]:
-        return {name: get() for name, get in getters.items()}
-
-    return getter

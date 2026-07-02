@@ -6,15 +6,13 @@ about Qt. It turns each ``model_fields`` entry into a :class:`ResolvedField`.
 
 from __future__ import annotations
 
-import json
 from collections.abc import Iterator
 from types import UnionType
 from typing import Any, Union, get_args, get_origin
 
 from pydantic import BaseModel
-from pydantic.fields import FieldInfo
 
-from .types import ResolvedField
+from .resolved_field import ResolvedField
 
 # Field-name parts that should render as upper-case acronyms in titles.
 _ACRONYMS = {"url": "URL", "tls": "TLS", "ai": "AI", "api": "API", "id": "ID"}
@@ -39,16 +37,6 @@ def iter_fields(model_cls: type[BaseModel], data: dict[str, Any] | None) -> Iter
             title=prettify(name),
             description=info.description or "",
         )
-
-
-def example_placeholder(info: FieldInfo) -> str:
-    """Render a field's first declared example as placeholder text, if any."""
-    if not info.examples:
-        return ""
-    example = info.examples[0]
-    if isinstance(example, str):
-        return example
-    return json.dumps(example, indent=2)
 
 
 def _unwrap_optional(annotation: Any) -> tuple[Any, bool]:

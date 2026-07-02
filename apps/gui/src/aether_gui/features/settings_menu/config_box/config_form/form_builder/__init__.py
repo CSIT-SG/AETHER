@@ -9,6 +9,6 @@ rows (for live filtering).
 """
 
 from .builder import build_settings_form
-from .types import SettingsForm
+from .settings_form import SettingsForm
 
 __all__ = ["SettingsForm", "build_settings_form"]

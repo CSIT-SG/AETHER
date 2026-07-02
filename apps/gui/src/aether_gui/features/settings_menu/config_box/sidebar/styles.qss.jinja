@@ -1,0 +1,28 @@
+QListWidget#SettingsNav {
+    background-color: {{ colors.window }};
+    color: {{ colors.text }};
+    border: none;
+    border-right: 1px solid {{ colors.mid }};
+    outline: 0;
+    padding-top: 4px;
+}
+
+QListWidget#SettingsNav::item {
+    padding: 8px 12px;
+    margin: 3px 6px;
+    border-radius: 6px;
+    color: {{ colors.text }};
+}
+
+/* Hover and selected use guaranteed-contrasting palette pairs so the label text
+   stays readable on top of the highlight background. */
+QListWidget#SettingsNav::item:hover {
+    background-color: {{ colors.button }};
+    color: {{ colors.buttontext }};
+}
+
+QListWidget#SettingsNav::item:selected,
+QListWidget#SettingsNav::item:selected:hover {
+    background-color: {{ colors.highlight }};
+    color: {{ colors.highlightedtext }};
+}
