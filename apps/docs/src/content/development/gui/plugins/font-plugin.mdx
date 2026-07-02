@@ -37,7 +37,7 @@ The main use of the singleton is to allow components to reuse the same manager, 
 ## Installation
 In order for the plugin to be installed onto a component, the component must implement the methods and attributes demanded by the `FontPluginProtocol`
 
-We also register our custom font action handlers onto `IDA` but more on that later.
+We also register our custom font action handlers onto `IDA` but more on that [later](#font-handlers).
 
 ## Font Hook
 Instead of listening to `QEvents`, our font plugin uses font hooks to directly set fonts.
@@ -100,6 +100,8 @@ class SetFontHandler(ida_kernwin.action_handler_t):
 Important things to note that the font handlers directly call the `set_font()` method on the font manager.
 
 This is the same across all handlers as the most reliable way to get the font change signal across to the font manager.
+
+They are installed by the font hook onto IDA's action system.
 
 ### Limitations
 Due to the limitations of working in IDA, we can only rely on the window title to identify which windows belong to `AETHER`.
