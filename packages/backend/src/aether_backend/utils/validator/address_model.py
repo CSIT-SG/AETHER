@@ -1,25 +1,8 @@
-import re
 from typing import Annotated
 
 from pydantic import BaseModel, BeforeValidator, Field
 
-from .constants import IDA_PREFIXES
-
-IDA_REGEX = "|".join(re.escape(prefix) for prefix in IDA_PREFIXES)
-
-_VALID_INPUT = re.compile(
-    r"""
-    ^
-    (?:
-        (?P<prefix>0x|0X|{IDA_REGEX})      # named 'prefix'
-        (?P<prefixed_hex>[0-9a-f]+)   # named 'prefixed_hex'
-      |                                # OR
-        (?P<unprefixed_hex>[0-9a-f]*[a-f][0-9a-f]*)   # named 'unprefixed_hex'
-    )
-    $
-    """,
-    re.VERBOSE | re.IGNORECASE,
-)
+from .constants import _VALID_INPUT
 
 
 def _normalize_hex(v: str) -> str | None:
