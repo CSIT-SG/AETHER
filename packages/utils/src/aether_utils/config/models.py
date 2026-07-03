@@ -91,6 +91,10 @@ class ConfigModel(BaseModel):
         default=None,
         description="Whether to enable debug mode, which may include more verbose logging and additional output for debugging purposes.",
     )
+    experimental: bool | None = Field(
+        default=None,
+        description="Whether to enable experimental features, which may be unstable or in development.",
+    )
     tls: TlsConfigModel | None = Field(
         default=None, description="TLS configuration for secure connections."
     )

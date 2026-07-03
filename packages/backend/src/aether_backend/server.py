@@ -16,6 +16,9 @@ def get_disabled_tags() -> set[str]:
     if not config.debug:
         disabled_tags.add(ToolTags.DEBUG)
 
+    if not config.experimental:
+        disabled_tags.add(ToolTags.EXPERIMENTAL)
+
     return disabled_tags
 
 
