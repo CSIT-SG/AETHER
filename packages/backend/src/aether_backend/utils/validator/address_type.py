@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from pydantic import BaseModel, BeforeValidator, Field
+from pydantic import BeforeValidator, Field
 
 from .constants import _VALID_INPUT
 
@@ -25,7 +25,3 @@ type HexAddress = Annotated[
         examples=["0x140009050", "0xffff"],
     ),
 ]
-
-
-class AddressModel(BaseModel):
-    address: HexAddress
