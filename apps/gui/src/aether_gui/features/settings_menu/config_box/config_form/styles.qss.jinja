@@ -1,8 +1,8 @@
 QGroupBox[settingsRole="section"] {
-    border: {{ tokens.border_width }} solid {{ colors.mid }};
-    border-radius: {{ tokens.radius_section }};
-    margin-top: {{ tokens.margin_group_top }};
-    padding: {{ tokens.pad_group }};
+    border: 1px solid {{ colors.mid }};
+    border-radius: 6px;
+    margin-top: 14px;
+    padding: 8px;
     font-family: "{{ fontstyles.family }}";
     font-size: {{ fontstyles.size }}pt;
     font-weight: bold;
@@ -11,8 +11,8 @@ QGroupBox[settingsRole="section"] {
 QGroupBox[settingsRole="section"]::title {
     subcontrol-origin: margin;
     subcontrol-position: top left;
-    left: {{ tokens.title_left }};
-    padding: {{ tokens.pad_title }};
+    left: 10px;
+    padding: 0 4px;
     color: {{ colors.text }};
 }
 
@@ -33,16 +33,16 @@ QLabel[settingsRole="description"] {
 QLineEdit, QPlainTextEdit {
     background-color: {{ colors.base }};
     color: {{ colors.text }};
-    border: {{ tokens.border_width }} solid {{ colors.midlight }};
-    border-radius: {{ tokens.radius_input }};
-    padding: {{ tokens.pad_input }};
+    border: 1px solid {{ colors.midlight }};
+    border-radius: 4px;
+    padding: 4px;
     font-family: "{{ fontstyles.family }}";
     font-size: {{ fontstyles.size }}pt;
     font-weight: {{ fontstyles.weight }};
 }
 
 QLineEdit:focus, QPlainTextEdit:focus {
-    border: {{ tokens.border_width }} solid {{ colors.highlight }};
+    border: 1px solid {{ colors.highlight }};
 }
 
 QCheckBox {

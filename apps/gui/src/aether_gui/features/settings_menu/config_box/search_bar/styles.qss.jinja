@@ -1,22 +1,22 @@
 QLineEdit#SettingsSearch {
     background-color: {{ colors.base }};
     color: {{ colors.text }};
-    border: {{ tokens.border_width }} solid {{ colors.midlight }};
-    border-radius: {{ tokens.radius_input }};
-    padding: {{ tokens.pad_search }};
-    margin: {{ tokens.margin_search }};
+    border: 1px solid {{ colors.midlight }};
+    border-radius: 4px;
+    padding: 6px 8px;
+    margin: 2px;
     font-family: "{{ fontstyles.family }}";
     font-size: {{ fontstyles.size }}pt;
     font-weight: {{ fontstyles.weight }};
 }
 
 QLineEdit#SettingsSearch:focus {
-    border: {{ tokens.border_width }} solid {{ colors.highlight }};
+    border: 1px solid {{ colors.highlight }};
 }
 
 QLabel#SettingsCount {
     color: {{ colors.placeholdertext }};
-    padding: {{ tokens.pad_count }};
+    padding: 0 6px;
     font-family: "{{ fontstyles.family }}";
     font-size: {{ fontstyles.size }}pt;
     font-weight: {{ fontstyles.weight }};
@@ -25,14 +25,14 @@ QLabel#SettingsCount {
 QPushButton#JsonToggle, QPushButton#JsonBack {
     background-color: {{ colors.button }};
     color: {{ colors.buttontext }};
-    border: {{ tokens.border_width }} solid {{ colors.mid }};
-    border-radius: {{ tokens.radius_input }};
-    padding: {{ tokens.pad_button }};
+    border: 1px solid {{ colors.mid }};
+    border-radius: 4px;
+    padding: 5px 10px;
     font-family: "{{ fontstyles.family }}";
     font-size: {{ fontstyles.size }}pt;
     font-weight: bold;
 }
 
 QPushButton#JsonToggle:hover, QPushButton#JsonBack:hover {
-    border: {{ tokens.border_width }} solid {{ colors.highlight }};
+    border: 1px solid {{ colors.highlight }};
 }

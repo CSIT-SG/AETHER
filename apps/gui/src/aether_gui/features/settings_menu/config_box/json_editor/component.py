@@ -6,7 +6,7 @@ from aether_gui.utils.ui import FontPlugin, StyledComponent
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtGui import QFont
 
-from ...constants import JSON_INDENT, NO_MARGINS, SETTINGS_JSON_OBJECT_NAME, STYLE_TOKENS
+from ...constants import JSON_INDENT, SETTINGS_JSON_OBJECT_NAME
 
 
 class JsonEditor(StyledComponent):
@@ -23,7 +23,6 @@ class JsonEditor(StyledComponent):
         super().__init__(parent, plugins=[FontPlugin()])
 
     def setup(self) -> None:
-        self.state["tokens"] = STYLE_TOKENS
         self._editor: QtWidgets.QPlainTextEdit
 
     def init_ui(self) -> None:
@@ -32,7 +31,7 @@ class JsonEditor(StyledComponent):
         editor.textChanged.connect(self.changed)
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(*NO_MARGINS)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(editor)
         self._editor = editor
         self.setLayout(layout)

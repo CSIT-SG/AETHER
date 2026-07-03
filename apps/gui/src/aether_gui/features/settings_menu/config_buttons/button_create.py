@@ -6,13 +6,12 @@ from aether_utils.config import set_config
 from aether_utils.logger import get_logger
 from PySide6 import QtWidgets
 
-from ..constants import (
-    APPLY_BUTTON_LABEL,
-    CANCEL_BUTTON_LABEL,
-    CONFIG_SAVE_LOGGER,
-    OK_BUTTON_LABEL,
-)
+from ..constants import CONFIG_SAVE_LOGGER
 from .abstract_button import ConfigButton
+
+APPLY_BUTTON_LABEL = "Apply"
+OK_BUTTON_LABEL = "Ok"
+CANCEL_BUTTON_LABEL = "Cancel"
 
 logger = get_logger(CONFIG_SAVE_LOGGER)
 

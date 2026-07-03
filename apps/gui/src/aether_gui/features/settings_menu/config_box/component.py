@@ -5,16 +5,12 @@ from aether_gui.utils.ui import StyledComponent
 from aether_utils.config import get_config
 from PySide6 import QtCore, QtWidgets
 
-from ..constants import (
-    CONFIG_BOX_SPACING,
-    INVALID_JSON_RETURN_WARNING,
-    JSON_INDENT,
-    JSON_SORT_KEYS,
-    NO_MARGINS,
-)
+from ..constants import JSON_INDENT, JSON_SORT_KEYS
 from .json_editor import JsonEditor
 from .search_bar import SearchBar
 from .settings_form_view import SettingsFormView
+
+INVALID_JSON_RETURN_WARNING = "Cannot return to form view: settings JSON is invalid."
 
 
 class ConfigBox(StyledComponent):
@@ -47,8 +43,8 @@ class ConfigBox(StyledComponent):
         self._stack.addWidget(self._json_page)
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(*NO_MARGINS)
-        layout.setSpacing(CONFIG_BOX_SPACING)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(8)
         layout.addWidget(self._search_bar)
         layout.addWidget(self._stack)
         self.setLayout(layout)

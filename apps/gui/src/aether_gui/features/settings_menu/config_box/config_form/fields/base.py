@@ -6,13 +6,7 @@ from typing import Any
 
 from PySide6 import QtCore, QtWidgets
 
-from ....constants import (
-    DESCRIPTION_ROLE,
-    FIELD_MARGINS,
-    FIELD_SPACING,
-    SETTINGS_ROLE_PROPERTY,
-    TITLE_ROLE,
-)
+from ....constants import DESCRIPTION_ROLE, SETTINGS_ROLE_PROPERTY, TITLE_ROLE
 
 
 def _make_label(text: str, role: str) -> QtWidgets.QLabel:
@@ -34,8 +28,8 @@ class FieldWidget(QtWidgets.QWidget):
     ) -> None:
         super().__init__(parent)
         self._layout = QtWidgets.QVBoxLayout(self)
-        self._layout.setContentsMargins(*FIELD_MARGINS)
-        self._layout.setSpacing(FIELD_SPACING)
+        self._layout.setContentsMargins(0, 6, 0, 6)
+        self._layout.setSpacing(4)
         self._layout.addWidget(_make_label(title, TITLE_ROLE))
         if description:
             self._layout.addWidget(_make_label(description, DESCRIPTION_ROLE))

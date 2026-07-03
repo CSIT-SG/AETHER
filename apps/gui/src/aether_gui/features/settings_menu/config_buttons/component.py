@@ -3,7 +3,6 @@ from collections.abc import Callable
 from aether_gui.utils.ui import StyledComponent
 from PySide6 import QtCore, QtWidgets
 
-from ..constants import NO_MARGINS
 from .button_create import ApplyButton, CancelButton, OkButton
 
 
@@ -33,7 +32,7 @@ class ButtonRow(StyledComponent):
     def init_ui(self) -> None:
         layout = QtWidgets.QHBoxLayout(self)
         layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        layout.setContentsMargins(*NO_MARGINS)
+        layout.setContentsMargins(0, 0, 0, 0)
         self._layout = layout
         self.set_buttons(
             self._get_content,

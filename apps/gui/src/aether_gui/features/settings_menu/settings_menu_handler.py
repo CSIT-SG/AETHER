@@ -4,15 +4,14 @@ from PySide6 import QtWidgets
 from .config_box import ConfigBox, create_config_box
 from .config_buttons import ButtonRow, create_button_row
 from .config_message import ConfigMessage, create_config_message
-from .constants import (
-    CONFIG_APPLIED_MESSAGE,
-    CONFIG_BOX_MINIMUM_SIZE,
-    INVALID_CONFIG_MESSAGE,
-    SETTINGS_DIALOG_INITIAL_SIZE,
-    SETTINGS_DIALOG_MINIMUM_SIZE,
-    SETTINGS_DIALOG_TITLE,
-    SETTINGS_MENU_LOGGER,
-)
+from .constants import SETTINGS_MENU_LOGGER
+
+SETTINGS_DIALOG_TITLE = "AETHER Settings"
+SETTINGS_DIALOG_INITIAL_SIZE = (900, 600)
+SETTINGS_DIALOG_MINIMUM_SIZE = (700, 450)
+CONFIG_BOX_MINIMUM_SIZE = (500, 200)
+INVALID_CONFIG_MESSAGE = "Invalid config, check IDA output for more details"
+CONFIG_APPLIED_MESSAGE = "Config applied!"
 
 logger = get_logger(SETTINGS_MENU_LOGGER)
 

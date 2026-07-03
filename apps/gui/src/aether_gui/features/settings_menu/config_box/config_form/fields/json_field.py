@@ -7,7 +7,7 @@ from typing import Any
 
 from PySide6 import QtWidgets
 
-from ....constants import EMPTY_TEXT, JSON_FIELD_HEIGHT_RANGE, JSON_INDENT
+from ....constants import JSON_INDENT
 from .base import FieldWidget
 
 
@@ -31,17 +31,17 @@ class JsonField(FieldWidget):
         super().__init__(title, description, parent)
         self._optional = optional
         self._edit = QtWidgets.QPlainTextEdit()
-        self._edit.setMinimumHeight(JSON_FIELD_HEIGHT_RANGE[0])
-        self._edit.setMaximumHeight(JSON_FIELD_HEIGHT_RANGE[1])
+        self._edit.setMinimumHeight(60)
+        self._edit.setMaximumHeight(160)
         if placeholder:
             self._edit.setPlaceholderText(placeholder)
-        text = EMPTY_TEXT if value is None else json.dumps(value, indent=JSON_INDENT)
+        text = "" if value is None else json.dumps(value, indent=JSON_INDENT)
         self._edit.setPlainText(text)
         self._edit.textChanged.connect(self.changed)
         self.add_control(self._edit)
 
     def value(self) -> Any:
         raw = self._edit.toPlainText().strip()
-        if raw == EMPTY_TEXT:
+        if raw == "":
             return None if self._optional else {}
         return json.loads(raw)

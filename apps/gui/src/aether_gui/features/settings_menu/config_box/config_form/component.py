@@ -6,7 +6,6 @@ from pydantic import BaseModel
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtGui import QFont
 
-from ...constants import NO_MARGINS, STYLE_TOKENS
 from .form_builder import SettingsForm, build_settings_form
 
 
@@ -24,7 +23,6 @@ class ConfigForm(StyledComponent):
         super().__init__(parent, plugins=[FontPlugin()])
 
     def setup(self) -> None:
-        self.state["tokens"] = STYLE_TOKENS
         self._form: SettingsForm | None = None
         self._sections: dict[str, QtWidgets.QWidget] = {}
         self._scroll: QtWidgets.QScrollArea
@@ -35,7 +33,7 @@ class ConfigForm(StyledComponent):
         scroll.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(*NO_MARGINS)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(scroll)
         self._scroll = scroll
         self.setLayout(layout)

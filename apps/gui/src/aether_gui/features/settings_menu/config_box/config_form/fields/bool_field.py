@@ -6,7 +6,6 @@ from typing import Any
 
 from PySide6 import QtWidgets
 
-from ....constants import ENABLED_CHECKBOX_LABEL
 from .base import FieldWidget
 
 
@@ -21,7 +20,7 @@ class BoolField(FieldWidget):
         parent: QtWidgets.QWidget | None = None,
     ) -> None:
         super().__init__(title, description, parent)
-        self._check = QtWidgets.QCheckBox(ENABLED_CHECKBOX_LABEL)
+        self._check = QtWidgets.QCheckBox("Enabled")
         self._check.setChecked(bool(value))
         self._check.toggled.connect(self.changed)
         self.add_control(self._check)

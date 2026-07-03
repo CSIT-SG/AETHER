@@ -1,14 +1,14 @@
 QPlainTextEdit#SettingsJson {
     background-color: {{ colors.base }};
     color: {{ colors.text }};
-    border: {{ tokens.border_width }} solid {{ colors.midlight }};
-    border-radius: {{ tokens.radius_input }};
-    padding: {{ tokens.pad_input }};
+    border: 1px solid {{ colors.midlight }};
+    border-radius: 4px;
+    padding: 4px;
     font-family: "{{ fontstyles.family }}";
     font-size: {{ fontstyles.size }}pt;
     font-weight: {{ fontstyles.weight }};
 }
 
 QPlainTextEdit#SettingsJson:focus {
-    border: {{ tokens.border_width }} solid {{ colors.highlight }};
+    border: 1px solid {{ colors.highlight }};
 }

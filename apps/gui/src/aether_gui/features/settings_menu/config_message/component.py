@@ -5,14 +5,10 @@ from PySide6 import QtWidgets
 from PySide6.QtGui import QFont
 
 from ..constants import (
-    EMPTY_TEXT,
-    MESSAGE_CLEAR_TEXT,
-    MESSAGE_LABEL_MARGINS,
     MESSAGE_STATE_ERROR,
     MESSAGE_STATE_NONE,
     MESSAGE_STATE_PROPERTY,
     MESSAGE_STATE_SUCCESS,
-    NO_MARGINS,
 )
 
 
@@ -32,10 +28,10 @@ class ConfigMessage(StyledComponent):
         self._label: QtWidgets.QLabel
 
     def init_ui(self) -> None:
-        label = QtWidgets.QLabel(EMPTY_TEXT, self)
-        label.setContentsMargins(*MESSAGE_LABEL_MARGINS)
+        label = QtWidgets.QLabel("", self)
+        label.setContentsMargins(8, 0, 8, 0)
         layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(*NO_MARGINS)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(label)
         self._label = label
         self.setLayout(layout)
@@ -62,7 +58,7 @@ class ConfigMessage(StyledComponent):
 
     def clear(self) -> None:
         """Clear the message and reset to neutral styling."""
-        self._label.setText(MESSAGE_CLEAR_TEXT)
+        self._label.setText(" ")
         self._set_state(MESSAGE_STATE_NONE)
 
     def _set_state(self, state: str) -> None:

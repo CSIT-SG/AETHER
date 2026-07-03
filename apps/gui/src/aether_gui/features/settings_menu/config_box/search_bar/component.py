@@ -6,21 +6,19 @@ from PySide6 import QtCore, QtWidgets
 from PySide6.QtGui import QFont
 
 from ...constants import (
-    BACK_TO_SETTINGS_LABEL,
-    BACK_TO_SETTINGS_TOOLTIP,
-    COMPACT_MARGINS,
-    EMPTY_TEXT,
-    FILTERED_SETTINGS_COUNT_TEXT,
     JSON_BACK_OBJECT_NAME,
-    JSON_TOGGLE_LABEL,
     JSON_TOGGLE_OBJECT_NAME,
-    JSON_TOGGLE_TOOLTIP,
-    SEARCH_PLACEHOLDER,
     SETTINGS_COUNT_OBJECT_NAME,
-    SETTINGS_COUNT_TEXT,
     SETTINGS_SEARCH_OBJECT_NAME,
-    STYLE_TOKENS,
 )
+
+BACK_TO_SETTINGS_LABEL = "Back to Settings"
+JSON_TOGGLE_LABEL = "{ } JSON"
+SEARCH_PLACEHOLDER = "Search settings"
+BACK_TO_SETTINGS_TOOLTIP = "Return to the settings form"
+JSON_TOGGLE_TOOLTIP = "View and edit the raw settings JSON"
+SETTINGS_COUNT_TEXT = "{total} settings"
+FILTERED_SETTINGS_COUNT_TEXT = "{visible} of {total} settings"
 
 
 class SearchBar(StyledComponent):
@@ -39,7 +37,6 @@ class SearchBar(StyledComponent):
         super().__init__(parent, plugins=[FontPlugin()])
 
     def setup(self) -> None:
-        self.state["tokens"] = STYLE_TOKENS
         self._search: QtWidgets.QLineEdit
         self._results: QtWidgets.QLabel
         self._json_btn: QtWidgets.QPushButton
@@ -65,11 +62,11 @@ class SearchBar(StyledComponent):
         self._search.setClearButtonEnabled(True)
         self._search.textChanged.connect(self.search_changed)
 
-        self._results = QtWidgets.QLabel(EMPTY_TEXT, self)
+        self._results = QtWidgets.QLabel("", self)
         self._results.setObjectName(SETTINGS_COUNT_OBJECT_NAME)
 
         layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(*COMPACT_MARGINS)
+        layout.setContentsMargins(2, 2, 2, 2)
         layout.addWidget(self._back_btn)
         layout.addWidget(self._search, 1)
         layout.addWidget(self._results)

@@ -12,7 +12,7 @@ from typing import Any, Union, get_args, get_origin
 
 from pydantic import BaseModel
 
-from ....constants import EMPTY_TEXT, FIELD_TITLE_ACRONYMS
+from ....constants import FIELD_TITLE_ACRONYMS
 from .resolved_field import ResolvedField
 
 
@@ -33,7 +33,7 @@ def iter_fields(model_cls: type[BaseModel], data: dict[str, Any] | None) -> Iter
             optional=optional,
             value=data.get(name),
             title=prettify(name),
-            description=info.description or EMPTY_TEXT,
+            description=info.description or "",
         )
 
 

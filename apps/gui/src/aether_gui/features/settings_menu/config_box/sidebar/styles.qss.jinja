@@ -2,18 +2,18 @@ QListWidget#SettingsNav {
     background-color: {{ colors.window }};
     color: {{ colors.text }};
     border: none;
-    border-right: {{ tokens.border_width }} solid {{ colors.mid }};
+    border-right: 1px solid {{ colors.mid }};
     outline: 0;
-    padding-top: {{ tokens.pad_nav_top }};
+    padding-top: 4px;
     font-family: "{{ fontstyles.family }}";
     font-size: {{ fontstyles.size }}pt;
     font-weight: {{ fontstyles.weight }};
 }
 
 QListWidget#SettingsNav::item {
-    padding: {{ tokens.pad_nav_item }};
-    margin: {{ tokens.margin_nav_item }};
-    border-radius: {{ tokens.radius_section }};
+    padding: 8px 12px;
+    margin: 3px 6px;
+    border-radius: 6px;
     color: {{ colors.text }};
 }
 

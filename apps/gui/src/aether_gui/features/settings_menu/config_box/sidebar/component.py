@@ -4,13 +4,7 @@ from aether_gui.utils.ui import FontPlugin, StyledComponent
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtGui import QFont
 
-from ...constants import (
-    NO_MARGINS,
-    SETTINGS_NAV_OBJECT_NAME,
-    SIDEBAR_ITEM_SPACING,
-    SIDEBAR_WIDTH_RANGE,
-    STYLE_TOKENS,
-)
+from ...constants import SETTINGS_NAV_OBJECT_NAME
 
 
 class Sidebar(StyledComponent):
@@ -28,26 +22,25 @@ class Sidebar(StyledComponent):
         super().__init__(parent, plugins=[FontPlugin()])
 
     def setup(self) -> None:
-        self.state["tokens"] = STYLE_TOKENS
         self._list: QtWidgets.QListWidget
 
     def init_ui(self) -> None:
         nav = QtWidgets.QListWidget(self)
         nav.setObjectName(SETTINGS_NAV_OBJECT_NAME)
-        nav.setSpacing(SIDEBAR_ITEM_SPACING)
+        nav.setSpacing(2)
         nav.setUniformItemSizes(True)
         nav.setWordWrap(False)
         nav.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         nav.itemClicked.connect(lambda item: self.category_clicked.emit(item.text()))
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(*NO_MARGINS)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(nav)
         self._list = nav
         self.setLayout(layout)
 
-        self.setMinimumWidth(SIDEBAR_WIDTH_RANGE[0])
-        self.setMaximumWidth(SIDEBAR_WIDTH_RANGE[1])
+        self.setMinimumWidth(150)
+        self.setMaximumWidth(200)
 
     def style_file(self) -> Path | None:
         return Path(__file__).with_name("styles.qss.jinja")

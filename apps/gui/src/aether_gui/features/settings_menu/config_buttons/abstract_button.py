@@ -3,7 +3,8 @@ from abc import ABC, abstractmethod
 from aether_gui.utils.ui import StyledComponent
 from PySide6 import QtWidgets
 
-from ..constants import UNDEFINED_BUTTON_ACTION_ERROR, UNSET_BUTTON_LABEL
+UNSET_BUTTON_LABEL = "I AM NOT SET"
+UNDEFINED_BUTTON_ACTION_ERROR = "ACTION NOT DEFINED BUTTON {label} DOES NOTHING"
 
 
 class ConfigButton(ABC, StyledComponent):

@@ -6,7 +6,7 @@ import json
 
 from pydantic.fields import FieldInfo
 
-from ....constants import EMPTY_TEXT, JSON_INDENT, SECRET_FIELD_NAMES
+from ....constants import JSON_INDENT, SECRET_FIELD_NAMES
 from ..fields import BoolField, FieldWidget, JsonField, StringField
 from .resolved_field import ResolvedField
 
@@ -34,7 +34,7 @@ def make_leaf_field(fld: ResolvedField) -> FieldWidget:
 def _example_placeholder(info: FieldInfo) -> str:
     """Render a field's first declared example as placeholder text, if any."""
     if not info.examples:
-        return EMPTY_TEXT
+        return ""
     example = info.examples[0]
     if isinstance(example, str):
         return example
