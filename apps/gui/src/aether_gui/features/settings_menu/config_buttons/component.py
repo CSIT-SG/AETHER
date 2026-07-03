@@ -3,6 +3,7 @@ from collections.abc import Callable
 from aether_gui.utils.ui import StyledComponent
 from PySide6 import QtCore, QtWidgets
 
+from ..constants import NO_MARGINS
 from .button_create import ApplyButton, CancelButton, OkButton
 
 
@@ -32,7 +33,7 @@ class ButtonRow(StyledComponent):
     def init_ui(self) -> None:
         layout = QtWidgets.QHBoxLayout(self)
         layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(*NO_MARGINS)
         self._layout = layout
         self.set_buttons(
             self._get_content,
@@ -51,8 +52,8 @@ class ButtonRow(StyledComponent):
         clear_message_box: Callable[[], None],
         on_success: Callable[[], None],
     ) -> None:
-        ok: OkButton = OkButton(get_content, on_close, on_error, clear_message_box)
-        apply: ApplyButton = ApplyButton(get_content, on_error, clear_message_box, on_success)
+        ok = OkButton(get_content, on_close, on_error, clear_message_box)
+        apply = ApplyButton(get_content, on_error, clear_message_box, on_success)
         cancel: CancelButton = CancelButton(on_close)
         for btn in (ok, apply, cancel):
             btn.setSizePolicy(
@@ -66,3 +67,14 @@ class ButtonRow(StyledComponent):
     @property
     def apply_button(self) -> ApplyButton:
         return self._apply
+
+
+def create_button_row(
+    get_content: Callable[[], str],
+    on_close: Callable,
+    on_error: Callable[[], None],
+    clear_message_box: Callable[[], None],
+    on_success: Callable[[], None],
+    parent: QtWidgets.QWidget | None = None,
+) -> ButtonRow:
+    return ButtonRow(get_content, on_close, on_error, clear_message_box, on_success, parent=parent)

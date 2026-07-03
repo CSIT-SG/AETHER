@@ -14,6 +14,7 @@ from typing import Any
 from pydantic import BaseModel
 from PySide6 import QtWidgets
 
+from ....constants import FORM_GROUP_SPACING, FORM_SECTION_SPACING, NO_MARGINS
 from ..fields import FieldWidget
 from .field_factory import make_leaf_field
 from .introspection import iter_fields
@@ -39,8 +40,8 @@ def build_settings_form(model_cls: type[BaseModel], data: dict[str, Any] | None)
     """
     container = QtWidgets.QWidget()
     layout = QtWidgets.QVBoxLayout(container)
-    layout.setContentsMargins(0, 0, 0, 0)
-    layout.setSpacing(12)
+    layout.setContentsMargins(*NO_MARGINS)
+    layout.setSpacing(FORM_SECTION_SPACING)
 
     rows: list[Row] = []
     getters: dict[str, Callable[[], Any]] = {}
@@ -78,8 +79,8 @@ def _build_group_body(
     """Build the inner widget for a model's fields (without an outer group box)."""
     container = QtWidgets.QWidget()
     layout = QtWidgets.QVBoxLayout(container)
-    layout.setContentsMargins(0, 0, 0, 0)
-    layout.setSpacing(6)
+    layout.setContentsMargins(*NO_MARGINS)
+    layout.setSpacing(FORM_GROUP_SPACING)
 
     getters: dict[str, Callable[[], Any]] = {}
     for fld in iter_fields(model_cls, data):

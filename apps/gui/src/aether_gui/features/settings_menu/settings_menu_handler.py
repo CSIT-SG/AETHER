@@ -1,19 +1,28 @@
 from aether_utils.logger import get_logger
 from PySide6 import QtWidgets
 
-from .config_box import ConfigBox
-from .config_buttons import ButtonRow
-from .config_message import ConfigMessage
+from .config_box import ConfigBox, create_config_box
+from .config_buttons import ButtonRow, create_button_row
+from .config_message import ConfigMessage, create_config_message
+from .constants import (
+    CONFIG_APPLIED_MESSAGE,
+    CONFIG_BOX_MINIMUM_SIZE,
+    INVALID_CONFIG_MESSAGE,
+    SETTINGS_DIALOG_INITIAL_SIZE,
+    SETTINGS_DIALOG_MINIMUM_SIZE,
+    SETTINGS_DIALOG_TITLE,
+    SETTINGS_MENU_LOGGER,
+)
 
-logger = get_logger("settings_menu")
+logger = get_logger(SETTINGS_MENU_LOGGER)
 
 
 class SettingsMenuHandler(QtWidgets.QDialog):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
-        self.setWindowTitle("AETHER Settings")
-        self.resize(900, 600)
-        self.setMinimumSize(700, 450)
+        self.setWindowTitle(SETTINGS_DIALOG_TITLE)
+        self.resize(*SETTINGS_DIALOG_INITIAL_SIZE)
+        self.setMinimumSize(*SETTINGS_DIALOG_MINIMUM_SIZE)
         self._layout: QtWidgets.QVBoxLayout
         self._buttons: ButtonRow
         self._config_box: ConfigBox
@@ -22,9 +31,9 @@ class SettingsMenuHandler(QtWidgets.QDialog):
 
     def init_ui(self) -> None:
         layout = QtWidgets.QVBoxLayout(self)
-        config_box = ConfigBox(self)
-        text_label = ConfigMessage(self)
-        buttons: ButtonRow = ButtonRow(
+        config_box = create_config_box(self)
+        text_label = create_config_message(self)
+        buttons: ButtonRow = create_button_row(
             config_box.get_content,
             self.close,
             self.show_error_message,
@@ -35,8 +44,8 @@ class SettingsMenuHandler(QtWidgets.QDialog):
         # Apply is actionable only while the form has unsaved edits.
         buttons.apply_button.setEnabled(config_box.is_dirty())
         config_box.dirtyChanged.connect(buttons.apply_button.setEnabled)
-        config_box.setMinimumWidth(500)
-        config_box.setMinimumHeight(200)
+        config_box.setMinimumWidth(CONFIG_BOX_MINIMUM_SIZE[0])
+        config_box.setMinimumHeight(CONFIG_BOX_MINIMUM_SIZE[1])
         self._layout = layout
         self._config_box = config_box
         self._buttons = buttons
@@ -47,7 +56,7 @@ class SettingsMenuHandler(QtWidgets.QDialog):
         self.setLayout(self._layout)
 
     def show_error_message(self) -> None:
-        self._cfg_message.show_error("Invalid config, check IDA output for more details")
+        self._cfg_message.show_error(INVALID_CONFIG_MESSAGE)
 
     def clear_message_box(self) -> None:
         self._cfg_message.clear()
@@ -56,4 +65,4 @@ class SettingsMenuHandler(QtWidgets.QDialog):
         # Runs after a successful Apply: clear the dirty state (which disables the
         # Apply button) and report success without closing the dialog.
         self._config_box.mark_saved()
-        self._cfg_message.show_success("Config applied!")
+        self._cfg_message.show_success(CONFIG_APPLIED_MESSAGE)

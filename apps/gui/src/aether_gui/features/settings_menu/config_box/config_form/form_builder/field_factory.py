@@ -6,11 +6,9 @@ import json
 
 from pydantic.fields import FieldInfo
 
+from ....constants import EMPTY_TEXT, JSON_INDENT, SECRET_FIELD_NAMES
 from ..fields import BoolField, FieldWidget, JsonField, StringField
 from .resolved_field import ResolvedField
-
-# Fields whose text input should be masked.
-_SECRET_FIELDS = {"api_key"}
 
 
 def make_leaf_field(fld: ResolvedField) -> FieldWidget:
@@ -24,7 +22,7 @@ def make_leaf_field(fld: ResolvedField) -> FieldWidget:
             fld.description,
             fld.value,
             optional=fld.optional,
-            secret=fld.name in _SECRET_FIELDS,
+            secret=fld.name in SECRET_FIELD_NAMES,
             placeholder=placeholder,
         )
     # dict fields and any unrecognized annotation fall back to JSON editing.
@@ -36,8 +34,8 @@ def make_leaf_field(fld: ResolvedField) -> FieldWidget:
 def _example_placeholder(info: FieldInfo) -> str:
     """Render a field's first declared example as placeholder text, if any."""
     if not info.examples:
-        return ""
+        return EMPTY_TEXT
     example = info.examples[0]
     if isinstance(example, str):
         return example
-    return json.dumps(example, indent=2)
+    return json.dumps(example, indent=JSON_INDENT)

@@ -6,9 +6,15 @@ from aether_utils.config import set_config
 from aether_utils.logger import get_logger
 from PySide6 import QtWidgets
 
+from ..constants import (
+    APPLY_BUTTON_LABEL,
+    CANCEL_BUTTON_LABEL,
+    CONFIG_SAVE_LOGGER,
+    OK_BUTTON_LABEL,
+)
 from .abstract_button import ConfigButton
 
-logger = get_logger("json_loader")
+logger = get_logger(CONFIG_SAVE_LOGGER)
 
 
 class ApplyButton(ConfigButton):
@@ -20,7 +26,7 @@ class ApplyButton(ConfigButton):
         on_success: Callable[[], None],
         parent: QtWidgets.QWidget | None = None,
     ) -> None:
-        super().__init__("Apply", parent=parent)
+        super().__init__(APPLY_BUTTON_LABEL, parent=parent)
         self._on_error = on_error
         self._clear_message_box = clear_message_box
         self._get_content = get_content
@@ -46,7 +52,7 @@ class OkButton(ConfigButton):
         clear_message_box: Callable[[], None],
         parent: QtWidgets.QWidget | None = None,
     ) -> None:
-        super().__init__("Ok", parent=parent)
+        super().__init__(OK_BUTTON_LABEL, parent=parent)
         self._get_content = get_content
         self._on_close = on_close
         self._clear_message_box = clear_message_box
@@ -65,7 +71,7 @@ class OkButton(ConfigButton):
 
 class CancelButton(ConfigButton):
     def __init__(self, on_close: Callable, parent: QtWidgets.QWidget | None = None) -> None:
-        super().__init__("Cancel", parent=parent)
+        super().__init__(CANCEL_BUTTON_LABEL, parent=parent)
         self._on_close: Callable = on_close
 
     def action(self) -> None:

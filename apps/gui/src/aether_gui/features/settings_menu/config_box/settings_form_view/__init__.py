@@ -1,3 +1,3 @@
-from .component import SettingsFormView
+from .component import SettingsFormView, create_settings_form_view
 
-__all__ = ["SettingsFormView"]
+__all__ = ["SettingsFormView", "create_settings_form_view"]

@@ -12,15 +12,13 @@ from typing import Any, Union, get_args, get_origin
 
 from pydantic import BaseModel
 
+from ....constants import EMPTY_TEXT, FIELD_TITLE_ACRONYMS
 from .resolved_field import ResolvedField
-
-# Field-name parts that should render as upper-case acronyms in titles.
-_ACRONYMS = {"url": "URL", "tls": "TLS", "ai": "AI", "api": "API", "id": "ID"}
 
 
 def prettify(name: str) -> str:
     """Turn a snake_case field name into a human-readable title."""
-    return " ".join(_ACRONYMS.get(part, part.capitalize()) for part in name.split("_"))
+    return " ".join(FIELD_TITLE_ACRONYMS.get(part, part.capitalize()) for part in name.split("_"))
 
 
 def iter_fields(model_cls: type[BaseModel], data: dict[str, Any] | None) -> Iterator[ResolvedField]:
@@ -35,7 +33,7 @@ def iter_fields(model_cls: type[BaseModel], data: dict[str, Any] | None) -> Iter
             optional=optional,
             value=data.get(name),
             title=prettify(name),
-            description=info.description or "",
+            description=info.description or EMPTY_TEXT,
         )
 
 

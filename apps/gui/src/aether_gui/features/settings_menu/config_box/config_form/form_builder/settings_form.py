@@ -8,10 +8,8 @@ from typing import Any
 
 from PySide6 import QtWidgets
 
+from ....constants import GENERAL_CATEGORY
 from ..fields import FieldWidget
-
-# Category for top-level scalar fields that don't belong to a nested model.
-GENERAL_CATEGORY = "General"
 
 # (search text, leaf widget, category title) for every editable field.
 Row = tuple[str, FieldWidget, str]

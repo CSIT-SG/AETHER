@@ -6,11 +6,19 @@ from typing import Any
 
 from PySide6 import QtCore, QtWidgets
 
+from ....constants import (
+    DESCRIPTION_ROLE,
+    FIELD_MARGINS,
+    FIELD_SPACING,
+    SETTINGS_ROLE_PROPERTY,
+    TITLE_ROLE,
+)
+
 
 def _make_label(text: str, role: str) -> QtWidgets.QLabel:
     """Build a label tagged with a ``settingsRole`` property for QSS styling."""
     label = QtWidgets.QLabel(text)
-    label.setProperty("settingsRole", role)
+    label.setProperty(SETTINGS_ROLE_PROPERTY, role)
     label.setWordWrap(True)
     return label
 
@@ -26,11 +34,11 @@ class FieldWidget(QtWidgets.QWidget):
     ) -> None:
         super().__init__(parent)
         self._layout = QtWidgets.QVBoxLayout(self)
-        self._layout.setContentsMargins(0, 6, 0, 6)
-        self._layout.setSpacing(4)
-        self._layout.addWidget(_make_label(title, "title"))
+        self._layout.setContentsMargins(*FIELD_MARGINS)
+        self._layout.setSpacing(FIELD_SPACING)
+        self._layout.addWidget(_make_label(title, TITLE_ROLE))
         if description:
-            self._layout.addWidget(_make_label(description, "description"))
+            self._layout.addWidget(_make_label(description, DESCRIPTION_ROLE))
 
     def add_control(self, widget: QtWidgets.QWidget) -> None:
         """Place the editing control beneath the title/description."""

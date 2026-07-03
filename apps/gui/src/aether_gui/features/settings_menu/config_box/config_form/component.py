@@ -1,10 +1,12 @@
 from pathlib import Path
 from typing import Any
 
-from aether_gui.utils.ui import StyledComponent
+from aether_gui.utils.ui import FontPlugin, StyledComponent
 from pydantic import BaseModel
 from PySide6 import QtCore, QtWidgets
+from PySide6.QtGui import QFont
 
+from ...constants import NO_MARGINS, STYLE_TOKENS
 from .form_builder import SettingsForm, build_settings_form
 
 
@@ -18,7 +20,11 @@ class ConfigForm(StyledComponent):
 
     changed = QtCore.Signal()
 
+    def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
+        super().__init__(parent, plugins=[FontPlugin()])
+
     def setup(self) -> None:
+        self.state["tokens"] = STYLE_TOKENS
         self._form: SettingsForm | None = None
         self._sections: dict[str, QtWidgets.QWidget] = {}
         self._scroll: QtWidgets.QScrollArea
@@ -29,13 +35,19 @@ class ConfigForm(StyledComponent):
         scroll.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(*NO_MARGINS)
         layout.addWidget(scroll)
         self._scroll = scroll
         self.setLayout(layout)
 
     def style_file(self) -> Path | None:
         return Path(__file__).with_name("styles.qss.jinja")
+
+    def on_font_change(self, font: QFont) -> None:
+        pass
+
+    def _current_font(self) -> QFont:
+        return self.get_plugin(FontPlugin).current_font
 
     def install(self, model_cls: type[BaseModel], data: dict[str, Any]) -> list[str]:
         """Build the form from ``data`` and mount it, returning the category titles."""
@@ -90,3 +102,7 @@ class ConfigForm(StyledComponent):
 
         total = len(self._form.rows)
         return visible_count, total, (visible_categories if query else None)
+
+
+def create_config_form(parent: QtWidgets.QWidget | None = None) -> ConfigForm:
+    return ConfigForm(parent=parent)

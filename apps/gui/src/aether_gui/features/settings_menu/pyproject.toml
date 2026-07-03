@@ -1,0 +1,17 @@
+[project]
+name = "aether_gui"
+version = "0.1.0"
+description = "AETHER GUI application"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "aether_core",
+    "aether_utils",
+    "PySide6",
+    "jinja2",
+    "markupsafe==2.0.1",
+    "markdown==3.10.2",
+]
+
+[tool.mypy]
+plugins = ["pydantic.mypy"]

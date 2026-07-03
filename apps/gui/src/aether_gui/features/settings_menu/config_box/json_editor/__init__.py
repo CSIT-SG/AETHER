@@ -1,3 +1,3 @@
-from .component import JsonEditor
+from .component import JsonEditor, create_json_editor
 
-__all__ = ["JsonEditor"]
+__all__ = ["JsonEditor", "create_json_editor"]

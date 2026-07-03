@@ -1,3 +1,3 @@
-from .component import SearchBar
+from .component import SearchBar, create_search_bar
 
-__all__ = ["SearchBar"]
+__all__ = ["SearchBar", "create_search_bar"]

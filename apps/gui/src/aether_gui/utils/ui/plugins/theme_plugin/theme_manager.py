@@ -1,4 +1,5 @@
 # theme_manager.py
+from aether_gui.utils.constants import SEMANTIC_COLORS
 from aether_utils.logger import get_logger
 from PySide6.QtCore import QEvent, QObject, Signal
 from PySide6.QtGui import QPalette
@@ -98,11 +99,6 @@ class ThemeManager(QObject):
 
         DEFAULT_COLOR = "#000000" if self.current_theme == "light" else "#FFFFFF"
         
-        SEMANTIC_COLORS: dict[Theme, dict[str, str]] = {
-            "light": {"error": "#c0392b", "success": "#1e7e34", "warning": "#b26a00"},
-            "dark": {"error": "#ff6b6b", "success": "#5cb85c", "warning": "#ffb74d"},
-        }
-
         colors: ThemeColors = {
             role.name.lower(): (
                 palette.color(role).name() if palette.color(role).isValid() else DEFAULT_COLOR

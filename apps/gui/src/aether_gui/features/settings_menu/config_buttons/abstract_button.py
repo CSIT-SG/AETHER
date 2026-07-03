@@ -3,10 +3,12 @@ from abc import ABC, abstractmethod
 from aether_gui.utils.ui import StyledComponent
 from PySide6 import QtWidgets
 
+from ..constants import UNDEFINED_BUTTON_ACTION_ERROR, UNSET_BUTTON_LABEL
+
 
 class ConfigButton(ABC, StyledComponent):
     def __init__(
-        self, label: str = "I AM NOT SET", parent: QtWidgets.QWidget | None = None
+        self, label: str = UNSET_BUTTON_LABEL, parent: QtWidgets.QWidget | None = None
     ) -> None:
         self._label: str = label
         super().__init__(parent)
@@ -24,4 +26,4 @@ class ConfigButton(ABC, StyledComponent):
 
     @abstractmethod
     def action(self) -> None:
-        raise NotImplementedError(f"ACTION NOT DEFINED BUTTON {self._label} DOES NOTHING")
+        raise NotImplementedError(UNDEFINED_BUTTON_ACTION_ERROR.format(label=self._label))

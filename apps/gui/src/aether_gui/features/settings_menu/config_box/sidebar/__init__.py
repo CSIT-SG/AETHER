@@ -1,3 +1,3 @@
-from .component import Sidebar
+from .component import Sidebar, create_sidebar
 
-__all__ = ["Sidebar"]
+__all__ = ["Sidebar", "create_sidebar"]

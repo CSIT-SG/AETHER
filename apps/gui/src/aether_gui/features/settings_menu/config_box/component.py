@@ -5,6 +5,13 @@ from aether_gui.utils.ui import StyledComponent
 from aether_utils.config import get_config
 from PySide6 import QtCore, QtWidgets
 
+from ..constants import (
+    CONFIG_BOX_SPACING,
+    INVALID_JSON_RETURN_WARNING,
+    JSON_INDENT,
+    JSON_SORT_KEYS,
+    NO_MARGINS,
+)
 from .json_editor import JsonEditor
 from .search_bar import SearchBar
 from .settings_form_view import SettingsFormView
@@ -40,8 +47,8 @@ class ConfigBox(StyledComponent):
         self._stack.addWidget(self._json_page)
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(8)
+        layout.setContentsMargins(*NO_MARGINS)
+        layout.setSpacing(CONFIG_BOX_SPACING)
         layout.addWidget(self._search_bar)
         layout.addWidget(self._stack)
         self.setLayout(layout)
@@ -88,7 +95,7 @@ class ConfigBox(StyledComponent):
         """
         parsed = self._json_page.parse()
         if parsed is None:
-            self.logger.warning("Cannot return to form view: settings JSON is invalid.")
+            self.logger.warning(INVALID_JSON_RETURN_WARNING)
             return
         self._install_form(parsed)
         self._stack.setCurrentWidget(self._form_view)
@@ -107,7 +114,7 @@ class ConfigBox(StyledComponent):
             data = json.loads(self.get_content())
         except json.JSONDecodeError:
             return None
-        return json.dumps(data, sort_keys=True) if isinstance(data, dict) else None
+        return json.dumps(data, sort_keys=JSON_SORT_KEYS) if isinstance(data, dict) else None
 
     def is_dirty(self) -> bool:
         """Whether the current content differs from the last saved state."""
@@ -136,4 +143,8 @@ class ConfigBox(StyledComponent):
         """Return the active view's current values as a JSON string."""
         if self._in_json_mode():
             return self._json_page.text()
-        return json.dumps(self._form_view.values(), indent=2)
+        return json.dumps(self._form_view.values(), indent=JSON_INDENT)
+
+
+def create_config_box(parent: QtWidgets.QWidget | None = None) -> ConfigBox:
+    return ConfigBox(parent=parent)

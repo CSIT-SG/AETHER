@@ -1,43 +1,53 @@
 QGroupBox[settingsRole="section"] {
-    border: 1px solid {{ colors.mid }};
-    border-radius: 6px;
-    margin-top: 14px;
-    padding: 8px;
+    border: {{ tokens.border_width }} solid {{ colors.mid }};
+    border-radius: {{ tokens.radius_section }};
+    margin-top: {{ tokens.margin_group_top }};
+    padding: {{ tokens.pad_group }};
+    font-family: "{{ fontstyles.family }}";
+    font-size: {{ fontstyles.size }}pt;
     font-weight: bold;
 }
 
 QGroupBox[settingsRole="section"]::title {
     subcontrol-origin: margin;
     subcontrol-position: top left;
-    left: 10px;
-    padding: 0 4px;
+    left: {{ tokens.title_left }};
+    padding: {{ tokens.pad_title }};
     color: {{ colors.text }};
 }
 
 QLabel[settingsRole="title"] {
     color: {{ colors.text }};
+    font-family: "{{ fontstyles.family }}";
+    font-size: {{ fontstyles.size }}pt;
     font-weight: bold;
 }
 
 QLabel[settingsRole="description"] {
     color: {{ colors.placeholdertext }};
-    font-weight: normal;
+    font-family: "{{ fontstyles.family }}";
+    font-size: {{ fontstyles.size }}pt;
+    font-weight: {{ fontstyles.weight }};
 }
 
 QLineEdit, QPlainTextEdit {
     background-color: {{ colors.base }};
     color: {{ colors.text }};
-    border: 1px solid {{ colors.midlight }};
-    border-radius: 4px;
-    padding: 4px;
-    font-weight: normal;
+    border: {{ tokens.border_width }} solid {{ colors.midlight }};
+    border-radius: {{ tokens.radius_input }};
+    padding: {{ tokens.pad_input }};
+    font-family: "{{ fontstyles.family }}";
+    font-size: {{ fontstyles.size }}pt;
+    font-weight: {{ fontstyles.weight }};
 }
 
 QLineEdit:focus, QPlainTextEdit:focus {
-    border: 1px solid {{ colors.highlight }};
+    border: {{ tokens.border_width }} solid {{ colors.highlight }};
 }
 
 QCheckBox {
     color: {{ colors.text }};
-    font-weight: normal;
+    font-family: "{{ fontstyles.family }}";
+    font-size: {{ fontstyles.size }}pt;
+    font-weight: {{ fontstyles.weight }};
 }

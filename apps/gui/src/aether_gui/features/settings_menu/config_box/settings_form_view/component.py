@@ -4,6 +4,7 @@ from aether_gui.utils.ui import StyledComponent
 from pydantic import BaseModel
 from PySide6 import QtCore, QtWidgets
 
+from ...constants import NO_MARGINS, SETTINGS_FORM_VIEW_SPACING
 from ..config_form import ConfigForm
 from ..sidebar import Sidebar
 
@@ -22,8 +23,8 @@ class SettingsFormView(StyledComponent):
         self._config_form = ConfigForm(self)
 
         layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(8)
+        layout.setContentsMargins(*NO_MARGINS)
+        layout.setSpacing(SETTINGS_FORM_VIEW_SPACING)
         layout.addWidget(self._sidebar)
         layout.addWidget(self._config_form, 1)
         self.setLayout(layout)
@@ -45,3 +46,7 @@ class SettingsFormView(StyledComponent):
         visible, total, visible_categories = self._config_form.apply_filter(text)
         self._sidebar.set_visible_categories(visible_categories)
         return visible, total, visible_categories
+
+
+def create_settings_form_view(parent: QtWidgets.QWidget | None = None) -> SettingsFormView:
+    return SettingsFormView(parent=parent)

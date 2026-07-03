@@ -6,6 +6,7 @@ from typing import Any
 
 from PySide6 import QtWidgets
 
+from ....constants import EMPTY_TEXT
 from .base import FieldWidget
 
 
@@ -25,7 +26,7 @@ class StringField(FieldWidget):
     ) -> None:
         super().__init__(title, description, parent)
         self._optional = optional
-        self._edit = QtWidgets.QLineEdit("" if value is None else str(value))
+        self._edit = QtWidgets.QLineEdit(EMPTY_TEXT if value is None else str(value))
         if placeholder:
             self._edit.setPlaceholderText(placeholder)
         if secret:
@@ -35,6 +36,6 @@ class StringField(FieldWidget):
 
     def value(self) -> str | None:
         text = self._edit.text()
-        if self._optional and text == "":
+        if self._optional and text == EMPTY_TEXT:
             return None
         return text
