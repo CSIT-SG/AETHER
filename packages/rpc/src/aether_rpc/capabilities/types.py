@@ -101,3 +101,7 @@ class FuncNameAddr(TypedDict):
 class ListFunctionResult(TypedDict):
     count: int
     functions: list[FuncNameAddr]
+
+
+class TakeSnapshotResult(TypedDict):
+    snapshot_path: str
