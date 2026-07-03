@@ -258,6 +258,39 @@ class TestConfigManagerIO:
         assert manager.config.provider.gateway_url == DEFAULT_CONFIG.provider.gateway_url
         assert manager.config.provider.default_model == DEFAULT_CONFIG.provider.default_model
 
+    def test_deleted_file_reloads_default(self, tmp_path: Path) -> None:
+        """A deleted config.json should invalidate the cached in-memory config."""
+        config_file = tmp_path / "config.json"
+        config_file.write_text(json.dumps(VALID_FULL), encoding="utf-8")
+
+        with patch("aether_utils.config.config.get_config_file_path", return_value=config_file):
+            manager = ConfigManager()
+
+        assert manager.config.debug is True
+
+        config_file.unlink()
+
+        assert manager.config.debug is None
+        assert config_file.is_file()
+
+    def test_replaced_file_reloads_from_disk(self, tmp_path: Path) -> None:
+        """Replacing config.json should invalidate the cached in-memory config."""
+        config_file = tmp_path / "config.json"
+        replacement_file = tmp_path / "replacement.json"
+        config_file.write_text(json.dumps(VALID_FULL), encoding="utf-8")
+        replacement_file.write_text(json.dumps(VALID_MINIMAL), encoding="utf-8")
+
+        with patch("aether_utils.config.config.get_config_file_path", return_value=config_file):
+            manager = ConfigManager()
+
+        assert manager.config.debug is True
+
+        config_file.unlink()
+        replacement_file.rename(config_file)
+
+        assert manager.config.debug is None
+        assert manager.config.provider.api_key == "sk-test"
+
     def test_valid_file_is_loaded(self, tmp_path: Path) -> None:
         """A well-formed config.json is parsed and returned correctly."""
         config_file = tmp_path / "config.json"

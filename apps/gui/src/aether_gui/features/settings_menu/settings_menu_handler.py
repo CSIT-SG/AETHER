@@ -7,9 +7,12 @@ from .config_message import ConfigMessage, create_config_message
 from .constants import SETTINGS_MENU_LOGGER
 
 SETTINGS_DIALOG_TITLE = "AETHER Settings"
-SETTINGS_DIALOG_INITIAL_SIZE = (900, 600)
-SETTINGS_DIALOG_MINIMUM_SIZE = (700, 450)
-CONFIG_BOX_MINIMUM_SIZE = (500, 200)
+SETTINGS_DIALOG_INITIAL_WIDTH = 900
+SETTINGS_DIALOG_INITIAL_HEIGHT = 600
+SETTINGS_DIALOG_MINIMUM_WIDTH = 700
+SETTINGS_DIALOG_MINIMUM_HEIGHT = 450
+CONFIG_BOX_MINIMUM_WIDTH = 500
+CONFIG_BOX_MINIMUM_HEIGHT = 200
 INVALID_CONFIG_MESSAGE = "Invalid config, check IDA output for more details"
 CONFIG_APPLIED_MESSAGE = "Config applied!"
 
@@ -20,8 +23,8 @@ class SettingsMenuHandler(QtWidgets.QDialog):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.setWindowTitle(SETTINGS_DIALOG_TITLE)
-        self.resize(*SETTINGS_DIALOG_INITIAL_SIZE)
-        self.setMinimumSize(*SETTINGS_DIALOG_MINIMUM_SIZE)
+        self.resize(SETTINGS_DIALOG_INITIAL_WIDTH, SETTINGS_DIALOG_INITIAL_HEIGHT)
+        self.setMinimumSize(SETTINGS_DIALOG_MINIMUM_WIDTH, SETTINGS_DIALOG_MINIMUM_HEIGHT)
         self._layout: QtWidgets.QVBoxLayout
         self._buttons: ButtonRow
         self._config_box: ConfigBox
@@ -43,8 +46,8 @@ class SettingsMenuHandler(QtWidgets.QDialog):
         # Apply is actionable only while the form has unsaved edits.
         buttons.apply_button.setEnabled(config_box.is_dirty())
         config_box.dirtyChanged.connect(buttons.apply_button.setEnabled)
-        config_box.setMinimumWidth(CONFIG_BOX_MINIMUM_SIZE[0])
-        config_box.setMinimumHeight(CONFIG_BOX_MINIMUM_SIZE[1])
+        config_box.setMinimumWidth(CONFIG_BOX_MINIMUM_WIDTH)
+        config_box.setMinimumHeight(CONFIG_BOX_MINIMUM_HEIGHT)
         self._layout = layout
         self._config_box = config_box
         self._buttons = buttons
