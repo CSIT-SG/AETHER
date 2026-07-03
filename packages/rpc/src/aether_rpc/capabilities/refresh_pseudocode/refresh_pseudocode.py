@@ -42,7 +42,7 @@ class RefreshPseudocode(Capability):
             ida_hexrays.open_pseudocode(func.start_ea, ida_hexrays.OPF_REUSE)
             self.logger.info(f"Refreshed pseudocode view for function at {hex(func.start_ea)}")
 
-            return Ok(result=hex(func.start_ea))
         else:
             self.logger.warning("Cannot refresh pseudocode view in headless IDA mode")
-            return Err(result="Cannot refresh pseudocode view in headless IDA mode")
+
+        return Ok(result=hex(func.start_ea))

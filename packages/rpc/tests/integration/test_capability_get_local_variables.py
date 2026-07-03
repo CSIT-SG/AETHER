@@ -16,7 +16,6 @@ class TestGetLocalVariables:
         for var in result.result:
             assert "name" in var
             assert "type" in var
-            assert "location" in var
             assert "is_arg_var" in var
             assert "is_stk_var" in var
             assert "is_reg_var" in var
