@@ -25,11 +25,11 @@ def iter_fields(model_cls: type[BaseModel], data: dict[str, Any] | None) -> Iter
     """Yield each field of ``model_cls`` resolved against the seed ``data``."""
     data = data or {}
     for name, info in model_cls.model_fields.items():
-        base, optional = _unwrap_optional(info.annotation)
+        field_type, optional = _unwrap_optional(info.annotation)
         yield ResolvedField(
             name=name,
             info=info,
-            base=base,
+            field_type=field_type,
             optional=optional,
             value=data.get(name),
             title=prettify(name),

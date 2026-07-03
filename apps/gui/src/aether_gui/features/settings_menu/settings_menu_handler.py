@@ -2,7 +2,13 @@ from aether_utils.logger import get_logger
 from PySide6 import QtWidgets
 
 from .config_box import ConfigBox, create_config_box
-from .config_buttons import ButtonRow, create_button_row
+from .config_buttons import (
+    ApplyButton,
+    ButtonRow,
+    CancelButton,
+    OkButton,
+    create_button_row,
+)
 from .config_message import ConfigMessage, create_config_message
 from .constants import SETTINGS_MENU_LOGGER
 
@@ -35,17 +41,26 @@ class SettingsMenuHandler(QtWidgets.QDialog):
         layout = QtWidgets.QVBoxLayout(self)
         config_box = create_config_box(self)
         text_label = create_config_message(self)
-        buttons: ButtonRow = create_button_row(
+        ok_button = OkButton(
             config_box.get_content,
             self.close,
             self.show_error_message,
             self.clear_message_box,
+        )
+        apply_button = ApplyButton(
+            config_box.get_content,
+            self.show_error_message,
+            self.clear_message_box,
             self.on_success,
+        )
+        cancel_button = CancelButton(self.close)
+        buttons: ButtonRow = create_button_row(
+            [ok_button, apply_button, cancel_button],
             parent=self,
         )
         # Apply is actionable only while the form has unsaved edits.
-        buttons.apply_button.setEnabled(config_box.is_dirty())
-        config_box.dirtyChanged.connect(buttons.apply_button.setEnabled)
+        apply_button.setEnabled(config_box.is_dirty())
+        config_box.dirtyChanged.connect(apply_button.setEnabled)
         config_box.setMinimumWidth(CONFIG_BOX_MINIMUM_WIDTH)
         config_box.setMinimumHeight(CONFIG_BOX_MINIMUM_HEIGHT)
         self._layout = layout

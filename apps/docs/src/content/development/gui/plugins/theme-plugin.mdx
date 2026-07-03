@@ -100,6 +100,16 @@ def _read_palette(self) -> ThemeColors:
 ```
 This will likely never happen but its good to know.
 
+`_read_palette()` also adds semantic colors from `SEMANTIC_COLORS` after reading the Qt palette roles. These are app-level state colors rather than Qt palette roles, and can be used in QSS templates through the same `colors` object:
+
+```jinja
+{{ colors.error }}
+{{ colors.success }}
+{{ colors.warning }}
+```
+
+Use semantic colors when styling meaning-based UI states such as validation errors, success messages, or warnings. Use Qt palette role colors for ordinary surface, text, border, and selection styling.
+
 ## Priority
 
 In the plugin list, the theme plugin is the first to be installed.

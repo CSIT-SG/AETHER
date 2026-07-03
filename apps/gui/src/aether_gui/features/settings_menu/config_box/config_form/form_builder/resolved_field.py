@@ -16,7 +16,7 @@ class ResolvedField:
 
     name: str
     info: FieldInfo
-    base: Any  # annotation with ``| None`` stripped off
+    field_type: Any  # annotation with ``| None`` stripped off
     optional: bool
     value: Any
     title: str
@@ -24,4 +24,4 @@ class ResolvedField:
 
     @property
     def is_model(self) -> bool:
-        return inspect.isclass(self.base) and issubclass(self.base, BaseModel)
+        return inspect.isclass(self.field_type) and issubclass(self.field_type, BaseModel)

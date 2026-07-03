@@ -102,7 +102,7 @@ def _build_model_section(
     if fld.description:
         group_layout.addWidget(section_header(fld.description))
     body, getter = _build_group_body(
-        fld.base, fld.value if isinstance(fld.value, dict) else {}, rows, category
+        fld.field_type, fld.value if isinstance(fld.value, dict) else {}, rows, category
     )
     group_layout.addWidget(body)
     return group, getter

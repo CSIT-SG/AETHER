@@ -14,9 +14,9 @@ from .resolved_field import ResolvedField
 def make_leaf_field(fld: ResolvedField) -> FieldWidget:
     """Build the right control for a single non-model field."""
     placeholder = _example_placeholder(fld.info)
-    if fld.base is bool:
+    if fld.field_type is bool:
         return BoolField(fld.title, fld.description, fld.value)
-    if fld.base is str:
+    if fld.field_type is str:
         return StringField(
             fld.title,
             fld.description,
