@@ -14,4 +14,5 @@ EXPORTS: dict[str, str] = {
     "RefreshPseudocode": ".refresh_pseudocode",
     "TakeSnapshot": ".take_snapshot",
     "CollectFunctionsWithDefaultCriteria": ".collect_functions_with_default_criteria",
+    "GetFunctionsCalledRecursively": ".get_functions_called_recursively",
 }

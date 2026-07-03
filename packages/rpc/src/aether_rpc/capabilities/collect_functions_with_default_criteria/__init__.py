@@ -1,3 +1,0 @@
-from .collect_functions_with_default_criteria import CollectFunctionsWithDefaultCriteria
-
-__all__ = ["CollectFunctionsWithDefaultCriteria"]

@@ -20,12 +20,12 @@ FILTERED_FUNCTIONS = [
     ".memset", ".memcpy", ".strcpy", ".strcmp", ".strlen", ".strcat", ".sprintf", ".printf"
 ]
 
-class CollectFunctionsWithDefaultCriteria(Capability):
+class GetFunctionsCalledRecursively(Capability):
     """Get all callees of a function."""
 
     @property
     def name(self) -> str:
-        return "collect_functions_with_default_criteria"
+        return "get_functions_called_recursively"
 
     def execute(self, address: str | int) -> Result[ListFunctionResult]:
         """Look up the function enclosing the given address and return its callees.
@@ -135,7 +135,7 @@ class CollectFunctionsWithDefaultCriteria(Capability):
 
         # Add the starting function
 
-        selected_functions.append({"name": func_name, "address": ea})
+        selected_functions.append({"name": func_name, "address": hex(ea)})
 
         # Collect functions recursively
         collect_recursive(str(hex(ea)), func_name, depth)
