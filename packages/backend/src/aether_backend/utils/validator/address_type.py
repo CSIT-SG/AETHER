@@ -6,8 +6,7 @@ from .constants import _VALID_INPUT
 
 
 def _normalize_hex(v: str) -> str | None:
-    stripped = v.strip().lower()
-    match = _VALID_INPUT.fullmatch(stripped)
+    match = _VALID_INPUT.fullmatch(v)
     if not match:
         return None
 
@@ -20,7 +19,6 @@ type HexAddress = Annotated[
     str,
     BeforeValidator(_normalize_hex),
     Field(
-        pattern=r"^0x[0-9a-f]+$",  # ensures the result is a valid hex address
         description="Hex address in format '0x<hex>'. Uppercase input is normalized to lowercase.",
         examples=["0x140009050", "0xffff"],
     ),

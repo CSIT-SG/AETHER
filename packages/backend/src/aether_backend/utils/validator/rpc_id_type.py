@@ -18,7 +18,6 @@ type RPCId = Annotated[
     str,
     BeforeValidator(_validate_rpc_id),
     Field(
-        pattern=r".-.",
         description="RPC id in the format <filename>-<time>",
         examples=["hello-120067", "world-001267"],
     ),
