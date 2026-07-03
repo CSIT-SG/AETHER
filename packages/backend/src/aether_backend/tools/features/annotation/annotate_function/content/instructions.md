@@ -22,7 +22,6 @@ The effective address (EA) of the function to annotate. Must be a valid function
 
 Acceptable forms:
 - Hex string: `"0x140009050"`, `"0x14000905C"`.
-- Decimal int: `5368748112`.
 
 If the address is invalid, is not the start of a function, or refers to a function that failed to decompile, the tool returns an error. Do not retry with the same address hoping it works — verify the address first using `get_function_by_address` or `get_function_by_name`.
 
