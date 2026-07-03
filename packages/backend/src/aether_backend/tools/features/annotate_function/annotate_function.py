@@ -16,7 +16,7 @@ config = get_config()
 SYSTEM_PROMPT = get_content(Path(__file__).parent, "prompt.md")
 
 
-async def annotate(service: Any, function_address: str | int) -> Program:
+async def annotate(service: Any, function_address: str | int, custom_prompt: str | None) -> Program:
     agent = Agent(
         name="Annotator",
         model=OpenAIGateway().get_model(
@@ -28,10 +28,12 @@ async def annotate(service: Any, function_address: str | int) -> Program:
         model_settings=ModelSettings(parallel_tool_calls=False),
     )
 
+    if custom_prompt is None:
+        custom_prompt = ""
     result = Runner.run_streamed(
         agent,
         context=InternalToolDependencies(service),
-        input=f"Analyze the function at address {function_address} and provide annotations for the psuedocode.",
+        input=f"Analyze the function at address {function_address} and provide annotations for the psuedocode.\n{custom_prompt}",
         max_turns=None,
     )
 
