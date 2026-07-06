@@ -8,6 +8,7 @@ from ..types import ListFunctionResult, ProcessFunctions
 from ..utils import get_function, resolve_effective_address
 from .constants import FILTERED_FUNCTIONS, MAX_DEPTH
 
+
 class GetFunctionsCalledRecursively(Capability):
     """Get all callees of a function."""
 
@@ -16,10 +17,10 @@ class GetFunctionsCalledRecursively(Capability):
         return "get_functions_called_recursively"
 
     def filter_function(self, func_name: str):
-            for filtered_name in FILTERED_FUNCTIONS:
-                if filtered_name.lower() in func_name.lower():
-                    return True
-            return False
+        for filtered_name in FILTERED_FUNCTIONS:
+            if filtered_name.lower() in func_name.lower():
+                return True
+        return False
 
     def get_function_callees(
         self, func_addr_str: str, parent_func_name: str | None = None
@@ -76,9 +77,12 @@ class GetFunctionsCalledRecursively(Capability):
 
             # Check if function not already in selected functions
             if not any(
-                f["function_name"] == callee_name for f in self.process_functions["selected_functions"]
+                f["function_name"] == callee_name
+                for f in self.process_functions["selected_functions"]
             ):
-                self.process_functions["selected_functions"].append({"function_name": callee_name, "address": callee_addr})
+                self.process_functions["selected_functions"].append(
+                    {"function_name": callee_name, "address": callee_addr}
+                )
                 self.logger.info(f"[AETHER] Auto-selected function: {callee_name}")
 
                 # Recursively process this function's callees
@@ -116,10 +120,15 @@ class GetFunctionsCalledRecursively(Capability):
 
         # Add the starting function
 
-        self.process_functions["selected_functions"].append({"function_name": func_name, "address": hex(ea)})
+        self.process_functions["selected_functions"].append(
+            {"function_name": func_name, "address": hex(ea)}
+        )
 
         # Collect functions recursively
         self.collect_recursive(str(hex(ea)), func_name, depth)
         return Ok(
-            result=ListFunctionResult(count=len(self.process_functions["selected_functions"]), functions=self.process_functions["selected_functions"])
+            result=ListFunctionResult(
+                count=len(self.process_functions["selected_functions"]),
+                functions=self.process_functions["selected_functions"],
+            )
         )
