@@ -5,15 +5,13 @@ from pathlib import Path
 import pytest
 import rpyc
 
-BIN_NAME = "basic"
-
 
 @pytest.mark.dependency(depends=["connection"], scope="session")
 class TestTakeSnapshot:
     """Verifies that take_snapshot writes a snapshot file into the binary's directory."""
 
     def test_snapshot_is_created_on_disk(
-        self, ida_client: rpyc.Connection, get_binary: Callable[..., Path]
+        self, ida_client: rpyc.Connection, get_binary: Callable[..., Path], BIN_NAME: str
     ) -> None:
         bin_dir = get_binary(BIN_NAME).parent
 
@@ -31,7 +29,7 @@ class TestTakeSnapshot:
         assert snapshot_path.parent == bin_dir
 
     def test_snapshot_appears_in_binary_directory_listing(
-        self, ida_client: rpyc.Connection, get_binary: Callable[..., Path]
+        self, ida_client: rpyc.Connection, get_binary: Callable[..., Path], BIN_NAME: str
     ) -> None:
         bin_dir = get_binary(BIN_NAME).parent
 

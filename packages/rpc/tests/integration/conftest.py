@@ -11,7 +11,6 @@ from pathlib import Path
 import pytest
 import rpyc
 
-BIN_NAME = "basic"
 HEADLESS_PORT = 57000
 ENTRYPOINT = Path(__file__).parent.parent.parent / "scripts" / "run_headless.py"
 
@@ -26,6 +25,11 @@ def _port_is_free(port: int) -> bool:
 
 
 @pytest.fixture(scope="session")
+def BIN_NAME() -> str:
+    return "basic"
+
+
+@pytest.fixture(scope="session")
 def ida_dir() -> str:
     d = os.environ.get("IDADIR", "")
     if not d:
@@ -35,7 +39,7 @@ def ida_dir() -> str:
 
 @pytest.fixture(scope="session")
 def headless_ida(
-    get_binary: Callable[..., Path], ida_dir: str
+    get_binary: Callable[..., Path], ida_dir: str, BIN_NAME
 ) -> Generator[tuple[str, int], None, None]:
     if not _port_is_free(HEADLESS_PORT):
         pytest.skip(f"Port {HEADLESS_PORT} is already in use")
