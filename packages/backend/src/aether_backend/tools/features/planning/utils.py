@@ -1,7 +1,20 @@
-
 import uuid
 from datetime import UTC, datetime
 from enum import StrEnum
+
+
+class PlanCrudAction(StrEnum):
+    CREATE = "create"
+    READ = "read"
+    UPDATE = "update"
+    DELETE = "delete"
+    LIST = "list"
+
+
+class ObjectiveCrudAction(StrEnum):
+    CREATE = "create"
+    UPDATE = "update"
+    DELETE = "delete"
 
 
 class ObjectiveStatus(StrEnum):
