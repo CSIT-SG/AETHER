@@ -9,16 +9,13 @@ class SnapshotMiddleware(Middleware):
     async def on_call_tool(self, context: MiddlewareContext, call_next) -> ToolResult:
         """Middleware hook that is called before a tool is executed.
 
-        This method checks if the tool being executed is the "TakeSnapshot" tool.
-        If it is, it performs any necessary pre-processing or validation before
-        allowing the tool to execute.
+        This method checks if the tool being executed has the destructive hint or not.
+        If it does, takes snapshot of current IDA database and then continues the execution of the tool.
+        Else, just executes the tool.
 
         Args:
             ctx (MiddlewareContext): The context of the middleware call, which
                 contains information about the tool being executed and its arguments.
-
-        Raises:
-            Exception: If any validation fails or if the tool cannot be executed.
         """
 
         tool_context = context.fastmcp_context
