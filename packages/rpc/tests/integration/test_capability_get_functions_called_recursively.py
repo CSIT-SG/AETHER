@@ -69,8 +69,15 @@ class TestGetFunctionsCalledRecursively:
         assert result.success is False
 
     def test_max_depth(self, ida_client: rpyc.Connection) -> None:
-        result = ida_client.root.get_functions_called_recursively(address="recursive_call")
+        result = ida_client.root.get_functions_called_recursively(address="max_depth_call")
 
         assert result.success is True
         assert result.result["count"] == 6
         assert len(result.result["functions"]) == 6
+
+    def test_self_call(self, ida_client: rpyc.Connection) -> None:
+        result = ida_client.root.get_functions_called_recursively(address="self_call")
+
+        assert result.success is True
+        assert result.result["count"] == 1
+        assert len(result.result["functions"]) == 1
