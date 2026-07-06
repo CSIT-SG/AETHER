@@ -6,7 +6,7 @@ from typing import Any
 from aether_rpc.registry import RPCFileRegistry
 from aether_utils.data_dir import get_data_dir
 from aether_utils.logger import get_logger
-from watchfiles import awatch
+from watchfiles import Change, awatch
 
 from .connection import RpcConnectionEntry, connect_with_backoff, ping, safe_close
 from .constants import DISCOVERY_REFRESH_INTERVAL
@@ -91,8 +91,10 @@ class RPCRegistry:
     # Watcher
     async def _listen(self) -> None:
         async for changes in awatch(self._directory):
-            self._logger.debug("RPC registry watcher detected changes: %r", changes)
-            await self._check_connections()
+            for change_type, path in changes:
+                if change_type == Change.added or change_type == Change.deleted:
+                    self._logger.debug("RPC registry watcher detected changes at: %r", path)
+                    await self._check_connections()
 
 
     async def _check_connections(self) -> None:
