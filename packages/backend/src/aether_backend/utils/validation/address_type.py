@@ -5,10 +5,10 @@ from pydantic import BeforeValidator, Field
 from .constants import _VALID_INPUT
 
 
-def _normalize_hex(v: str) -> str | None:
+def _normalize_hex(v: str) -> str:
     match = _VALID_INPUT.fullmatch(v)
     if not match:
-        return None
+        raise ValueError(f"Invalid value {v} passed into tool. Expects Hex address")
 
     hex_part = match["addr"]
 
