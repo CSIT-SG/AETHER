@@ -4,7 +4,7 @@ from typing import cast
 from aether_backend.utils.effect import Program, effectful
 from aether_backend.utils.get_content import get_content
 from aether_backend.utils.rpc_discovery import RPC_REGISTRY_KEY, RPCRegistry
-from aether_backend.utils.validation import HexAddress, validate_rpc_id
+from aether_backend.utils.validation import HexAddress, validate_service
 from fastmcp.dependencies import CurrentContext
 from fastmcp.server.context import Context
 from fastmcp.tools import tool
@@ -29,7 +29,6 @@ async def annotate_function(
     ctx: Context = CurrentContext(),
 ) -> Program:
     """Annotate a function at the given address."""
-    await validate_rpc_id(rpc_id)
     registry = cast(RPCRegistry, ctx.lifespan_context[RPC_REGISTRY_KEY])
-    async for effect in annotate(await registry.get(rpc_id), address, custom_prompt):
+    async for effect in annotate(await validate_service(registry, rpc_id), address, custom_prompt):
         yield effect

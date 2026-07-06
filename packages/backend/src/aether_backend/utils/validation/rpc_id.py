@@ -1,13 +1,11 @@
-from typing import cast
+from typing import Any
 
-from aether_backend.utils.rpc_discovery import RPC_REGISTRY_KEY, RPCRegistry
-from fastmcp.server.dependencies import get_context
+from aether_backend.utils.rpc_discovery import RPCRegistry
 
 
-async def validate_rpc_id(rpc_id: str) -> str:
+async def validate_service(registry: RPCRegistry, rpc_id: str) -> Any:
     """Validate the RPC ID and return the corresponding RPCRegistry."""
-    ctx = get_context()
-    registry = cast(RPCRegistry, ctx.lifespan_context[RPC_REGISTRY_KEY])
-    if not await registry.has(rpc_id):
-        raise ValueError(f"RPC ID {rpc_id} is not registered.")
-    return rpc_id
+    service = registry.get(rpc_id)
+    if service:
+        return service
+    raise ValueError(f"RPC registry has no connection with RPC server {rpc_id}")
