@@ -6,6 +6,7 @@ from typing import Any
 from aether_rpc.registry import RPCFileRegistry
 from aether_utils.data_dir import get_data_dir
 from aether_utils.logger import get_logger
+from watchfiles import awatch
 
 from .connection import RpcConnectionEntry, connect_with_backoff, ping, safe_close
 from .constants import DISCOVERY_REFRESH_INTERVAL
@@ -87,8 +88,14 @@ class RPCRegistry:
             except Exception:
                 self._logger.exception("RPC registry heartbeat error")
 
-    async def _check_connections(self) -> None:
+    # Watcher
+    async def _listen(self) -> None:
+        async for changes in awatch(self._directory):
+            self._logger.debug("RPC registry watcher detected changes: %r", changes)
+            await self._check_connections()
 
+
+    async def _check_connections(self) -> None:
         # ping all connections concurrently
         async with self._lock:
             snapshot = dict(self._entries)
