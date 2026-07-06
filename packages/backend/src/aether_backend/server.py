@@ -5,6 +5,7 @@ from starlette.routing import Mount
 
 from .constants import ToolTags
 from .tools import app_provider
+from .utils.middleware import SnapshotMiddleware
 from .utils.rpc_discovery import rpc_lifespan
 
 
@@ -25,6 +26,7 @@ def get_disabled_tags() -> set[str]:
 mcp = FastMCP("AETHER Backend", providers=[app_provider], lifespan=rpc_lifespan)
 
 mcp.disable(tags=get_disabled_tags())
+mcp.add_middleware(SnapshotMiddleware())
 
 mcp_app = mcp.http_app(path="/")
 
