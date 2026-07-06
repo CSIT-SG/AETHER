@@ -17,6 +17,7 @@ node* bar_link(node *p, node *q);
 pool* baz_pool(size_t n);
 void qux_fill(pool *p);
 void zap_free(pool *p);
+void recursive_call();
 
 node* foo_make(int x) {
     node *p = (node*)malloc(sizeof(node));
@@ -87,4 +88,32 @@ int main() {
     qux_fill(p);
     zap_free(p);
     return 0;
+}
+
+void recursive_call() {
+    recursive_call_1();
+}
+
+void recursive_call_1() {
+    recursive_call_2();
+}
+
+void recursive_call_2() {
+    recursive_call_3();
+}
+
+void recursive_call_3() {
+    recursive_call_4();
+}
+
+void recursive_call_4() {
+    recursive_call_5();
+}
+
+void recursive_call_5() {
+    recursive_call_6();
+}
+
+void recursive_call_6() {
+    return;
 }

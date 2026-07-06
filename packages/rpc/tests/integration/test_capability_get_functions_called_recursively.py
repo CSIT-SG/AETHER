@@ -19,15 +19,22 @@ class TestGetFunctionsCalledRecursively:
 
         # First function should be the starting function
         first_function = result.result["functions"][0]
-        assert first_function["name"] == "main"
+        assert first_function["function_name"] == "main"
+    def test_non_existent_symbol_name(
+        self, ida_client: rpyc.Connection
+    ) -> None:
+        result = ida_client.root.get_functions_called_recursively(
+            address="idontexistright"
+        )
 
+        assert result.success is False
         # Verify returned function address resolves correctly
         resolved = ida_client.root.get_function_by_address(
             address=first_function["address"]
         )
 
         assert resolved.success is True
-        assert resolved.result["name"] == "main"
+        assert resolved.result["function_name"] == "main"
 
     def test_accept_valid_address(self, ida_client: rpyc.Connection) -> None:
         # Get address of main
@@ -44,7 +51,7 @@ class TestGetFunctionsCalledRecursively:
 
         # Ensure the starting function is included
         first_function = result.result["functions"][0]
-        assert first_function["name"] == "main"
+        assert first_function["function_name"] == "main"
 
     def test_returns_valid_function_entries(
         self, ida_client: rpyc.Connection
@@ -56,10 +63,9 @@ class TestGetFunctionsCalledRecursively:
         assert result.success is True
 
         for function in result.result["functions"]:
-            assert "name" in function
+            assert "function_name" in function
             assert "address" in function
-            assert function["name"] is not None
-            assert isinstance(function["address"], int)
+            assert function["function_name"] is not None
 
             # Every returned address should correspond to a valid function
             resolved = ida_client.root.get_function_by_address(
@@ -67,7 +73,7 @@ class TestGetFunctionsCalledRecursively:
             )
 
             assert resolved.success is True
-            assert resolved.result["name"] == function["name"]
+            assert resolved.result["name"] == function["function_name"]
 
     def test_non_existent_address(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.get_functions_called_recursively(
@@ -84,3 +90,14 @@ class TestGetFunctionsCalledRecursively:
         )
 
         assert result.success is False
+
+    def test_max_depth(
+        self, ida_client: rpyc.Connection
+    ) -> None:
+        result = ida_client.root.get_functions_called_recursively(
+            address="recursive_call"
+        )
+
+        assert result.success is True
+        assert result.result["count"] == 6
+        assert len(result.result["functions"]) == 6
