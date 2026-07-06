@@ -10,7 +10,7 @@ def _normalize_hex(v: str) -> str | None:
     if not match:
         return None
 
-    hex_part = match["prefixed_hex"] or match["unprefixed_hex"]
+    hex_part = match["addr"]
 
     return f"0x{hex_part}"
 
