@@ -1,6 +1,5 @@
 import ida_kernwin
 import ida_loader
-from aether_utils.data_dir.data_dir import get_data_dir
 
 from ..base import Capability
 from ..result import Err, Ok, Result
@@ -25,11 +24,8 @@ class TakeSnapshot(Capability):
             and whose ``result`` carries the path to the saved snapshot file.
         """
 
-        aether_dir = get_data_dir("mcp")
-
         snapshot = ida_loader.snapshot_t()
         snapshot.desc = "AETHER snapshot"
-        snapshot.filename = str(aether_dir / "snapshot.idb")
         success, err_msg = ida_kernwin.take_database_snapshot(snapshot)
 
         if success:

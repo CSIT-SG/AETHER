@@ -12,4 +12,5 @@ EXPORTS: dict[str, str] = {
     "SetComment": ".set_comment",
     "ExecuteIDAPython": ".execute_idapython",
     "RefreshPseudocode": ".refresh_pseudocode",
+    "TakeSnapshot": ".take_snapshot",
 }
