@@ -8,5 +8,6 @@
     "packages/test-fixtures/src",
     "C:\\Program Files\\IDA Professional 9.2\\python",
     "C:\\Program Files\\IDA Professional 9.3\\python",
-  ]
+  ],
+  "ignore": ["**/build", "**/dist", "**/node_modules", "**/.next"],
 }

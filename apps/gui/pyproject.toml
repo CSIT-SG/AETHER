@@ -5,8 +5,9 @@ description = "AETHER GUI application"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "aether_core",
     "aether_utils",
+    "aether_rpc",
+    "aether_backend",
     "PySide6",
     "jinja2",
     "markupsafe==2.0.1",

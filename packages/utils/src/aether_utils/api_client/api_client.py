@@ -7,7 +7,7 @@ from aether_utils.find_root import get_version
 from aether_utils.logger import get_logger
 
 VERSION = get_version()
-logger = get_logger("aether_core.api_client")
+logger = get_logger("aether_utils.api_client")
 
 
 def _build_client_cert_key(client_cert_path: str, client_key_path: str) -> tuple[str, str] | None:
