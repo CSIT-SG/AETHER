@@ -1,5 +1,3 @@
-"""Choose concrete field widgets for resolved schema fields."""
-
 from __future__ import annotations
 
 import json

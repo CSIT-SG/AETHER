@@ -1,5 +1,3 @@
-"""Qt section widgets used by the settings form builder."""
-
 from __future__ import annotations
 
 from aether_gui.features.settings_menu.style_contracts import (

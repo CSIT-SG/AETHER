@@ -1,5 +1,3 @@
-"""Output types produced by the settings form builder."""
-
 from __future__ import annotations
 
 from collections.abc import Callable

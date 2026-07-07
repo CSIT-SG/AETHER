@@ -1,5 +1,3 @@
-"""JSON helpers shared by the settings menu."""
-
 from __future__ import annotations
 
 import json

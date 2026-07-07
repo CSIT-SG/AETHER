@@ -1,5 +1,3 @@
-"""Shared base widget for settings form fields."""
-
 from __future__ import annotations
 
 from typing import Any

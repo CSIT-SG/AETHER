@@ -1,9 +1,3 @@
-"""Resolve pydantic model fields into builder-friendly descriptors.
-
-This stage knows about pydantic (annotations, ``FieldInfo``, examples) and nothing
-about Qt. It turns each ``model_fields`` entry into a :class:`ResolvedField`.
-"""
-
 from __future__ import annotations
 
 from collections.abc import Iterator

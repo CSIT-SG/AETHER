@@ -1,5 +1,3 @@
-"""QSS-facing names and dynamic-property values for settings menu widgets."""
-
 from __future__ import annotations
 
 from enum import StrEnum

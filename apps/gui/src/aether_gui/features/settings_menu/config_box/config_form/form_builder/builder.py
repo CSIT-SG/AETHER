@@ -1,11 +1,3 @@
-"""Build the Qt settings form from resolved pydantic fields.
-
-This stage knows about Qt widgets and layouts. It consumes
-:class:`ResolvedField` values from :mod:`.introspection` and produces a
-:class:`SettingsForm`. Functions are ordered top-down: the public entry point
-first, then progressively lower-level helpers.
-"""
-
 from __future__ import annotations
 
 from collections.abc import Callable

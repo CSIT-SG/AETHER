@@ -1,5 +1,3 @@
-"""Pydantic field descriptor consumed by the form builder."""
-
 from __future__ import annotations
 
 import inspect

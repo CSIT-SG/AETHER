@@ -1,5 +1,3 @@
-"""Text formatting helpers shared by settings menu components."""
-
 from __future__ import annotations
 
 FIELD_TITLE_ACRONYMS = {"url": "URL", "tls": "TLS", "ai": "AI", "api": "API", "id": "ID"}
