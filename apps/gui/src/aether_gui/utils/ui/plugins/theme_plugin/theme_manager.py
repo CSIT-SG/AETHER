@@ -98,14 +98,14 @@ class ThemeManager(QObject):
         palette = window.palette() if window else app.palette()
 
         DEFAULT_COLOR = "#000000" if self.current_theme == "light" else "#FFFFFF"
-        
+
         colors: ThemeColors = {
             role.name.lower(): (
                 palette.color(role).name() if palette.color(role).isValid() else DEFAULT_COLOR
             )
             for role in QPalette.ColorRole
         }
-        
+
         colors.update(SEMANTIC_COLORS.get(self.current_theme, {}))
         return colors
 

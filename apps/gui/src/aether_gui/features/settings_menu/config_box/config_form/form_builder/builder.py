@@ -14,12 +14,11 @@ from typing import Any
 from pydantic import BaseModel
 from PySide6 import QtWidgets
 
-from ..fields import FieldWidget
 from .field_factory import make_leaf_field
 from .introspection import iter_fields
 from .resolved_field import ResolvedField
-from .sections import section_group, section_header
 from .schema import GENERAL_CATEGORY
+from .sections import section_group, section_header
 from .settings_form import Getter, SearchMeta, SettingsForm
 from .values import make_getter
 
