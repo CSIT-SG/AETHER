@@ -5,15 +5,20 @@ import socket
 import subprocess
 import sys
 import time
-from collections.abc import Callable, Generator
+from collections.abc import AsyncGenerator, AsyncIterator, Callable, Generator
+from contextlib import _AsyncGeneratorContextManager, asynccontextmanager
 from pathlib import Path
 
 import pytest
-import rpyc
+import pytest_asyncio
+from fastmcp import Client
+from fastmcp.client.transports import StreamableHttpTransport
 
 BIN_NAME = "basic"
 HEADLESS_PORT = 57000
+MCP_PORT = 6766
 ENTRYPOINT = Path(__file__).parent.parent.parent / "scripts" / "run_headless.py"
+RPC_ENTRYPOINT = "C:/Users/asher.cheng/Downloads/AETHER-next/packages/rpc/scripts/run_headless.py"
 
 
 def _port_is_free(port: int) -> bool:
@@ -25,11 +30,18 @@ def _port_is_free(port: int) -> bool:
             return False
 
 
-
 @pytest.fixture(scope="session")
+def ida_dir() -> str:
+    d = os.environ.get("IDADIR", "")
+    if not d:
+        pytest.skip("IDADIR not set")
+    return d
+
+
+@pytest.fixture(scope="session", autouse=True)
 def headless_ida(
     get_binary: Callable[..., Path], ida_dir: str
-) -> Generator[tuple[str, int], None, None]:
+) -> Generator[subprocess.Popen, None, None]:
     if not _port_is_free(HEADLESS_PORT):
         pytest.skip(f"Port {HEADLESS_PORT} is already in use")
 
@@ -45,8 +57,10 @@ def headless_ida(
     proc = subprocess.Popen(
         [
             sys.executable,
-            str(ENTRYPOINT),
+            str(RPC_ENTRYPOINT),
             str(bin_path),
+            "--ida-dir",
+            ida_dir,
             "--host",
             "127.0.0.1",
             "--port",
@@ -54,13 +68,22 @@ def headless_ida(
         ],
         env={**os.environ, "IDADIR": ida_dir},
         creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == "win32" else 0,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,  # Crucial so we get strings instead of raw bytes
     )
 
     # Wait for the port to start accepting connections
     deadline = time.monotonic() + 10
     while True:
         if proc.poll() is not None:
-            pytest.fail(f"Headless IDA server exited with code {proc.returncode}")
+            stdout_text, stderr_text = proc.communicate()
+
+            pytest.fail(
+                f"Headless IDA server exited with code {proc.returncode}.\n\n"
+                f"=== SUBPROCESS STDOUT ===\n{stdout_text}\n"
+                f"=== SUBPROCESS STDERR ===\n{stderr_text}"
+            )
         if time.monotonic() > deadline:
             proc.kill()
             pytest.fail("Headless IDA server did not become ready within 60s")
@@ -70,7 +93,7 @@ def headless_ida(
         except OSError:
             time.sleep(0.2)
 
-    yield "127.0.0.1", HEADLESS_PORT
+    yield proc
 
     if sys.platform == "win32":
         proc.send_signal(signal.CTRL_BREAK_EVENT)
@@ -83,9 +106,65 @@ def headless_ida(
         proc.kill()
 
 
-@pytest.fixture(scope="session")
-def ida_client(headless_ida: tuple[str, int]) -> Generator[rpyc.Connection, None, None]:
-    host, port = headless_ida
-    conn = rpyc.connect(host, port, config={"allow_public_attrs": True})
-    yield conn
-    conn.close()
+@pytest_asyncio.fixture(scope="session")
+async def headless_mcp() -> AsyncGenerator[tuple[str, int], None]:
+    host = "127.0.0.1"
+
+    if not _port_is_free(MCP_PORT):
+        pytest.skip(f"Port {MCP_PORT} is already in use by another service.")
+
+    # Launch the uvicorn script you refactored earlier
+    proc = subprocess.Popen(
+        [
+            sys.executable,
+            str(ENTRYPOINT),
+            "--port",
+            str(MCP_PORT),
+            "--no-reload",
+        ],
+        env=os.environ.copy(),
+        creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == "win32" else 0,
+    )
+
+    # Poll until the Uvicorn port starts accepting socket connections
+    deadline = time.monotonic() + 10  # 10 second timeout limit
+    while True:
+        if proc.poll() is not None:
+            pytest.fail(f"MCP server exited prematurely with code {proc.returncode}")
+        if time.monotonic() > deadline:
+            proc.kill()
+            pytest.fail("MCP server did not become ready within 10 seconds")
+        try:
+            with socket.create_connection((host, MCP_PORT), timeout=1):
+                break  # The server is alive and accepting connections
+        except OSError:
+            time.sleep(0.2)
+
+    yield host, MCP_PORT
+
+    if sys.platform == "win32":
+        proc.send_signal(signal.CTRL_BREAK_EVENT)
+    else:
+        proc.send_signal(signal.SIGTERM)
+
+    try:
+        proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait()
+
+
+@pytest_asyncio.fixture(scope="session")
+async def mcp_client(
+    headless_mcp: tuple[str, int],
+) -> AsyncGenerator[Callable[[], _AsyncGeneratorContextManager[Client]]]:
+    host, port = headless_mcp
+    sse_url = f"http://{host}:{port}/mcp"
+
+    @asynccontextmanager
+    async def _connect() -> AsyncIterator[Client]:
+        transport = StreamableHttpTransport(url=sse_url)
+        async with Client(transport) as client:
+            yield client
+
+    yield _connect

@@ -11,6 +11,7 @@ dependencies = [
     "aether_utils",
     "aether_rpc",
     "openai-agents>=0.17.5",
+    "pytest_asyncio"
 ]
 
 [tool.mypy]

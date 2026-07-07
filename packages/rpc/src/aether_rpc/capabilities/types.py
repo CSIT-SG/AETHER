@@ -106,6 +106,7 @@ class ListFunctionResult(TypedDict):
 class TakeSnapshotResult(TypedDict):
     snapshot_path: str
 
+
 class ProcessFunctions(TypedDict):
     processed: set[str]
     selected_functions: list[FuncNameAddr]
