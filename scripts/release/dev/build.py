@@ -1,31 +1,18 @@
 import re
 import shutil
-import subprocess
-import sys
 import tempfile
 import uuid
 from pathlib import Path
 
-APPS = ["aether-gui"]
-ROOT_DIR = Path(__file__).parent.parent
-OUTPUT_DIR = ROOT_DIR / "dist"
-
-WHEELS_DIRNAME = "wheels"
-REQUIREMENTS_FILENAME = "requirements.txt"
+from ..config import (  # type: ignore[misc]
+    OUTPUT_DIR,
+    PROD_APPS,
+    REQUIREMENTS_FILENAME,
+    WHEELS_DIRNAME,
+)
+from ..utils import cp_r, mkdir, sh  # type: ignore[misc]
 
 EDITABLE_RE = re.compile(r"^-e\s+(?P<path>\S+)")  # "-e ./packages/backend" -> "./packages/backend"
-
-
-def sh(cmd: list[str]) -> str:
-    result = subprocess.run(cmd, text=True, capture_output=True, cwd=ROOT_DIR)
-    if result.returncode != 0:
-        print(result.stderr.strip(), file=sys.stderr)
-        sys.exit(result.returncode)
-    return result.stdout
-
-
-def mkdir(path: Path) -> None:
-    path.mkdir(parents=True, exist_ok=True)
 
 
 def split_export(text: str) -> tuple[list[str], list[str]]:
@@ -41,18 +28,12 @@ def split_export(text: str) -> tuple[list[str], list[str]]:
     return local_paths, kept_lines
 
 
-def prune_app_deps(app: str) -> None:
-
-    app_out = OUTPUT_DIR / app
-
-    wheels_dir = app_out / WHEELS_DIRNAME
-    requirements_path = app_out / REQUIREMENTS_FILENAME
-    mkdir(wheels_dir)
+def prune_app_deps(app: str, requirements_path: Path, wheels_dir: Path) -> None:
 
     with tempfile.TemporaryDirectory() as tmp:
         raw_path = Path(tmp) / f"reqs-raw-{uuid.uuid4().hex}.txt"
 
-        # 1. PRUNE: export just this app's dependency closure
+        # export just this app's dependency closure
         sh(
             [
                 "uv",
@@ -87,9 +68,21 @@ def main() -> None:
     if OUTPUT_DIR.exists():
         shutil.rmtree(OUTPUT_DIR)
 
-    for app in APPS:
-        mkdir(OUTPUT_DIR / app)
-        prune_app_deps(app)
+    for app, cfg in PROD_APPS.items():
+        # create output directories
+        app_out = OUTPUT_DIR / app
+        mkdir(app_out)
+
+        wheels_dir = app_out / WHEELS_DIRNAME
+        requirements_path = app_out / REQUIREMENTS_FILENAME
+        mkdir(wheels_dir)
+
+        # prune the app's dependencies and build wheels
+        prune_app_deps(app, requirements_path, wheels_dir)
+
+        app_extra_inodes = cfg["extra_inodes"]
+        for inode in app_extra_inodes:
+            cp_r(inode, app_out / inode.name)
 
 
 if __name__ == "__main__":
