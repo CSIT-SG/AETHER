@@ -2,7 +2,7 @@ import json
 from typing import Any
 
 from aether_gui.utils.ui import StyledComponent
-from aether_utils.config import get_config
+from pydantic import BaseModel
 from PySide6 import QtCore, QtWidgets
 
 from ..json_object import JSON_INDENT, JSON_SORT_KEYS, parse_json_object
@@ -24,6 +24,16 @@ class ConfigBox(StyledComponent):
 
     # Emitted with the current "has unsaved edits" state whenever it may change.
     dirtyChanged = QtCore.Signal(bool)
+
+    def __init__(
+        self,
+        model_cls: type[BaseModel],
+        data: dict[str, Any],
+        parent: QtWidgets.QWidget | None = None,
+    ) -> None:
+        self._model_cls = model_cls
+        self._initial_data = data
+        super().__init__(parent)
 
     def setup(self) -> None:
         # Canonical JSON of the last saved state; None until the form is loaded.
@@ -50,7 +60,7 @@ class ConfigBox(StyledComponent):
         self.setLayout(layout)
 
         self._connect_signals()
-        self._install_form(get_config().model_dump())
+        self._install_form(self._initial_data)
         # The freshly loaded form is, by definition, the saved state.
         self._reset_baseline()
 
@@ -66,7 +76,7 @@ class ConfigBox(StyledComponent):
     # ------------------------------------------------------------------
     def _install_form(self, data: dict[str, Any]) -> None:
         """Build the form from ``data`` and refresh the sidebar and filter."""
-        self._form_view.install(type(get_config()), data)
+        self._form_view.install(self._model_cls, data)
         self._apply_filter(self._search_bar.text())
 
     def _apply_filter(self, text: str) -> None:
@@ -139,5 +149,9 @@ class ConfigBox(StyledComponent):
         return json.dumps(self._form_view.values(), indent=JSON_INDENT)
 
 
-def create_config_box(parent: QtWidgets.QWidget | None = None) -> ConfigBox:
-    return ConfigBox(parent=parent)
+def create_config_box(
+    model_cls: type[BaseModel],
+    data: dict[str, Any],
+    parent: QtWidgets.QWidget | None = None,
+) -> ConfigBox:
+    return ConfigBox(model_cls, data, parent=parent)

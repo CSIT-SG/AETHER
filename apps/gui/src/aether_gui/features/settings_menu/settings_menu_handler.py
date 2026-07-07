@@ -1,3 +1,6 @@
+from typing import Any
+
+from aether_utils.config import get_config, set_config
 from aether_utils.logger import get_logger
 from PySide6 import QtWidgets
 
@@ -10,7 +13,8 @@ from .config_buttons import (
     create_button_row,
 )
 from .config_message import ConfigMessage, create_config_message
-from .log_names import SETTINGS_MENU_LOGGER
+from .json_object import parse_json_object
+from .log_names import CONFIG_SAVE_LOGGER
 
 SETTINGS_DIALOG_TITLE = "AETHER Settings"
 SETTINGS_DIALOG_INITIAL_WIDTH = 900
@@ -22,7 +26,7 @@ CONFIG_BOX_MINIMUM_HEIGHT = 200
 INVALID_CONFIG_MESSAGE = "Invalid config, check IDA output for more details"
 CONFIG_APPLIED_MESSAGE = "Config applied!"
 
-logger = get_logger(SETTINGS_MENU_LOGGER)
+save_logger = get_logger(CONFIG_SAVE_LOGGER)
 
 
 class SettingsMenuHandler(QtWidgets.QDialog):
@@ -39,20 +43,11 @@ class SettingsMenuHandler(QtWidgets.QDialog):
 
     def init_ui(self) -> None:
         layout = QtWidgets.QVBoxLayout(self)
-        config_box = create_config_box(self)
+        config = get_config()
+        config_box = create_config_box(type(config), config.model_dump(), self)
         text_label = create_config_message(self)
-        ok_button = OkButton(
-            config_box.get_content,
-            self.close,
-            self.show_error_message,
-            self.clear_message_box,
-        )
-        apply_button = ApplyButton(
-            config_box.get_content,
-            self.show_error_message,
-            self.clear_message_box,
-            self.on_success,
-        )
+        ok_button = OkButton(self.ok_config)
+        apply_button = ApplyButton(self.apply_config)
         cancel_button = CancelButton(self.close)
         buttons: ButtonRow = create_button_row(
             [ok_button, apply_button, cancel_button],
@@ -77,6 +72,31 @@ class SettingsMenuHandler(QtWidgets.QDialog):
 
     def clear_message_box(self) -> None:
         self._cfg_message.clear()
+
+    def apply_config(self) -> None:
+        if self._save_config():
+            self.on_success()
+
+    def ok_config(self) -> None:
+        if self._save_config():
+            self.close()
+
+    def _save_config(self) -> bool:
+        self.clear_message_box()
+        try:
+            formatted = self._parse_config_content()
+            set_config(formatted)
+        except Exception as e:
+            self.show_error_message()
+            save_logger.error(e)
+            return False
+        return True
+
+    def _parse_config_content(self) -> dict[str, Any]:
+        formatted = parse_json_object(self._config_box.get_content())
+        if formatted is None:
+            raise ValueError(INVALID_CONFIG_MESSAGE)
+        return formatted
 
     def on_success(self) -> None:
         # Runs after a successful Apply: clear the dirty state (which disables the
