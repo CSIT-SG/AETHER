@@ -9,7 +9,7 @@ from PySide6 import QtWidgets
 from ..fields import FieldWidget
 
 # Collects the live control values into a nested dict mirroring the model.
-Getter = Callable[[], dict[str, Any]]
+type Getter = Callable[[], dict[str, Any]]
 
 
 @dataclass

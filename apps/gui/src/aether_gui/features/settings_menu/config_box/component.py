@@ -48,15 +48,18 @@ class ConfigBox(StyledComponent):
         self._form_view = SettingsFormView(self)
         self._json_page = JsonEditor(self)
 
+        # Body: the form view and JSON editor share one slot; the header's
+        # JSON / Back buttons toggle which of the two is shown.
         self._stack = QtWidgets.QStackedWidget(self)
         self._stack.addWidget(self._form_view)
         self._stack.addWidget(self._json_page)
 
+        # Top-to-bottom: SearchBar header on top, swappable body stack beneath.
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(8)
-        layout.addWidget(self._search_bar)
-        layout.addWidget(self._stack)
+        layout.addWidget(self._search_bar)  # header row: search box + view buttons
+        layout.addWidget(self._stack)  # body: form view or JSON editor
         self.setLayout(layout)
 
         self._connect_signals()
