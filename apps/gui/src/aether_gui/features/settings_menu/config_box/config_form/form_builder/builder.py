@@ -19,7 +19,8 @@ from .field_factory import make_leaf_field
 from .introspection import iter_fields
 from .resolved_field import ResolvedField
 from .sections import section_group, section_header
-from .settings_form import GENERAL_CATEGORY, Getter, SearchMeta, SettingsForm
+from .schema import GENERAL_CATEGORY
+from .settings_form import Getter, SearchMeta, SettingsForm
 from .values import make_getter
 
 

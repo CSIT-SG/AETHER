@@ -4,7 +4,7 @@ from aether_gui.utils.ui import FontPlugin, StyledComponent
 from PySide6 import QtWidgets
 from PySide6.QtGui import QFont
 
-from ..constants import MESSAGE_STATE_PROPERTY, MessageState
+from ..style_contracts import MESSAGE_STATE_PROPERTY, MessageState
 
 
 class ConfigMessage(StyledComponent):

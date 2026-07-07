@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import json
 
-from aether_gui.features.settings_menu.constants import JSON_INDENT, SECRET_FIELD_NAMES
+from aether_gui.features.settings_menu.json_object import JSON_INDENT
 from pydantic.fields import FieldInfo
 
 from ..fields import BoolField, FieldWidget, JsonField, StringField
 from .resolved_field import ResolvedField
+from .schema import SECRET_FIELD_NAMES
 
 
 def make_leaf_field(field: ResolvedField) -> FieldWidget:

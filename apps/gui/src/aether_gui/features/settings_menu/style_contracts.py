@@ -1,14 +1,8 @@
-"""Constants shared by the settings menu feature."""
+"""QSS-facing names and dynamic-property values for settings menu widgets."""
+
+from __future__ import annotations
 
 from enum import StrEnum
-
-# Json Editing.
-JSON_INDENT = 2
-JSON_SORT_KEYS = True
-
-# Logger names.
-SETTINGS_MENU_LOGGER = "settings_menu"
-CONFIG_SAVE_LOGGER = "json_loader"
 
 # Widget object names used by QSS.
 SETTINGS_SEARCH_OBJECT_NAME = "SettingsSearch"
@@ -25,15 +19,10 @@ SECTION_ROLE = "section"
 TITLE_ROLE = "title"
 DESCRIPTION_ROLE = "description"
 
-# States for Status Message after editing config.
+
 class MessageState(StrEnum):
-    """Status states for the settings message line; values match the QSS selectors."""
+    """Status states for the settings message line; values match QSS selectors."""
 
     NONE = "none"
     ERROR = "error"
     SUCCESS = "success"
-
-# Builder/schema labels.
-GENERAL_CATEGORY = "General"
-SECRET_FIELD_NAMES = frozenset({"api_key"})
-FIELD_TITLE_ACRONYMS = {"url": "URL", "tls": "TLS", "ai": "AI", "api": "API", "id": "ID"}

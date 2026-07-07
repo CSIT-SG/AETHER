@@ -6,7 +6,6 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
-from aether_gui.features.settings_menu.constants import GENERAL_CATEGORY
 from PySide6 import QtWidgets
 
 from ..fields import FieldWidget

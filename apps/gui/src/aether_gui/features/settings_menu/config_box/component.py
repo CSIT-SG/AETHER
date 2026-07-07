@@ -5,8 +5,7 @@ from aether_gui.utils.ui import StyledComponent
 from aether_utils.config import get_config
 from PySide6 import QtCore, QtWidgets
 
-from ..constants import JSON_INDENT, JSON_SORT_KEYS
-from ..json_object import parse_json_object
+from ..json_object import JSON_INDENT, JSON_SORT_KEYS, parse_json_object
 from .json_editor import JsonEditor
 from .search_bar import SearchBar
 from .settings_form_view import SettingsFormView

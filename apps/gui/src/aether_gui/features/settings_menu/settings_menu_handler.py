@@ -10,7 +10,7 @@ from .config_buttons import (
     create_button_row,
 )
 from .config_message import ConfigMessage, create_config_message
-from .constants import SETTINGS_MENU_LOGGER
+from .log_names import SETTINGS_MENU_LOGGER
 
 SETTINGS_DIALOG_TITLE = "AETHER Settings"
 SETTINGS_DIALOG_INITIAL_WIDTH = 900

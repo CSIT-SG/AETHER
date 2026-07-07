@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .constants import FIELD_TITLE_ACRONYMS
+FIELD_TITLE_ACRONYMS = {"url": "URL", "tls": "TLS", "ai": "AI", "api": "API", "id": "ID"}
 
 
 def format_field_title(name: str) -> str:

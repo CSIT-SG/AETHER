@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from pathlib import Path
 
-from aether_gui.features.settings_menu.constants import (
+from aether_gui.features.settings_menu.style_contracts import (
     JSON_BACK_OBJECT_NAME,
     JSON_TOGGLE_OBJECT_NAME,
     SETTINGS_COUNT_OBJECT_NAME,
