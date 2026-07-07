@@ -27,13 +27,16 @@ class SnapshotMiddleware(Middleware):
         if tool_context is None:
             return await call_next(context)
 
-        tool = tool_context.fastmcp.get_tool(context.message.name)
-        annotations = getattr(tool, "annotations", None)
+        tool = await tool_context.fastmcp.get_tool(context.message.name)
+        if tool is None:
+            return await call_next(context)
+
+        annotations = tool.annotations
         is_destructive = annotations and annotations.destructiveHint
 
         if is_destructive:
             registry = cast(RPCRegistry, tool_context.lifespan_context[RPC_REGISTRY_KEY])
-            service = await registry.get(context.message.arguments)
+            service = await registry.get(context.message.arguments["rpc_id"])
             if service:
                 service.take_snapshot()
 
