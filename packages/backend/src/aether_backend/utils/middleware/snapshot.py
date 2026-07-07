@@ -1,4 +1,4 @@
-from typing import cast
+from typing import Any, cast
 
 from aether_backend.utils.rpc_discovery import RPC_REGISTRY_KEY, RPCRegistry
 from aether_utils.config import get_config
@@ -9,7 +9,7 @@ config = get_config()
 
 
 class SnapshotMiddleware(Middleware):
-    async def on_call_tool(self, context: MiddlewareContext, call_next) -> ToolResult:
+    async def on_call_tool(self, context: MiddlewareContext, call_next: Any) -> ToolResult:
         """Middleware hook that is called before a tool is executed.
 
         This method checks if the tool being executed has the destructive hint or not.
