@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any
+from typing import Any, TypedDict
 
 from pydantic import BaseModel
 from PySide6 import QtWidgets
@@ -9,10 +9,17 @@ from PySide6 import QtWidgets
 from .field_factory import make_leaf_field
 from .introspection import iter_fields
 from .resolved_field import ResolvedField
-from .schema import GENERAL_CATEGORY
+from .constants import GENERAL_CATEGORY
 from .sections import section_group, section_header
-from .settings_form import Getter, SearchMeta, SettingsForm
+from .settings_form import Getter, SearchMeta, Section, SettingsForm
 from .values import make_getter
+
+
+class BuiltSection(TypedDict):
+    """A built section widget paired with the getter that reads its values."""
+
+    widget: QtWidgets.QWidget
+    getter: Getter
 
 
 def build_settings_form(model_cls: type[BaseModel], data: dict[str, Any] | None) -> SettingsForm:
@@ -43,27 +50,27 @@ def build_settings_form(model_cls: type[BaseModel], data: dict[str, Any] | None)
     general_group = section_group(GENERAL_CATEGORY)
     general_layout = QtWidgets.QVBoxLayout(general_group)
     has_general = False
-    model_sections: list[tuple[str, QtWidgets.QWidget]] = []
+    model_sections: list[Section] = []
 
     for field in iter_fields(model_cls, data):
         if field.is_model:
             # Nested model -> its own titled section; its getter yields a nested dict.
-            group, getter = _build_model_section(field, rows, field.title)
-            val_getters[field.name] = getter
-            model_sections.append((field.title, group))
+            built = _build_model_section(field, rows, field.title)
+            val_getters[field.name] = built["getter"]
+            model_sections.append({"title": field.title, "widget": built["widget"]})
         else:
             # Root-level scalar -> goes into the shared "General" section.
             _add_leaf(general_layout, val_getters, rows, field, GENERAL_CATEGORY)
             has_general = True
 
     # General first, then one section per nested model in declaration order.
-    sections: list[tuple[str, QtWidgets.QWidget]] = []
+    sections: list[Section] = []
     if has_general:
-        sections.append((GENERAL_CATEGORY, general_group))
+        sections.append({"title": GENERAL_CATEGORY, "widget": general_group})
     sections.extend(model_sections)
 
-    for _title, section_widget in sections:
-        layout.addWidget(section_widget)
+    for section in sections:
+        layout.addWidget(section["widget"])
     layout.addStretch(1)
 
     # make_getter collapses the {name: value-reader} map into one callable that
@@ -73,7 +80,7 @@ def build_settings_form(model_cls: type[BaseModel], data: dict[str, Any] | None)
 
 def _build_model_section(
     field: ResolvedField, rows: list[SearchMeta], category: str
-) -> tuple[QtWidgets.QGroupBox, Getter]:
+) -> BuiltSection:
     """Build a titled group box for a nested-model field and its children."""
     group = section_group(field.title)
     group_layout = QtWidgets.QVBoxLayout(group)
@@ -85,13 +92,13 @@ def _build_model_section(
     val_getters: dict[str, Callable[[], Any]] = {}
     for child_field in iter_fields(field.field_type, data):
         if child_field.is_model:
-            child_group, getter = _build_model_section(child_field, rows, category)
-            group_layout.addWidget(child_group)
-            val_getters[child_field.name] = getter
+            child = _build_model_section(child_field, rows, category)
+            group_layout.addWidget(child["widget"])
+            val_getters[child_field.name] = child["getter"]
         else:
             _add_leaf(group_layout, val_getters, rows, child_field, category)
 
-    return group, make_getter(val_getters)
+    return {"widget": group, "getter": make_getter(val_getters)}
 
 
 def _add_leaf(

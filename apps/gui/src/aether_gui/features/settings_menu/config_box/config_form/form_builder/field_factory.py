@@ -7,7 +7,7 @@ from pydantic.fields import FieldInfo
 
 from ..fields import BoolField, FieldWidget, JsonField, StringField
 from .resolved_field import ResolvedField
-from .schema import SECRET_FIELD_NAMES
+from .constants import SECRET_FIELD_NAMES
 
 
 def make_leaf_field(field: ResolvedField) -> FieldWidget:

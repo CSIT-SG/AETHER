@@ -81,8 +81,10 @@ class ConfigBox(StyledComponent):
 
     def _apply_filter(self, text: str) -> None:
         """Filter the form and reflect the result in the sidebar and count label."""
-        visible, total, visible_categories = self._form_view.apply_filter(text)
-        self._search_bar.set_counts(visible, total, filtering=visible_categories is not None)
+        result = self._form_view.apply_filter(text)
+        self._search_bar.set_counts(
+            result["visible"], result["total"], filtering=result["categories"] is not None
+        )
 
     # ------------------------------------------------------------------
     # form <-> JSON view switching

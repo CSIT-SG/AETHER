@@ -1,4 +1,4 @@
 from .builder import build_settings_form
-from .settings_form import SettingsForm
+from .settings_form import FilterResult, SettingsForm
 
-__all__ = ["SettingsForm", "build_settings_form"]
+__all__ = ["FilterResult", "SettingsForm", "build_settings_form"]

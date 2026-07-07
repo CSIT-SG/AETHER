@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtGui import QFont
 
-from .form_builder import SettingsForm, build_settings_form
+from .form_builder import FilterResult, SettingsForm, build_settings_form
 
 
 class ConfigForm(StyledComponent):
@@ -51,13 +51,13 @@ class ConfigForm(StyledComponent):
         """Build the form from ``data`` and mount it, returning the category titles."""
         form = build_settings_form(model_cls, data)
         self._form = form
-        self._sections = dict(form.sections)
+        self._sections = {section["title"]: section["widget"] for section in form.sections}
 
         for row in form.rows:
             row.widget.changed.connect(self.changed)
 
         self._scroll.setWidget(form.widget)
-        return [title for title, _ in form.sections]
+        return [section["title"] for section in form.sections]
 
     def values(self) -> dict[str, Any]:
         """Collect the current control values into a nested dict."""
@@ -75,15 +75,13 @@ class ConfigForm(StyledComponent):
         scrollbar = self._scroll.verticalScrollBar()
         scrollbar.setValue(min(top, scrollbar.maximum()))
 
-    def apply_filter(self, query: str) -> tuple[int, int, set[str] | None]:
+    def apply_filter(self, query: str) -> FilterResult:
         """Show only fields/categories matching ``query``.
 
-        Returns:
-            ``(visible_count, total, visible_categories)`` where
-            ``visible_categories`` is ``None`` when no filter is active.
+        ``categories`` in the result is ``None`` when no filter is active.
         """
         if self._form is None:
-            return 0, 0, None
+            return {"visible": 0, "total": 0, "categories": None}
         query = query.strip().lower()
         visible_categories: set[str] = set()
         visible_count = 0
@@ -95,11 +93,14 @@ class ConfigForm(StyledComponent):
                 visible_categories.add(row.category)
                 visible_count += 1
 
-        for title, section in self._form.sections:
-            section.setVisible((not query) or (title in visible_categories))
+        for section in self._form.sections:
+            section["widget"].setVisible((not query) or (section["title"] in visible_categories))
 
-        total = len(self._form.rows)
-        return visible_count, total, (visible_categories if query else None)
+        return {
+            "visible": visible_count,
+            "total": len(self._form.rows),
+            "categories": visible_categories if query else None,
+        }
 
 
 def create_config_form(parent: QtWidgets.QWidget | None = None) -> ConfigForm:
