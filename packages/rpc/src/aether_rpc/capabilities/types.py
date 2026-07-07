@@ -106,13 +106,6 @@ class ListFunctionResult(TypedDict):
 class TakeSnapshotResult(TypedDict):
     snapshot_path: str
 
-<<<<<<< HEAD
-
-class ProcessFunctions(TypedDict):
-    processed: set[str]
-    selected_functions: list[FuncNameAddr]
-=======
->>>>>>> 05521c7 (Added parent address to functions)
 
 class FuncNameAddrParent(TypedDict):
     function_name: str
