@@ -81,3 +81,12 @@ class TestGetFunctionsCalledRecursively:
         assert result.success is True
         assert result.result["count"] == 1
         assert len(result.result["functions"]) == 1
+
+    def test_parent(self, ida_client: rpyc.Connection) -> None:
+        result = ida_client.root.get_functions_called_recursively(address="max_depth_call")
+
+        for i in range(1, 6):
+            assert (
+                result.result["functions"][-i]["parent"]
+                == result.result["functions"][-i - 1]["address"]
+            )
