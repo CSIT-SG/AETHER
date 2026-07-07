@@ -1,4 +1,5 @@
 import asyncio
+import json
 from contextlib import suppress
 from pathlib import Path
 from typing import Any
@@ -39,7 +40,8 @@ class RPCRegistry:
             return
         self._started = True
         self._heartbeat_task = asyncio.create_task(
-            self._heartbeat_loop(),
+            #self._heartbeat_loop(),
+            self._listen(),
             name="rpc-registry-heartbeat",
         )
 
@@ -76,11 +78,10 @@ class RPCRegistry:
             return {k: v.root for k, v in self._entries.items()}
 
     # Heartbeat
-
     async def _heartbeat_loop(self) -> None:
         while True:
             try:
-                await self._check_connections()
+                await self._check_connections(self._directory)
                 self._logger.debug("RPC registry heartbeat check complete")
                 await asyncio.sleep(self._refresh_interval)
             except asyncio.CancelledError:
@@ -90,20 +91,31 @@ class RPCRegistry:
 
     # Watcher
     async def _listen(self) -> None:
+        initial_config = self._load_configs()
+        self._logger.info(f"Existing RPC Configs: {initial_config.keys()}")
         async for changes in awatch(self._directory):
-            for change_type, path in changes:
+            for change_type, change_path in changes:
+                self._logger.info(f"changed path: {change_path} change_type: {change_type}")
                 if change_type == Change.added or change_type == Change.deleted:
-                    self._logger.debug("RPC registry watcher detected changes at: %r", path)
-                    await self._check_connections()
+                    self._logger.debug("RPC registry watcher detected changes at: %r", change_path)
+                    await self._check_connections(change_path)
 
 
-    async def _check_connections(self) -> None:
+    async def _check_connections(self, file_path: str | Path) -> None:
         # ping all connections concurrently
+        self._logger.debug("RPC registry checking connections due to change at: %r", file_path)
         async with self._lock:
             snapshot = dict(self._entries)
-
+            self._logger.debug(f"GIGANIGGA SNAPSHOT {snapshot}")
+        with open(file_path) as f:
+            data = json.load(f)
+            self._logger.debug(f"GIGANIGGA {data}")
+        key = data.get("id")
+        self._logger.debug(f"GIGANIGGA KEY {key}")
         ping_tasks = {
-            rpc_id: asyncio.create_task(ping(entry)) for rpc_id, entry in snapshot.items()
+            rpc_id: asyncio.create_task(ping(entry))
+            for rpc_id, entry in snapshot.items()
+            if rpc_id == key
         }
         ping_results = await asyncio.gather(*ping_tasks.values(), return_exceptions=True)
 
@@ -112,7 +124,6 @@ class RPCRegistry:
         live_ids = set(configs)
 
         to_reconnect: list[tuple[str, int]] = []
-
         async with self._lock:
             for rpc_id, ok in zip(ping_tasks, ping_results, strict=True):
                 if ok is True:
@@ -129,6 +140,7 @@ class RPCRegistry:
 
                 # we queue a reconnect if the config still exists
                 if rpc_id in live_ids:
+                    self._logger.info(rpc_id)
                     port, _ = configs[rpc_id]
                     to_reconnect.append((rpc_id, port))
                 else:
