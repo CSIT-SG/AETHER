@@ -15,8 +15,6 @@ from .config_buttons import (
 from .config_message import ConfigMessage, create_config_message
 from .json_object import parse_json_object
 
-CONFIG_SAVE_LOGGER = "json_loader"
-SETTINGS_DIALOG_TITLE = "AETHER Settings"
 SETTINGS_DIALOG_INITIAL_WIDTH = 900
 SETTINGS_DIALOG_INITIAL_HEIGHT = 600
 SETTINGS_DIALOG_MINIMUM_WIDTH = 700
@@ -26,13 +24,13 @@ CONFIG_BOX_MINIMUM_HEIGHT = 200
 INVALID_CONFIG_MESSAGE = "Invalid config, check IDA output for more details"
 CONFIG_APPLIED_MESSAGE = "Config applied!"
 
-save_logger = get_logger(CONFIG_SAVE_LOGGER)
+save_logger = get_logger("json_loader")
 
 
 class SettingsMenuHandler(QtWidgets.QDialog):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
-        self.setWindowTitle(SETTINGS_DIALOG_TITLE)
+        self.setWindowTitle("AETHER Settings")
         self.resize(SETTINGS_DIALOG_INITIAL_WIDTH, SETTINGS_DIALOG_INITIAL_HEIGHT)
         self.setMinimumSize(SETTINGS_DIALOG_MINIMUM_WIDTH, SETTINGS_DIALOG_MINIMUM_HEIGHT)
         self._layout: QtWidgets.QVBoxLayout

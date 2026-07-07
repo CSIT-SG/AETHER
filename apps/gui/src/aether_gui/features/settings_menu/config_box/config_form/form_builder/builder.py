@@ -6,10 +6,10 @@ from typing import Any, TypedDict
 from pydantic import BaseModel
 from PySide6 import QtWidgets
 
+from .constants import GENERAL_CATEGORY
 from .field_factory import make_leaf_field
 from .introspection import iter_fields
 from .resolved_field import ResolvedField
-from .constants import GENERAL_CATEGORY
 from .sections import section_group, section_header
 from .settings_form import Getter, SearchMeta, Section, SettingsForm
 from .values import make_getter

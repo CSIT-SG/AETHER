@@ -11,14 +11,6 @@ from aether_gui.utils.ui import FontPlugin, StyledComponent
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtGui import QFont
 
-BACK_TO_SETTINGS_LABEL = "Back to Settings"
-JSON_TOGGLE_LABEL = "{ } JSON"
-SEARCH_PLACEHOLDER = "Search settings"
-BACK_TO_SETTINGS_TOOLTIP = "Return to the settings form"
-JSON_TOGGLE_TOOLTIP = "View and edit the raw settings JSON"
-SETTINGS_COUNT_TEXT = "{total} settings"
-FILTERED_SETTINGS_COUNT_TEXT = "{visible} of {total} settings"
-
 
 class SearchBar(StyledComponent):
     """Header row of the settings editor.
@@ -43,21 +35,21 @@ class SearchBar(StyledComponent):
 
     def init_ui(self) -> None:
         self._back_btn = self._make_button(
-            BACK_TO_SETTINGS_LABEL,
+            "Back to Settings",
             JSON_BACK_OBJECT_NAME,
-            BACK_TO_SETTINGS_TOOLTIP,
+            "Return to the settings form",
             self.back_clicked.emit,
         )
         self._json_btn = self._make_button(
-            JSON_TOGGLE_LABEL,
+            "{ } JSON",
             JSON_TOGGLE_OBJECT_NAME,
-            JSON_TOGGLE_TOOLTIP,
+            "View and edit the raw settings JSON",
             self.json_clicked.emit,
         )
 
         self._search = QtWidgets.QLineEdit(self)
         self._search.setObjectName(SETTINGS_SEARCH_OBJECT_NAME)
-        self._search.setPlaceholderText(SEARCH_PLACEHOLDER)
+        self._search.setPlaceholderText("Search settings")
         self._search.setClearButtonEnabled(True)
         self._search.textChanged.connect(self.search_changed)
 
@@ -94,9 +86,9 @@ class SearchBar(StyledComponent):
     def set_counts(self, visible: int, total: int, *, filtering: bool) -> None:
         """Update the results count label next to the search box."""
         text = (
-            FILTERED_SETTINGS_COUNT_TEXT.format(visible=visible, total=total)
+            f"{visible} of {total} settings"
             if filtering
-            else SETTINGS_COUNT_TEXT.format(total=total)
+            else f"{total} settings"
         )
         self._results.setText(text)
 
