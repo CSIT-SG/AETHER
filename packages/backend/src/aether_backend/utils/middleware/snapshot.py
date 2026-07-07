@@ -1,8 +1,11 @@
 from typing import cast
 
 from aether_backend.utils.rpc_discovery import RPC_REGISTRY_KEY, RPCRegistry
+from aether_utils.config import get_config
 from fastmcp.server.middleware import Middleware, MiddlewareContext
 from fastmcp.tools.base import ToolResult
+
+config = get_config()
 
 
 class SnapshotMiddleware(Middleware):
@@ -17,6 +20,8 @@ class SnapshotMiddleware(Middleware):
             ctx (MiddlewareContext): The context of the middleware call, which
                 contains information about the tool being executed and its arguments.
         """
+        if not config.backup:
+            return await call_next(context)
 
         tool_context = context.fastmcp_context
         if tool_context is None:
