@@ -25,6 +25,7 @@ dev = [
     "pytest-dependency>=0.6.1",
     "pytest-order>=1.4.0",
     "pre-commit>=4.6.0",
+    "pytest-asyncio>=1.4.0",
 ]
 
 # Dev dependencies are managed at workspace level

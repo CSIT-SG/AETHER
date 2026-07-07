@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pytest
 import pytest_asyncio
+from aether_utils.find_root import find_repo_root
 from fastmcp import Client
 from fastmcp.client.transports import StreamableHttpTransport
 
@@ -18,7 +19,7 @@ BIN_NAME = "basic"
 HEADLESS_PORT = 57000
 MCP_PORT = 6766
 ENTRYPOINT = Path(__file__).parent.parent.parent / "scripts" / "run_headless.py"
-RPC_ENTRYPOINT = "C:/Users/asher.cheng/Downloads/AETHER-next/packages/rpc/scripts/run_headless.py"
+RPC_ENTRYPOINT = find_repo_root() / "packages" / "rpc" / "scripts" / "run_headless.py"
 
 
 def _port_is_free(port: int) -> bool:
@@ -68,7 +69,6 @@ def headless_ida(
         ],
         env={**os.environ, "IDADIR": ida_dir},
         creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == "win32" else 0,
-        stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,  # Crucial so we get strings instead of raw bytes
     )
@@ -77,13 +77,7 @@ def headless_ida(
     deadline = time.monotonic() + 10
     while True:
         if proc.poll() is not None:
-            stdout_text, stderr_text = proc.communicate()
-
-            pytest.fail(
-                f"Headless IDA server exited with code {proc.returncode}.\n\n"
-                f"=== SUBPROCESS STDOUT ===\n{stdout_text}\n"
-                f"=== SUBPROCESS STDERR ===\n{stderr_text}"
-            )
+            pytest.fail(f"Headless IDA server exited with code {proc.returncode}")
         if time.monotonic() > deadline:
             proc.kill()
             pytest.fail("Headless IDA server did not become ready within 60s")

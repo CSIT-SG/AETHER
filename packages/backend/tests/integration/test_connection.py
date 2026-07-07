@@ -15,5 +15,6 @@ async def test_fastmcp_lists_tools(mcp_client: Callable[[], _AsyncGeneratorConte
             "list_rpc_connections",
         )
         content = response.content
+        assert len(content) > 0
         if content[0].type == "text" and list(content[0].text) != 0:
             assert len(list(content[0].text)) != 0
