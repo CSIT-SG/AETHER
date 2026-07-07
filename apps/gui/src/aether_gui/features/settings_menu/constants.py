@@ -1,5 +1,7 @@
 """Constants shared by the settings menu feature."""
 
+from enum import StrEnum
+
 # Json Editing.
 JSON_INDENT = 2
 JSON_SORT_KEYS = True
@@ -22,9 +24,14 @@ MESSAGE_STATE_PROPERTY = "messageState"
 SECTION_ROLE = "section"
 TITLE_ROLE = "title"
 DESCRIPTION_ROLE = "description"
-MESSAGE_STATE_NONE = "none"
-MESSAGE_STATE_ERROR = "error"
-MESSAGE_STATE_SUCCESS = "success"
+
+# States for Status Message after editing config.
+class MessageState(StrEnum):
+    """Status states for the settings message line; values match the QSS selectors."""
+
+    NONE = "none"
+    ERROR = "error"
+    SUCCESS = "success"
 
 # Builder/schema labels.
 GENERAL_CATEGORY = "General"

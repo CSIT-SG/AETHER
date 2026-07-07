@@ -2,11 +2,11 @@ import json
 from pathlib import Path
 from typing import Any
 
+from aether_gui.features.settings_menu.constants import JSON_INDENT, SETTINGS_JSON_OBJECT_NAME
+from aether_gui.features.settings_menu.json_object import parse_json_object
 from aether_gui.utils.ui import FontPlugin, StyledComponent
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtGui import QFont
-
-from ...constants import JSON_INDENT, SETTINGS_JSON_OBJECT_NAME
 
 
 class JsonEditor(StyledComponent):
@@ -55,11 +55,7 @@ class JsonEditor(StyledComponent):
 
     def parse(self) -> dict[str, Any] | None:
         """Parse the edited text, returning a dict or ``None`` if invalid."""
-        try:
-            parsed = json.loads(self.text())
-        except json.JSONDecodeError:
-            return None
-        return parsed if isinstance(parsed, dict) else None
+        return parse_json_object(self.text())
 
 
 def create_json_editor(parent: QtWidgets.QWidget | None = None) -> JsonEditor:

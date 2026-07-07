@@ -6,16 +6,22 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
+from aether_gui.features.settings_menu.constants import GENERAL_CATEGORY
 from PySide6 import QtWidgets
 
-from ....constants import GENERAL_CATEGORY
 from ..fields import FieldWidget
-
-# (search text, leaf widget, category title) for every editable field.
-Row = tuple[str, FieldWidget, str]
 
 # Collects the live control values into a nested dict mirroring the model.
 Getter = Callable[[], dict[str, Any]]
+
+
+@dataclass
+class SearchMeta:
+    """Search/index metadata for one editable settings field."""
+
+    search_text: str
+    widget: FieldWidget
+    category: str
 
 
 @dataclass
@@ -26,4 +32,4 @@ class SettingsForm:
     getter: Getter
     # (category title, section widget) in display order - drives the sidebar.
     sections: list[tuple[str, QtWidgets.QWidget]] = field(default_factory=list)
-    rows: list[Row] = field(default_factory=list)
+    rows: list[SearchMeta] = field(default_factory=list)

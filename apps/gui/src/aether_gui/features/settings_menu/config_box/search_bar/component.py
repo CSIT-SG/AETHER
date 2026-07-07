@@ -1,16 +1,15 @@
 from collections.abc import Callable
 from pathlib import Path
 
-from aether_gui.utils.ui import FontPlugin, StyledComponent
-from PySide6 import QtCore, QtWidgets
-from PySide6.QtGui import QFont
-
-from ...constants import (
+from aether_gui.features.settings_menu.constants import (
     JSON_BACK_OBJECT_NAME,
     JSON_TOGGLE_OBJECT_NAME,
     SETTINGS_COUNT_OBJECT_NAME,
     SETTINGS_SEARCH_OBJECT_NAME,
 )
+from aether_gui.utils.ui import FontPlugin, StyledComponent
+from PySide6 import QtCore, QtWidgets
+from PySide6.QtGui import QFont
 
 BACK_TO_SETTINGS_LABEL = "Back to Settings"
 JSON_TOGGLE_LABEL = "{ } JSON"

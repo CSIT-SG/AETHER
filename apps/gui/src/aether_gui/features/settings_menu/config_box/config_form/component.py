@@ -53,8 +53,8 @@ class ConfigForm(StyledComponent):
         self._form = form
         self._sections = dict(form.sections)
 
-        for _text, widget, _category in form.rows:
-            widget.changed.connect(self.changed)
+        for row in form.rows:
+            row.widget.changed.connect(self.changed)
 
         self._scroll.setWidget(form.widget)
         return [title for title, _ in form.sections]
@@ -88,11 +88,11 @@ class ConfigForm(StyledComponent):
         visible_categories: set[str] = set()
         visible_count = 0
 
-        for search_text, widget, category in self._form.rows:
-            match = (not query) or (query in search_text)
-            widget.setVisible(match)
+        for row in self._form.rows:
+            match = (not query) or (query in row.search_text)
+            row.widget.setVisible(match)
             if match:
-                visible_categories.add(category)
+                visible_categories.add(row.category)
                 visible_count += 1
 
         for title, section in self._form.sections:

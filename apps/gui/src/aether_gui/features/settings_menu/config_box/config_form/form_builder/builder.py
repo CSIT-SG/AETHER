@@ -19,7 +19,7 @@ from .field_factory import make_leaf_field
 from .introspection import iter_fields
 from .resolved_field import ResolvedField
 from .sections import section_group, section_header
-from .settings_form import GENERAL_CATEGORY, Getter, Row, SettingsForm
+from .settings_form import GENERAL_CATEGORY, Getter, SearchMeta, SettingsForm
 from .values import make_getter
 
 
@@ -42,21 +42,26 @@ def build_settings_form(model_cls: type[BaseModel], data: dict[str, Any] | None)
     layout.setContentsMargins(0, 0, 0, 0)
     layout.setSpacing(12)
 
-    rows: list[Row] = []
-    getters: dict[str, Callable[[], Any]] = {}
+    rows: list[SearchMeta] = []
+    # field name -> value-reader callable; bundled by make_getter at the end.
+    val_getters: dict[str, Callable[[], Any]] = {}
 
+    # "General" collects the config's root-level *non-model* keys, plain scalars that don't warrant a section of their own.
+    # Each nested pydantic model (provider, tls, ...) becomes its own section.
     general_group = section_group(GENERAL_CATEGORY)
     general_layout = QtWidgets.QVBoxLayout(general_group)
     has_general = False
     model_sections: list[tuple[str, QtWidgets.QWidget]] = []
 
-    for fld in iter_fields(model_cls, data):
-        if fld.is_model:
-            group, getter = _build_model_section(fld, rows, fld.title)
-            getters[fld.name] = getter
-            model_sections.append((fld.title, group))
+    for field in iter_fields(model_cls, data):
+        if field.is_model:
+            # Nested model -> its own titled section; its getter yields a nested dict.
+            group, getter = _build_model_section(field, rows, field.title)
+            val_getters[field.name] = getter
+            model_sections.append((field.title, group))
         else:
-            _add_leaf(general_layout, getters, rows, fld, GENERAL_CATEGORY)
+            # Root-level scalar -> goes into the shared "General" section.
+            _add_leaf(general_layout, val_getters, rows, field, GENERAL_CATEGORY)
             has_general = True
 
     # General first, then one section per nested model in declaration order.
@@ -69,54 +74,49 @@ def build_settings_form(model_cls: type[BaseModel], data: dict[str, Any] | None)
         layout.addWidget(section_widget)
     layout.addStretch(1)
 
-    return SettingsForm(container, make_getter(getters), sections, rows)
-
-
-def _build_group_body(
-    model_cls: type[BaseModel], data: dict[str, Any] | None, rows: list[Row], category: str
-) -> tuple[QtWidgets.QWidget, Getter]:
-    """Build the inner widget for a model's fields (without an outer group box)."""
-    container = QtWidgets.QWidget()
-    layout = QtWidgets.QVBoxLayout(container)
-    layout.setContentsMargins(0, 0, 0, 0)
-    layout.setSpacing(6)
-
-    getters: dict[str, Callable[[], Any]] = {}
-    for fld in iter_fields(model_cls, data):
-        if fld.is_model:
-            group, getter = _build_model_section(fld, rows, category)
-            layout.addWidget(group)
-            getters[fld.name] = getter
-        else:
-            _add_leaf(layout, getters, rows, fld, category)
-
-    return container, make_getter(getters)
+    # make_getter collapses the {name: value-reader} map into one callable that
+    # rebuilds the whole nested config dict from the live widgets on demand.
+    return SettingsForm(container, make_getter(val_getters), sections, rows)
 
 
 def _build_model_section(
-    fld: ResolvedField, rows: list[Row], category: str
+    field: ResolvedField, rows: list[SearchMeta], category: str
 ) -> tuple[QtWidgets.QGroupBox, Getter]:
-    """Build a titled group box for a nested-model field."""
-    group = section_group(fld.title)
+    """Build a titled group box for a nested-model field and its children."""
+    group = section_group(field.title)
     group_layout = QtWidgets.QVBoxLayout(group)
-    if fld.description:
-        group_layout.addWidget(section_header(fld.description))
-    body, getter = _build_group_body(
-        fld.field_type, fld.value if isinstance(fld.value, dict) else {}, rows, category
-    )
-    group_layout.addWidget(body)
-    return group, getter
+    group_layout.setSpacing(6)
+    if field.description:
+        group_layout.addWidget(section_header(field.description))
+
+    data = field.value if isinstance(field.value, dict) else {}
+    val_getters: dict[str, Callable[[], Any]] = {}
+    for child_field in iter_fields(field.field_type, data):
+        if child_field.is_model:
+            child_group, getter = _build_model_section(child_field, rows, category)
+            group_layout.addWidget(child_group)
+            val_getters[child_field.name] = getter
+        else:
+            _add_leaf(group_layout, val_getters, rows, child_field, category)
+
+    return group, make_getter(val_getters)
 
 
 def _add_leaf(
     layout: QtWidgets.QVBoxLayout,
-    getters: dict[str, Callable[[], Any]],
-    rows: list[Row],
-    fld: ResolvedField,
+    val_getters: dict[str, Callable[[], Any]],
+    rows: list[SearchMeta],
+    field: ResolvedField,
     category: str,
 ) -> None:
     """Create a leaf control, add it to ``layout`` and register its value + search row."""
-    widget = make_leaf_field(fld)
-    layout.addWidget(widget)
-    getters[fld.name] = widget.value
-    rows.append((f"{category} {fld.title} {fld.description} {fld.name}".lower(), widget, category))
+    field_widget = make_leaf_field(field)
+    layout.addWidget(field_widget)
+    val_getters[field.name] = field_widget.value
+    rows.append(
+        SearchMeta(
+            search_text=f"{category} {field.title} {field.description} {field.name}".lower(),
+            widget=field_widget,
+            category=category,
+        )
+    )

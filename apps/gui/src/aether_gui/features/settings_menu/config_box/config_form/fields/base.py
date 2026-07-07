@@ -4,9 +4,12 @@ from __future__ import annotations
 
 from typing import Any
 
+from aether_gui.features.settings_menu.constants import (
+    DESCRIPTION_ROLE,
+    SETTINGS_ROLE_PROPERTY,
+    TITLE_ROLE,
+)
 from PySide6 import QtCore, QtWidgets
-
-from ....constants import DESCRIPTION_ROLE, SETTINGS_ROLE_PROPERTY, TITLE_ROLE
 
 
 def _make_label(text: str, role: str) -> QtWidgets.QLabel:

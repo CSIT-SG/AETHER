@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+from aether_gui.features.settings_menu.constants import (
+    DESCRIPTION_ROLE,
+    SECTION_ROLE,
+    SETTINGS_ROLE_PROPERTY,
+)
 from PySide6 import QtWidgets
-
-from ....constants import DESCRIPTION_ROLE, SECTION_ROLE, SETTINGS_ROLE_PROPERTY
 
 
 def section_group(title: str) -> QtWidgets.QGroupBox:

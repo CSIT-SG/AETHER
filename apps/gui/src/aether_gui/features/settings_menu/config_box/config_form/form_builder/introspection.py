@@ -12,13 +12,7 @@ from typing import Any, Union, get_args, get_origin
 
 from pydantic import BaseModel
 
-from ....constants import FIELD_TITLE_ACRONYMS
 from .resolved_field import ResolvedField
-
-
-def prettify(name: str) -> str:
-    """Turn a snake_case field name into a human-readable title."""
-    return " ".join(FIELD_TITLE_ACRONYMS.get(part, part.capitalize()) for part in name.split("_"))
 
 
 def iter_fields(model_cls: type[BaseModel], data: dict[str, Any] | None) -> Iterator[ResolvedField]:
@@ -32,18 +26,17 @@ def iter_fields(model_cls: type[BaseModel], data: dict[str, Any] | None) -> Iter
             field_type=field_type,
             optional=optional,
             value=data.get(name),
-            title=prettify(name),
             description=info.description or "",
         )
 
 
 def _unwrap_optional(annotation: Any) -> tuple[Any, bool]:
     """Strip ``X | None`` to ``(X, True)``; non-optional types return ``(X, False)``."""
-    if get_origin(annotation) in (UnionType, Union):
-        args = get_args(annotation)
-        optional = type(None) in args
-        non_none = [arg for arg in args if arg is not type(None)]
-        if len(non_none) == 1:
-            return non_none[0], optional
+    if get_origin(annotation) not in (UnionType, Union):
+        return annotation, False
+    args = get_args(annotation)
+    optional = type(None) in args
+    non_none = [arg for arg in args if arg is not type(None)]
+    if len(non_none) != 1:
         return annotation, optional
-    return annotation, False
+    return non_none[0], optional

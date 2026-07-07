@@ -1,10 +1,9 @@
 from pathlib import Path
 
+from aether_gui.features.settings_menu.constants import SETTINGS_NAV_OBJECT_NAME
 from aether_gui.utils.ui import FontPlugin, StyledComponent
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtGui import QFont
-
-from ...constants import SETTINGS_NAV_OBJECT_NAME
 
 
 class Sidebar(StyledComponent):

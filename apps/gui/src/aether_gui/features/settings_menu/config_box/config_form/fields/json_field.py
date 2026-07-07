@@ -5,9 +5,9 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from aether_gui.features.settings_menu.constants import JSON_INDENT
 from PySide6 import QtWidgets
 
-from ....constants import JSON_INDENT
 from .base import FieldWidget
 
 

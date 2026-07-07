@@ -6,6 +6,7 @@ from aether_utils.config import get_config
 from PySide6 import QtCore, QtWidgets
 
 from ..constants import JSON_INDENT, JSON_SORT_KEYS
+from ..json_object import parse_json_object
 from .json_editor import JsonEditor
 from .search_bar import SearchBar
 from .settings_form_view import SettingsFormView
@@ -106,11 +107,8 @@ class ConfigBox(StyledComponent):
     # ------------------------------------------------------------------
     def _canonical(self) -> str | None:
         """Order-independent JSON of the current content, or ``None`` if invalid."""
-        try:
-            data = json.loads(self.get_content())
-        except json.JSONDecodeError:
-            return None
-        return json.dumps(data, sort_keys=JSON_SORT_KEYS) if isinstance(data, dict) else None
+        data = parse_json_object(self.get_content())
+        return json.dumps(data, sort_keys=JSON_SORT_KEYS) if data is not None else None
 
     def is_dirty(self) -> bool:
         """Whether the current content differs from the last saved state."""
