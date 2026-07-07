@@ -14,8 +14,8 @@ from .config_buttons import (
 )
 from .config_message import ConfigMessage, create_config_message
 from .json_object import parse_json_object
-from .log_names import CONFIG_SAVE_LOGGER
 
+CONFIG_SAVE_LOGGER = "json_loader"
 SETTINGS_DIALOG_TITLE = "AETHER Settings"
 SETTINGS_DIALOG_INITIAL_WIDTH = 900
 SETTINGS_DIALOG_INITIAL_HEIGHT = 600
