@@ -30,6 +30,7 @@ class RPCRegistry:
         self._lock = asyncio.Lock()
 
         self._heartbeat_task: asyncio.Task[None] | None = None
+        self._file_watching_task: asyncio.Task[None] | None = None
         self._started = False
         self._logger = get_logger("rpc-registry")
 
@@ -40,9 +41,12 @@ class RPCRegistry:
             return
         self._started = True
         self._heartbeat_task = asyncio.create_task(
-            #self._heartbeat_loop(),
-            self._listen(),
+            self._heartbeat_loop(),
             name="rpc-registry-heartbeat",
+        )
+        self._file_watching_task = asyncio.create_task(
+            self._listen(),
+            name="rpc-registry-file-watcher",
         )
 
     async def stop(self) -> None:
@@ -79,9 +83,16 @@ class RPCRegistry:
 
     # Heartbeat
     async def _heartbeat_loop(self) -> None:
+        configs = self._load_configs()
         while True:
             try:
-                await self._check_connections(self._directory)
+                #check if all configs are live
+                for rpc_id, (port, path) in configs.items():
+                    live = await self._check_config_live(rpc_id, port)
+                    if not live:
+                        #remove dead configs if file still present
+                        self._entries.pop(rpc_id)
+                        Path.unlink(path, missing_ok=True)
                 self._logger.debug("RPC registry heartbeat check complete")
                 await asyncio.sleep(self._refresh_interval)
             except asyncio.CancelledError:
@@ -95,12 +106,14 @@ class RPCRegistry:
         # Catches already opened IDA instances
         live_configs:list[str] = []
         initial_config = self._load_configs()
-        if initial_config.keys():
+        if initial_config:
+            #check if config files are live
             for rpc_id, (port, _) in initial_config.items():
                 live = await self._check_config_live(rpc_id, port)
                 if live:
                     live_configs.append(rpc_id)
-            self._logger.info(f"Existing RPC Configs: {live_configs}")
+            self._logger.info("Existing RPC Configs: %s", live_configs)
+
         async for changes in awatch(self._directory):
             for change_type, change_path in changes:
                 self._logger.info(f"changed path: {change_path} change_type: {change_type}")
