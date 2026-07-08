@@ -14,19 +14,11 @@ class _AppBuildConfig(TypedDict):
 
 _apps_path = ROOT_DIR / "apps"
 
-PROD_APPS: dict[str, _AppBuildConfig] = {
+APPS: dict[str, _AppBuildConfig] = {
     "aether_gui": {
         "extra_inodes": [
             _apps_path / "gui" / "src" / "plugin.py",
-            _apps_path / "gui" / "scripts" / "install.py",
-        ],
-    }
-}
-
-DEV_APPS: dict[str, _AppBuildConfig] = {
-    "aether_gui": {
-        "extra_inodes": [
-            _apps_path / "gui" / "scripts" / "install_dev.py",
+            _apps_path / "gui" / "scripts" / "install-prod.py",
         ],
     }
 }

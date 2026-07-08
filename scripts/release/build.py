@@ -4,13 +4,13 @@ import tempfile
 import uuid
 from pathlib import Path
 
-from ..config import (  # type: ignore[misc]
+from .config import (
+    APPS,
     OUTPUT_DIR,
-    PROD_APPS,
     REQUIREMENTS_FILENAME,
     WHEELS_DIRNAME,
 )
-from ..utils import cp_r, mkdir, sh  # type: ignore[misc]
+from .utils import cp_r, mkdir, sh
 
 EDITABLE_RE = re.compile(r"^-e\s+(?P<path>\S+)")  # "-e ./packages/backend" -> "./packages/backend"
 
@@ -68,7 +68,7 @@ def main() -> None:
     if OUTPUT_DIR.exists():
         shutil.rmtree(OUTPUT_DIR)
 
-    for app, cfg in PROD_APPS.items():
+    for app, cfg in APPS.items():
         # create output directories
         app_out = OUTPUT_DIR / app
         mkdir(app_out)
@@ -80,8 +80,7 @@ def main() -> None:
         # prune the app's dependencies and build wheels
         prune_app_deps(app, requirements_path, wheels_dir)
 
-        app_extra_inodes = cfg["extra_inodes"]
-        for inode in app_extra_inodes:
+        for inode in cfg["extra_inodes"]:
             cp_r(inode, app_out / inode.name)
 
 

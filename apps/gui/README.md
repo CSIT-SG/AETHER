@@ -7,28 +7,26 @@ GUI application for the AETHER project.
 From the this package's root directory:
 
 ```powershell
-# Dev: link the plugin entrypoint into the IDA plugins folder
-./scripts/PS/install-dev.ps1
+# Dev: export requirements and link the plugin entrypoint into the IDA plugins folder
+python .\scripts\install-dev.py
 
-# Prod: copy artifacts into the IDA plugins folder
-# we create a shim at the root of the file that resolves the imports and re-calls the entrypoint plugin.py
-./scripts/PS/install-prod.ps1
-# If plugins directory is not %APPDATA%\Roaming\Hex-Rays\IDA Pro, specify with .\install-prod.ps1 -IdaPluginsDir Path\To\Plugins\Folder
+# Prod: install the wheel bundle and copy the entrypoint into the IDA plugins folder
+python .\scripts\install-prod.py
+
+# If the plugins directory is not %APPDATA%\Roaming\Hex-Rays\IDA Pro\plugins,
+# specify it with: python .\scripts\install-dev.py --plugin-path Path\To\Plugins\Folder
 
 # formatter used: https://marketplace.visualstudio.com/items?itemName=shakram02.bash-beautify
 ```
 
 ```bash
-# IMPORTANT!!!
-# Ensure to run ./idapyswitch to point ida pro to your python installation. AETHER plugin may not work otherwise
+# Dev: export requirements and link the plugin entrypoint into the IDA plugins folder
+python ./scripts/install-dev.py
 
-# Dev: link the plugin entrypoint into the IDA plugins folder
-./scripts/Bash/install-dev.sh
+# Prod: install the wheel bundle and copy the entrypoint into the IDA plugins folder
+python ./scripts/install-prod.py
 
-# Prod: copy artifacts into the IDA plugins folder
-# we create a shim at the root of the file that resolves the imports and re-calls the entrypoint plugin.py
-./scripts/Bash/install-prod.sh
-# Usage: ./install-prod.sh --ida-plugins-dir Path/To/Plugins/Folder
+# Usage: python ./scripts/install-dev.py --plugin-path /path/to/plugins/dir
 
 # Formatter Used: https://marketplace.visualstudio.com/items?itemName=Tooark.ark-format-powershell
 ```
