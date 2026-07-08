@@ -91,9 +91,16 @@ class RPCRegistry:
 
     # Watcher
     async def _listen(self) -> None:
+        # initial scan when server first starts
+        # Catches already opened IDA instances
+        live_configs:list[str] = []
         initial_config = self._load_configs()
         if initial_config.keys():
-            self._logger.info(f"Existing RPC Configs: {list(initial_config.keys())}")
+            for rpc_id, (port, _) in initial_config.items():
+                live = await self._check_config_live(rpc_id, port)
+                if live:
+                    live_configs.append(rpc_id)
+            self._logger.info(f"Existing RPC Configs: {live_configs}")
         async for changes in awatch(self._directory):
             for change_type, change_path in changes:
                 self._logger.info(f"changed path: {change_path} change_type: {change_type}")
@@ -180,6 +187,14 @@ class RPCRegistry:
             if entry := RPCFileRegistry.load(path):
                 result[entry.id] = (entry.port, path)
         return result
+
+    async def _check_config_live(self, rpc_id: str, port: int)-> bool:
+        """checks if the config file is live
+
+        returns true if it is live, false if not
+        """
+        exists = await connect_with_backoff(rpc_id, port)
+        return(bool(exists))
 
     async def _close_all(self) -> None:
         async with self._lock:
