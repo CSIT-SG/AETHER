@@ -2,7 +2,7 @@ from pathlib import Path
 
 from aether_backend.utils.effect import Program, effectful
 from aether_backend.utils.get_content import get_content
-from aether_backend.utils.validation import HexAddress, validate_service
+from aether_backend.utils.validation import HexAddress, get_service
 from fastmcp.tools import tool
 from mcp.types import ToolAnnotations
 
@@ -24,5 +24,5 @@ async def annotate_function(
     custom_prompt: str | None = None,
 ) -> Program:
     """Annotate a function at the given address."""
-    async for effect in annotate(await validate_service(rpc_id), address, custom_prompt):
+    async for effect in annotate(await get_service(rpc_id), address, custom_prompt):
         yield effect

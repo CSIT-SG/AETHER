@@ -2,7 +2,7 @@ from pathlib import Path
 
 from aether_backend.utils.effect import Program, effectful
 from aether_backend.utils.get_content import get_content
-from aether_backend.utils.validation import validate_service
+from aether_backend.utils.validation import get_service
 from fastmcp.tools import tool
 from mcp.types import ToolAnnotations
 
@@ -19,5 +19,5 @@ INSTRUCTIONS = get_content(Path(__file__).parent, "instructions.md")
 )  # tool is untyped in fastmcp
 @effectful  # type: ignore
 async def execute_idapython(rpc_id: str, code: str) -> Program:
-    async for effect in exec_code(await validate_service(rpc_id), code):
+    async for effect in exec_code(await get_service(rpc_id), code):
         yield effect
