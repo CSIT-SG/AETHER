@@ -82,6 +82,7 @@ def main() -> None:
 
         for inode in cfg["extra_inodes"]:
             cp_r(inode, app_out / inode.name)
+            print(f"Copied extra inode {inode} to {app_out / inode.name}")
 
 
 if __name__ == "__main__":
