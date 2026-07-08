@@ -11,7 +11,7 @@ from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
 GUI_DIR = ROOT_DIR / "apps" / "gui"
-ENTRYPOINT_SOURCE = GUI_DIR / "src" / "plugin-dev.py"
+ENTRYPOINT_SOURCE = GUI_DIR / "src" / "plugin_dev.py"
 ENTRYPOINT_NAME = "aether-next-dev.py"
 
 
@@ -68,7 +68,6 @@ def export_requirements(uv_path: str) -> Path:
             "export",
             "--all-packages",
             "--no-hashes",
-            "--no-emit-workspace",
             "--output-file",
             str(requirements_path),
         ],
@@ -78,10 +77,7 @@ def export_requirements(uv_path: str) -> Path:
 
 
 def install_requirements(uv_path: str, requirements_path: Path) -> None:
-    run(
-        [uv_path, "pip", "install", "-r", str(requirements_path)],
-        cwd=requirements_path.parent,
-    )
+    run([uv_path, "pip", "install", "-r", str(requirements_path)], cwd=requirements_path.parent)
 
 
 def link_entrypoint(plugin_path: Path) -> None:
@@ -105,10 +101,10 @@ def main() -> None:
     ensure_plugin_path(args.plugin_path)
     requirements_path = export_requirements(uv_path)
 
-    install_requirements(uv_path, requirements_path)
-
-    if requirements_path.exists():
-        requirements_path.unlink()
+    try:
+        install_requirements(uv_path, requirements_path)
+    finally:
+        requirements_path.unlink(missing_ok=True)
 
     link_entrypoint(args.plugin_path)
     print(f"Installed AETHER GUI dev plugin in: {args.plugin_path}")

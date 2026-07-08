@@ -2,6 +2,7 @@
   "extraPaths": [
     "apps/cli/src",
     "apps/gui/src",
+    "apps/gui/scripts",
     "packages/utils/src",
     "packages/rpc/src",
     "packages/backend/src",

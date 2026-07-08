@@ -42,7 +42,7 @@ def ida_dir() -> str:
 @pytest.fixture(scope="session", autouse=True)
 def headless_ida(
     get_binary: Callable[..., Path], ida_dir: str
-) -> Generator[subprocess.Popen, None, None]:
+) -> Generator[subprocess.Popen[str], None, None]:
     if not _port_is_free(HEADLESS_PORT):
         pytest.skip(f"Port {HEADLESS_PORT} is already in use")
 
@@ -151,12 +151,14 @@ async def headless_mcp() -> AsyncGenerator[tuple[str, int], None]:
 @pytest_asyncio.fixture(scope="session")
 async def mcp_client(
     headless_mcp: tuple[str, int],
-) -> AsyncGenerator[Callable[[], _AsyncGeneratorContextManager[Client]]]:
+) -> AsyncGenerator[
+    Callable[[], _AsyncGeneratorContextManager[Client[StreamableHttpTransport]]], None
+]:
     host, port = headless_mcp
     sse_url = f"http://{host}:{port}/mcp"
 
     @asynccontextmanager
-    async def _connect() -> AsyncIterator[Client]:
+    async def _connect() -> AsyncIterator[Client[StreamableHttpTransport]]:
         transport = StreamableHttpTransport(url=sse_url)
         async with Client(transport) as client:
             yield client
