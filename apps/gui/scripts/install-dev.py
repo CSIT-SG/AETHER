@@ -11,8 +11,8 @@ from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
 GUI_DIR = ROOT_DIR / "apps" / "gui"
-ENTRYPOINT_SOURCE = GUI_DIR / "src" / "plugin.py"
-ENTRYPOINT_NAME = "aether-next.py"
+ENTRYPOINT_SOURCE = GUI_DIR / "src" / "plugin-dev.py"
+ENTRYPOINT_NAME = "aether-next-dev.py"
 
 
 def default_plugin_path() -> Path:
@@ -68,6 +68,7 @@ def export_requirements(uv_path: str) -> Path:
             "export",
             "--all-packages",
             "--no-hashes",
+            "--no-emit-workspace",
             "--output-file",
             str(requirements_path),
         ],
@@ -76,9 +77,9 @@ def export_requirements(uv_path: str) -> Path:
     return requirements_path
 
 
-def install_requirements(requirements_path: Path) -> None:
+def install_requirements(uv_path: str, requirements_path: Path) -> None:
     run(
-        [sys.executable, "-m", "pip", "install", "--user", "-r", str(requirements_path)],
+        [uv_path, "pip", "install", "-r", str(requirements_path)],
         cwd=requirements_path.parent,
     )
 
@@ -104,7 +105,7 @@ def main() -> None:
     ensure_plugin_path(args.plugin_path)
     requirements_path = export_requirements(uv_path)
     try:
-        install_requirements(requirements_path)
+        install_requirements(uv_path, requirements_path)
     finally:
         if requirements_path.exists():
             requirements_path.unlink()
