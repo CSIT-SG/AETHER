@@ -104,11 +104,11 @@ def main() -> None:
 
     ensure_plugin_path(args.plugin_path)
     requirements_path = export_requirements(uv_path)
-    try:
-        install_requirements(uv_path, requirements_path)
-    finally:
-        if requirements_path.exists():
-            requirements_path.unlink()
+
+    install_requirements(uv_path, requirements_path)
+
+    if requirements_path.exists():
+        requirements_path.unlink()
 
     link_entrypoint(args.plugin_path)
     print(f"Installed AETHER GUI dev plugin in: {args.plugin_path}")
