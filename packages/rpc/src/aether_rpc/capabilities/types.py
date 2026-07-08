@@ -107,12 +107,12 @@ class TakeSnapshotResult(TypedDict):
     snapshot_path: str
 
 
-class FuncNameAddrParent(TypedDict):
+class FunctionTreeNode(TypedDict):
     function_name: str
     address: str
-    parent: str
+    children: list["FunctionTreeNode"]
 
 
-class ListFunctionResultWithParent(TypedDict):
+class FunctionTreeResult(TypedDict):
     count: int
-    functions: list[FuncNameAddrParent]
+    root: FunctionTreeNode

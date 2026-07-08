@@ -4,13 +4,13 @@ import idc
 
 from ..base import Capability
 from ..result import Err, Ok, Result
-from ..types import FuncNameAddrParent, ListFunctionResultWithParent
+from ..types import FunctionTreeNode, FunctionTreeResult
 from ..utils import get_function, resolve_effective_address
 from .constants import FILTERED_FUNCTIONS, MAX_DEPTH
 
 
 class GetFunctionsCalledRecursively(Capability):
-    """Get all callees of a function."""
+    """Get all callees of a function, as a nested call tree."""
 
     @property
     def name(self) -> str:
@@ -19,76 +19,61 @@ class GetFunctionsCalledRecursively(Capability):
     def _is_filtered(self, func_name: str) -> bool:
         return any(filtered.lower() in func_name.lower() for filtered in FILTERED_FUNCTIONS)
 
-    def get_function_callees(
-        self, func_addr_str: str, parent_func_name: str | None = None
-    ) -> list[FuncNameAddrParent]:
-        """Get callees of a function using IDA API. Must be called from main thread."""
-        try:
-            func_addr = int(func_addr_str, 16)
-            func = idaapi.get_func(func_addr)
-            if not func:
-                return []
-            # Dedupe by address while scanning every instruction/xref in the function.
-            callee_addrs: set[int] = set()
-            for instruction_ea in idautils.FuncItems(func.start_ea):
-                for xref in idautils.XrefsFrom(instruction_ea, 0):
-                    callee_func = idaapi.get_func(xref.to)  # type: ignore
-                    if callee_func:
-                        callee_addrs.add(callee_func.start_ea)
+    def _count_nodes(self, node: FunctionTreeNode) -> int:
+        return 1 + sum(self._count_nodes(c) for c in node["children"])
 
-            callees: list[FuncNameAddrParent] = []
-            for func_ea in sorted(callee_addrs):
-                func_name = idc.get_name(func_ea, idaapi.GN_VISIBLE)
-                if not func_name:
-                    continue
-                if self._is_filtered(func_name):
-                    continue
-                if parent_func_name and func_name == parent_func_name:
-                    continue
-                callees.append(
-                    {"function_name": func_name, "address": hex(func_ea), "parent": "Nil"}
-                )
-
-            return callees
-
-        except Exception as e:
-            self.logger.error(f"Error getting callees for {func_addr_str}: {e}")
+    def _get_callees(self, func_addr: int) -> list[tuple[str, int]]:
+        """Return deduped, unfiltered (name, addr) callees of the function at func_addr."""
+        func = idaapi.get_func(func_addr)
+        if not func:
             return []
 
-    def collect_recursive(self, func_addr: str, func_name: str, current_depth: int) -> None:
-        if current_depth >= MAX_DEPTH or func_addr in self.processed:
-            return
+        callee_eas = {
+            callee.start_ea
+            for ea in idautils.FuncItems(func.start_ea)
+            for xref in idautils.XrefsFrom(ea, 0)
+            if (callee := idaapi.get_func(xref.to))  # type: ignore
+        }
 
-        self.processed.add(func_addr)
+        return [
+            (name, ea)
+            for ea in sorted(callee_eas)
+            if (name := idc.get_name(ea, idaapi.GN_VISIBLE)) and not self._is_filtered(name)
+        ]
 
-        # Get callees for this function
-        callees = self.get_function_callees(func_addr, func_name)
+    def _build_tree(
+        self, func_addr: int, func_name: str, depth: int, seen: set[str]
+    ) -> FunctionTreeNode:
+        """Recursively build a call tree rooted at func_addr.
 
-        for callee_info in callees:
-            callee_name, callee_addr = callee_info["function_name"], callee_info["address"]
+        Stops descending at MAX_DEPTH. `seen` is shared across the whole
+        recursion so each function name appears at most once in the tree
+        (this also prevents infinite recursion on call cycles).
+        """
+        children: list[FunctionTreeNode] = []
 
-            # Check if function not already in selected functions
-            if any(f["function_name"] == callee_name for f in self.selected_functions):
-                continue
+        if depth < MAX_DEPTH:
+            try:
+                for name, ea in self._get_callees(func_addr):
+                    if name in seen:
+                        continue
+                    seen.add(name)
+                    self.logger.info(f"Auto-selected function: {name}")
+                    children.append(self._build_tree(ea, name, depth + 1, seen))
+            except Exception as e:
+                self.logger.error(f"Error getting callees for {hex(func_addr)}: {e}")
 
-            self.selected_functions.append(
-                {"function_name": callee_name, "address": callee_addr, "parent": func_addr}
-            )
-            self.logger.info(f"Auto-selected function: {callee_name}")
+        return {"function_name": func_name, "address": hex(func_addr), "children": children}
 
-            # Recursively process this function's callees
-            self.collect_recursive(callee_addr, callee_name, current_depth + 1)
-
-    def execute(self, address: str | int) -> Result[ListFunctionResultWithParent]:
-        """Look up the function enclosing the given address and return its callees.
+    def execute(self, address: str | int) -> Result[FunctionTreeResult]:
+        """Look up the function enclosing the given address and return its call tree.
 
         Args:
             address: Hex or decimal string address anywhere within the target function.
 
         Returns:
-            A Result whose ``result`` holds the Functions called by starting function (name, start
-            address) on success, or an error message if the address
-            is invalid or no function bounds it.
+            A Result whose ``result`` holds the call tree rooted at the starting function,
+            or an error message if the address is invalid or no function bounds it.
         """
         ea = resolve_effective_address(address)
         if ea is None:
@@ -100,22 +85,6 @@ class GetFunctionsCalledRecursively(Capability):
             self.logger.warning(f"No function found containing address {hex(ea)}")
             return Err(result=f"No function found containing address {hex(ea)}")
 
-        self.processed: set[str] = set()
-        self.selected_functions: list[FuncNameAddrParent] = []
+        root = self._build_tree(ea, func["name"], depth=0, seen={func["name"]})
 
-        # Add the starting function
-
-        func_name = func["name"]
-
-        self.selected_functions.append(
-            {"function_name": func_name, "address": hex(ea), "parent": "Nil"}
-        )
-
-        # Collect functions recursively
-        self.collect_recursive(hex(ea), func_name, 0)
-        return Ok(
-            result=ListFunctionResultWithParent(
-                count=len(self.selected_functions),
-                functions=self.selected_functions,
-            )
-        )
+        return Ok(result=FunctionTreeResult(count=self._count_nodes(root), root=root))

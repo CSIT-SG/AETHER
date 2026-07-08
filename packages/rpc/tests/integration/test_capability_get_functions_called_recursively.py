@@ -3,6 +3,10 @@ import pytest
 import rpyc
 
 
+def count_nodes(node: dict) -> int:
+    return 1 + sum(count_nodes(child) for child in node["children"])
+
+
 @pytest.mark.dependency(depends=["connection"], scope="session")
 class TestGetFunctionsCalledRecursively:
     """Tests for get_functions_called_recursively capability."""
@@ -10,18 +14,14 @@ class TestGetFunctionsCalledRecursively:
     def test_accept_valid_symbol_name(self, ida_client: rpyc.Connection) -> None:
         # Call capability using a valid function name
         result = ida_client.root.get_functions_called_recursively(address="main")
-
         assert result.success is True
         assert result.result["count"] >= 1
-        assert len(result.result["functions"]) >= 1
 
-        # First function should be the starting function
-        first_function = result.result["functions"][0]
-        assert first_function["function_name"] == "main"
+        root = result.result["root"]
+        assert root["function_name"] == "main"
 
         # Verify returned function address resolves correctly
-        resolved = ida_client.root.get_function_by_address(address=first_function["address"])
-
+        resolved = ida_client.root.get_function_by_address(address=root["address"])
         assert resolved.success is True
         assert resolved.result["name"] == "main"
 
@@ -34,59 +34,70 @@ class TestGetFunctionsCalledRecursively:
         result = ida_client.root.get_functions_called_recursively(
             address=func.result["start_address"]
         )
-
         assert result.success is True
         assert result.result["count"] >= 1
 
-        # Ensure the starting function is included
-        first_function = result.result["functions"][0]
-        assert first_function["function_name"] == "main"
+        # Ensure the starting function is the tree root
+        assert result.result["root"]["function_name"] == "main"
 
     def test_returns_valid_function_entries(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.get_functions_called_recursively(address="main")
-
         assert result.success is True
 
-        for function in result.result["functions"]:
-            assert "function_name" in function
-            assert "address" in function
-            assert function["function_name"] is not None
+        root = result.result["root"]
+        assert count_nodes(root) == result.result["count"]
 
-            # Every returned address should correspond to a valid function
-            resolved = ida_client.root.get_function_by_address(address=function["address"])
-
+        def check(node: dict) -> None:
+            assert "function_name" in node
+            assert "address" in node
+            assert "children" in node
+            assert node["function_name"] is not None
+            # Every node's address should correspond to a valid function
+            resolved = ida_client.root.get_function_by_address(address=node["address"])
             assert resolved.success is True
-            assert resolved.result["name"] == function["function_name"]
+            assert resolved.result["name"] == node["function_name"]
+            for child in node["children"]:
+                check(child)
+
+        check(root)
 
     def test_non_existent_address(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.get_functions_called_recursively(address="0xB33F")
-
         assert result.success is False
 
     def test_non_existent_symbol_name(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.get_functions_called_recursively(address="idontexistright")
-
         assert result.success is False
 
     def test_max_depth(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.get_functions_called_recursively(address="max_depth_call")
-
         assert result.success is True
         assert result.result["count"] == 6
-        assert len(result.result["functions"]) == 6
 
     def test_self_call(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.get_functions_called_recursively(address="self_call")
-
         assert result.success is True
         assert result.result["count"] == 1
-        assert len(result.result["functions"]) == 1
+
+        root = result.result["root"]
+        assert root["function_name"] == "self_call"
+        # The recursive self-call is filtered out (already "seen"),
+        # so the root should have no children
+        assert len(root["children"]) == 0
 
     def test_parent(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.get_functions_called_recursively(address="max_depth_call")
+        assert result.success is True
 
-        for i in range(1, 6):
-            assert (
-                result.result["functions"][-i]["parent"]
-                == result.result["functions"][-i - 1]["address"]
+        # Walk down the tree; each node's parent-child relationship is now
+        # expressed by nesting rather than an address-based "parent" field
+        node = result.result["root"]
+        depth = 1
+        while node["children"]:
+            assert len(node["children"]) == 1, (
+                f"Expected a single chain at depth {depth}, got {len(node['children'])} children"
             )
+            node = node["children"][0]
+            depth += 1
+
+        assert depth == 6
