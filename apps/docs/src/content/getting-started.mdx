@@ -1,4 +1,4 @@
-import { Callout, Tabs } from 'nextra/components'
+import { Callout, FileTree } from 'nextra/components'
 
 
 # Getting Started
@@ -14,59 +14,48 @@ import { Callout, Tabs } from 'nextra/components'
 </Callout>
 
 - IDA Pro: Version `9.2` or later
-- LLM API Key: An OpenRouter API Key is required by default.
+- LLM Gateway: You need a openai-compatible LLM gateway and api key to use Aether. The default is OpenRouter, but you can configure your own provider in the [configuration file](./configuration).
 
-<Callout type="info"> 
-    While pre-configured for OpenRouter, Aether supports any OpenAI-compatible API. 
-    You can customize the provider by editing the [configuration file](./configuration).
-</Callout>
 
 ## Graphical User Interface (GUI)
 
-<Tabs items={['Windows', 'Linux']}>
-    <Tabs.Tab>
+This is located in `apps/gui`. It is a plugin for IDA Pro that provides an interface for interacting with LLMs.
 
-        Open powershell as **administrator** and change directory to `\AETHER-next\apps\gui\scripts\PS`.
+The install script will install the required dependencies and copy the plugin entrypoint into the IDA plugins folder. 
+You can specify a custom plugins folder with the `--plugin-path` argument, eg. `python ./scripts/install_dev.py --plugin-path /opt/ida-9.2`.
 
-        ### Standard Installation
+### Development
 
-        ```powershell
-        ./install-prod.ps1
-        ```
-        `install-prod.ps1` copies relevant files from the repo into the Ida plugins folder. Though not recommended, it is safe to delete the repo from your computer.
+Clone the repo and run the dev script.
 
-        ### Development
+```bash
+git clone https://github.com/csitgovsg-acube/AETHER-next
+cd apps/gui && python ./scripts/install_dev.py
+```
 
-        ```powershell
-        ./install-dev.ps1
-        ```
-        `install-dev.ps1` creates a symbolic link to the repo in the Ida. **DO NOT** delete the repo.
-    </Tabs.Tab>
-    <Tabs.Tab>
-        ### Standard Installation
-        Open terminal with **sudo** privileges and navigate to `/AETHER-next/apps/gui/scripts/Bash`.
+This will install the required dependencies for idapython and link the plugin entrypoint into the IDA plugins folder.
 
-        ```bash
-        ./install-prod.sh --plugins-dir /path/to/ida/plugins/dir
-        ```
+### Production
 
-        `install-prod.sh` copies relevant files from the repo into the Ida plugins folder. Though not recommended, it is safe to delete the repo from your computer.
-        
-        #### Development
+Download the release binaries. The files are laid out in the following structure: 
 
-        ```bash
-        ./install-dev.sh --plugins-dir /path/to/ida/plugins/dir
-        ```
-        `install-dev.sh` creates a symbolic link to the repo in the Ida. **DO NOT** delete the repo.
+<FileTree>
+  <FileTree.Folder name="aether_gui" defaultOpen>
+    <FileTree.Folder name="wheels" />
+    <FileTree.File name="requirements.txt" />
+    <FileTree.File name="install_prod.py" />
+    <FileTree.File name="plugin.py" />
+    <FileTree.File name="README.md" />
+  </FileTree.Folder>
+</FileTree>
 
-        <Callout type ="info">
-            Ensure to set the `--plugins-dir` flag. Default installation directory is `/opt/ida-pro-9.X/plugins`.
-        </Callout>
-    </Tabs.Tab>
-</Tabs>
+Run the prod script.
 
+```bash
+python install_prod.py
+```
 
-
+This will install the wheel bundles and copy the plugin entrypoint into the IDA plugins folder.
 
 
 ### Headless Command-Line Interface (CLI)
