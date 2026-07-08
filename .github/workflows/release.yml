@@ -31,30 +31,55 @@ jobs:
           else
             RAW="$(cat VERSION)"
           fi
-
           # strip all surrounding/embedded whitespace (guards against trailing newline in VERSION)
           VERSION_CLEAN="$(printf '%s' "$RAW" | tr -d '[:space:]')"
-
           if ! printf '%s' "$VERSION_CLEAN" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([-+.][0-9A-Za-z.-]+)?$'; then
             echo "::error::Resolved version '$VERSION_CLEAN' is not valid semver (expected e.g. 1.2.3)."
             exit 1
           fi
-
           echo "version=$VERSION_CLEAN" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Build release bundles
+        run: uv run python -m scripts.release.build
+
+      - name: Verify build output
+        run: |
+          if [ ! -d dist ] || [ -z "$(ls -A dist 2>/dev/null)" ]; then
+            echo "::error::dist/ is missing or empty after the build step."
+            exit 1
+          fi
+
+      - name: Zip release bundles
+        run: |
+          mkdir -p release-zips
+          for app_dir in dist/*/; do
+            app="$(basename "$app_dir")"
+            zip_name="${app}-v${{ steps.version.outputs.version }}.zip"
+            (cd dist && zip -qr "../release-zips/${zip_name}" "${app}")
+            echo "Packaged ${zip_name}"
+          done
+          ls -la release-zips
 
       - name: Create Git tag
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
           VERSION="v${{ steps.version.outputs.version }}"
           REMOTE="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
-
           if git ls-remote --tags "$REMOTE" "$VERSION" | grep -q "$VERSION"; then
             echo "::error::Tag $VERSION already exists. Bump the version in VERSION file or pass a different version input."
             exit 1
           fi
-
           git tag "$VERSION"
           git push "$REMOTE" "$VERSION"
 
@@ -65,5 +90,6 @@ jobs:
           name: Release v${{ steps.version.outputs.version }}
           generate_release_notes: true
           draft: ${{ env.ACT == 'true' }}  # act automatically sets ACT=true. https://nektosact.com/usage/index.html?highlight=env.ACT#skipping-steps
+          files: release-zips/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
