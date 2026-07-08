@@ -4,7 +4,6 @@ import inspect
 from dataclasses import dataclass
 from typing import Any
 
-from aether_gui.features.settings_menu.formatting import format_field_title
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 
@@ -18,12 +17,8 @@ class ResolvedField:
     field_type: Any  # annotation with ``| None`` stripped off
     optional: bool
     value: Any
+    title: str  # display heading/label, from Field(title=...) (falls back to name)
     description: str
-
-    @property
-    def title(self) -> str:
-        """Human-readable title derived from the field name."""
-        return format_field_title(self.name)
 
     @property
     def is_model(self) -> bool:

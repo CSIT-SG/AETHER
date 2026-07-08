@@ -12,7 +12,9 @@ from .resolved_field import ResolvedField
 
 def make_leaf_field(field: ResolvedField) -> FieldWidget:
     """Build the right control for a single non-model field."""
-    placeholder = _example_placeholder(field.info)
+    # Prefer a declared example as placeholder; otherwise show a greyed "null" for
+    # optional fields, so an empty control reads as "unset → falls back to default".
+    placeholder = _example_placeholder(field.info) or ("null" if field.optional else "")
     if field.field_type is bool:
         return BoolField(field.title, field.description, field.value)
     if field.field_type is str:

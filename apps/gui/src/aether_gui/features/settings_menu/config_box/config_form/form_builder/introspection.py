@@ -27,6 +27,7 @@ def iter_fields(model_cls: type[BaseModel], data: dict[str, Any] | None) -> Iter
             field_type=unwrapped["field_type"],
             optional=unwrapped["optional"],
             value=data.get(name),
+            title=info.title or name,
             description=info.description or "",
         )
 

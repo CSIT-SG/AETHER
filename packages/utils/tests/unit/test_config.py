@@ -31,7 +31,6 @@ VALID_FULL = {
     "subagents": {
         "gatherer_model": "Claude Sonnet",
         "annotator_model": "Qwen Coder",
-        "ai_decomp_model": None,
         "single_analysis_model": None,
         "struct_creator_model": None,
         "index_agent_model": None,
@@ -41,7 +40,6 @@ VALID_FULL = {
         "deobfuscator": None,
         "chatbot": {},
         "gatherer": None,
-        "ai_decomp": None,
     },
     "debug": True,
     "tls": {
@@ -60,7 +58,6 @@ VALID_SUBAGENTS_ALL_NULL = {
     "subagents": {
         "gatherer_model": None,
         "annotator_model": None,
-        "ai_decomp_model": None,
         "single_analysis_model": None,
         "struct_creator_model": None,
         "index_agent_model": None,
@@ -184,7 +181,6 @@ class TestValidConfigs:
         assert cfg.tls is not None
         assert cfg.subagents is not None
         assert cfg.subagents.gatherer_model == "Claude Sonnet"
-        assert cfg.subagents.ai_decomp_model is None
 
     def test_subagents_all_null(self) -> None:
         """Subagents block present but every override is None — validator should pass."""
