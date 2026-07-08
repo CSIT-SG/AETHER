@@ -5,6 +5,8 @@ from aether_utils.config import get_config
 from fastmcp.server.middleware import Middleware, MiddlewareContext
 from fastmcp.tools.base import ToolResult
 
+from .constants import RPC_ARGUMENT
+
 config = get_config()
 
 
@@ -36,7 +38,7 @@ class SnapshotMiddleware(Middleware):
 
         if is_destructive:
             registry = cast(RPCRegistry, tool_context.lifespan_context[RPC_REGISTRY_KEY])
-            service = await registry.get(context.message.arguments["rpc_id"])
+            service = await registry.get(context.message.arguments[RPC_ARGUMENT])
             if service:
                 service.take_snapshot()
 
