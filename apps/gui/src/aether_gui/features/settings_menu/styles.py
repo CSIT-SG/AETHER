@@ -16,6 +16,7 @@ MESSAGE_STATE_PROPERTY = "messageState"
 SECTION_ROLE = "section"
 TITLE_ROLE = "title"
 DESCRIPTION_ROLE = "description"
+REQUIRED_ROLE = "required"
 
 
 class MessageState(StrEnum):

@@ -63,6 +63,10 @@ class ConfigForm(StyledComponent):
         """Collect the current control values into a nested dict."""
         return self._form.getter() if self._form is not None else {}
 
+    def has_required_missing(self) -> bool:
+        """Whether the form has any required fields left empty."""
+        return self._form.has_required_missing() if self._form is not None else False
+
     def scroll_to(self, title: str) -> None:
         """Scroll so the given category sits at the top of the viewport."""
         section = self._sections.get(title)

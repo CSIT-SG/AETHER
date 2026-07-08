@@ -45,3 +45,7 @@ class SettingsForm:
     getter: Getter
     sections: list[Section] = field(default_factory=list)
     rows: list[SearchMeta] = field(default_factory=list)
+
+    def has_required_missing(self) -> bool:
+        """Whether any required field is currently empty."""
+        return any(row.widget.is_required_missing() for row in self.rows)

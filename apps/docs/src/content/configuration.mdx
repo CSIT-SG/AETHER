@@ -14,7 +14,7 @@ Configures the language model provider that AETHER communicates with.
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `gateway_url` | `string` | Yes | The base URL for the provider's API gateway. |
-| `api_key` | `string` | No | The API key for the provider. Take note that you must set this field for most features to work. Defaults to an empty string. |
+| `api_key` | `string \| null` | No | The API key for the provider. Take note that you must set this field for most features to work. Defaults to `null`. |
 | `models` | `object` | No | A mapping of friendly names to model IDs for this provider (e.g. `{"fast": "gpt-4o-mini", "smart": "gpt-4o"}`). |
 | `default_model` | `string` | Yes | The friendly name of the model to use when no other model is specified. Must be a key present in `models`. eg. if `models` contains `"fast": "gpt-4o-mini"`, then `default_model` can be `"fast"`. |
 | `extra_body` | `object` | No | Any additional body parameters to include in every request to this provider. |
@@ -62,8 +62,8 @@ Configures mutual TLS (mTLS) for providers that require client certificate authe
 
 | Field | Type | Description |
 |---|---|---|
-| `client_cert_path` | `string` | Path to the client certificate file. Defaults to an empty string (disabled). |
-| `client_key_path` | `string` | Path to the client private key file. Defaults to an empty string (disabled). |
+| `client_cert_path` | `string \| null` | Path to the client certificate file. Defaults to `null` (disabled). |
+| `client_key_path` | `string \| null` | Path to the client private key file. Defaults to `null` (disabled). |
 
 
 ## `debug` (optional)

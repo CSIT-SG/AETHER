@@ -156,6 +156,10 @@ class ConfigBox(StyledComponent):
         """Called after the config is written so the form is no longer dirty."""
         self._reset_baseline()
 
+    def has_required_missing(self) -> bool:
+        """Whether the current form view has required fields left empty."""
+        return (not self._in_json_mode()) and self._form_view.has_required_missing()
+
     # ------------------------------------------------------------------
     # output
     # ------------------------------------------------------------------

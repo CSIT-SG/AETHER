@@ -320,7 +320,10 @@ class TestConfigManagerIO:
 
         original_config = manager.config
 
-        with patch.object(manager, "_write_config_file", return_value=False):
+        with (
+            patch.object(manager, "_write_config_file", side_effect=OSError("write failed")),
+            pytest.raises(OSError, match="write failed"),
+        ):
             manager.config = VALID_FULL  # raw dict, as the setter now expects
 
         assert manager.config is original_config

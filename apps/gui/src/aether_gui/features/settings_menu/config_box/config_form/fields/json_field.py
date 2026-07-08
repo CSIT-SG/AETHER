@@ -4,9 +4,29 @@ import json
 from typing import Any
 
 from aether_gui.utils.json import JSON_INDENT
-from PySide6 import QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
 
 from .base import FieldWidget
+
+
+class ExamplePlainTextEdit(QtWidgets.QPlainTextEdit):
+    def __init__(self, example: str = "", parent: QtWidgets.QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._example = example
+
+    def event(self, event: QtCore.QEvent) -> bool:
+        if (
+            self._example
+            and event.type() == QtCore.QEvent.Type.KeyPress
+            and isinstance(event, QtGui.QKeyEvent)
+            and event.key() == QtCore.Qt.Key.Key_Tab
+            and event.modifiers() == QtCore.Qt.KeyboardModifier.NoModifier
+            and not self.toPlainText().strip()
+        ):
+            self.setPlainText(self._example)
+            event.accept()
+            return True
+        return super().event(event)
 
 
 class JsonField(FieldWidget):
@@ -26,12 +46,14 @@ class JsonField(FieldWidget):
         value: Any,
         *,
         optional: bool,
+        required: bool = False,
         placeholder: str = "",
+        example: str = "",
         parent: QtWidgets.QWidget | None = None,
     ) -> None:
-        super().__init__(title, description, parent)
+        super().__init__(title, description, parent, required=required)
         self._optional = optional
-        self._edit = QtWidgets.QPlainTextEdit()
+        self._edit = ExamplePlainTextEdit(example)
         self._edit.setMinimumHeight(60)
         self._edit.setMaximumHeight(160)
         if placeholder:
@@ -39,7 +61,11 @@ class JsonField(FieldWidget):
         text = "" if value is None else json.dumps(value, indent=JSON_INDENT)
         self._edit.setPlainText(text)
         self._edit.textChanged.connect(self.changed)
+        self._edit.textChanged.connect(
+            lambda: self._update_required(not self._edit.toPlainText().strip())
+        )
         self.add_control(self._edit)
+        self._update_required(not self._edit.toPlainText().strip())
 
     def value(self) -> Any:
         raw = self._edit.toPlainText().strip()

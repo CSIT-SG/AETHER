@@ -30,6 +30,13 @@ QLabel[settingsRole="description"] {
     font-weight: {{ fontstyles.weight }};
 }
 
+QLabel[settingsRole="required"] {
+    color: {{ colors.error }};
+    font-family: "{{ fontstyles.family }}";
+    font-size: {{ fontstyles.size }}pt;
+    font-weight: {{ fontstyles.weight }};
+}
+
 QLineEdit, QPlainTextEdit {
     background-color: {{ colors.base }};
     color: {{ colors.text }};

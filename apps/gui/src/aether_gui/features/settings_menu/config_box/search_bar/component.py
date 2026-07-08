@@ -85,11 +85,7 @@ class SearchBar(StyledComponent):
 
     def set_counts(self, visible: int, total: int, *, filtering: bool) -> None:
         """Update the results count label next to the search box."""
-        text = (
-            f"{visible} of {total} settings"
-            if filtering
-            else f"{total} settings"
-        )
+        text = f"{visible} of {total} settings" if filtering else f"{total} settings"
         self._results.setText(text)
 
     def set_json_mode(self, json_mode: bool) -> None:

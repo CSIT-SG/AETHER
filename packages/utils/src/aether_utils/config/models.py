@@ -5,16 +5,25 @@ from pydantic import BaseModel, Field, model_validator
 
 class ProviderModel(BaseModel):
     gateway_url: str = Field(
-        ..., title="Gateway URL", description="The base URL for the provider's API gateway."
+        ...,
+        title="Gateway URL",
+        description="The base URL for the provider's API gateway.",
+        examples=["https://openrouter.ai/api/v1"],
     )
-    api_key: str = Field("", title="API Key", description="The API key for the provider.")
+    api_key: str | None = Field(
+        default=None, title="API Key", description="The API key for the provider."
+    )
     models: dict[str, str] = Field(
         default_factory=dict,
         title="Models",
         description="A mapping of friendly names to model ids for this provider.",
+        examples=[{"OpenAI: gpt-oss-120b": "openai/gpt-oss-120b"}],
     )
     default_model: str = Field(
-        ..., title="Default Model", description="Friendly name of default model to fall back to."
+        ...,
+        title="Default Model",
+        description="Friendly name of default model to fall back to.",
+        examples=["OpenAI: gpt-oss-120b"],
     )
     extra_body: dict[str, object] | None = Field(
         default_factory=dict,
@@ -86,13 +95,13 @@ class FeaturesModel(BaseModel):
 
 
 class TlsConfigModel(BaseModel):
-    client_cert_path: str = Field(
-        "",
+    client_cert_path: str | None = Field(
+        default=None,
         title="Client Cert Path",
         description="Path to the client certificate for mutual TLS authentication, if required by the provider.",
     )
-    client_key_path: str = Field(
-        "",
+    client_key_path: str | None = Field(
+        default=None,
         title="Client Key Path",
         description="Path to the client private key for mutual TLS authentication, if required by the provider.",
     )

@@ -59,6 +59,9 @@ class SettingsMenuHandler(QtWidgets.QDialog):
     def show_error_message(self) -> None:
         self._cfg_message.show_error("Invalid config, check IDA output for more details")
 
+    def show_required_fields_message(self) -> None:
+        self._cfg_message.show_error("One or more required fields are not filled.")
+
     def clear_message_box(self) -> None:
         self._cfg_message.clear()
 
@@ -72,6 +75,9 @@ class SettingsMenuHandler(QtWidgets.QDialog):
 
     def _save_config(self) -> bool:
         self.clear_message_box()
+        if self._config_box.has_required_missing():
+            self.show_required_fields_message()
+            return False
         try:
             formatted = load_json_object(self._config_box.get_content())
             set_config(formatted)

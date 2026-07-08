@@ -40,6 +40,10 @@ class SettingsFormView(StyledComponent):
         """Return the form's current settings values."""
         return self._config_form.values()
 
+    def has_required_missing(self) -> bool:
+        """Whether any required form field is currently empty."""
+        return self._config_form.has_required_missing()
+
     def apply_filter(self, text: str) -> FilterResult:
         """Filter fields and mirror the category visibility in the sidebar."""
         result = self._config_form.apply_filter(text)

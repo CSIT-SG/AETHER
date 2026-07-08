@@ -12,9 +12,10 @@ from .resolved_field import ResolvedField
 
 def make_leaf_field(field: ResolvedField) -> FieldWidget:
     """Build the right control for a single non-model field."""
-    # Prefer a declared example as placeholder; otherwise show a greyed "null" for
-    # optional fields, so an empty control reads as "unset → falls back to default".
-    placeholder = _example_placeholder(field.info) or ("null" if field.optional else "")
+    # Prefer declared examples; otherwise optional fields show a greyed "null".
+    example = _example_placeholder(field.info)
+    placeholder = example or ("null" if field.optional else "")
+    tab_example = example if not field.optional else ""
     if field.field_type is bool:
         return BoolField(field.title, field.description, field.value)
     if field.field_type is str:
@@ -23,12 +24,20 @@ def make_leaf_field(field: ResolvedField) -> FieldWidget:
             field.description,
             field.value,
             optional=field.optional,
+            required=not field.optional,
             secret=field.name in SECRET_FIELD_NAMES,
             placeholder=placeholder,
+            example=tab_example,
         )
     # dict fields and any unrecognized annotation fall back to JSON editing.
     return JsonField(
-        field.title, field.description, field.value, optional=field.optional, placeholder=placeholder
+        field.title,
+        field.description,
+        field.value,
+        optional=field.optional,
+        required=not field.optional,
+        placeholder=placeholder,
+        example=tab_example,
     )
 
 
