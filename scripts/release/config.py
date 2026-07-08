@@ -19,6 +19,7 @@ APPS: dict[str, _AppBuildConfig] = {
         "extra_inodes": [
             _apps_path / "gui" / "src" / "plugin.py",
             _apps_path / "gui" / "scripts" / "install_prod.py",
+            _apps_path / "gui" / "README.md",
         ],
     }
 }
