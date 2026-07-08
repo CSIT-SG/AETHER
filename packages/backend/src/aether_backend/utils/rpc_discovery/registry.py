@@ -92,12 +92,13 @@ class RPCRegistry:
     # Watcher
     async def _listen(self) -> None:
         initial_config = self._load_configs()
-        self._logger.info(f"Existing RPC Configs: {initial_config.keys()}")
+        if initial_config.keys():
+            self._logger.info(f"Existing RPC Configs: {list(initial_config.keys())}")
         async for changes in awatch(self._directory):
             for change_type, change_path in changes:
                 self._logger.info(f"changed path: {change_path} change_type: {change_type}")
                 if change_type == Change.added or change_type == Change.deleted:
-                    self._logger.debug("RPC registry watcher detected changes at: %r", change_path)
+                    self._logger.debug("RPC registry watcher detected changes at: %r action: %r", change_path, change_type)
                     await self._check_connections(change_path)
 
 
@@ -106,7 +107,6 @@ class RPCRegistry:
         self._logger.debug("RPC registry checking connections due to change at: %r", file_path)
         async with self._lock:
             snapshot = dict(self._entries)
-            self._logger.debug(f"GIGANIGGA SNAPSHOT {snapshot}")
         with open(file_path) as f:
             data = json.load(f)
             self._logger.debug(f"GIGANIGGA {data}")
@@ -117,6 +117,7 @@ class RPCRegistry:
             for rpc_id, entry in snapshot.items()
             if rpc_id == key
         }
+        self._logger.debug(f"GIGANIGGA PING TASKS {ping_tasks}")
         ping_results = await asyncio.gather(*ping_tasks.values(), return_exceptions=True)
 
         # check for dead connections and new configs
