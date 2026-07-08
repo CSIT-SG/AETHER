@@ -28,13 +28,16 @@ class OpenAIGateway:
         feature: str | None = None,
     ) -> Model:
         """Create a Model with an OpenAI client configured according to the gateway's settings."""
-        if self.config.tls:
+        if self.config.tls and self.config.tls.client_cert_path and self.config.tls.client_key_path:
             httpx_client = create_async_httpx_client(
                 client_cert_path=self.config.tls.client_cert_path,
                 client_key_path=self.config.tls.client_key_path,
             )
         else:
             httpx_client = create_async_httpx_client()
+
+        if not self.config.provider.api_key:
+            raise ValueError("OpenAI API key is not set in the configuration.")
 
         client = create_async_openai_client(
             api_key=self.config.provider.api_key,
