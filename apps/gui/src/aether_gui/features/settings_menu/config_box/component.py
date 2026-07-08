@@ -10,8 +10,6 @@ from .form_view import SettingsFormView
 from .json_editor import JsonEditor
 from .search_bar import SearchBar
 
-INVALID_JSON_RETURN_WARNING = "Cannot return to form view: settings JSON is invalid."
-
 
 class ConfigBox(StyledComponent):
     """Schema-driven, VSCode-style editor for the AETHER config.
@@ -113,7 +111,7 @@ class ConfigBox(StyledComponent):
             # JSON, non-object JSON and duplicate keys in one catch.
             parsed = load_json_object(self._json_page.text())
         except ValueError as e:
-            self.logger.warning("%s %s", INVALID_JSON_RETURN_WARNING, e)
+            self.logger.warning("%s %s", "Cannot return to form view: settings JSON is invalid.", e)
             self.errorRaised.emit(f"Invalid JSON: {e}")
             return
         self._install_form(parsed)

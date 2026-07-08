@@ -13,15 +13,6 @@ from .config_buttons import (
 )
 from .config_message import ConfigMessage, create_config_message
 
-SETTINGS_DIALOG_INITIAL_WIDTH = 900
-SETTINGS_DIALOG_INITIAL_HEIGHT = 600
-SETTINGS_DIALOG_MINIMUM_WIDTH = 700
-SETTINGS_DIALOG_MINIMUM_HEIGHT = 450
-CONFIG_BOX_MINIMUM_WIDTH = 500
-CONFIG_BOX_MINIMUM_HEIGHT = 200
-INVALID_CONFIG_MESSAGE = "Invalid config, check IDA output for more details"
-CONFIG_APPLIED_MESSAGE = "Config applied!"
-
 save_logger = get_logger("json_loader")
 
 
@@ -29,8 +20,8 @@ class SettingsMenuHandler(QtWidgets.QDialog):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self.setWindowTitle("AETHER Settings")
-        self.resize(SETTINGS_DIALOG_INITIAL_WIDTH, SETTINGS_DIALOG_INITIAL_HEIGHT)
-        self.setMinimumSize(SETTINGS_DIALOG_MINIMUM_WIDTH, SETTINGS_DIALOG_MINIMUM_HEIGHT)
+        self.resize(900, 600)
+        self.setMinimumSize(700, 450)
         self._layout: QtWidgets.QVBoxLayout
         self._buttons: ButtonRow
         self._config_box: ConfigBox
@@ -54,8 +45,8 @@ class SettingsMenuHandler(QtWidgets.QDialog):
         config_box.dirtyChanged.connect(apply_button.setEnabled)
         # Surface coordinator-level failures (e.g. invalid JSON on Back) inline.
         config_box.errorRaised.connect(text_label.show_error)
-        config_box.setMinimumWidth(CONFIG_BOX_MINIMUM_WIDTH)
-        config_box.setMinimumHeight(CONFIG_BOX_MINIMUM_HEIGHT)
+        config_box.setMinimumWidth(500)
+        config_box.setMinimumHeight(200)
         self._layout = layout
         self._config_box = config_box
         self._buttons = buttons
@@ -66,7 +57,7 @@ class SettingsMenuHandler(QtWidgets.QDialog):
         self.setLayout(self._layout)
 
     def show_error_message(self) -> None:
-        self._cfg_message.show_error(INVALID_CONFIG_MESSAGE)
+        self._cfg_message.show_error("Invalid config, check IDA output for more details")
 
     def clear_message_box(self) -> None:
         self._cfg_message.clear()
@@ -96,4 +87,4 @@ class SettingsMenuHandler(QtWidgets.QDialog):
         # Runs after a successful Apply: clear the dirty state (which disables the
         # Apply button) and report success without closing the dialog.
         self._config_box.mark_saved()
-        self._cfg_message.show_success(CONFIG_APPLIED_MESSAGE)
+        self._cfg_message.show_success("Config applied!")

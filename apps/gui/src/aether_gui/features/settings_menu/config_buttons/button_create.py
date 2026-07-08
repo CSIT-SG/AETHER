@@ -4,10 +4,6 @@ from PySide6 import QtWidgets
 
 from .button_base import ConfigButton
 
-APPLY_BUTTON_LABEL = "Apply"
-OK_BUTTON_LABEL = "Ok"
-CANCEL_BUTTON_LABEL = "Cancel"
-
 
 class ApplyButton(ConfigButton):
     def __init__(
@@ -15,7 +11,7 @@ class ApplyButton(ConfigButton):
         on_apply: Callable[[], None],
         parent: QtWidgets.QWidget | None = None,
     ) -> None:
-        super().__init__(APPLY_BUTTON_LABEL, parent=parent)
+        super().__init__("Apply", parent=parent)
         self._on_apply = on_apply
 
     def action(self) -> None:
@@ -28,7 +24,7 @@ class OkButton(ConfigButton):
         on_ok: Callable[[], None],
         parent: QtWidgets.QWidget | None = None,
     ) -> None:
-        super().__init__(OK_BUTTON_LABEL, parent=parent)
+        super().__init__("Ok", parent=parent)
         self._on_ok = on_ok
 
     def action(self) -> None:
@@ -37,7 +33,7 @@ class OkButton(ConfigButton):
 
 class CancelButton(ConfigButton):
     def __init__(self, on_close: Callable, parent: QtWidgets.QWidget | None = None) -> None:
-        super().__init__(CANCEL_BUTTON_LABEL, parent=parent)
+        super().__init__("Cancel", parent=parent)
         self._on_close: Callable = on_close
 
     def action(self) -> None:
