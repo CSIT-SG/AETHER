@@ -16,7 +16,6 @@ description = "AETHER - AI-powered Next Generation Framework"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "watchdog>=6.0.0",
     "watchfiles>=1.2.0",
 ]
 

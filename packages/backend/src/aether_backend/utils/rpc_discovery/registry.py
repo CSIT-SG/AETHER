@@ -87,12 +87,9 @@ class RPCRegistry:
         while True:
             try:
                 #check if all configs are live
-                for rpc_id, (port, path) in configs.items():
-                    live = await self._check_config_live(rpc_id, port)
-                    if not live:
-                        #remove dead configs if file still present
-                        self._entries.pop(rpc_id)
-                        Path.unlink(path, missing_ok=True)
+                for rpc_id, (_, path) in configs.items():
+                    await self._check_config_live(path)
+                self._logger.info("Current active configs: %s", self._entries.keys())
                 self._logger.debug("RPC registry heartbeat check complete")
                 await asyncio.sleep(self._refresh_interval)
             except asyncio.CancelledError:
@@ -104,92 +101,26 @@ class RPCRegistry:
     async def _listen(self) -> None:
         # initial scan when server first starts
         # Catches already opened IDA instances
-        live_configs:list[str] = []
-        initial_config = self._load_configs()
-        if initial_config:
+        entry_memory = self._load_configs()
+        if entry_memory:
             #check if config files are live
-            for rpc_id, (port, _) in initial_config.items():
-                live = await self._check_config_live(rpc_id, port)
-                if live:
-                    live_configs.append(rpc_id)
-            self._logger.info("Existing RPC Configs: %s", live_configs)
+            for rpc_id, (_, path) in entry_memory.items():
+                await self._check_config_live(path)
+            self._logger.info("Existing RPC Configs: %s", self._entries.keys())
 
         async for changes in awatch(self._directory):
             for change_type, change_path in changes:
-                self._logger.info(f"changed path: {change_path} change_type: {change_type}")
-                if change_type == Change.added or change_type == Change.deleted:
-                    self._logger.debug("RPC registry watcher detected changes at: %r action: %r", change_path, change_type)
-                    await self._check_connections(change_path)
-
-
-    async def _check_connections(self, file_path: str | Path) -> None:
-        # ping all connections concurrently
-        self._logger.debug("RPC registry checking connections due to change at: %r", file_path)
-        async with self._lock:
-            snapshot = dict(self._entries)
-        with open(file_path) as f:
-            data = json.load(f)
-            self._logger.debug(f"GIGANIGGA {data}")
-        key = data.get("id")
-        self._logger.debug(f"GIGANIGGA KEY {key}")
-        ping_tasks = {
-            rpc_id: asyncio.create_task(ping(entry))
-            for rpc_id, entry in snapshot.items()
-            if rpc_id == key
-        }
-        self._logger.debug(f"GIGANIGGA PING TASKS {ping_tasks}")
-        ping_results = await asyncio.gather(*ping_tasks.values(), return_exceptions=True)
-
-        # check for dead connections and new configs
-        configs = self._load_configs()
-        live_ids = set(configs)
-
-        to_reconnect: list[tuple[str, int]] = []
-        async with self._lock:
-            for rpc_id, ok in zip(ping_tasks, ping_results, strict=True):
-                if ok is True:
-                    if rpc_id not in live_ids:
-                        self._logger.info("RPC service %r decommissioned (config removed)", rpc_id)
-                        safe_close(snapshot[rpc_id].conn)
-                        self._entries.pop(rpc_id, None)
-                    # in any case, we don't need to reconnect
-                    continue
-
-                # connection is dead or ping failed, so we remove it from the registry
-                safe_close(snapshot[rpc_id].conn)
-                self._entries.pop(rpc_id, None)
-
-                # we queue a reconnect if the config still exists
-                if rpc_id in live_ids:
-                    self._logger.info(rpc_id)
-                    port, _ = configs[rpc_id]
-                    to_reconnect.append((rpc_id, port))
-                else:
-                    self._logger.info("RPC service %r removed (config gone)", rpc_id)
-
-            # we found new configs that we don't have connections for, so we queue them for reconnect
-            for rpc_id in live_ids - set(self._entries) - {r for r, _ in to_reconnect}:
-                self._logger.info("RPC service %r discovered (new config)", rpc_id)
-                port, _ = configs[rpc_id]
-                to_reconnect.append((rpc_id, port))
-
-        if not to_reconnect:
-            return
-
-        # reconnect all queued connections concurrently
-        new_entries = await asyncio.gather(
-            *[connect_with_backoff(rpc_id, port) for rpc_id, port in to_reconnect],
-            return_exceptions=False,
-        )
-        # update the registry with the new connections, removing any zombies that failed to reconnect
-        async with self._lock:
-            for (rpc_id, _), entry in zip(to_reconnect, new_entries, strict=True):
-                if entry is not None:
-                    self._entries[entry.rpc_id] = entry
-                else:
-                    self._logger.warning("RPC service %r unreachable — removing config", rpc_id)
-                    _, path = configs[rpc_id]
-                    path.unlink(missing_ok=True)
+                path_obj = Path(change_path)
+                self._logger.debug("memdump %r", entry_memory)
+                self._logger.debug("RPC registry watcher detected changes at: %r action: %r", change_path, change_type)
+                if change_type == Change.added:
+                     entry_memory = self._load_configs()
+                elif change_type == Change.deleted:
+                    async with self._lock:
+                        rpc_id = next(k for k, v in entry_memory.items() if v[1] == path_obj)
+                        self._entries.pop(rpc_id)
+                        entry_memory.pop(rpc_id)
+                await self._check_config_live(path_obj)
 
     # Internal helpers
 
@@ -201,13 +132,22 @@ class RPCRegistry:
                 result[entry.id] = (entry.port, path)
         return result
 
-    async def _check_config_live(self, rpc_id: str, port: int)-> bool:
+    async def _check_config_live(self, path: Path)-> bool:
         """checks if the config file is live
+
+        Takes in path to json file, reads contents.
 
         returns true if it is live, false if not
         """
+        with path.open(mode="r") as f:
+            data = json.load(f)
+        rpc_id: str = data.get("id")
+        port: int = data.get("port")
         exists = await connect_with_backoff(rpc_id, port)
-        return(bool(exists))
+        if exists:
+            async with self._lock:
+                self._entries[rpc_id] = exists
+        return bool(exists)
 
     async def _close_all(self) -> None:
         async with self._lock:
