@@ -85,17 +85,21 @@ class RPCRegistry:
     async def _heartbeat_loop(self) -> None:
         configs = self._load_configs()
         while True:
-            try:
-                #check if all configs are live
-                for rpc_id, (_, path) in configs.items():
-                    await self._check_config_live(path)
-                self._logger.info("Current active configs: %s", self._entries.keys())
-                self._logger.debug("RPC registry heartbeat check complete")
-                await asyncio.sleep(self._refresh_interval)
-            except asyncio.CancelledError:
-                raise
-            except Exception:
-                self._logger.exception("RPC registry heartbeat error")
+            if configs is not None:
+                try:
+                    #check if all configs are live
+                    for rpc_id, (_, path) in configs.items():
+                        await self._check_config_live(path)
+                    if self._entries:
+                        self._logger.info("Current active configs: %s", self._entries.keys())
+                    else:
+                        self._logger.info("No active configs found.")
+                    self._logger.info("RPC registry heartbeat check complete")
+                    await asyncio.sleep(self._refresh_interval)
+                except asyncio.CancelledError:
+                    raise
+                except Exception:
+                    self._logger.exception("RPC registry heartbeat error")
 
     # Watcher
     async def _listen(self) -> None:
@@ -110,17 +114,22 @@ class RPCRegistry:
 
         async for changes in awatch(self._directory):
             for change_type, change_path in changes:
-                path_obj = Path(change_path)
-                self._logger.debug("memdump %r", entry_memory)
-                self._logger.debug("RPC registry watcher detected changes at: %r action: %r", change_path, change_type)
-                if change_type == Change.added:
-                     entry_memory = self._load_configs()
-                elif change_type == Change.deleted:
-                    async with self._lock:
-                        rpc_id = next(k for k, v in entry_memory.items() if v[1] == path_obj)
-                        self._entries.pop(rpc_id)
-                        entry_memory.pop(rpc_id)
-                await self._check_config_live(path_obj)
+                try:
+                    path_obj = Path(change_path)
+                    self._logger.debug("memdump %r", entry_memory)
+                    self._logger.debug("RPC registry watcher detected changes at: %r action: %r", change_path, change_type)
+                    if change_type == Change.added:
+                        entry_memory = self._load_configs()
+                        await self._check_config_live(path_obj)
+                    elif change_type == Change.deleted:
+                        async with self._lock:
+                            rpc_id = next(k for k, v in entry_memory.items() if v[1] == path_obj)
+                            self._entries.pop(rpc_id)
+                            entry_memory.pop(rpc_id)
+                except asyncio.CancelledError:
+                    raise
+                except Exception:
+                    self._logger.exception("RPC registry heartbeat error")
 
     # Internal helpers
 
@@ -147,6 +156,11 @@ class RPCRegistry:
         if exists:
             async with self._lock:
                 self._entries[rpc_id] = exists
+        else:
+            async with self._lock:
+                if rpc_id in self._entries:
+                    safe_close(self._entries[rpc_id].conn)
+                    self._entries.pop(rpc_id)
         return bool(exists)
 
     async def _close_all(self) -> None:
