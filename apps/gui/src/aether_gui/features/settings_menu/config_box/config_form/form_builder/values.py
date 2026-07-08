@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from .settings_form import Getter
+from .form import Getter
 
 
 def make_getter(getters: dict[str, Callable[[], Any]]) -> Getter:

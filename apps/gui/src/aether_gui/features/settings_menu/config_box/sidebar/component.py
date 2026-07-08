@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from aether_gui.features.settings_menu.style_contracts import SETTINGS_NAV_OBJECT_NAME
+from aether_gui.features.settings_menu.styles import SETTINGS_NAV_OBJECT_NAME
 from aether_gui.utils.ui import FontPlugin, StyledComponent
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtGui import QFont

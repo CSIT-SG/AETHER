@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from aether_gui.features.settings_menu.json_object import JSON_INDENT
+from aether_gui.utils.json import JSON_INDENT
 from pydantic.fields import FieldInfo
 
 from ..fields import BoolField, FieldWidget, JsonField, StringField

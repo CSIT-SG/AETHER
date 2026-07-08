@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from aether_gui.features.settings_menu.style_contracts import (
+from aether_gui.features.settings_menu.styles import (
     DESCRIPTION_ROLE,
     SETTINGS_ROLE_PROPERTY,
     TITLE_ROLE,

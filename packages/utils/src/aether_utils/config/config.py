@@ -39,19 +39,17 @@ class ConfigManager:
     @config.setter
     def config(self, raw: dict[str, Any]) -> None:
         cfg = self.validate_config(raw)
-        if not self._write_config_file(cfg):
-            return
+        self._write_config_file(cfg)
         self._config = cfg
         self._config_file_state = self._current_config_file_state()
 
-    def _write_config_file(self, config: ConfigModel) -> bool:
+    def _write_config_file(self, config: ConfigModel) -> None:
         try:
             with open(self.config_file, "w", encoding="utf-8") as f:
                 json.dump(config.model_dump(), f, indent=2)
-            return True
-        except Exception as e:
+        except OSError as e:
             self.logger.error("Error saving config file: %s", e)
-            return False
+            raise
 
     def load_config(self) -> ConfigModel:
         if not self.config_file.is_file():
@@ -59,7 +57,12 @@ class ConfigManager:
                 "Config file not found or unreadable at %s, using defaults", self.config_file
             )
             cfg = DEFAULT_CONFIG
-            self.config = cfg.model_dump()  # persist default to disk
+            try:
+                self.config = cfg.model_dump()
+            except OSError:
+                # First-run persist failed (e.g. read-only dir); keep going with
+                # in-memory defaults rather than blocking startup.
+                self.logger.warning("Could not persist default config; using in-memory defaults.")
         else:
             self.logger.info("Loading config from %s", self.config_file)
             try:

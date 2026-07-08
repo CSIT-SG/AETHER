@@ -1,5 +1,4 @@
-from typing import Any
-
+from aether_gui.utils.json import load_json_object
 from aether_utils.config import get_config, set_config
 from aether_utils.logger import get_logger
 from PySide6 import QtWidgets
@@ -13,7 +12,6 @@ from .config_buttons import (
     create_button_row,
 )
 from .config_message import ConfigMessage, create_config_message
-from .json_object import parse_json_object
 
 SETTINGS_DIALOG_INITIAL_WIDTH = 900
 SETTINGS_DIALOG_INITIAL_HEIGHT = 600
@@ -54,6 +52,8 @@ class SettingsMenuHandler(QtWidgets.QDialog):
         # Apply is actionable only while the form has unsaved edits.
         apply_button.setEnabled(config_box.is_dirty())
         config_box.dirtyChanged.connect(apply_button.setEnabled)
+        # Surface coordinator-level failures (e.g. invalid JSON on Back) inline.
+        config_box.errorRaised.connect(text_label.show_error)
         config_box.setMinimumWidth(CONFIG_BOX_MINIMUM_WIDTH)
         config_box.setMinimumHeight(CONFIG_BOX_MINIMUM_HEIGHT)
         self._layout = layout
@@ -82,19 +82,15 @@ class SettingsMenuHandler(QtWidgets.QDialog):
     def _save_config(self) -> bool:
         self.clear_message_box()
         try:
-            formatted = self._parse_config_content()
+            formatted = load_json_object(self._config_box.get_content())
             set_config(formatted)
         except Exception as e:
             self.show_error_message()
-            save_logger.error(e)
+            # Log the real reason (JSON line/column, "not an object", or the
+            # pydantic ValidationError) — the shown message only points here.
+            save_logger.error("Settings not saved: %s", e)
             return False
         return True
-
-    def _parse_config_content(self) -> dict[str, Any]:
-        formatted = parse_json_object(self._config_box.get_content())
-        if formatted is None:
-            raise ValueError(INVALID_CONFIG_MESSAGE)
-        return formatted
 
     def on_success(self) -> None:
         # Runs after a successful Apply: clear the dirty state (which disables the

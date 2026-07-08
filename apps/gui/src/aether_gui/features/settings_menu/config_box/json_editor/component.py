@@ -2,8 +2,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from aether_gui.features.settings_menu.json_object import JSON_INDENT, parse_json_object
-from aether_gui.features.settings_menu.style_contracts import SETTINGS_JSON_OBJECT_NAME
+from aether_gui.features.settings_menu.styles import SETTINGS_JSON_OBJECT_NAME
+from aether_gui.utils.json import JSON_INDENT
 from aether_gui.utils.ui import FontPlugin, StyledComponent
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtGui import QFont
@@ -52,10 +52,6 @@ class JsonEditor(StyledComponent):
     def text(self) -> str:
         """Return the editor's raw text."""
         return self._editor.toPlainText()
-
-    def parse(self) -> dict[str, Any] | None:
-        """Parse the edited text, returning a dict or ``None`` if invalid."""
-        return parse_json_object(self.text())
 
 
 def create_json_editor(parent: QtWidgets.QWidget | None = None) -> JsonEditor:

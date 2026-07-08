@@ -3,7 +3,7 @@ from collections.abc import Sequence
 from aether_gui.utils.ui import StyledComponent
 from PySide6 import QtCore, QtWidgets
 
-from .abstract_button import ConfigButton
+from .button_base import ConfigButton
 
 
 class ButtonRow(StyledComponent):

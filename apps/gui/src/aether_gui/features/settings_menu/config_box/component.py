@@ -1,14 +1,14 @@
 import json
 from typing import Any
 
+from aether_gui.utils.json import JSON_INDENT, JSON_SORT_KEYS, load_json_object
 from aether_gui.utils.ui import StyledComponent
 from pydantic import BaseModel
 from PySide6 import QtCore, QtWidgets
 
-from ..json_object import JSON_INDENT, JSON_SORT_KEYS, parse_json_object
+from .form_view import SettingsFormView
 from .json_editor import JsonEditor
 from .search_bar import SearchBar
-from .settings_form_view import SettingsFormView
 
 INVALID_JSON_RETURN_WARNING = "Cannot return to form view: settings JSON is invalid."
 
@@ -24,6 +24,9 @@ class ConfigBox(StyledComponent):
 
     # Emitted with the current "has unsaved edits" state whenever it may change.
     dirtyChanged = QtCore.Signal(bool)
+    # Emitted with a user-facing message when an action fails (e.g. the JSON is
+    # invalid on Back). The owning dialog routes it to the status line.
+    errorRaised = QtCore.Signal(str)
 
     def __init__(
         self,
@@ -101,12 +104,17 @@ class ConfigBox(StyledComponent):
     def _show_form(self) -> None:
         """Return to the form view, rebuilding it from the edited JSON.
 
-        Stays in the JSON view if the text is not a valid JSON object, so the
-        user never loses their edits to a parse error.
+        Stays in the JSON view if the text is not a valid JSON object, so the user
+        never loses their edits to a parse error, and surfaces *why* it failed
+        (previously this was a silent no-op with only a log line).
         """
-        parsed = self._json_page.parse()
-        if parsed is None:
-            self.logger.warning(INVALID_JSON_RETURN_WARNING)
+        try:
+            # JSONDecodeError is a ValueError subclass, so this covers malformed
+            # JSON, non-object JSON and duplicate keys in one catch.
+            parsed = load_json_object(self._json_page.text())
+        except ValueError as e:
+            self.logger.warning("%s %s", INVALID_JSON_RETURN_WARNING, e)
+            self.errorRaised.emit(f"Invalid JSON: {e}")
             return
         self._install_form(parsed)
         self._stack.setCurrentWidget(self._form_view)
@@ -121,8 +129,14 @@ class ConfigBox(StyledComponent):
     # ------------------------------------------------------------------
     def _canonical(self) -> str | None:
         """Order-independent JSON of the current content, or ``None`` if invalid."""
-        data = parse_json_object(self.get_content())
-        return json.dumps(data, sort_keys=JSON_SORT_KEYS) if data is not None else None
+        try:
+            data = load_json_object(self.get_content())
+        except (TypeError, ValueError):
+            # Invalid/duplicate-key JSON, a non-object, or a non-serializable field
+            # value: treat as invalid (i.e. dirty) rather than crashing this
+            # per-keystroke check. ValueError also covers JSONDecodeError.
+            return None
+        return json.dumps(data, sort_keys=JSON_SORT_KEYS)
 
     def is_dirty(self) -> bool:
         """Whether the current content differs from the last saved state."""

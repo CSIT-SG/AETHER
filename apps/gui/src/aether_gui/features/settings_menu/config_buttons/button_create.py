@@ -2,7 +2,7 @@ from collections.abc import Callable
 
 from PySide6 import QtWidgets
 
-from .abstract_button import ConfigButton
+from .button_base import ConfigButton
 
 APPLY_BUTTON_LABEL = "Apply"
 OK_BUTTON_LABEL = "Ok"

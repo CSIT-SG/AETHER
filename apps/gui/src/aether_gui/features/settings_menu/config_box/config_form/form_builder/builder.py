@@ -8,10 +8,10 @@ from PySide6 import QtWidgets
 
 from .constants import GENERAL_CATEGORY
 from .field_factory import make_leaf_field
+from .form import Getter, SearchMeta, Section, SettingsForm
 from .introspection import iter_fields
 from .resolved_field import ResolvedField
 from .sections import section_group, section_header
-from .settings_form import Getter, SearchMeta, Section, SettingsForm
 from .values import make_getter
 
 

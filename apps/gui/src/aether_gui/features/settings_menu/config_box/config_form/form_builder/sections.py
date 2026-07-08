@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from aether_gui.features.settings_menu.style_contracts import (
+from aether_gui.features.settings_menu.styles import (
     DESCRIPTION_ROLE,
     SECTION_ROLE,
     SETTINGS_ROLE_PROPERTY,
