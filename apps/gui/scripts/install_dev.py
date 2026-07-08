@@ -67,6 +67,7 @@ def export_requirements(uv_path: str) -> Path:
             uv_path,
             "export",
             "--all-packages",
+            "--no-emit-workspace",
             "--no-hashes",
             "--output-file",
             str(requirements_path),
