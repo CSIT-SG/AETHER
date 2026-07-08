@@ -17,6 +17,9 @@ SYSTEM_PROMPT = get_content(Path(__file__).parent, "prompt.md")
 
 
 async def annotate(service: Any, function_address: str | int, custom_prompt: str | None) -> Program:
+    if config.backup:
+        service.take_snapshot()
+
     agent = Agent(
         name="Annotator",
         model=OpenAIGateway().get_model(
