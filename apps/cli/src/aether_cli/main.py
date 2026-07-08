@@ -1,4 +1,5 @@
 import argparse
+import threading
 
 from .runners import mcp_runner, rpc_runner
 
@@ -10,5 +11,15 @@ def aether_cli() -> None:
     parser.add_argument("--host", default="127.0.0.1", help="Host to bind on (default: 127.0.0.1)")
 
     args = parser.parse_args()
-    mcp_runner(args.host)
-    rpc_runner(args.idb, args.ida_dir, args.host)
+    mcp_thread = threading.Thread(
+        target=mcp_runner,
+        args=(args.host,),
+        daemon=True,
+        name="mcp-server",
+    )
+    mcp_thread.start()
+
+    try:
+        rpc_runner(args.idb, args.ida_dir, args.host)
+    finally:
+        mcp_thread.join(timeout=5)
