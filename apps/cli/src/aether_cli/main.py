@@ -1,6 +1,7 @@
 import argparse
+import contextlib
 import multiprocessing as mp
-import time
+from multiprocessing import connection
 
 from aether_utils.config import get_config, get_config_file_path
 from aether_utils.logger import get_logger
@@ -8,6 +9,13 @@ from aether_utils.logger import get_logger
 from .runners import mcp_runner, rpc_runner
 
 logger = get_logger("AETHER CLI")
+
+
+def _shutdown(proc: mp.Process, timeout: float = 10.0) -> None:
+    proc.join(timeout)
+    if proc.is_alive():
+        proc.terminate()
+        proc.join()
 
 
 def aether_cli() -> None:
@@ -18,7 +26,7 @@ def aether_cli() -> None:
 
     args = parser.parse_args()
 
-    get_config()
+    logger.info(f"Config: {get_config()}")
     logger.info(f"Config file can be found at {get_config_file_path()}")
 
     mp.set_start_method("spawn", force=True)
@@ -37,11 +45,8 @@ def aether_cli() -> None:
     )
     mcp_proc.start()
 
-    try:
-        while rpc_proc.is_alive() and mcp_proc.is_alive():
-            time.sleep(0.2)
-    except KeyboardInterrupt:
-        pass
+    with contextlib.suppress(KeyboardInterrupt):
+        connection.wait([rpc_proc.sentinel, mcp_proc.sentinel])
 
-    rpc_proc.join()
-    mcp_proc.join()
+    _shutdown(rpc_proc)
+    _shutdown(mcp_proc)
