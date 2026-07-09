@@ -58,7 +58,7 @@ class ConfigManager:
             )
             cfg = DEFAULT_CONFIG
             try:
-                self.config = cfg.model_dump() # type: ignore
+                self.config = cfg.model_dump()
             except OSError:
                 # First-run persist failed (e.g. read-only dir); keep going with
                 # in-memory defaults rather than blocking startup.

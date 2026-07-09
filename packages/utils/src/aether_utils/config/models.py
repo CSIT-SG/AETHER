@@ -127,7 +127,7 @@ class ConfigModel(BaseModel):
         description="Whether to enable debug mode, which may include more verbose logging and additional output for debugging purposes.",
     )
     backup: bool | None = Field(
-        default=True, description="Whether to enable backups before performing destructive actions"
+        default=True, description="Whether to enable backups before performing destructive actions."
     )
     experimental: bool | None = Field(
         default=None,

@@ -6,18 +6,27 @@ In IDA, go to **Edit -> Plugins -> AETHER Settings** to configure the plugin.
 
 The configuration is structured as a set of nested sections. Each section and its fields are described below.
 
+## General Fields
+
+These fields are located at the top level of the configuration file.
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `debug` | `boolean \| null` | No | Whether to enable debug mode, which may include more verbose logging and additional output for debugging purposes. |
+| `experimental` | `boolean \| null` | No | Whether to enable experimental features, which may be unstable or in development. |
+| `backup` | `boolean \| null` | No | Whether to enable backups before performing destructive actions. |
 
 ## `provider` (required)
 
-Configures the language model provider that AETHER communicates with. 
+Configures the language model provider that AETHER communicates with.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `gateway_url` | `string` | Yes | The base URL for the provider's API gateway. |
-| `api_key` | `string \| null` | No | The API key for the provider. Take note that you must set this field for most features to work. Defaults to `null`. |
-| `models` | `object` | No | A mapping of friendly names to model IDs for this provider (e.g. `{"fast": "gpt-4o-mini", "smart": "gpt-4o"}`). |
-| `default_model` | `string` | Yes | The friendly name of the model to use when no other model is specified. Must be a key present in `models`. eg. if `models` contains `"fast": "gpt-4o-mini"`, then `default_model` can be `"fast"`. |
-| `extra_body` | `object` | No | Any additional body parameters to include in every request to this provider. |
+| `api_key` | `string \| null` | No | The API key for the provider. |
+| `models` | `object` | No | A mapping of friendly names to model ids for this provider. |
+| `default_model` | `string` | Yes | Friendly name of default model to fall back to. |
+| `extra_body` | `object \| null` | No | Any extra body parameters to include in requests to this provider, e.g. `{"reasoning": {"effort": "high"}}` or `{"transforms": ["middle-out"]}`. |
 
 <Callout>
   The `default_model` must be one of the keys defined in `models`. AETHER will raise an error on startup if this constraint is violated.
@@ -25,16 +34,17 @@ Configures the language model provider that AETHER communicates with.
 
 ## `subagents` (optional)
 
-Overrides the model used for specific internal subagents. Each field accepts a friendly model name that must exist as a key in [`provider.models`](#provider-required). 
+Overrides the model used for specific internal subagents. Each field accepts a friendly model name that must exist as a key in [`provider.models`](#provider-required).
+
 If a field is omitted, the subagent falls back to [`provider.default_model`](#provider-required).
 
-| Field | Type | Description |
-|---|---|---|
-| `gatherer_model` | `string \| null` | Model override for the **gatherer** subagent. |
-| `annotator_model` | `string \| null` | Model override for the **annotator** subagent. |
-| `single_analysis_model` | `string \| null` | Model override for the **single analysis** subagent. |
-| `struct_creator_model` | `string \| null` | Model override for the **structure creator** subagent. |
-| `index_agent_model` | `string \| null` | Model override for the **index agent** subagent. |
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `gatherer_model` | `string \| null` | No | Model override for the gatherer subagent. |
+| `annotator_model` | `string \| null` | No | Model override for the annotator subagent. |
+| `single_analysis_model` | `string \| null` | No | Model override for the single analysis subagent. |
+| `struct_creator_model` | `string \| null` | No | Model override for the structure creator subagent. |
+| `index_agent_model` | `string \| null` | No | Model override for the index agent subagent. |
 
 <Callout>
   Any non-null model name must be a key defined in `provider.models`.
@@ -48,27 +58,18 @@ Controls feature flags and component-level parameters. Each sub-key accepts a fr
     Not yet fully implemented/documented.
 </Callout>
 
-| Field | Type | Description |
-|---|---|---|
-| `annotator` | `object \| null` | Feature flags and parameters for the **annotator** component. |
-| `deobfuscator` | `object \| null` | Feature flags and parameters for the **deobfuscator** component. |
-| `chatbot` | `object \| null` | Feature flags and parameters for the **chatbot** component. |
-| `gatherer` | `object \| null` | Feature flags and parameters for the **gatherer** component. |
-
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `annotator` | `object \| null` | No | Feature flags and parameters for the annotator component. |
+| `deobfuscator` | `object \| null` | No | Feature flags and parameters for the deobfuscator component. |
+| `chatbot` | `object \| null` | No | Feature flags and parameters for the chatbot component. |
+| `gatherer` | `object \| null` | No | Feature flags and parameters for the gatherer component. |
 
 ## `tls` (optional)
 
 Configures mutual TLS (mTLS) for providers that require client certificate authentication.
 
-| Field | Type | Description |
-|---|---|---|
-| `client_cert_path` | `string \| null` | Path to the client certificate file. Defaults to `null` (disabled). |
-| `client_key_path` | `string \| null` | Path to the client private key file. Defaults to `null` (disabled). |
-
-
-## `debug` (optional)
-
-| Field | Type | Default | Description |
+| Field | Type | Required | Description |
 |---|---|---|---|
-| `debug` | `boolean \| null` | `null` | When `true`, enables debug mode with verbose logging and additional diagnostic output. |
-
+| `client_cert_path` | `string \| null` | No | Path to the client certificate for mutual TLS authentication, if required by the provider. |
+| `client_key_path` | `string \| null` | No | Path to the client private key for mutual TLS authentication, if required by the provider. |
