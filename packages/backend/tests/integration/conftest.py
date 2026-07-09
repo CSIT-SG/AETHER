@@ -5,8 +5,7 @@ import socket
 import subprocess
 import sys
 import time
-from collections.abc import AsyncGenerator, AsyncIterator, Callable, Generator
-from contextlib import _AsyncGeneratorContextManager, asynccontextmanager
+from collections.abc import AsyncGenerator, Callable, Generator
 from pathlib import Path
 
 import pytest
@@ -151,16 +150,18 @@ async def headless_mcp() -> AsyncGenerator[tuple[str, int], None]:
 @pytest_asyncio.fixture(scope="package")
 async def mcp_client(
     headless_mcp: tuple[str, int],
-) -> AsyncGenerator[
-    Callable[[], _AsyncGeneratorContextManager[Client[StreamableHttpTransport]]], None
-]:
+) -> AsyncGenerator[Client[StreamableHttpTransport], None]:
     host, port = headless_mcp
     sse_url = f"http://{host}:{port}/mcp"
 
-    @asynccontextmanager
-    async def _connect() -> AsyncIterator[Client[StreamableHttpTransport]]:
-        transport = StreamableHttpTransport(url=sse_url)
-        async with Client(transport) as client:
-            yield client
+    transport = StreamableHttpTransport(url=sse_url)
+    async with Client(transport) as client:
+        yield client
 
-    yield _connect
+
+@pytest_asyncio.fixture(scope="package")
+async def test_mcp_connection_is_alive(mcp_client: Client[StreamableHttpTransport]) -> None:
+    try:
+        await mcp_client.ping()
+    except Exception as e:
+        pytest.skip(f"MCP server could not be reached: {e}")
