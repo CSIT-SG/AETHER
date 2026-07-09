@@ -3,9 +3,6 @@ from __future__ import annotations
 import json
 from typing import Any
 
-JSON_INDENT = 2
-JSON_SORT_KEYS = True
-
 
 def _reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     """``object_pairs_hook`` that rejects duplicate keys instead of silently

@@ -1,5 +1,5 @@
-from aether_gui.utils.json import load_json_object
 from aether_utils.config import get_config, set_config
+from aether_utils.json import load_json_object
 from aether_utils.logger import get_logger
 from PySide6 import QtWidgets
 

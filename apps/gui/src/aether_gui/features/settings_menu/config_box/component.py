@@ -1,8 +1,9 @@
 import json
 from typing import Any
 
-from aether_gui.utils.json import JSON_INDENT, JSON_SORT_KEYS, load_json_object
+from aether_gui.utils.json_format import JSON_INDENT, JSON_SORT_KEYS
 from aether_gui.utils.ui import StyledComponent
+from aether_utils.json import load_json_object
 from pydantic import BaseModel
 from PySide6 import QtCore, QtWidgets
 

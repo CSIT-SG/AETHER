@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from aether_gui.utils.json import JSON_INDENT
+from aether_gui.utils.json_format import JSON_INDENT
 from PySide6 import QtCore, QtGui, QtWidgets
 
 from .base import FieldWidget

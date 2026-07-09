@@ -22,6 +22,44 @@ Requires:
 
 For more information, go to the respective package `README.md`.
 
+## Config migration tool
+
+If you want to carry an old install's config into AETHER Next, use the one-shot
+migration tool at `scripts/migrate_legacy_config`. It brings settings from a
+legacy `AppData\Local\AETHER-IDA` install into the current `AETHER-next` global config.
+
+**`cd` into the tool's directory and run it from there** (`python .` runs the
+package):
+
+```sh
+cd scripts/migrate_legacy_config
+
+# Dry run first: show what would change and which legacy fields are dropped.
+uv run python . --source AETHER-IDA --dry-run --dropped
+
+# Write a migration report without touching the destination config.
+# Omit the path and it writes migration-report.json into this directory.
+uv run python . --source AETHER-IDA --dry-run --report
+
+# Migrate a specific file instead of auto-discovering legacy install paths.
+uv run python . --source-path path\to\config.json
+
+# Drop --dry-run to actually write the AETHER Next config (will backup existing AETHER Next config).
+uv run python . --source AETHER-IDA
+```
+
+The tool only migrates settings AETHER Next exposes as static `ConfigModel` fields and runtime-supported values. If a legacy field has no static AETHER Next setting yet, keep it in `DROPPED_FIELD_NOTES` in `scripts/migrate_legacy_config/mapping.py`.
+
+When adding support for a dropped legacy setting:
+
+1. Add a typed Pydantic field in `packages/utils/src/aether_utils/config/models.py`.
+2. Ensure runtime code actually reads the new setting.
+3. Move the legacy key from `DROPPED_FIELD_NOTES` to `FIELD_MAPPINGS`.
+4. Update `scripts/migrate_legacy_config/tests/test_migration.py`.
+5. Run `uv run pytest scripts/migrate_legacy_config/tests/test_migration.py`.
+
+See `scripts/migrate_legacy_config/README.md` for the module layout and flag reference.
+
 ## Release
 
 Releases are published via the [`release.yml`](workflows/release.yml) GitHub Actions workflow.

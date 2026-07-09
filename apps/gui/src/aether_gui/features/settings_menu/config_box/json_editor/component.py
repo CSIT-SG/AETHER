@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any
 
 from aether_gui.features.settings_menu.styles import SETTINGS_JSON_OBJECT_NAME
-from aether_gui.utils.json import JSON_INDENT
+from aether_gui.utils.json_format import JSON_INDENT
 from aether_gui.utils.ui import FontPlugin, StyledComponent
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtGui import QFont
