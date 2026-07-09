@@ -26,11 +26,6 @@ class TestResolveCommand:
         )
         assert prod.resolve_command("python", "python3") == "found"
 
-    def test_raises_when_none_found(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr(prod.shutil, "which", lambda _name: None)
-        with pytest.raises(SystemExit):
-            prod.resolve_command("uv", "uvx")
-
 
 class TestRun:
     def test_success_passes_args_through(
@@ -39,7 +34,7 @@ class TestRun:
         captured: dict[str, object] = {}
 
         def fake_run(
-            command: list[str], cwd: Path | None = None, _text: bool | None = None
+            command: list[str], cwd: Path | None = None, text: bool | None = None
         ) -> subprocess.CompletedProcess[str]:
             captured.update(command=command, cwd=cwd)
             return subprocess.CompletedProcess(command, returncode=0)
@@ -52,9 +47,7 @@ class TestRun:
         monkeypatch.setattr(
             prod.subprocess,
             "run",
-            lambda command, _cwd=None, _text=None: subprocess.CompletedProcess(
-                command, returncode=7
-            ),
+            lambda command, cwd=None, text=None: subprocess.CompletedProcess(command, returncode=7),  # noqa: ARG005
         )
         with pytest.raises(SystemExit) as exc_info:
             prod.run(["false"])

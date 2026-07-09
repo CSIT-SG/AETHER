@@ -20,8 +20,8 @@ jobs:
           docker rm docs-extract
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: docs-standalone
           path: docs-standalone
-          retention-days: 7
+          retention-days: 5
