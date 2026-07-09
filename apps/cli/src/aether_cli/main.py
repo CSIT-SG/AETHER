@@ -1,5 +1,6 @@
 import argparse
-import threading
+import multiprocessing as mp
+import time
 
 from .runners import mcp_runner, rpc_runner
 
@@ -11,15 +12,27 @@ def aether_cli() -> None:
     parser.add_argument("--host", default="127.0.0.1", help="Host to bind on (default: 127.0.0.1)")
 
     args = parser.parse_args()
-    mcp_thread = threading.Thread(
+    mp.set_start_method("spawn", force=True)
+
+    rpc_proc = mp.Process(
+        target=rpc_runner,
+        args=(args.idb, args.ida_dir, args.host),
+        name="rpc-server",
+    )
+    rpc_proc.start()
+
+    mcp_proc = mp.Process(
         target=mcp_runner,
         args=(args.host,),
-        daemon=True,
         name="mcp-server",
     )
-    mcp_thread.start()
+    mcp_proc.start()
 
     try:
-        rpc_runner(args.idb, args.ida_dir, args.host)
-    finally:
-        mcp_thread.join(timeout=5)
+        while rpc_proc.is_alive() and mcp_proc.is_alive():
+            time.sleep(0.2)
+    except KeyboardInterrupt:
+        pass
+
+    rpc_proc.join()
+    mcp_proc.join()

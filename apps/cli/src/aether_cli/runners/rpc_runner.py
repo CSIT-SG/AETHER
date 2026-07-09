@@ -5,9 +5,8 @@ import threading
 from threading import Event
 
 from aether_utils.file_id import file_id
+from aether_utils.get_port import get_port
 from aether_utils.logger import get_logger
-
-from aether_cli.utils import get_port
 
 logger = get_logger("rpc_headless_plugin")
 
