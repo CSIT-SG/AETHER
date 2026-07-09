@@ -29,6 +29,7 @@ dependencies = [
     { name = "openai-agents" },
     { name = "pydantic" },
     { name = "rpyc" },
+    { name = "watchfiles" },
 ]
 
 [package.metadata]
@@ -39,6 +40,7 @@ requires-dist = [
     { name = "openai-agents", specifier = ">=0.17.5" },
     { name = "pydantic" },
     { name = "rpyc", specifier = ">=6.0.1" },
+    { name = "watchfiles", specifier = ">=1.2.0" },
 ]
 
 [[package]]
@@ -81,9 +83,6 @@ requires-dist = [
 name = "aether-next"
 version = "0.1.0"
 source = { virtual = "." }
-dependencies = [
-    { name = "watchfiles" },
-]
 
 [package.dev-dependencies]
 dev = [
@@ -98,7 +97,6 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "watchfiles", specifier = ">=1.2.0" }]
 
 [package.metadata.requires-dev]
 dev = [
