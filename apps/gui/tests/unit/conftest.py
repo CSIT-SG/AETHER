@@ -11,7 +11,7 @@ if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="package")
 def symlink_supported() -> bool:
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp_path = Path(tmp_dir)

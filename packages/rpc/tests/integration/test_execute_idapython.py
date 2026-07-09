@@ -3,7 +3,8 @@ import pytest
 import rpyc
 
 
-@pytest.mark.dependency(depends=["connection"], scope="session")
+@pytest.mark.dependency(depends=["connection"], scope="package")
+@pytest.mark.order(after="test_connection.py::TestLiveCapabilities::test_connection_is_alive")
 class TestExecuteIDAPython:
     """Tests for valid code execution, output capture, IDA API access, and error handling."""
 

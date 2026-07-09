@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 import rpyc
 
-HEADLESS_PORT = 57000
+HEADLESS_PORT = 57001
 ENTRYPOINT = Path(__file__).parent.parent.parent / "scripts" / "run_headless.py"
 
 
@@ -24,12 +24,12 @@ def _port_is_free(port: int) -> bool:
             return False
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="package")
 def BIN_NAME() -> str:
     return "basic"
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="package")
 def ida_dir() -> str:
     d = os.environ.get("IDADIR", "")
     if not d:
@@ -37,7 +37,7 @@ def ida_dir() -> str:
     return d
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="package")
 def headless_ida(
     get_binary: Callable[..., Path], ida_dir: str, BIN_NAME
 ) -> Generator[tuple[str, int], None, None]:
@@ -96,7 +96,7 @@ def headless_ida(
         proc.kill()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="package")
 def ida_client(headless_ida: tuple[str, int]) -> Generator[rpyc.Connection, None, None]:
     host, port = headless_ida
     conn = rpyc.connect(host, port, config={"allow_public_attrs": True})

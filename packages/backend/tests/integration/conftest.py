@@ -31,7 +31,7 @@ def _port_is_free(port: int) -> bool:
             return False
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="package")
 def ida_dir() -> str:
     d = os.environ.get("IDADIR", "")
     if not d:
@@ -39,7 +39,7 @@ def ida_dir() -> str:
     return d
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="package", autouse=True)
 def headless_ida(
     get_binary: Callable[..., Path], ida_dir: str
 ) -> Generator[subprocess.Popen[str], None, None]:
@@ -100,7 +100,7 @@ def headless_ida(
         proc.kill()
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture(scope="package")
 async def headless_mcp() -> AsyncGenerator[tuple[str, int], None]:
     host = "127.0.0.1"
 
@@ -148,7 +148,7 @@ async def headless_mcp() -> AsyncGenerator[tuple[str, int], None]:
         proc.wait()
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture(scope="package")
 async def mcp_client(
     headless_mcp: tuple[str, int],
 ) -> AsyncGenerator[

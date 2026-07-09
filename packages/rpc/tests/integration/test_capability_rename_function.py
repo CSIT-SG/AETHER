@@ -3,7 +3,8 @@ import pytest
 import rpyc
 
 
-@pytest.mark.dependency(depends=["connection"], scope="session")
+@pytest.mark.dependency(depends=["connection"], scope="package")
+@pytest.mark.order(after="test_connection.py::TestLiveCapabilities::test_connection_is_alive")
 class TestRenameFunction:
     def test_renames_function(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.rename_function(

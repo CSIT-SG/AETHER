@@ -3,11 +3,14 @@ from contextlib import _AsyncGeneratorContextManager
 
 import pytest
 from fastmcp import Client
+from fastmcp.client.transports import StreamableHttpTransport
 
 
 @pytest.mark.asyncio
-@pytest.mark.dependency(name="connection", scope="session")
-async def test_fastmcp_lists_tools(mcp_client: Callable[[], _AsyncGeneratorContextManager[Client]]):
+@pytest.mark.dependency(name="connection", scope="package")
+async def test_mcp_connection(
+    mcp_client: Callable[[], _AsyncGeneratorContextManager[Client[StreamableHttpTransport]]],
+) -> None:
     """Verifies that the MCP server can return tools from the RPC server."""
     # Await the high-level fastmcp method directly
     async with mcp_client() as client:

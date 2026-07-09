@@ -3,7 +3,8 @@ import pytest
 import rpyc
 
 
-@pytest.mark.dependency(depends=["connection"], scope="session")
+@pytest.mark.dependency(depends=["connection"], scope="package")
+@pytest.mark.order(after="test_connection.py::TestLiveCapabilities::test_connection_is_alive")
 class TestGetFunctionByName:
     def test_finds_main_by_name(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.get_function_by_name(function_name="main")

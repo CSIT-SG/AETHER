@@ -7,7 +7,8 @@ def count_nodes(node: dict) -> int:
     return 1 + sum(count_nodes(child) for child in node["children"])
 
 
-@pytest.mark.dependency(depends=["connection"], scope="session")
+@pytest.mark.dependency(depends=["connection"], scope="package")
+@pytest.mark.order(after="test_connection.py::TestLiveCapabilities::test_connection_is_alive")
 class TestGetFunctionsCalledRecursively:
     """Tests for get_functions_called_recursively capability."""
 

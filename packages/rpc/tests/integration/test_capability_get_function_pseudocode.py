@@ -3,7 +3,8 @@ import pytest
 import rpyc
 
 
-@pytest.mark.dependency(depends=["connection"], scope="session")
+@pytest.mark.dependency(depends=["connection"], scope="package")
+@pytest.mark.order(after="test_connection.py::TestLiveCapabilities::test_connection_is_alive")
 class TestGetFunctionPseudocode:
     """Tests for Getting Function Pseudocode"""
 
