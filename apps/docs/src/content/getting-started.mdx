@@ -3,6 +3,7 @@ import { Callout, FileTree } from 'nextra/components'
 
 # Getting Started
 
+You should install one of of our clients (CLI or GUI) to use AETHER. You also need to set up and configure an LLM gateway to use AETHER.
 
 ## System Requirements
 
@@ -58,7 +59,7 @@ python install_prod.py
 This will install the wheel bundles and copy the plugin entrypoint into the IDA plugins folder.
 
 
-### Headless Command-Line Interface (CLI)
+## Headless Command-Line Interface (CLI)
 
 Download the release binaries. The files are laid out in the following structure: 
 
@@ -91,3 +92,58 @@ python entrypoint.py --idb C:/path/to/your/idb/example.exe.i64 --ida-dir "C:/Pro
 ```
 
 You can then use the output port to [connect your agent](https://modelcontextprotocol.io/) to the MCP server.
+
+## Setting up an LLM Gateway
+
+Choose from any OpenAI-compatible LLM gateway. You should target at least a 7B parameter model for average performance.
+
+### OpenRouter
+
+Choose a model on [OpenRouter](https://openrouter.ai/) and generate an API key. Then your config will look like:
+
+```json
+{
+    "provider": {
+        "gateway_url": "https://openrouter.ai/api/v1",
+        "api_key": "YOUR_API_KEY",
+        "models": {
+            "claude-sonnet-5": "anthropic/claude-sonnet-5",
+            "qwen3.5-9b": "qwen/qwen3.5-9b",
+        },
+        "default_model": "claude-sonnet-5",
+    },
+    ...rest of your config
+}
+```
+
+### llama.cpp (llama-server)
+
+Follow their [install guide](https://github.com/ggml-org/llama.cpp#quick-start) to set up a `llama-server` instance.
+
+For example, running the following command will start a `llama-server` instance with [huggingface's `Qwen2.5-7B-Instruct-GGUF`](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct-GGUF) model on port `8080`:
+```bash
+llama-server -hf bartowski/Qwen2.5-7B-Instruct-GGUF:Q4_K_M
+```
+
+Then your config will look like:
+
+```json
+{
+    "provider": {
+        "gateway_url": "http://localhost:8080/v1",
+        "api_key": null,
+        "models": {
+        "qwen-7b": "bartowski/Qwen2.5-7B-Instruct-GGUF:Q4_K_M"
+        },
+        "default_model": "qwen-7b",
+        "extra_body": null
+    },
+  ...rest of your config
+}
+```
+
+If you need to support authentication, generate an API keyon the `llama-server` instance and set it in your config in `provider.api_key`.
+
+
+### LiteLLM
+
