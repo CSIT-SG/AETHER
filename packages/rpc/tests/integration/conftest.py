@@ -102,3 +102,8 @@ def ida_client(headless_ida: tuple[str, int]) -> Generator[rpyc.Connection, None
     conn = rpyc.connect(host, port, config={"allow_public_attrs": True})
     yield conn
     conn.close()
+
+
+@pytest.fixture(scope="package")
+def test_connection_is_alive(ida_client: rpyc.Connection) -> None:
+    assert ida_client.root is not None

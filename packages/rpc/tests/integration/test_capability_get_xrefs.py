@@ -3,8 +3,7 @@ import pytest
 import rpyc
 
 
-@pytest.mark.dependency(depends=["connection"], scope="package")
-@pytest.mark.order(after="test_connection.py::TestLiveCapabilities::test_connection_is_alive")
+@pytest.mark.dependency(scope="package")
 class TestGetXrefsTo:
     def test_get_xrefs_to_main(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.get_xrefs_to(location="main")

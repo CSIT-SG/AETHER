@@ -3,8 +3,7 @@ import pytest
 import rpyc
 
 
-@pytest.mark.dependency(depends=["connection"], scope="package")
-@pytest.mark.order(after="test_connection.py::TestLiveCapabilities::test_connection_is_alive")
+@pytest.mark.dependency(scope="package")
 class TestSetComment:
     """Testing SetComment Uses Separate custom function 'foo_comment' to avoid clashing with other test cases"""
 

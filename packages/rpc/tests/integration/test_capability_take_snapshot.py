@@ -6,8 +6,7 @@ import pytest
 import rpyc
 
 
-@pytest.mark.dependency(depends=["connection"], scope="package")
-@pytest.mark.order(after="test_connection.py::TestLiveCapabilities::test_connection_is_alive")
+@pytest.mark.dependency(scope="package")
 class TestTakeSnapshot:
     """Verifies that take_snapshot writes a snapshot file into the binary's directory."""
 
