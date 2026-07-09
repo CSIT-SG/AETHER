@@ -184,6 +184,7 @@ class RPCRegistry:
                 self._entries[entry.id] = exists
             else:
                 self._entries.pop(entry.id, None)
+                path.unlink(missing_ok=True)
             if old is not None and old is not exists:
                 safe_close(old.conn)
         return bool(exists)
