@@ -4,6 +4,9 @@ import shutil
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Any
+
+type JSONObject = dict[str, Any]
 
 
 def user_data_dir(appname: str, appauthor: str | None) -> Path:
@@ -43,7 +46,7 @@ MAPPING = {
 }
 
 
-def assign(root: dict, dotted: str, value: object) -> None:
+def assign(root: JSONObject, dotted: str, value: Any) -> None:
     *parents, leaf = dotted.split(".")
     for part in parents:
         root = root.setdefault(part, {})
@@ -56,7 +59,7 @@ if not LEGACY_PATH.is_file():
 legacy = json.loads(LEGACY_PATH.read_text("utf-8"))
 id_to_name = {mid: name for name, mid in legacy.get("MODEL_LIST", {}).items()}
 
-new: dict = {}
+new: JSONObject = {}
 for key, dotted in MAPPING.items():
     if key not in legacy:
         continue
@@ -69,8 +72,8 @@ for key, dotted in MAPPING.items():
 
 # Enough validation that AETHER Next can load the result (it does the full
 # pydantic validation itself on startup).
-provider = new.get("provider", {})
-models = provider.get("models", {})
+provider: JSONObject = new.get("provider", {})
+models: JSONObject = provider.get("models", {})
 if not provider.get("gateway_url"):
     sys.exit("Legacy config is missing OPENAI_BASE_URL.")
 if provider.get("default_model") not in models:

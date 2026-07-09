@@ -2,11 +2,8 @@
 
 One-shot migration of a legacy `AETHER-IDA` config into the current AETHER Next config.
 
-Self-contained: [`__main__.py`](__main__.py) is a single standard-library-only
-file. No repo build, no `uv`, no `pip install` — grab it and run:
-
 ```sh
-python __main__.py
+python -m scripts.migrate_config.run
 ```
 
 It reads the legacy `AETHER-IDA` config, converts the settings AETHER Next
