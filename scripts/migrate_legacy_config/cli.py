@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from .candidates import choose_candidate, discover_candidates
-from .mapping import DROPPED_FIELD_NOTES
+from .mapping import DROPPED_FIELD_NOTES, FIELD_MAPPINGS
 from .migration import normalize_legacy_config
 from .paths import current_config_path, legacy_sources
 from .schema import ConfigCandidate, RejectedCandidate
@@ -21,6 +21,11 @@ from .storage import (
 PACKAGE_DIR = Path(__file__).resolve().parent
 DEFAULT_REPORT_NAME = "migration-report.json"
 DEFAULT_REPORT_PATH = PACKAGE_DIR / DEFAULT_REPORT_NAME
+
+# Legacy key -> dotted destination path in the new config, for display.
+TARGET_BY_LEGACY_KEY = {
+    mapping.legacy_key: ".".join(mapping.target_path) for mapping in FIELD_MAPPINGS
+}
 
 
 def print_rejections(rejected: list[RejectedCandidate]) -> None:
@@ -41,6 +46,17 @@ def print_ambiguous(candidates: list[ConfigCandidate]) -> None:
 def print_dropped_notes() -> None:
     for key, note in DROPPED_FIELD_NOTES.items():
         print(f"Dropped {key}: {note}")
+
+
+def print_migrated_keys(candidate: ConfigCandidate) -> None:
+    if not candidate.migrated_keys:
+        print("Migrated 0 legacy keys: (none)")
+        return
+    print(f"Migrated {len(candidate.migrated_keys)} legacy keys:")
+    width = max(len(key) for key in candidate.migrated_keys)
+    for key in candidate.migrated_keys:
+        target = TARGET_BY_LEGACY_KEY.get(key, "?")
+        print(f"  {key.ljust(width)} -> {target}")
 
 
 def print_unmapped_keys(candidate: ConfigCandidate) -> None:
@@ -158,6 +174,7 @@ def main() -> int:
     destination_path = args.destination_path or current_config_path()
     print(f"Selected {selected.source} config: {selected.path}")
     print(f"Destination: {destination_path}")
+    print_migrated_keys(selected)
     print_unmapped_keys(selected)
 
     if args.dropped:

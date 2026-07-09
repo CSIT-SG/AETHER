@@ -169,6 +169,35 @@ def test_backup_existing_config_noop_when_absent(tmp_path: Path) -> None:
     assert backup_existing_config(tmp_path / "missing.json") is None
 
 
+def test_print_migrated_keys_lists_transferred(capsys) -> None:
+    from scripts.migrate_legacy_config.cli import print_migrated_keys
+
+    candidate = ConfigCandidate(
+        source="AETHER-IDA",
+        path=Path("legacy.json"),
+        config={},
+        digest="d",
+        modified=datetime(2026, 1, 1),
+        migrated_keys=("OPENAI_MODEL", "DEBUG"),
+        dropped_keys=(),
+        unmapped_keys=(),
+    )
+
+    print_migrated_keys(candidate)
+    out = capsys.readouterr().out
+    assert "Migrated 2 legacy keys:" in out
+    # Each transferred key is shown mapped to its destination path.
+    assert "OPENAI_MODEL -> provider.default_model" in out
+    assert "DEBUG        -> debug" in out
+
+
+def test_print_migrated_keys_handles_none(capsys) -> None:
+    from scripts.migrate_legacy_config.cli import print_migrated_keys
+
+    print_migrated_keys(_candidate("AETHER-IDA", "d", datetime(2026, 1, 1)))
+    assert "Migrated 0 legacy keys: (none)" in capsys.readouterr().out
+
+
 def test_write_migration_report_writes_json(tmp_path: Path) -> None:
     from scripts.migrate_legacy_config.cli import write_migration_report
 

@@ -58,7 +58,7 @@ When adding support for a dropped legacy setting:
 4. Update `scripts/migrate_legacy_config/tests/test_migration.py`.
 5. Run `uv run pytest scripts/migrate_legacy_config/tests/test_migration.py`.
 
-See `scripts/migrate_legacy_config/README.md` for the module layout and flag reference.
+See [scripts/migrate_legacy_config/README.md]([scripts/migrate_legacy_config/README.md) for the module layout and flag reference.
 
 ## Release
 

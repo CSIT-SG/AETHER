@@ -39,6 +39,11 @@ If exactly one legacy config family is present, `--source` can be omitted.
 
 `--source` and `--source-path` are mutually exclusive.
 
+Every run prints the legacy keys that transferred successfully, each shown mapped
+to its destination path (e.g. `OPENAI_MODEL -> provider.default_model`), plus any
+unmapped keys — no flag needed. `--dropped` additionally lists the keys
+deliberately not migrated, and `--report` captures all three sets to a file.
+
 ## Behavior
 
 - Discovers known legacy config locations in `paths.py`, or accepts one explicit `--source-path`.
