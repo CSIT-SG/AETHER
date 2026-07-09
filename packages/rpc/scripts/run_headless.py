@@ -8,7 +8,8 @@ from os import environ
 from pathlib import Path
 from threading import Event
 
-from aether_rpc.executors.headless_executor import HeadlessExecutor, configure_idapro
+from aether_rpc.executors.headless_executor import HeadlessExecutor
+from aether_utils.configure_ida import configure_ida
 from aether_utils.file_id import file_id
 from aether_utils.logger import get_logger
 
@@ -23,7 +24,7 @@ def main(
     on_ready: Callable[[str, int], None] | None = None,
     stop_event: Event | None = None,
 ) -> None:
-    configure_idapro(ida_install_dir)
+    configure_ida(ida_install_dir)
 
     import aether_rpc.capabilities as caps
     from aether_rpc.server import RPCServer

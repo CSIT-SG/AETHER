@@ -1,21 +1,14 @@
-import os
 import queue
-import sys
 from collections.abc import Callable
 from concurrent.futures import Future
 from typing import Any, cast
 
 import idapro
+from aether_utils.configure_ida import configure_ida
 
 from .base import IDAExecutor
 
 _SENTINEL = object()
-
-
-def configure_idapro(ida_install_dir: str) -> None:
-    os.environ.setdefault("IDADIR", ida_install_dir)
-    if ida_install_dir not in sys.path:
-        sys.path.insert(0, ida_install_dir)
 
 
 class HeadlessExecutor(IDAExecutor):
@@ -64,7 +57,7 @@ class HeadlessExecutor(IDAExecutor):
             self._db_open = False
 
     def startup(self) -> None:
-        configure_idapro(self._ida_install_dir)
+        configure_ida(self._ida_install_dir)
         result = idapro.open_database(
             self._idb_path,
             run_auto_analysis=True,

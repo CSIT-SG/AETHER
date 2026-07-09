@@ -4,6 +4,7 @@ import sys
 import threading
 from threading import Event
 
+from aether_utils.configure_ida import configure_ida
 from aether_utils.file_id import file_id
 from aether_utils.get_port import get_port
 from aether_utils.logger import get_logger
@@ -16,11 +17,11 @@ def rpc_runner(
     ida_install_dir: str,
     host: str = "127.0.0.1",
 ) -> None:
-    import aether_rpc.capabilities as caps
-    from aether_rpc.executors.headless_executor import HeadlessExecutor, configure_idapro
-    from aether_rpc.server import RPCServer
+    configure_ida(ida_install_dir)
 
-    configure_idapro(ida_install_dir)
+    import aether_rpc.capabilities as caps
+    from aether_rpc.executors.headless_executor import HeadlessExecutor
+    from aether_rpc.server import RPCServer
 
     executor = HeadlessExecutor(idb_path, ida_install_dir)
     capabilities = [
