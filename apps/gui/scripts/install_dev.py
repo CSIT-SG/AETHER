@@ -59,8 +59,11 @@ def remove_path(path: Path) -> None:
 
 
 def export_requirements(uv_path: str) -> Path:
-    temp_handle = tempfile.NamedTemporaryFile(prefix="aether-gui-dev-", suffix=".txt", delete=False)
-    temp_handle.close()
+    with tempfile.NamedTemporaryFile(
+        prefix="aether-gui-dev-", suffix=".txt", delete=False
+    ) as temp_handle:
+        requirements_path = Path(temp_handle.name)
+
     requirements_path = Path(temp_handle.name)
     run(
         [
