@@ -116,3 +116,10 @@ class FunctionTreeNode(TypedDict):
 class FunctionTreeResult(TypedDict):
     count: int
     root: FunctionTreeNode
+
+
+class RenameStructFieldResult(TypedDict):
+    type_id: int
+    type_name: str
+    old_field_name: str
+    new_field_name: str
