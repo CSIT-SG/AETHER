@@ -2,7 +2,7 @@ import uvicorn
 from aether_utils.get_port import get_port
 from aether_utils.logger import get_logger
 
-logger = get_logger("mcp_headless")
+logger = get_logger("AETHER_CLI_MCP")
 
 
 def mcp_runner(host: str = "127.0.0.1") -> None:

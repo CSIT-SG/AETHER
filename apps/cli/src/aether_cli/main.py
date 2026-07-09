@@ -2,7 +2,12 @@ import argparse
 import multiprocessing as mp
 import time
 
+from aether_utils.config import get_config, get_config_file_path
+from aether_utils.logger import get_logger
+
 from .runners import mcp_runner, rpc_runner
+
+logger = get_logger("AETHER CLI")
 
 
 def aether_cli() -> None:
@@ -12,6 +17,10 @@ def aether_cli() -> None:
     parser.add_argument("--host", default="127.0.0.1", help="Host to bind on (default: 127.0.0.1)")
 
     args = parser.parse_args()
+
+    get_config()
+    logger.info(f"Config file can be found at {get_config_file_path()}")
+
     mp.set_start_method("spawn", force=True)
 
     rpc_proc = mp.Process(

@@ -8,7 +8,7 @@ from aether_utils.file_id import file_id
 from aether_utils.get_port import get_port
 from aether_utils.logger import get_logger
 
-logger = get_logger("rpc_headless_plugin")
+logger = get_logger("AETHER_CLI_RPC")
 
 
 def rpc_runner(

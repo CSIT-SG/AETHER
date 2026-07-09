@@ -60,10 +60,40 @@ This will install the wheel bundles and copy the plugin entrypoint into the IDA 
 
 ### Headless Command-Line Interface (CLI)
 
+Download the release binaries. The files are laid out in the following structure: 
 
-<Callout type="error"> 
-    Will be available in a future release.
-</Callout>
+<FileTree>
+  <FileTree.Folder name="aether_cli" defaultOpen>
+    <FileTree.Folder name="wheels" />
+    <FileTree.File name="requirements.txt" />
+    <FileTree.File name="install_prod.py" />
+    <FileTree.File name="entrypoint.py" />
+    <FileTree.File name="README.md" />
+  </FileTree.Folder>
+</FileTree>
 
+Run the prod script.
 
+```bash
+python install_prod.py
+```
 
+This will install the wheel bundles and copy the plugin entrypoint into the IDA plugins folder.
+
+Afterwards, you can run `entrypoint.py` with your IDA database path and the install directory of **IDA**.
+
+You can also pass in the host address to run the **CLI** on.
+
+For example:
+
+```bash
+python entrypoint.py --idb C:/path/to/your/idb/example.exe.i64 --ida-dir "C:/Program Files/IDA Professional 9.2"
+```
+
+After running `entrypoint.py`, you will get this output:
+```bash
+[aether.AETHER CLI] INFO: Config file can be found at C:/Users/asher.cheng/AppData/Local/AETHER-next/_global/config.json
+[aether.AETHER_CLI_MCP] INFO: MCP server started at 127.0.0.1:50150
+```
+
+You can then use these to configure your provider and connect to the MCP server.
