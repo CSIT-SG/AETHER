@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 class RPCRegistryEntry(BaseModel):
     id: str
-    port: int | None
+    port: int
     pid: int
 
 
@@ -18,7 +18,7 @@ class RPCFileRegistry:
     def __init__(self, data_file: Path) -> None:
         self._data_file = data_file
 
-    def register(self, *, instance_id: str, port: int | None) -> None:
+    def register(self, *, instance_id: str, port: int) -> None:
         entry = RPCRegistryEntry(
             id=instance_id,
             port=port,

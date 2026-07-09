@@ -1,8 +1,7 @@
 import asyncio
-import json
 from contextlib import suppress
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 from aether_rpc.registry import RPCFileRegistry
 from aether_utils.data_dir import get_data_dir
@@ -11,6 +10,11 @@ from watchfiles import Change, awatch
 
 from .connection import RpcConnectionEntry, connect_with_backoff, ping, safe_close
 from .constants import DISCOVERY_REFRESH_INTERVAL
+
+
+class _RpcFileConfigEntry(NamedTuple):
+    port: int
+    path: Path
 
 
 class RPCRegistry:
@@ -54,11 +58,12 @@ class RPCRegistry:
             return
         self._started = False
 
-        if self._heartbeat_task:
-            self._heartbeat_task.cancel()
+        for task in filter(None, (self._heartbeat_task, self._file_watching_task)):
+            task.cancel()
             with suppress(asyncio.CancelledError):
-                await self._heartbeat_task
-            self._heartbeat_task = None
+                await task
+        self._heartbeat_task = None
+        self._file_watching_task = None
 
         await self._close_all()
 
@@ -83,84 +88,104 @@ class RPCRegistry:
 
     # Heartbeat
     async def _heartbeat_loop(self) -> None:
-        configs = self._load_configs()
         while True:
-            if configs is not None:
-                try:
-                    #check if all configs are live
-                    for rpc_id, (_, path) in configs.items():
-                        await self._check_config_live(path)
-                    if self._entries:
-                        self._logger.info("Current active configs: %s", self._entries.keys())
-                    else:
-                        self._logger.info("No active configs found.")
-                    self._logger.info("RPC registry heartbeat check complete")
-                    await asyncio.sleep(self._refresh_interval)
-                except asyncio.CancelledError:
-                    raise
-                except Exception:
-                    self._logger.exception("RPC registry heartbeat error")
+            try:
+                configs = self._load_configs()  # {rpc_id: _RpcFileConfigEntry}
+                async with self._lock:
+                    snapshot = dict(self._entries)  # copy
+
+                results = await asyncio.gather(
+                    *(ping(e) for e in snapshot.values()), return_exceptions=True
+                )
+                dead_ids = {
+                    rid for rid, ok in zip(snapshot, results, strict=True) if ok is not True
+                }
+                new_ids = set(configs) - set(snapshot)
+
+                # calculate the paths to reconnect to: dead paths union new path
+                reconnect_paths = {rid: snapshot[rid].path for rid in dead_ids} | {
+                    rid: configs[rid].path for rid in new_ids
+                }
+
+                results = await asyncio.gather(
+                    *(self._check_config_live(p) for p in reconnect_paths.values()),
+                    return_exceptions=True,
+                )
+                for rid, r in zip(reconnect_paths, results, strict=True):
+                    if isinstance(r, Exception):
+                        self._logger.exception("Failed to reconnect %r", rid, exc_info=r)
+
+                self._logger.info("heartbeat complete; active: %s", sorted(self._entries) or "none")
+                await asyncio.sleep(self._refresh_interval)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                self._logger.exception("RPC registry heartbeat error")
 
     # Watcher
     async def _listen(self) -> None:
-        # initial scan when server first starts
-        # Catches already opened IDA instances
-        entry_memory = self._load_configs()
-        if entry_memory:
-            #check if config files are live
-            for rpc_id, (_, path) in entry_memory.items():
-                await self._check_config_live(path)
-            self._logger.info("Existing RPC Configs: %s", self._entries.keys())
-
         async for changes in awatch(self._directory):
             for change_type, change_path in changes:
+                path = Path(change_path)
+
+                if path.suffix != ".json":
+                    continue
+
+                if change_type not in (Change.added, Change.deleted):
+                    continue
+
                 try:
-                    path_obj = Path(change_path)
-                    self._logger.debug("memdump %r", entry_memory)
-                    self._logger.debug("RPC registry watcher detected changes at: %r action: %r", change_path, change_type)
-                    if change_type == Change.added:
-                        entry_memory = self._load_configs()
-                        await self._check_config_live(path_obj)
-                    elif change_type == Change.deleted:
-                        async with self._lock:
-                            rpc_id = next(k for k, v in entry_memory.items() if v[1] == path_obj)
-                            self._entries.pop(rpc_id)
-                            entry_memory.pop(rpc_id)
+                    self._logger.info(
+                        "RPC registry watcher detected %s config: %r",
+                        change_type.name,
+                        change_path,
+                    )
+                    await self._check_config_live(path)
                 except asyncio.CancelledError:
                     raise
                 except Exception:
-                    self._logger.exception("RPC registry heartbeat error")
+                    self._logger.exception(
+                        "RPC registry watcher error handling %r",
+                        change_path,
+                    )
 
     # Internal helpers
 
-    def _load_configs(self) -> dict[str, tuple[int, Path]]:  # {rpc_id: (port, path)}
-        """Returns {rpc_id: (port, path)}"""
-        result = {}
-        for path in self._directory.glob("*.json"):
-            if entry := RPCFileRegistry.load(path):
-                result[entry.id] = (entry.port, path)
-        return result
+    def _load_configs(self) -> dict[str, _RpcFileConfigEntry]:
+        """Returns {rpc_id: _RpcFileConfigEntry} for all .json files in the registry directory"""
+        return {
+            entry.id: _RpcFileConfigEntry(entry.port, path)
+            for path in self._directory.glob("*.json")
+            if (entry := RPCFileRegistry.load(path))
+        }
 
-    async def _check_config_live(self, path: Path)-> bool:
-        """checks if the config file is live
+    async def _check_config_live(self, path: Path) -> bool:
+        """Connects/reconnects to the service described by `path` and
+        updates the registry. Returns True if live."""
+        entry = RPCFileRegistry.load(path)
 
-        Takes in path to json file, reads contents.
-
-        returns true if it is live, false if not
-        """
-        with path.open(mode="r") as f:
-            data = json.load(f)
-        rpc_id: str = data.get("id")
-        port: int = data.get("port")
-        exists = await connect_with_backoff(rpc_id, port)
-        if exists:
+        # file is gone, find any entry we previously
+        # associated with this path and tear it down
+        if entry is None:
             async with self._lock:
-                self._entries[rpc_id] = exists
-        else:
-            async with self._lock:
-                if rpc_id in self._entries:
-                    safe_close(self._entries[rpc_id].conn)
-                    self._entries.pop(rpc_id)
+                old = None
+                for rid, existing in self._entries.items():
+                    if existing.path == path:
+                        old = self._entries.pop(rid)
+                        break
+            if old:
+                safe_close(old.conn)
+            return False
+
+        exists = await connect_with_backoff(rpc_id=entry.id, port=entry.port, path=path)
+        async with self._lock:
+            old = self._entries.get(entry.id)
+            if exists:
+                self._entries[entry.id] = exists
+            else:
+                self._entries.pop(entry.id, None)
+            if old is not None and old is not exists:
+                safe_close(old.conn)
         return bool(exists)
 
     async def _close_all(self) -> None:

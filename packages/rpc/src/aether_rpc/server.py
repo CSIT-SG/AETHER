@@ -62,9 +62,7 @@ class RPCServer:
         )
 
         self._thread.start()
-        self._registry.register(
-            instance_id=self._id, port=self._server.port if self._server else None
-        )
+        self._registry.register(instance_id=self._id, port=self._server.port)
 
     def _run(self) -> None:
         if not self._server:

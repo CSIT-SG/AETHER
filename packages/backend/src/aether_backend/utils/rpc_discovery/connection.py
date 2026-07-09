@@ -1,5 +1,6 @@
 import asyncio
 import random
+from pathlib import Path
 from typing import Any, NamedTuple
 
 import rpyc
@@ -19,10 +20,11 @@ logger = get_logger("rpc-registry")
 
 
 class RpcConnectionEntry(NamedTuple):
+    rpc_id: str
     conn: rpyc.Connection
     root: Any
-    rpc_id: str
     port: int
+    path: Path
 
 
 def _jitter(value: float) -> float:
@@ -36,8 +38,10 @@ def _backoff(attempt: int) -> float:
 
 
 async def connect_with_backoff(
+    *,
     rpc_id: str,
     port: int,
+    path: Path,
 ) -> RpcConnectionEntry | None:
     """
     Try to open an RPyC connection, retrying with exponential backoff.
@@ -56,14 +60,15 @@ async def connect_with_backoff(
                 ),
                 timeout=CONNECT_TIMEOUT,
             )
-            root = conn.root
             logger.info(
                 "Connected to RPC service %r on port %d (attempt %d)",
                 rpc_id,
                 port,
                 attempt + 1,
             )
-            return RpcConnectionEntry(conn=conn, root=root, rpc_id=rpc_id, port=port)
+            return RpcConnectionEntry(
+                conn=conn, root=conn.root, rpc_id=rpc_id, port=port, path=path
+            )
 
         except TimeoutError:
             logger.warning(
