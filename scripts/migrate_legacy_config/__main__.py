@@ -1,12 +1,3 @@
-"""One-shot, self-contained migration of a legacy AETHER-IDA config into the
-AETHER Next config. Works on Windows, Linux and macOS.
-
-Pure standard library — no repo build and no pip installs needed. Copy this file
-anywhere and run it:
-
-    python __main__.py
-"""
-
 import json
 import os
 import shutil
@@ -17,16 +8,16 @@ from pathlib import Path
 
 def user_data_dir(appname: str, appauthor: str | None) -> Path:
     """Stdlib port of ``platformdirs.user_data_dir`` for the platforms AETHER
-    runs on, so the tool stays dependency-free but resolves to the same paths
-    the app uses. Note: on Linux/macOS ``appauthor`` is not part of the path."""
+    supports (Windows and Linux), so the tool stays dependency-free but resolves
+    to the same paths the app uses. On Linux ``appauthor`` is not part of the path."""
     if sys.platform == "win32":
         base = Path(os.environ.get("LOCALAPPDATA") or Path.home() / "AppData" / "Local")
         return base / appauthor / appname if appauthor else base / appname
-    if sys.platform == "darwin":
-        return Path.home() / "Library" / "Application Support" / appname
-    # Linux and other unix: XDG Base Directory spec.
-    xdg = os.environ.get("XDG_DATA_HOME", "").strip()
-    return (Path(xdg) if xdg else Path.home() / ".local" / "share") / appname
+    if sys.platform.startswith("linux"):
+        # XDG Base Directory spec.
+        xdg = os.environ.get("XDG_DATA_HOME", "").strip()
+        return (Path(xdg) if xdg else Path.home() / ".local" / "share") / appname
+    sys.exit(f"Unsupported platform {sys.platform!r}; this tool supports Windows and Linux.")
 
 
 LEGACY_PATH = user_data_dir("AETHER-IDA", None) / "config.json"
