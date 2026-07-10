@@ -81,9 +81,7 @@ python install_prod.py
 
 This will install the wheel bundles and copy the plugin entrypoint into the IDA plugins folder.
 
-Afterwards, you can run `entrypoint.py` with your IDA database path and the install directory of **IDA**.
-
-You can also pass in the host address to run the **CLI** on.
+Afterwards, you can run `entrypoint.py` with your IDA database path and the install directory of **IDA**. You can also pass in the host address to run the **CLI** on.
 
 For example:
 
@@ -133,7 +131,7 @@ Then your config will look like:
         "gateway_url": "http://localhost:8080/v1",
         "api_key": null,
         "models": {
-        "qwen-7b": "bartowski/Qwen2.5-7B-Instruct-GGUF:Q4_K_M"
+            "qwen-7b": "bartowski/Qwen2.5-7B-Instruct-GGUF:Q4_K_M"
         },
         "default_model": "qwen-7b",
         "extra_body": null
@@ -142,8 +140,31 @@ Then your config will look like:
 }
 ```
 
-If you need to support authentication, generate an API keyon the `llama-server` instance and set it in your config in `provider.api_key`.
+If you need to support authentication, generate an API key on the `llama-server` instance and set it in your config in `provider.api_key`.
 
 
 ### LiteLLM
 
+Install LiteLLM by following their [installation guide](https://docs.litellm.ai/docs/#litellm-proxy-server-llm-gateway). 
+
+Then run a server.
+```bash
+litellm --model huggingface/bartowski/Qwen2.5-7B-Instruct-GGUF:Q4_K_M
+```
+
+You should set the API key in the config to match the one you created. Then your config will look like:
+
+```json
+{
+    "provider": {
+        "gateway_url": "http://localhost:4000/v1",
+        "api_key": "YOUR_API_KEY",
+        "models": {
+            "hf-qwen-7b": "huggingface/bartowski/Qwen2.5-7B-Instruct-GGUF:Q4_K_M"
+        },
+        "default_model": "hf-qwen-7b",
+        "extra_body": null
+    },
+  ...rest of your config
+}
+```
