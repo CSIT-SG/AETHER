@@ -9,7 +9,7 @@ from aether_utils.logger import get_logger
 from watchfiles import Change, awatch
 
 from .connection import RpcConnectionEntry, connect_with_backoff, ping, safe_close
-from .constants import DISCOVERY_REFRESH_INTERVAL
+from .constants import DISCOVERY_REFRESH_INTERVAL, RPC_REGISTRY_KEY
 
 
 class _RpcFileConfigEntry(NamedTuple):
@@ -36,7 +36,7 @@ class RPCRegistry:
         self._heartbeat_task: asyncio.Task[None] | None = None
         self._file_watching_task: asyncio.Task[None] | None = None
         self._started = False
-        self._logger = get_logger("rpc-registry")
+        self._logger = get_logger(RPC_REGISTRY_KEY)
 
     # Lifecycle
 
@@ -46,11 +46,11 @@ class RPCRegistry:
         self._started = True
         self._heartbeat_task = asyncio.create_task(
             self._heartbeat_loop(),
-            name="rpc-registry-heartbeat",
+            name=f"{RPC_REGISTRY_KEY}-heartbeat",
         )
         self._file_watching_task = asyncio.create_task(
             self._listen(),
-            name="rpc-registry-file-watcher",
+            name=f"{RPC_REGISTRY_KEY}-file-watcher",
         )
 
     async def stop(self) -> None:
@@ -80,7 +80,7 @@ class RPCRegistry:
 
     async def ids(self) -> list[str]:
         async with self._lock:
-            return sorted(self._entries)
+            return sorted(self._entries.keys())
 
     async def all(self) -> dict[str, Any]:
         async with self._lock:
@@ -102,7 +102,7 @@ class RPCRegistry:
                 }
                 new_ids = set(configs) - set(snapshot)
 
-                # calculate the paths to reconnect to: dead paths union new path
+                # calculate the paths to reconnect to: dead paths union new paths
                 reconnect_paths = {rid: snapshot[rid].path for rid in dead_ids} | {
                     rid: configs[rid].path for rid in new_ids
                 }

@@ -1,8 +1,22 @@
 # RPC discovery
 
-
+The backend discovers [RPyC](https://rpyc.readthedocs.io/en/latest/) servers running on IDA instances by watching a directory for files that contain the connection information. 
+The backend will attempt to connect to the RPC servers.
 
 ## Accessing the RPC registry
 
+The registry is attached to the [lifespan context](https://gofastmcp.com/servers/lifespan) of the backend. Access it using the `RPC_REGISTRY_KEY` constant.
 
-work in progress
+```python
+ctx = get_context()
+registry = ctx.lifespan_context[RPC_REGISTRY_KEY]
+```
+
+Then, you can run the public accessors:
+
+```python
+registry.get("testr_20260710-085739") # get the RPYC connection entry for the given IDA instance
+registry.all() # get all RPYC connection entries
+registry.has("testr_20260710-085739") # check if the registry has an entry for the given IDA instance
+registry.ids() # get all the IDs of the registered IDA instances
+```
