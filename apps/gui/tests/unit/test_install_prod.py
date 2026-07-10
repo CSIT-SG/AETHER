@@ -34,7 +34,9 @@ class TestRun:
         captured: dict[str, object] = {}
 
         def fake_run(
-            command: list[str], cwd: Path | None = None, text: bool | None = None
+            command: list[str],
+            cwd: Path | None = None,
+            text: bool | None = None,  # noqa: ARG001
         ) -> subprocess.CompletedProcess[str]:
             captured.update(command=command, cwd=cwd)
             return subprocess.CompletedProcess(command, returncode=0)
