@@ -8,7 +8,7 @@ from aether_utils.logger import get_logger
 
 from .runners import mcp_runner, rpc_runner
 
-logger = get_logger("AETHER CLI")
+logger = get_logger("AETHER_CLI")
 
 
 def _shutdown(proc: mp.Process, timeout: float = 10.0) -> None:
@@ -19,14 +19,19 @@ def _shutdown(proc: mp.Process, timeout: float = 10.0) -> None:
 
 
 def aether_cli() -> None:
-    parser = argparse.ArgumentParser(prog="AETHER_CLI", description="Run AETHER CLI on an idb")
-    parser.add_argument("--idb", required=True)
-    parser.add_argument("--ida-dir", required=True)
+    parser = argparse.ArgumentParser(
+        prog="AETHER_CLI", description="AI powered reverse engineering framework for IDA Pro"
+    )
+    parser.add_argument(
+        "--idb", required=True, help="Path to the .idb/.i64/binary file to run AETHER CLI on"
+    )
+    parser.add_argument("--ida-dir", required=True, help="Path to the IDA installation directory")
     parser.add_argument("--host", default="127.0.0.1", help="Host to bind on (default: 127.0.0.1)")
+    parser.add_argument("--port", type=int, default=8000, help="Port to bind on (default: 8000)")
 
     args = parser.parse_args()
 
-    logger.info(f"Config: {get_config()}")
+    logger.info(f"Config: {get_config().model_dump_json(indent=2)}")
     logger.info(f"Config file can be found at {get_config_file_path()}")
 
     mp.set_start_method("spawn", force=True)
@@ -40,7 +45,7 @@ def aether_cli() -> None:
 
     mcp_proc = mp.Process(
         target=mcp_runner,
-        args=(args.host,),
+        args=(args.host, args.port),
         name="mcp-server",
     )
     mcp_proc.start()

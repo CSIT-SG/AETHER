@@ -1,0 +1,24 @@
+# Starting Up
+
+After you `uv sync`, you can start the CLI application by running:
+
+```bash
+cd apps/cli && uv run src/entrypoint.py --idb <path-to-your-idb> --ida-dir <path-to-your-ida-installation>
+```
+
+## Claude Code
+
+Paste this in your MCP server configuration:
+
+```json
+{
+  "mcpServers": {
+    "aether-cli": {
+      "transport": {
+        "type": "http",
+        "url": "http://localhost:8000/mcp"
+      }
+    }
+  }
+}
+```
