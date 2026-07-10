@@ -25,7 +25,7 @@ APPS: dict[str, _AppBuildConfig] = {
     "aether_cli": {
         "extra_inodes": [
             _apps_path / "cli" / "src" / "entrypoint.py",
-            _apps_path / "cli" / "scripts" / "install_prod.py",
+            _apps_path / "cli" / "scripts" / "install.py",
             _apps_path / "cli" / "README.md",
         ],
     },
