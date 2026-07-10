@@ -22,22 +22,6 @@ You should install one of of our clients (CLI or GUI) to use AETHER. You also ne
 
 This is located in `apps/gui`. It is a plugin for IDA Pro that provides an interface for interacting with LLMs.
 
-The install script will install the required dependencies and copy the plugin entrypoint into the IDA plugins folder. 
-You can specify a custom plugins folder with the `--plugin-path` argument, eg. `python ./scripts/install_dev.py --plugin-path /opt/ida-9.2`.
-
-### Development
-
-Clone the repo and run the dev script.
-
-```bash
-git clone https://github.com/csitgovsg-acube/AETHER-next
-cd apps/gui && python ./scripts/install_dev.py
-```
-
-This will install the required dependencies for idapython and link the plugin entrypoint into the IDA plugins folder.
-
-### Production
-
 Download the release binaries. The files are laid out in the following structure: 
 
 <FileTree>
@@ -58,6 +42,8 @@ python install_prod.py
 
 This will install the wheel bundles and copy the plugin entrypoint into the IDA plugins folder.
 
+You can specify a custom plugins folder with the `--plugin-path` argument, eg. `python ./scripts/install_prod.py --plugin-path /opt/ida-9.2`.
+
 
 ## Headless Command-Line Interface (CLI)
 
@@ -67,21 +53,20 @@ Download the release binaries. The files are laid out in the following structure
   <FileTree.Folder name="aether_cli" defaultOpen>
     <FileTree.Folder name="wheels" />
     <FileTree.File name="requirements.txt" />
-    <FileTree.File name="install_prod.py" />
+    <FileTree.File name="install.py" />
     <FileTree.File name="entrypoint.py" />
     <FileTree.File name="README.md" />
   </FileTree.Folder>
 </FileTree>
 
-Run the prod script.
+Run the install script.
 
 ```bash
-python install_prod.py
+python install.py
 ```
 
-This will install the wheel bundles and copy the plugin entrypoint into the IDA plugins folder.
-
-Afterwards, you can run `entrypoint.py` with your IDA database path and the install directory of **IDA**. You can also pass in the host address to run the **CLI** on.
+This will install the wheel bundles. Afterwards, you can run `entrypoint.py` with your IDA database path and the install directory of **IDA**. 
+You can also pass in the host address to run the **CLI** on.
 
 For example:
 
@@ -168,3 +153,17 @@ You should set the API key in the config to match the one you created. Then your
   ...rest of your config
 }
 ```
+
+## Development
+
+Clone the repo and run the gui dev script.
+
+```bash
+uv sync --all-packages
+git clone https://github.com/csitgovsg-acube/AETHER-next
+cd apps/gui && python ./scripts/install_dev.py
+```
+
+This will install the required dependencies for idapython and link the plugin entrypoint into the IDA plugins folder.
+
+Follow the workspace README files for more information.
