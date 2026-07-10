@@ -9,9 +9,8 @@ import sys
 from pathlib import Path
 
 SOURCE_DIR = Path(__file__).resolve().parent
-ROOT_DIR = Path(__file__).resolve().parents[3]
-DIST_DIR = ROOT_DIR / "dist" / "aether_gui"
 ENTRYPOINT_NAME = "aether-next.py"
+PYTHON_VERSIONS = {(3, 12), (3, 13)}
 
 
 def default_plugin_path() -> Path:
@@ -60,8 +59,6 @@ def remove_path(path: Path) -> None:
 def resource_dir() -> Path:
     if (SOURCE_DIR / "requirements.txt").exists() and (SOURCE_DIR / "wheels").exists():
         return SOURCE_DIR
-    if (DIST_DIR / "requirements.txt").exists() and (DIST_DIR / "wheels").exists():
-        return DIST_DIR
     raise SystemExit("Production wheel bundle was not found")
 
 
@@ -94,7 +91,7 @@ def main() -> None:
     resolve_command("python", "python3")
     resolve_command("pip")
 
-    if sys.version_info[:2] not in {(3, 12), (3, 13)}:
+    if sys.version_info[:2] not in PYTHON_VERSIONS:
         raise SystemExit("Python 3.12 or 3.13 is required")
 
     bundle_dir = resource_dir()

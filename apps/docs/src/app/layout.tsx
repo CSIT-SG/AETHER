@@ -17,7 +17,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 				<Layout
 					navbar={navbar}
 					pageMap={await getPageMap()}
-					docsRepositoryBase="https://github.com/SebassNoob/AETHER-next"
+					docsRepositoryBase="https://github.com/csitgovsg-acube/AETHER-next"
 				>
 					{children}
 				</Layout>
