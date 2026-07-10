@@ -1,4 +1,5 @@
 import socket
+from typing import cast
 
 
 def get_port(host: str) -> int:
@@ -6,6 +7,7 @@ def get_port(host: str) -> int:
         try:
             sock.bind((host, 0))
         except OSError as e:
-            raise RuntimeError(f"Could not bind to {host}:0 — {e}") from e
+            raise RuntimeError(f"Could not bind to {host}:0 - {e}") from e
 
-        return sock.getsockname()[1]
+        _, port = sock.getsockname()
+        return cast(int, port)
