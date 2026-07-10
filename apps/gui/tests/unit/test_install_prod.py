@@ -38,12 +38,12 @@ class TestRun:
             cwd: Path | None = None,
             text: bool | None = None,  # noqa: ARG001
         ) -> subprocess.CompletedProcess[str]:
-            captured.update(command=command, cwd=cwd)
+            captured.update(command=command, cwd=cwd, text=text)
             return subprocess.CompletedProcess(command, returncode=0)
 
         monkeypatch.setattr(prod.subprocess, "run", fake_run)
         prod.run(["echo", "hi"], cwd=tmp_path)
-        assert captured == {"command": ["echo", "hi"], "cwd": tmp_path}
+        assert captured == {"command": ["echo", "hi"], "cwd": tmp_path, "text": True}
 
     def test_nonzero_return_code_raises_system_exit(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
@@ -152,7 +152,6 @@ class TestInstallRequirements:
             "-m",
             "pip",
             "install",
-            "--no-deps",
             "--user",
             "-r",
             str(bundle_dir / "requirements.txt"),

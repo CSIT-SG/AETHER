@@ -83,7 +83,6 @@ dependencies = [
     { name = "jinja2" },
     { name = "markdown" },
     { name = "markupsafe" },
-    { name = "pyside6" },
 ]
 
 [package.metadata]
@@ -94,7 +93,6 @@ requires-dist = [
     { name = "jinja2", specifier = "==3.1.6" },
     { name = "markdown", specifier = "==3.10.2" },
     { name = "markupsafe", specifier = "==2.0.1" },
-    { name = "pyside6", specifier = "==6.11.1" },
 ]
 
 [[package]]
@@ -106,12 +104,16 @@ source = { virtual = "." }
 dev = [
     { name = "mypy" },
     { name = "pre-commit" },
+    { name = "pyside6" },
+    { name = "pyside6-addons" },
+    { name = "pyside6-essentials" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
     { name = "pytest-dependency" },
     { name = "pytest-order" },
     { name = "ruff" },
+    { name = "shiboken6" },
 ]
 
 [package.metadata]
@@ -120,12 +122,16 @@ dev = [
 dev = [
     { name = "mypy", specifier = "==2.1.0" },
     { name = "pre-commit", specifier = "==4.6.0" },
+    { name = "pyside6", specifier = "==6.11.1" },
+    { name = "pyside6-addons", specifier = "==6.11.1" },
+    { name = "pyside6-essentials", specifier = "==6.11.1" },
     { name = "pytest", specifier = "==9.0.3" },
     { name = "pytest-asyncio", specifier = "==1.4.0" },
     { name = "pytest-cov", specifier = "==7.1.0" },
     { name = "pytest-dependency", specifier = "==0.6.1" },
     { name = "pytest-order", specifier = "==1.4.0" },
     { name = "ruff", specifier = "==0.15.16" },
+    { name = "shiboken6", specifier = "==6.11.1" },
 ]
 
 [[package]]

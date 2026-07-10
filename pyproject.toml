@@ -26,6 +26,10 @@ dev = [
     "pytest-order==1.4.0",
     "pre-commit==4.6.0",
     "pytest-asyncio==1.4.0",
+    "pyside6==6.11.1",
+    "pyside6-addons==6.11.1",
+    "pyside6-essentials==6.11.1",
+    "shiboken6==6.11.1",
 ]
 
 # Dev dependencies are managed at workspace level
