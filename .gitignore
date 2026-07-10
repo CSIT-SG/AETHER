@@ -12,7 +12,6 @@ wheels/
 # Virtual environments
 .venv
 .python-version
-aether-next-config.json
 
 # Docs search index
 _pagefind/
