@@ -3,4 +3,4 @@ name = "aether_docs"
 version = "0.1.0"
 description = "AETHER documentation"
 readme = "README.md"
-dependencies = ["griffe"]
+dependencies = ["griffe==2.0.2"]

@@ -37,11 +37,11 @@ dependencies = [
 requires-dist = [
     { name = "aether-rpc", editable = "packages/rpc" },
     { name = "aether-utils", editable = "packages/utils" },
-    { name = "fastmcp", specifier = ">=3.0.0" },
-    { name = "openai-agents", specifier = ">=0.17.5" },
-    { name = "pydantic" },
-    { name = "rpyc", specifier = ">=6.0.1" },
-    { name = "watchfiles", specifier = ">=1.2.0" },
+    { name = "fastmcp", specifier = "==3.4.2" },
+    { name = "openai-agents", specifier = "==0.17.5" },
+    { name = "pydantic", specifier = "==2.13.4" },
+    { name = "rpyc", specifier = "==6.0.2" },
+    { name = "watchfiles", specifier = "==1.2.0" },
 ]
 
 [[package]]
@@ -70,7 +70,7 @@ dependencies = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "griffe" }]
+requires-dist = [{ name = "griffe", specifier = "==2.0.2" }]
 
 [[package]]
 name = "aether-gui"
@@ -91,10 +91,10 @@ requires-dist = [
     { name = "aether-backend", editable = "packages/backend" },
     { name = "aether-rpc", editable = "packages/rpc" },
     { name = "aether-utils", editable = "packages/utils" },
-    { name = "jinja2" },
+    { name = "jinja2", specifier = "==3.1.6" },
     { name = "markdown", specifier = "==3.10.2" },
     { name = "markupsafe", specifier = "==2.0.1" },
-    { name = "pyside6" },
+    { name = "pyside6", specifier = "==6.11.1" },
 ]
 
 [[package]]
@@ -118,14 +118,14 @@ dev = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "mypy", specifier = ">=2.1.0" },
-    { name = "pre-commit", specifier = ">=4.6.0" },
-    { name = "pytest", specifier = ">=9.0.3" },
-    { name = "pytest-asyncio", specifier = ">=1.4.0" },
-    { name = "pytest-cov", specifier = ">=7.1.0" },
-    { name = "pytest-dependency", specifier = ">=0.6.1" },
-    { name = "pytest-order", specifier = ">=1.4.0" },
-    { name = "ruff", specifier = ">=0.15.12" },
+    { name = "mypy", specifier = "==2.1.0" },
+    { name = "pre-commit", specifier = "==4.6.0" },
+    { name = "pytest", specifier = "==9.0.3" },
+    { name = "pytest-asyncio", specifier = "==1.4.0" },
+    { name = "pytest-cov", specifier = "==7.1.0" },
+    { name = "pytest-dependency", specifier = "==0.6.1" },
+    { name = "pytest-order", specifier = "==1.4.0" },
+    { name = "ruff", specifier = "==0.15.16" },
 ]
 
 [[package]]
@@ -142,9 +142,9 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "aether-utils", editable = "packages/utils" },
-    { name = "idapro", specifier = ">=0.0.9" },
-    { name = "pydantic", specifier = ">=2.13.3" },
-    { name = "rpyc", specifier = ">=6.0.1" },
+    { name = "idapro", specifier = "==0.0.9" },
+    { name = "pydantic", specifier = "==2.13.4" },
+    { name = "rpyc", specifier = "==6.0.2" },
 ]
 
 [[package]]
@@ -165,10 +165,10 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "httpx" },
-    { name = "openai" },
-    { name = "platformdirs", specifier = ">=4.10.0" },
-    { name = "pydantic" },
+    { name = "httpx", specifier = "==0.28.1" },
+    { name = "openai", specifier = "==2.41.0" },
+    { name = "platformdirs", specifier = "==4.10.0" },
+    { name = "pydantic", specifier = "==2.13.4" },
 ]
 
 [[package]]

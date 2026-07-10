@@ -13,6 +13,25 @@ from .config import (
 from .utils import cp_r, mkdir, sh
 
 EDITABLE_RE = re.compile(r"^-e\s+(?P<path>\S+)")  # "-e ./packages/backend" -> "./packages/backend"
+DEP_NAME_RE = re.compile(r"^(?P<name>[A-Za-z0-9._-]+)")  # "pyside6==6.11.1 ; marker" -> "pyside6"
+
+
+def _normalize(name: str) -> str:
+    return name.lower().replace("_", "-")
+
+
+def drop_provided(lines: list[str], provided: set[str]) -> list[str]:
+    """Drop host-provided deps (e.g. PySide6, supplied by IDA) and their `# via` blocks."""
+    kept: list[str] = []
+    skipping = False
+    for line in lines:
+        is_spec = bool(line) and not line[0].isspace() and not line.lstrip().startswith("#")
+        if is_spec:
+            match = DEP_NAME_RE.match(line)
+            skipping = match is not None and _normalize(match.group("name")) in provided
+        if not skipping:
+            kept.append(line)
+    return kept
 
 
 def split_export(text: str) -> tuple[list[str], list[str]]:
@@ -28,7 +47,9 @@ def split_export(text: str) -> tuple[list[str], list[str]]:
     return local_paths, kept_lines
 
 
-def prune_app_deps(app: str, requirements_path: Path, wheels_dir: Path) -> None:
+def prune_app_deps(
+    app: str, requirements_path: Path, wheels_dir: Path, provided_deps: list[str]
+) -> None:
 
     with tempfile.TemporaryDirectory() as tmp:
         raw_path = Path(tmp) / f"reqs-raw-{uuid.uuid4().hex}.txt"
@@ -48,6 +69,8 @@ def prune_app_deps(app: str, requirements_path: Path, wheels_dir: Path) -> None:
         )
 
         local_deps, external_deps = split_export(raw_path.read_text())
+
+    external_deps = drop_provided(external_deps, {_normalize(d) for d in provided_deps})
 
     ext = "\n".join(external_deps)
 
@@ -78,7 +101,7 @@ def main() -> None:
         mkdir(wheels_dir)
 
         # prune the app's dependencies and build wheels
-        prune_app_deps(app, requirements_path, wheels_dir)
+        prune_app_deps(app, requirements_path, wheels_dir, cfg["provided_deps"])
 
         for inode in cfg["extra_inodes"]:
             cp_r(inode, app_out / inode.name)

@@ -5,9 +5,9 @@ description = "AETHER RPC library"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "idapro>=0.0.9",
-    "pydantic>=2.13.3",
-    "rpyc>=6.0.1",
+    "idapro==0.0.9",
+    "pydantic==2.13.4",
+    "rpyc==6.0.2",
     "aether_utils",
 ]
 

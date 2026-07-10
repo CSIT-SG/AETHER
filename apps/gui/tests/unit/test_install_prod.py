@@ -152,6 +152,7 @@ class TestInstallRequirements:
             "-m",
             "pip",
             "install",
+            "--no-deps",
             "--user",
             "-r",
             str(bundle_dir / "requirements.txt"),

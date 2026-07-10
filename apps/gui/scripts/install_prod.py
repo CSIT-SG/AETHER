@@ -72,6 +72,7 @@ def install_requirements(bundle_dir: Path) -> None:
             "-m",
             "pip",
             "install",
+            "--no-deps",
             "--user",
             "-r",
             str(bundle_dir / "requirements.txt"),
