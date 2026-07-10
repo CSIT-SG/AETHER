@@ -1,9 +1,9 @@
 import ida_typeinf
 
-from ..base import Capability
-from ..result import Err, Ok, Result
-from ..types import DeleteStructResult
-from ..utils import get_type_id_by_name
+from ...base import Capability
+from ...result import Err, Ok, Result
+from ...types import DeleteStructResult
+from ...utils import get_type_id_by_name
 
 
 class DeleteStruct(Capability):

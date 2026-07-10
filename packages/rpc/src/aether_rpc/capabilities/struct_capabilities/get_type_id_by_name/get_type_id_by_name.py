@@ -1,6 +1,6 @@
-from ..base import Capability
-from ..result import Err, Ok, Result
-from ..utils import get_type_id_by_name
+from ...base import Capability
+from ...result import Err, Ok, Result
+from ...utils import get_type_id_by_name
 
 
 class GetTypeIdByName(Capability):

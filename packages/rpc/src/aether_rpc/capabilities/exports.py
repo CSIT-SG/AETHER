@@ -14,7 +14,7 @@ EXPORTS: dict[str, str] = {
     "RefreshPseudocode": ".refresh_pseudocode",
     "TakeSnapshot": ".take_snapshot",
     "GetFunctionsCalledRecursively": ".get_functions_called_recursively",
-    "GetTypeIdByName": ".get_type_id_by_name",
-    "RenameStructField": ".rename_struct_field",
-    "DeleteStruct": ".delete_struct",
+    "GetTypeIdByName": ".struct_capabilities.get_type_id_by_name",
+    "RenameStructField": ".struct_capabilities.rename_struct_field",
+    "DeleteStruct": ".struct_capabilities.delete_struct",
 }
