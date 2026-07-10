@@ -16,4 +16,5 @@ EXPORTS: dict[str, str] = {
     "GetFunctionsCalledRecursively": ".get_functions_called_recursively",
     "GetTypeIdByName": ".get_type_id_by_name",
     "RenameStructField": ".rename_struct_field",
+    "DeleteStruct": ".delete_struct",
 }

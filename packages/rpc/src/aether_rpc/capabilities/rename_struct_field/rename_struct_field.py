@@ -3,6 +3,7 @@ import ida_typeinf
 from ..base import Capability
 from ..result import Err, Ok, Result
 from ..types import RenameStructFieldResult
+from ..utils import get_type_id_by_name
 
 
 class RenameStructField(Capability):
@@ -13,7 +14,7 @@ class RenameStructField(Capability):
         return "rename_struct_field"
 
     def execute(
-        self, type_id: str | int, old_field_name: str, new_field_name: str
+        self, type: str | int, old_field_name: str, new_field_name: str
     ) -> Result[RenameStructFieldResult]:
         """Rename struct field.
 
@@ -23,12 +24,15 @@ class RenameStructField(Capability):
             new_field_name: New name of field to be renamed.
 
         Returns:
-            A Result object whose ``result`` attribute contains the outcome.
+            A Result whose ``success`` reports whether the rename succeeded and
+            whose ``result`` carries the struct id, name, old field name and new field name.
         """
         try:
-            type_id = int(type_id)
+            type_id = int(type)
         except ValueError:
-            return Err(result=f"Type with the specified id {type_id} does not exist.")
+            type_id = get_type_id_by_name(str(type))
+            if not type_id:
+                return Err(result=f"Type with the specified id {type} does not exist.")
         tif = ida_typeinf.tinfo_t()
         if not tif.get_type_by_tid(type_id):
             return Err(result=f"Type with the specified id {type_id} does not exist.")

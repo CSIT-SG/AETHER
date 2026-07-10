@@ -123,3 +123,15 @@ class RenameStructFieldResult(TypedDict):
     type_name: str
     old_field_name: str
     new_field_name: str
+
+
+class ChangeStructFieldSizeResult(TypedDict):
+    type_id: int
+    type_name: str
+    field_name: str
+    new_size: str
+
+
+class DeleteStructResult(TypedDict):
+    type_id: int
+    type_name: str

@@ -1,8 +1,6 @@
-import ida_typeinf
-
 from ..base import Capability
 from ..result import Err, Ok, Result
-from .constants import INVALID_TYPE
+from ..utils import get_type_id_by_name
 
 
 class GetTypeIdByName(Capability):
@@ -22,7 +20,7 @@ class GetTypeIdByName(Capability):
             A Result object whose ``result`` attribute contains the corresponding
             type ID.
         """
-        type_id = ida_typeinf.get_named_type_tid(type_name)
-        if type_id == INVALID_TYPE:
+        type_id = get_type_id_by_name(type_name)
+        if type_id is None:
             return Err(result="Type with the specified name does not exist.")
         return Ok(result=type_id)
