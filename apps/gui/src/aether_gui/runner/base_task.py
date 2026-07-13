@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator
 from typing import Any, TypeVar
+from uuid import uuid4
 
 T = TypeVar("T")
 
@@ -9,7 +10,7 @@ class BaseTask[T](ABC):
     """Abstract Base Class for asynchronous tasks managed manually by a Worker Manager."""
 
     def __init__(self, name: str | None = None) -> None:
-        self.id: str = ""
+        self.id: str = str(uuid4())
         self.name: str = name or self.__class__.__name__
         self.is_running: bool = False
         self.has_failed: bool = False
@@ -23,6 +24,6 @@ class BaseTask[T](ABC):
         """
 
     @abstractmethod
-    def close(self) -> None:
+    async def close(self) -> None:
         """Asynchronously release resources (e.g., closing async client connections)."""
         ...

@@ -1,117 +1,102 @@
 from __future__ import annotations
 
 import asyncio
-import concurrent.futures
 import threading
-from typing import Any, TypeVar
-from uuid import uuid4
+from collections.abc import Callable
+from concurrent.futures import Future
+from typing import Any
 
 from .base_task import BaseTask
-from .types import TaskHandle, TaskStatus
+from .types import TaskHandle
 
-T = TypeVar("T")
 _SENTINEL = object()
 
 
 class WorkerManager[T]:
-    """Manages async tasks. Each submitted task runs concurrently, streaming events."""
-
-    def __init__(self, max_concurrent: int = 10) -> None:
-        self._max_concurrent = max_concurrent
-        self._sem: asyncio.Semaphore | None = None
+    def __init__(self) -> None:
         self._loop = asyncio.new_event_loop()
-        self._sem_ready = threading.Event()
-        self._thread = threading.Thread(
-            target=self._run_loop,
-            name="WorkerManagerAsyncRunner",
-            daemon=True,
-        )
+        self._ready = threading.Event()
+        self._thread = threading.Thread(target=self._run_loop, daemon=True)
         self._thread.start()
-        self._sem_ready.wait()
-
-        # Track active tasks: task_id -> (task, handle, pump_future)
-        self.registry: dict[
-            str, tuple[BaseTask[Any], TaskHandle, concurrent.futures.Future[Any]]
-        ] = {}
+        self._ready.wait()
+        self._tasks: dict[str, Future] = {}
 
     def _run_loop(self) -> None:
         asyncio.set_event_loop(self._loop)
-        self._sem = asyncio.Semaphore(self._max_concurrent)
-        self._sem_ready.set()
+        self._ready.set()
         self._loop.run_forever()
 
     def submit(self, task: BaseTask[T], *args: Any, **kwargs: Any) -> TaskHandle:
-        """Submit an async iterator factory. Returns a handle for consuming events."""
-        task_id = str(uuid4())
-        task.id = task_id
-        handle = TaskHandle(task_id=task_id)
-
-        pump_future = asyncio.run_coroutine_threadsafe(
-            self._run(handle, task, *args, **kwargs), self._loop
+        handle = TaskHandle(task_id=task.id)
+        future = asyncio.run_coroutine_threadsafe(
+            self._drive(handle, task, *args, **kwargs),
+            self._loop,
         )
-
-        self.registry[task_id] = (task, handle, pump_future)
-
+        self._tasks[task.id] = future
         return handle
 
-    async def _run(
+    async def _drive(
         self,
         handle: TaskHandle,
         task: BaseTask[T],
         *args: Any,
         **kwargs: Any,
     ) -> None:
-        """Execute the task, pushing events into its queue."""
-        while self._sem is None:
-            await asyncio.sleep(0.001)
+        try:
+            async for item in task.run(*args, **kwargs):
+                handle.results.put(item)
+        except BaseException as exc:
+            handle.error = exc
+        finally:
+            await task.close()
+            handle.results.put(_SENTINEL)
+            handle.done.set()
+            self._tasks.pop(handle.task_id, None)
 
-        async with self._sem:
-            handle.status = TaskStatus.RUNNING
+    def consume(
+        self,
+        handle: TaskHandle,
+        on_event: Callable[[T], None],
+        on_error: Callable[[BaseException], None] | None = None,
+        on_done: Callable[[], None] | None = None,
+    ) -> None:
+        """Consume events on a worker thread. Returns immediately.
 
+        Callbacks fire on the consumer thread — caller marshals to UI thread inside
+        the callback if needed.
+        """
+
+        def _consume() -> None:
             try:
-                async_stream = task.run(*args, **kwargs)
-                task.is_running = True
-                async for item in async_stream:
-                    await asyncio.to_thread(handle._queue.put, item)
-                handle.status = TaskStatus.COMPLETED
-            except asyncio.CancelledError:
-                task.has_failed = True
-                handle.status = TaskStatus.CANCELLED
-                raise
-            except BaseException as exc:
-                handle.status = TaskStatus.FAILED
-                handle.error = exc
-                await asyncio.to_thread(handle._queue.put, exc)
+                while True:
+                    item = handle.results.get()
+                    if item is _SENTINEL:
+                        if handle.error is not None and on_error:
+                            on_error(handle.error)
+                        break
+                    on_event(item)
+            except BaseException as e:
+                if on_error:
+                    on_error(e)
             finally:
-                task.is_running = False
-                task.close()
-                await asyncio.to_thread(handle._queue.put, _SENTINEL)
-                handle._done.set()
+                if on_done:
+                    on_done()
+
+        threading.Thread(
+            target=_consume,
+            daemon=True,
+            name=f"consumer-{handle.task_id[:8]}",
+        ).start()
 
     def cancel(self, task_id: str) -> bool:
-        """Cancel a running task. Returns True if the task existed."""
-        record = self.registry.get(task_id)
-        if record is None:
+        future = self._tasks.get(task_id)
+        if future is None or future.done():
             return False
+        return future.cancel()
 
-        _, handle, pump_future = record
-        if pump_future.done():
-            return False
-
-        pump_future.cancel()
-        handle.status = TaskStatus.CANCELLED
-        return True
-
-    def get(self, task_id: str) -> TaskHandle | None:
-        """Retrieve a task handle by ID."""
-        record = self.registry.get(task_id)
-        return record[1] if record else None
-
-    async def shutdown(self, timeout: float = 30.0) -> None:
-        """Cancel all running tasks and wait for them to finish."""
-        for _, handle, pump_future in self.registry.values():
-            if not pump_future.done():
-                pump_future.cancel()
-                handle.status = TaskStatus.CANCELLED
-
+    def shutdown(self) -> None:
+        for future in list(self._tasks.values()):
+            if not future.done():
+                future.cancel()
         self._loop.call_soon_threadsafe(self._loop.stop)
+        self._thread.join(timeout=5)

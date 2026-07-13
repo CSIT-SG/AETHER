@@ -92,6 +92,8 @@ class MessageBubble(StyledComponent):
         if self._browser:
             self._browser.setHtml(html)
 
+        self._adjust_height()
+
     def _adjust_height(self) -> None:
         if self._browser is None:
             return
