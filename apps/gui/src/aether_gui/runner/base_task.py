@@ -1,0 +1,30 @@
+import uuid
+from abc import ABC, abstractmethod
+from collections.abc import AsyncIterator
+from typing import Any, TypeVar
+
+T = TypeVar("T")
+
+
+class BaseTask[T](ABC):
+    """Abstract Base Class for asynchronous tasks managed manually by a Worker Manager."""
+
+    def __init__(self, name: str | None = None) -> None:
+        self.id: str = str(uuid.uuid4())
+        self.name: str = name or self.__class__.__name__
+        self.is_running: bool = False
+        self.has_failed: bool = False
+
+    @abstractmethod
+    async def run(self, *args: Any, **kwargs: Any) -> AsyncIterator[T]:
+        """Asynchronously execute the core workload.
+
+        Subclasses implement their heavy I/O boundaries (like network requests,
+        database queries, or LLM streams) using `await`.
+        """
+        ...
+
+    @abstractmethod
+    async def close(self) -> None:
+        """Asynchronously release resources (e.g., closing async client connections)."""
+        ...
