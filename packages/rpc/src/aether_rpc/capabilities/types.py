@@ -119,19 +119,19 @@ class FunctionTreeResult(TypedDict):
 
 
 class RenameStructFieldResult(TypedDict):
-    type_id: int
-    type_name: str
+    struct_id: int
+    struct_name: str
     old_field_name: str
     new_field_name: str
 
 
 class ChangeStructFieldSizeResult(TypedDict):
-    type_id: int
-    type_name: str
+    struct_id: int
+    struct_name: str
     field_name: str
     new_size: str
 
 
-class DeleteStructResult(TypedDict):
-    type_id: int
-    type_name: str
+class StructResult(TypedDict):
+    struct_id: int
+    struct_name: str
