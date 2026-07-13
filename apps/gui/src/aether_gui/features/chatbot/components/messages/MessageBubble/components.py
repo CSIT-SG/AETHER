@@ -83,6 +83,15 @@ class MessageBubble(StyledComponent):
         super().resizeEvent(event)
         self._adjust_height()
 
+    def refresh(self) -> None:
+        html = markdown(
+            self._message.content,
+            extensions=["fenced_code", "tables", "nl2br"],
+        )
+
+        if self._browser:
+            self._browser.setHtml(html)
+
     def _adjust_height(self) -> None:
         if self._browser is None:
             return

@@ -20,12 +20,14 @@ class WorkerManager[T]:
         self._max_concurrent = max_concurrent
         self._sem: asyncio.Semaphore | None = None
         self._loop = asyncio.new_event_loop()
+        self._sem_ready = threading.Event()
         self._thread = threading.Thread(
             target=self._run_loop,
             name="WorkerManagerAsyncRunner",
             daemon=True,
         )
         self._thread.start()
+        self._sem_ready.wait()
 
         # Track active tasks: task_id -> (task, handle, pump_future)
         self.registry: dict[
@@ -34,8 +36,8 @@ class WorkerManager[T]:
 
     def _run_loop(self) -> None:
         asyncio.set_event_loop(self._loop)
-        # Initialize the semaphore inside the event loop's native thread context
         self._sem = asyncio.Semaphore(self._max_concurrent)
+        self._sem_ready.set()
         self._loop.run_forever()
 
     def submit(self, task: BaseTask[T], *args: Any, **kwargs: Any) -> TaskHandle:
@@ -65,8 +67,9 @@ class WorkerManager[T]:
 
         async with self._sem:
             handle.status = TaskStatus.RUNNING
+
             try:
-                async_stream = await task.run(*args, **kwargs)
+                async_stream = task.run(*args, **kwargs)
                 task.is_running = True
                 async for item in async_stream:
                     await asyncio.to_thread(handle._queue.put, item)
@@ -81,7 +84,7 @@ class WorkerManager[T]:
                 await asyncio.to_thread(handle._queue.put, exc)
             finally:
                 task.is_running = False
-                await task.close()
+                task.close()
                 await asyncio.to_thread(handle._queue.put, _SENTINEL)
                 handle._done.set()
 

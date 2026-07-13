@@ -52,7 +52,7 @@ class MessageArea(StyledComponent):
         self._messages_container = messages_container
         self._messages_layout = messages_layout
 
-    def append_message(self, message: Message):
+    def add_message(self, message: Message) -> None:
         card = MessageRow(message, self)
         messages_layout = cast(QVBoxLayout, self._messages_layout)
         messages_layout.addWidget(card)
@@ -61,6 +61,12 @@ class MessageArea(StyledComponent):
             0,
             self.scroll_to_bottom,
         )
+
+    def append_message(self, message: str) -> None:
+        if self._messages_layout:
+            last_widget = self._messages_layout.itemAt(self._messages_layout.count() - 1).widget()
+            message_row = cast(MessageRow, last_widget)
+            message_row.append_text(message)
 
     # FIX: Scrollbar doesn't work yet
     def scroll_to_bottom(self, min_val, max_val) -> None:

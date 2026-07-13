@@ -126,6 +126,11 @@ class MessageRow(StyledComponent):
         clipboard = QApplication.clipboard()
         clipboard.setText(self._message.content)
 
+    def append_text(self, message: str) -> None:
+        self._message.content += message
+        if self._bubble:
+            self._bubble.refresh()
+
     def style_file(self) -> Path | None:
         return Path(__file__).resolve().parent / "styles.qss.jinja"
 
