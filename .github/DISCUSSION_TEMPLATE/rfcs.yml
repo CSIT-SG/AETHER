@@ -1,0 +1,129 @@
+title: "[RFC] "
+labels: ["RFC"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## RFC Template
+        Fill out each section below. Italicized hints show what belongs in each part - replace them as you write.
+
+  - type: input
+    id: authors
+    attributes:
+      label: Authors
+      description: "GitHub handle(s) of the author(s), e.g. @nickname"
+      placeholder: "@nickname"
+    validations:
+      required: true
+
+  - type: textarea
+    id: executive-summary
+    attributes:
+      label: "1. Executive Summary"
+      description: "A short paragraph or bullet list that quickly explains what you're trying to do."
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: "2. Motivation"
+      description: "What motivates this proposal, and why is it important? Aim to get comfortable articulating the value of your actions."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-implementation
+    attributes:
+      label: "3. Proposed Implementation"
+      description: |
+        This is the core of your proposal - its purpose is to help you think through the problem, since writing is thinking.
+        Use the headings below as prompts. Delete any that don't apply, and add diagrams, links, or code snippets wherever they help.
+      value: |
+        **Proposed Public API**
+        <!-- Endpoints, function signatures, event contracts, or interfaces this change exposes to other services/consumers. Include request/response shapes or example calls if relevant. -->
+
+        **Code / Microservice Organization**
+        <!-- Where does this code live? New service, new module, existing module? Folder/package structure, ownership boundaries, how it fits into the current architecture. -->
+
+        **Third-Party Dependencies**
+        <!-- Any new libraries, SDKs, or external services this introduces. Why this one over alternatives? Licensing, maintenance activity, bundle/perf impact. -->
+
+        **Test Plan**
+        <!-- Unit vs integration vs e2e coverage. Fixtures/mocks/seed data needed. Edge cases to cover. How will we know this works before and after shipping? -->
+
+        **Open Thinking / Trade-offs**
+        <!-- Anything else that helped you reason through this — things you went back and forth on, assumptions you're making, or questions for reviewers. -->
+    validations:
+      required: true
+
+  - type: textarea
+    id: performance-metrics
+    attributes:
+      label: "4. Performance Metrics"
+      description: "What are the main metrics we should be measuring? Will this proposal cause additional load?"
+    validations:
+      required: false
+
+  - type: textarea
+    id: drawbacks
+    attributes:
+      label: "5. Drawbacks"
+      description: "Are there any reasons why we should not do this? Aim to evaluate risk and check yourself."
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: "6. Alternatives"
+      description: "What are other ways of achieving the same outcome?"
+    validations:
+      required: false
+
+  - type: textarea
+    id: potential-impact
+    attributes:
+      label: "7. Potential Impact"
+      description: |
+        Be mindful of your environment and generate empathy towards others who may be impacted.
+        - Who is affected by this proposal?
+        - How could this be exploited by malicious attackers?
+    validations:
+      required: false
+
+  - type: textarea
+    id: unresolved-questions
+    attributes:
+      label: "8. Unresolved Questions"
+      description: "What parts of the proposal are still being defined or not covered by this proposal?"
+    validations:
+      required: false
+
+  - type: textarea
+    id: conclusion
+    attributes:
+      label: "9. Conclusion"
+      description: "Briefly outline why this is the right decision to make at this time."
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: process-checklist
+    attributes:
+      label: RFC Process Checklist
+      options:
+        - label: Draft RFC (think of it as a wireframe)
+        - label: Share as WIP with people you trust to gut-check
+        - label: Tag reviewers / relevant people for input
+        - label: Ready for team discussion and feedback
+
+  - type: markdown
+    attributes:
+      value: |
+        **Recommendations**
+        - Tag the title with `[WIP]` if you're still ironing out details.
+        - If there are areas you're unsure about, tag people who might know and ask for input.
+        - As the author, this is *your decision*. You're empowered to move forward despite dissenting comments.
+
+        This document is a thinking exercise, a historical record, and a way to broadcast information - it is **not** a request for permission, nor the most up-to-date representation of any process or system.
