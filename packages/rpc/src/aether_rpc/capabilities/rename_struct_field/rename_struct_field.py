@@ -1,9 +1,9 @@
 import ida_typeinf
 
-from ...base import Capability
-from ...result import Err, Ok, Result
-from ...types import RenameStructFieldResult
-from ...utils import get_struct_id_by_name
+from ..base import Capability
+from ..result import Err, Ok, Result
+from ..types import RenameStructFieldResult
+from ..utils import get_struct_id_by_name
 
 
 class RenameStructField(Capability):
