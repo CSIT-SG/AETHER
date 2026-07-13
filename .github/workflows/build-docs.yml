@@ -24,4 +24,4 @@ jobs:
         with:
           name: docs-standalone
           path: docs-standalone
-          retention-days: 5
+          retention-days: 3

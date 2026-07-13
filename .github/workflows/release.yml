@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g. 1.2.3). Defaults to the contents of VERSION if omitted.'
+        description: "Release version (e.g. 1.2.3). Defaults to the contents of VERSION if omitted."
         required: false
 
 permissions:
@@ -12,7 +12,7 @@ permissions:
 
 concurrency:
   group: release-${{ github.ref }}
-  cancel-in-progress: false  # never abort a release mid-tag-push; let the second run wait
+  cancel-in-progress: false # never abort a release mid-tag-push; let the second run wait
 
 jobs:
   release:
@@ -21,7 +21,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
         with:
-          fetch-depth: 0  # full history needed for auto-generated release notes
+          fetch-depth: 0 # full history needed for auto-generated release notes
 
       - name: Resolve release version
         id: version
@@ -42,7 +42,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Install uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
@@ -89,7 +89,7 @@ jobs:
           tag_name: v${{ steps.version.outputs.version }}
           name: Release v${{ steps.version.outputs.version }}
           generate_release_notes: true
-          draft: ${{ env.ACT == 'true' }}  # act automatically sets ACT=true. https://nektosact.com/usage/index.html?highlight=env.ACT#skipping-steps
+          draft: ${{ env.ACT == 'true' }} # act automatically sets ACT=true. https://nektosact.com/usage/index.html?highlight=env.ACT#skipping-steps
           files: release-zips/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
