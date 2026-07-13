@@ -97,7 +97,7 @@ class TestRemovePath:
 
 
 class TestResourceDir:
-    def test_prefers_source_dir_when_bundle_present(
+    def test_finds_source_dir_when_bundle_present(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         source_dir = tmp_path / "source"
@@ -106,20 +106,8 @@ class TestResourceDir:
         (source_dir / "wheels").mkdir()
 
         monkeypatch.setattr(prod, "SOURCE_DIR", source_dir)
-        monkeypatch.setattr(prod, "DIST_DIR", tmp_path / "unused_dist")
 
         assert prod.resource_dir() == source_dir
-
-    def test_falls_back_to_dist_dir(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        dist_dir = tmp_path / "dist"
-        dist_dir.mkdir()
-        (dist_dir / "requirements.txt").write_text("")
-        (dist_dir / "wheels").mkdir()
-
-        monkeypatch.setattr(prod, "SOURCE_DIR", tmp_path / "empty_source")
-        monkeypatch.setattr(prod, "DIST_DIR", dist_dir)
-
-        assert prod.resource_dir() == dist_dir
 
     def test_raises_when_bundle_incomplete_or_missing(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -129,7 +117,6 @@ class TestResourceDir:
         (source_dir / "requirements.txt").write_text("")
 
         monkeypatch.setattr(prod, "SOURCE_DIR", source_dir)
-        monkeypatch.setattr(prod, "DIST_DIR", tmp_path / "empty_dist")
 
         with pytest.raises(SystemExit):
             prod.resource_dir()
