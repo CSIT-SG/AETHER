@@ -14,5 +14,5 @@ TYPE_MAP = {
     "byte": ida_typeinf.BTF_BYTE,
     "float": ida_typeinf.BTF_FLOAT,
     "double": ida_typeinf.BTF_DOUBLE,
-    "void": ida_typeinf.BTF_VOID
+    "void": ida_typeinf.BTF_VOID,
 }

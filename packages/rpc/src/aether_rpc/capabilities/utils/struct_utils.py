@@ -3,18 +3,18 @@ import ida_typeinf
 INVALID_TYPE_ADDR = 18446744073709551615
 
 
-def get_type_id_by_name(type_name: str) -> int | None:
-    """Retrieves the type ID associated with the specified type name.
+def get_struct_id_by_name(struct_name: str) -> int | None:
+    """Retrieves the struct ID associated with the specified struct name.
 
     Args:
-        type_name: The name of the type to look up.
+        struct_name: The name of the type to look up.
 
     Returns:
         A Result object whose ``result`` attribute contains the corresponding
-        type ID.
+        struct ID.
     """
 
-    type_id = ida_typeinf.get_named_type_tid(type_name)
-    if type_id == INVALID_TYPE_ADDR:
+    struct_id = ida_typeinf.get_named_type_tid(struct_name)
+    if struct_id == INVALID_TYPE_ADDR:
         return None
-    return int(type_id)
+    return int(struct_id)

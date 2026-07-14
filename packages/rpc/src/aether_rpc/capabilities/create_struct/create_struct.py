@@ -1,6 +1,5 @@
 import ida_typeinf
 
-
 from ..base import Capability
 from ..result import Err, Ok, Result
 from ..types import StructResult
@@ -14,7 +13,9 @@ class CreateStruct(Capability):
     def name(self) -> str:
         return "create_struct"
 
-    def execute(self,  struct_name: str, fields: list[tuple[str, str, int | None]] | None = None) -> Result[StructResult]:
+    def execute(
+        self, struct_name: str, fields: list[tuple[str, str, int | None]] | None = None
+    ) -> Result[StructResult]:
         """Creates a new struct.
 
         Args:
@@ -62,25 +63,26 @@ class CreateStruct(Capability):
                     next_offset = next_offset + member.type.get_size() * 8
                     udt.push_back(member)
             except KeyError:
-                return Err(result=f"""Invalid type for field.""")
+                return Err(result="""Invalid type for field.""")
             except (ValueError, TypeError, SystemError):
-                return Err(result='Invalid fields. Each field must be a tuple containing a field '
-                           'name and type, with an optional array size, for example: '
-                           '[("id", "uint32_t"), ("name", "char", 32)].')
-
+                return Err(
+                    result="Invalid fields. Each field must be a tuple containing a field "
+                    "name and type, with an optional array size, for example: "
+                    '[("id", "uint32_t"), ("name", "char", 32)].'
+                )
 
         # Create the UDT
         if not tif.create_udt(udt, ida_typeinf.BTF_STRUCT):
-            return Err(result=f"Failed to create named struct.")
+            return Err(result="Failed to create named struct.")
 
         # Register it as a named type
         idati = ida_typeinf.get_idati()
         if not tif.set_named_type(idati, struct_name, ida_typeinf.NTF_REPLACE):
             return Ok(
                 result=StructResult(
-                struct_id=tif.get_tid(),
-                struct_name=struct_name,
-            )
+                    struct_id=tif.get_tid(),
+                    struct_name=struct_name,
+                )
             )
         else:
-            return Err(result=f"Failed to create named struct.")
+            return Err(result="Failed to create named struct.")
