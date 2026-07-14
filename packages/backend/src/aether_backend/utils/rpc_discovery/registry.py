@@ -36,7 +36,7 @@ class RPCRegistry:
         self._heartbeat_task: asyncio.Task[None] | None = None
         self._file_watching_task: asyncio.Task[None] | None = None
         self._started = False
-        self._logger = get_logger(RPC_REGISTRY_KEY)
+        self._logger = get_logger(RPC_REGISTRY_KEY, use_color=True)
 
     # Lifecycle
 

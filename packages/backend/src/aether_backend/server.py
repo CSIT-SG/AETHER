@@ -1,4 +1,5 @@
 from aether_utils.config import get_config
+from aether_utils.find_root import get_version
 from fastmcp import FastMCP
 from starlette.applications import Starlette
 from starlette.routing import Mount
@@ -22,7 +23,9 @@ def get_disabled_channels() -> set[str]:
     return disabled_tags
 
 
-mcp = FastMCP("AETHER Backend", providers=[app_provider], lifespan=rpc_lifespan)
+mcp = FastMCP(
+    "AETHER Backend", providers=[app_provider], lifespan=rpc_lifespan, version=get_version()
+)
 
 mcp.disable(tags=get_disabled_channels())
 

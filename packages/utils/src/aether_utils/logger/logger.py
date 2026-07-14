@@ -53,7 +53,7 @@ class NamespacedLogger(logging.Logger):
         name: str,
         namespace: str | None = None,
         level: int = logging.NOTSET,
-        use_color: bool = True,
+        use_color: bool = False,
     ):
         super().__init__(name, level)
         self.namespace = namespace
