@@ -2,8 +2,9 @@ from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass
 from itertools import chain
-from typing import Any, cast
+from typing import cast
 
+from aether_backend.utils.get_rpc_service import AnyService
 from agents import FunctionTool, Tool
 
 from ..constants import SubagentTool
@@ -11,7 +12,7 @@ from ..constants import SubagentTool
 
 @dataclass
 class ToolDependencies:
-    service: Any
+    service: AnyService
 
 
 class SubagentToolRegistry:
