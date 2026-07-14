@@ -173,6 +173,7 @@ async def new_ids(tmp_path_factory: pytest.TempPathFactory) -> AsyncGenerator:
     """Provides a temporary directory for the entire test session."""
     yield tmp_path_factory.mktemp("new_ids")
 
+
 @pytest.fixture(scope="package")
 async def delete_ids(tmp_path_factory: pytest.TempPathFactory) -> AsyncGenerator:
     """Provides a temporary directory for the entire test session."""

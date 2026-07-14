@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from pathlib import Path
 from unittest.mock import AsyncMock
 
@@ -32,10 +33,8 @@ async def test_detect_new_rpc(new_ids: Path, monkeypatch: pytest.MonkeyPatch) ->
                 await asyncio.sleep(0.05)
     finally:
         listen_task.cancel()
-        try:
+        with contextlib.suppress(asyncio.CancelledError):
             await listen_task
-        except asyncio.CancelledError:
-            pass
 
     check_config_live.assert_awaited_once_with(file_path)
 
@@ -63,9 +62,7 @@ async def test_detect_deleted_rpc(delete_ids: Path, monkeypatch: pytest.MonkeyPa
                 await asyncio.sleep(0.05)
     finally:
         listen_task.cancel()
-        try:
+        with contextlib.suppress(asyncio.CancelledError):
             await listen_task
-        except asyncio.CancelledError:
-            pass
 
     check_config_live.assert_awaited_once_with(file_path)
