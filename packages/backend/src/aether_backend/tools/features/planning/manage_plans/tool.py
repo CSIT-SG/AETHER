@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Annotated
 
 from aether_backend.tools.features.planning.utils import PlanCrudAction, PlanStatus
 from aether_backend.utils.effect import Program, effectful
@@ -21,11 +22,20 @@ INSTRUCTIONS = get_content(Path(__file__).parent, "instructions.md")
 )  # tool is untyped in fastmcp
 @effectful  # type: ignore
 async def manage_plans(
-    action: PlanCrudAction,
-    plan_id: str | None = None,
-    title: str | None = None,
-    description: str | None = None,
-    status: PlanStatus | None = None,
+    action: Annotated[PlanCrudAction, "The action to perform on the plan."],
+    plan_id: Annotated[
+        str | None,
+        "The ID of the plan to perform the action on. Required for read, update, and delete actions.",
+    ] = None,
+    title: Annotated[
+        str | None, "The title of the plan. Required for create and optional for update."
+    ] = None,
+    description: Annotated[
+        str | None, "The description of the plan. Optional for create and update."
+    ] = None,
+    status: Annotated[
+        PlanStatus | None, "The status of the plan. Optional for create and update."
+    ] = None,
 ) -> Program:
     """Create, read, update, delete, or list plans."""
     match action:

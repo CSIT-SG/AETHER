@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Annotated
 
 from aether_backend.tools.features.planning.utils import ObjectiveCrudAction, ObjectiveStatus
 from aether_backend.utils.effect import Program, effectful
@@ -19,11 +20,15 @@ INSTRUCTIONS = get_content(Path(__file__).parent, "instructions.md")
 )  # tool is untyped in fastmcp
 @effectful  # type: ignore
 async def manage_objectives(
-    action: ObjectiveCrudAction,
-    plan_id: str,
-    objective_id: str | None = None,
-    text: str | None = None,
-    status: ObjectiveStatus | None = None,
+    action: Annotated[ObjectiveCrudAction, "The action to perform on the objective."],
+    plan_id: Annotated[str, "The ID of the plan to which the objective belongs."],
+    objective_id: Annotated[str | None, "The ID of the objective to update or delete."] = None,
+    text: Annotated[
+        str | None, "The text of the objective. Required for create and optional for update."
+    ] = None,
+    status: Annotated[
+        ObjectiveStatus | None, "The status of the objective. Optional for create and update."
+    ] = None,
 ) -> Program:
     """Create, update, or delete objectives within a plan."""
     match action:

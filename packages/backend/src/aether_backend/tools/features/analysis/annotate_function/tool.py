@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Annotated
 
 from aether_backend.utils.effect import Program, effectful
 from aether_backend.utils.get_content import get_content
@@ -20,10 +21,16 @@ INSTRUCTIONS = get_content(Path(__file__).parent, "instructions.md")
 )  # tool is untyped in fastmcp
 @effectful  # type: ignore
 async def annotate_function(
-    rpc_id: str,
-    address: HexAddress,
-    custom_prompt: str | None = None,
+    rpc_id: Annotated[
+        str, "The ID of the RPC service/IDB to use. Formatted as `<file_name>_<date>-<time>`."
+    ],
+    address: Annotated[
+        HexAddress, "The hexadecimal effective address of the function to annotate."
+    ],
+    custom_prompt: Annotated[
+        str | None,
+        "A hint regarding behavior for the subagent to guide analysis. Keep it less than 3 sentences.",
+    ] = None,
 ) -> Program:
-    """Annotate a function at the given address."""
     async for effect in annotate(await get_rpc_service(rpc_id), address, custom_prompt):
         yield effect
