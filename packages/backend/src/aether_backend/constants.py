@@ -1,8 +1,8 @@
 from enum import StrEnum
 
 
-class ToolTags(StrEnum):
-    """Tags for categorizing tools."""
+class ToolChannels(StrEnum):
+    """Channels for categorizing tools."""
 
     DEBUG = "debug"
     EXPERIMENTAL = "experimental"
