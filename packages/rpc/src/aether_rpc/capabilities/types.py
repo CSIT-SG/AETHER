@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import NamedTuple, TypedDict
 
 
 class FunctionInfo(TypedDict):
@@ -135,3 +135,9 @@ class ChangeStructFieldSizeResult(TypedDict):
 class StructResult(TypedDict):
     struct_id: int
     struct_name: str
+
+
+class StructField(NamedTuple):
+    name: str
+    type: str
+    array_size: int | None = None

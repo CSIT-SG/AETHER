@@ -2,7 +2,7 @@ import ida_typeinf
 
 from ..base import Capability
 from ..result import Err, Ok, Result
-from ..types import StructResult
+from ..types import StructField, StructResult
 from .constants import TYPE_MAP
 
 
@@ -14,7 +14,7 @@ class CreateStruct(Capability):
         return "create_struct"
 
     def execute(
-        self, struct_name: str, fields: list[tuple[str, str, int | None]] | None = None
+        self, struct_name: str, fields: list[StructField] | None = None
     ) -> Result[StructResult]:
         """Creates a new struct.
 
@@ -47,20 +47,21 @@ class CreateStruct(Capability):
                 return Err(result="""Fields must contain a list.""")
             try:
                 next_offset = 0
+                fields = [StructField(*field) for field in fields]
                 for field in fields:
                     member = ida_typeinf.udm_t()
-                    member.name = field[0]
+                    member.name = field.name
                     member.offset = next_offset
                     member.type = ida_typeinf.tinfo_t()
-                    if len(field) == 3:
+
+                    if field.array_size is not None:
                         base = ida_typeinf.tinfo_t()
-                        base.create_simple_type(TYPE_MAP[field[1]])
-                        member.type.create_array(base, field[2])
-                    elif len(field) == 2:
-                        member.type.create_simple_type(TYPE_MAP[field[1]])
+                        base.create_simple_type(TYPE_MAP[field.type])
+                        member.type.create_array(base, field.array_size)
                     else:
-                        return Err(result="""Fields must only have the length of 2 or 3.""")
-                    next_offset = next_offset + member.type.get_size() * 8
+                        member.type.create_simple_type(TYPE_MAP[field.type])
+
+                    next_offset += member.type.get_size() * 8
                     udt.push_back(member)
             except KeyError:
                 return Err(result="""Invalid type for field.""")

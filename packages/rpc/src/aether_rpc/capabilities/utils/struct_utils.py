@@ -1,6 +1,5 @@
+import ida_idaapi
 import ida_typeinf
-
-INVALID_TYPE_ADDR = 18446744073709551615
 
 
 def get_struct_id_by_name(struct_name: str) -> int | None:
@@ -15,6 +14,6 @@ def get_struct_id_by_name(struct_name: str) -> int | None:
     """
 
     struct_id = ida_typeinf.get_named_type_tid(struct_name)
-    if struct_id == INVALID_TYPE_ADDR:
+    if struct_id == ida_idaapi.BADADDR:
         return None
     return int(struct_id)
