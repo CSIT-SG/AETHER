@@ -1,23 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    import httpx
     from openai import AsyncOpenAI
-
-# Exercise tool calling so chat-only models do not pass the agent support probe.
-_PROBE_TOOL: list[dict[str, Any]] = [
-    {
-        "type": "function",
-        "function": {
-            "name": "aether_support_probe",
-            "description": "No-op used to confirm the model supports tool calling.",
-            "parameters": {"type": "object", "properties": {}},
-        },
-    }
-]
 
 
 @dataclass(frozen=True)
@@ -25,13 +12,25 @@ class AgentSupport:
     supported: bool
     detail: str  # the provider's own error text, or a success note
     status_code: int | None = None
-    # Transient failures (network, rate limit, 5xx, out-of-credit) must not be cached.
-    cacheable: bool = True
+
+    @property
+    def invalid_key(self) -> bool:
+        """The gateway explicitly rejected the API key (401)."""
+        return self.status_code == 401
 
 
-async def check_agent_support(client: AsyncOpenAI, model: str) -> AgentSupport:
-    """Confirm a provider/model can run agents with a single-token tool probe."""
-    # Lazy import so merely importing this module (e.g. for the cache helpers) skips openai.
+async def probe_gateway(client: AsyncOpenAI, model: str) -> AgentSupport:
+    """Verifies the gateway accepts the API key and handles OpenAI-compatible requests.
+
+    Sends a minimal chat.completions request to the configured endpoint. To remain
+    provider-agnostic (e.g., OpenRouter, llama.cpp), it avoids probing provider-specific
+    features or assuming uniform tool support.
+
+    Exposes status_code for custom branching and forwards the provider's own error
+    message via detail (except for 401s). Only openai client transport/HTTP errors
+    are handled; all others propagate.
+    """
+    # Lazy import so importing this module (e.g. just for AgentSupport) skips openai.
     from openai import APIConnectionError, APIStatusError, RateLimitError
 
     try:
@@ -39,30 +38,24 @@ async def check_agent_support(client: AsyncOpenAI, model: str) -> AgentSupport:
             model=model,
             messages=[{"role": "user", "content": "ping"}],
             max_tokens=1,
-            tools=cast("Any", _PROBE_TOOL),
-            tool_choice="auto",
         )
     except RateLimitError as e:  # key works, just rate-limited — inconclusive
         msg = "Rate limited (429); the key works but the check couldn't complete."
-        return AgentSupport(False, msg, e.status_code, cacheable=False)
+        return AgentSupport(False, msg, e.status_code)
     except APIStatusError as e:
         if e.status_code == 401:
             return AgentSupport(False, "The API key was rejected (401).", 401)
-        if e.status_code == 402:  # valid key, no credit — distinct from a bad key, transient
-            return AgentSupport(
-                False, "API key has no remaining credit (402).", 402, cacheable=False
-            )
-        # 400/403/404 are stable; 5xx are server-side and transient.
-        detail = f"{_provider_message(e)} (HTTP {e.status_code})."
-        return AgentSupport(False, detail, e.status_code, cacheable=e.status_code < 500)
+        return AgentSupport(False, f"{_error_message(e)} (HTTP {e.status_code}).", e.status_code)
     except APIConnectionError:  # includes timeouts (APITimeoutError subclass)
-        return AgentSupport(False, "Could not reach the gateway (network error).", cacheable=False)
+        return AgentSupport(False, "Could not reach the gateway (network error).")
 
-    return AgentSupport(True, "Model responded and supports tool calling.", 200)
+    return AgentSupport(True, "The gateway accepted the request and the API key is valid.", 200)
 
 
-def _provider_message(error: Any) -> str:
-    """Return the cleanest provider message from an APIStatusError."""
+def _error_message(error: Any) -> str:
+    """Cleanest message from an APIStatusError: the provider's ``body.error.message`` if
+    present, else the SDK's ``message``/``str`` (avoids the verbose ``Error code: NNN`` wrapper).
+    """
     body = getattr(error, "body", None)
     if isinstance(body, dict):
         err = body.get("error")
@@ -72,42 +65,3 @@ def _provider_message(error: Any) -> str:
             return err
     message = getattr(error, "message", None)
     return str(message) if message else str(error)
-
-
-async def check_openrouter_key(
-    http_client: httpx.AsyncClient, base_url: str, api_key: str
-) -> AgentSupport:
-    """Validate an OpenRouter key via ``GET /auth/key`` without spending tokens."""
-    import httpx
-
-    url = f"{base_url.rstrip('/')}/auth/key"
-    try:
-        resp = await http_client.get(url, headers={"Authorization": f"Bearer {api_key}"})
-    except httpx.RequestError:
-        return AgentSupport(False, "Could not reach OpenRouter (network error).", cacheable=False)
-
-    if resp.status_code == 401:
-        return AgentSupport(False, "OpenRouter rejected the API key (401).", 401)
-    if resp.status_code != 200:
-        return AgentSupport(
-            False,
-            f"OpenRouter key check failed ({resp.status_code}).",
-            resp.status_code,
-            cacheable=resp.status_code < 500,
-        )
-
-    try:
-        data = resp.json().get("data", {})
-    except ValueError:
-        data = {}
-    limit = data.get("limit")
-    usage = data.get("usage")
-    remaining = data.get("limit_remaining")
-    if remaining is None and limit is not None and usage is not None:
-        remaining = limit - usage
-    if remaining is not None and remaining <= 0:
-        return AgentSupport(
-            False, "OpenRouter key is valid but has no remaining credit.", 402, cacheable=False
-        )
-
-    return AgentSupport(True, "OpenRouter key is valid.", 200)

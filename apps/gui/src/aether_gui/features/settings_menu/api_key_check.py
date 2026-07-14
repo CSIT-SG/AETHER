@@ -4,7 +4,7 @@ import asyncio
 from collections.abc import Callable
 
 from aether_utils.get_support import AgentSupport
-from aether_utils.get_support.verify import verify_agent_support
+from aether_utils.get_support.verify import verify_provider
 from aether_utils.logger import get_logger
 from PySide6 import QtCore
 
@@ -26,14 +26,14 @@ class _ApiKeyCheckTask(QtCore.QRunnable):
 
     def run(self) -> None:
         try:
-            result = asyncio.run(verify_agent_support())
+            result = asyncio.run(verify_provider())
         except Exception as e:  # noqa: BLE001 - a worker thread must never crash the UI
             logger.exception("API key check failed to run")
             result = AgentSupport(False, f"Could not run the API key check: {e}")
         self.signals.finished.emit(result)
 
 
-def run_api_key_check(on_finished: Callable[[AgentSupport], None]) -> None:
+def run_check(on_finished: Callable[[AgentSupport], None]) -> None:
     """Probe the configured provider off the UI thread."""
     task = _ApiKeyCheckTask()
     _active.add(task)

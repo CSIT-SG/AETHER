@@ -1,11 +1,3 @@
-from .get_support import (
-    AgentSupport,
-    check_agent_support,
-    check_openrouter_key,
-)
+from .get_support import AgentSupport, probe_gateway
 
-__all__ = [
-    "AgentSupport",
-    "check_agent_support",
-    "check_openrouter_key",
-]
+__all__ = ["AgentSupport", "probe_gateway"]

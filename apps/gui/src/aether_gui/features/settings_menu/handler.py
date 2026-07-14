@@ -4,7 +4,7 @@ from aether_utils.json import load_json_object
 from aether_utils.logger import get_logger
 from PySide6 import QtWidgets
 
-from .api_key_check import run_api_key_check
+from .api_key_check import run_check
 from .config_box import ConfigBox, create_config_box
 from .config_buttons import (
     ApplyButton,
@@ -68,25 +68,11 @@ class SettingsMenuHandler(QtWidgets.QDialog):
         self._cfg_message.clear()
 
     def apply_config(self) -> None:
-        previous_key = get_config().provider.api_key
+        previous_key = (
+            get_config().provider.api_key
+        )  # Capture the key before saving so on_success can tell whether it changed.
         if self._save_config():
-            self._config_box.mark_saved()
-            new_key = get_config().provider.api_key
-            if new_key and new_key != previous_key:
-                # Validate changed keys without blocking the settings dialog.
-                self._cfg_message.show_info("Config applied. Checking API key…")
-                run_api_key_check(self._on_api_key_checked)
-            else:
-                self._cfg_message.show_success("Config applied!")
-
-    def _on_api_key_checked(self, result: AgentSupport) -> None:
-        try:
-            if result.supported:
-                self._cfg_message.show_success("Config applied. API key is valid.")
-            else:
-                self._cfg_message.show_error(f"Config applied. {result.detail}")
-        except RuntimeError:
-            pass
+            self.on_success(previous_key)
 
     def ok_config(self) -> None:
         if self._save_config():
@@ -106,3 +92,29 @@ class SettingsMenuHandler(QtWidgets.QDialog):
             save_logger.error("Settings not saved: %s", e)
             return False
         return True
+
+    def on_success(self, previous_key: str | None) -> None:
+        """Clear dirty state and check API key if changed"""
+        self._config_box.mark_saved()
+        self._check_api_key(previous_key)
+
+    def _check_api_key(self, previous_key: str | None) -> None:
+        new_key = get_config().provider.api_key
+        if new_key and new_key != previous_key:
+            self._cfg_message.show_info("Config applied. Checking API key…")
+            run_check(self._on_api_key_checked)
+        else:
+            self._cfg_message.show_success("Config applied!")
+
+    def _on_api_key_checked(self, result: AgentSupport) -> None:
+        try:
+            if result.supported:
+                self._config_box.set_field_invalid("api_key", None)
+                self._cfg_message.show_success("Config applied. API key is valid.")
+            else:
+                # Flag the field red only when the key itself was rejected
+                if result.invalid_key:
+                    self._config_box.set_field_invalid("api_key", "Invalid API key")
+                self._cfg_message.show_error(f"Config applied. {result.detail}")
+        except RuntimeError:
+            pass

@@ -44,6 +44,10 @@ class SettingsFormView(StyledComponent):
         """Whether any required form field is currently empty."""
         return self._config_form.has_required_missing()
 
+    def set_field_invalid(self, name: str, message: str | None) -> None:
+        """Flag (or clear) a field as invalid by name."""
+        self._config_form.set_field_invalid(name, message)
+
     def apply_filter(self, text: str) -> FilterResult:
         """Filter fields and mirror the category visibility in the sidebar."""
         result = self._config_form.apply_filter(text)

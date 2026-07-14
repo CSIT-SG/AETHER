@@ -117,5 +117,6 @@ def _add_leaf(
             search_text=f"{category} {field.title} {field.description} {field.name}".lower(),
             widget=field_widget,
             category=category,
+            name=field.name,
         )
     )
