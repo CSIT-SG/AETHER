@@ -166,17 +166,3 @@ async def test_mcp_connection_is_alive(mcp_client: Client[StreamableHttpTranspor
         await mcp_client.ping()
     except Exception as e:
         pytest.skip(f"MCP server could not be reached: {e}")
-
-
-@pytest.fixture(scope="package")
-async def new_ids(tmp_path_factory: pytest.TempPathFactory) -> AsyncGenerator:
-    """Provides a temporary directory for the entire test session."""
-    yield tmp_path_factory.mktemp("new_ids")
-
-
-@pytest.fixture(scope="package")
-async def delete_ids(tmp_path_factory: pytest.TempPathFactory) -> AsyncGenerator:
-    """Provides a temporary directory for the entire test session."""
-    del_dir = tmp_path_factory.mktemp("delete_ids")
-    (del_dir / "deleteme-123456.json").write_text("test watcher")
-    yield del_dir

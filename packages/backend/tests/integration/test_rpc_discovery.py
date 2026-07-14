@@ -12,8 +12,8 @@ pytestmark = pytest.mark.asyncio
 
 
 @pytest.mark.dependency(scope="package")
-async def test_detect_new_rpc(new_ids: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    registry = RPCRegistry(directory=new_ids)
+async def test_detect_new_rpc(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    registry = RPCRegistry(directory=tmp_path)
 
     check_config_live = AsyncMock()
     monkeypatch.setattr(registry, "_check_config_live", check_config_live)
@@ -25,7 +25,7 @@ async def test_detect_new_rpc(new_ids: Path, monkeypatch: pytest.MonkeyPatch) ->
             # give awatch a moment to start watching before triggering change
             await asyncio.sleep(0.1)
 
-            file_path = new_ids / "sample-99999999.json"
+            file_path = tmp_path / "sample-99999999.json"
             file_path.write_text("test watcher")
 
             # poll until _check_config_live has actually been called
@@ -40,12 +40,13 @@ async def test_detect_new_rpc(new_ids: Path, monkeypatch: pytest.MonkeyPatch) ->
 
 
 @pytest.mark.dependency(scope="package")
-async def test_detect_deleted_rpc(delete_ids: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    file_path = delete_ids / "sample-99999999.json"
-    # file should already exist from test_detect_new_rpc, but don't rely on
+async def test_detect_deleted_rpc(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    file_path = tmp_path / "deleteme-99999999.json"
     file_path.write_text("test watcher")
 
-    registry = RPCRegistry(directory=delete_ids)
+    registry = RPCRegistry(directory=tmp_path)
+
+    assert file_path.exists(), f"{file_path} was not created"
 
     check_config_live = AsyncMock()
     monkeypatch.setattr(registry, "_check_config_live", check_config_live)
