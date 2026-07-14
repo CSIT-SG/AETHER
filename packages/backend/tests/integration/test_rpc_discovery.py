@@ -10,7 +10,7 @@ from aether_backend.utils.rpc_discovery import RPCRegistry
 pytestmark = pytest.mark.asyncio
 
 
-@pytest.mark.dependency(scope="package", name= "test_detect_new_rpc")
+@pytest.mark.dependency(scope="package", name="test_detect_new_rpc")
 async def test_detect_new_rpc(instance_ids: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     registry = RPCRegistry(directory=instance_ids)
 
@@ -38,6 +38,7 @@ async def test_detect_new_rpc(instance_ids: Path, monkeypatch: pytest.MonkeyPatc
             pass
 
     check_config_live.assert_awaited_once_with(file_path)
+
 
 @pytest.mark.dependency(scope="package", depends=["test_detect_new_rpc"])
 async def test_detect_deleted_rpc(instance_ids: Path, monkeypatch: pytest.MonkeyPatch) -> None:
