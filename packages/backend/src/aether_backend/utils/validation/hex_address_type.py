@@ -2,11 +2,11 @@ from typing import Annotated
 
 from pydantic import BeforeValidator, Field
 
-from .constants import _VALID_INPUT
+from .constants import VALID_INPUT
 
 
 def _normalize_hex(v: str) -> str:
-    match = _VALID_INPUT.fullmatch(v)
+    match = VALID_INPUT.fullmatch(v)
     if not match:
         raise ValueError(f"Invalid value {v} passed into tool. Expects Hex address")
 

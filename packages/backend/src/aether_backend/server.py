@@ -11,7 +11,7 @@ from .utils.rpc_discovery import rpc_lifespan
 def get_disabled_tags() -> set[str]:
     """Determine which tool tags should be disabled based on the configuration."""
     config = get_config()
-    disabled_tags = set()
+    disabled_tags: set[str] = set()
 
     if not config.debug:
         disabled_tags.add(ToolTags.DEBUG)
