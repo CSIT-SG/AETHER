@@ -1,16 +1,9 @@
-from aether_backend.utils.subagent.constants import SubagentTool
+from aether_backend.utils.get_rpc_service import AnyService
 from aether_rpc.capabilities.result import Result
 from aether_rpc.capabilities.types import AddressData
-from agents import RunContextWrapper, function_tool
-
-from .tags import ToolDependencies, registry
 
 
-@registry.tag(SubagentTool.ANNOTATOR)
-@function_tool
-async def get_data_at_address(
-    ctx: RunContextWrapper[ToolDependencies], *, location: str | int
-) -> Result[AddressData]:
+async def get_data_at_address(service: AnyService, *, location: str | int) -> Result[AddressData]:
     """Collect and return all available data at the given address or symbol.
 
     Args:
@@ -40,5 +33,4 @@ async def get_data_at_address(
         get_data_at_address(0xDEADBEEF)
         get_data_at_address("my_func")
     """
-    service = ctx.context.service
     return service.get_data_at_address(location=location)

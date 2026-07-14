@@ -1,13 +1,20 @@
 from pathlib import Path
 from typing import Any
 
+from aether_backend.forwarded_rpc import (
+    get_data_at_address,
+    get_function_pseudocode,
+    get_local_variables,
+    rename_function,
+    rename_local_variable,
+    set_comment,
+)
 from aether_backend.utils.effect import Log, Program, Return
 from aether_backend.utils.get_content import get_content
 from aether_backend.utils.subagent import (
-    InternalToolDependencies,
     OpenAIGateway,
-    SubagentTool,
-    internal_tool_registry,
+    SubagentToolDependencies,
+    build_subagent_tool,
 )
 from aether_utils.config import get_config
 from agents import Agent, Runner
@@ -24,13 +31,25 @@ async def test(service: Any, rpc_tool: str, **kwargs: Any) -> Program:
             feature="test",
         ),
         instructions=INSTRUCTIONS,
-        tools=internal_tool_registry.get_tools(SubagentTool.ANNOTATOR),
+        tools=list(
+            map(
+                build_subagent_tool,
+                [
+                    get_data_at_address,
+                    get_function_pseudocode,
+                    get_local_variables,
+                    rename_function,
+                    set_comment,
+                    rename_local_variable,
+                ],
+            )
+        ),
     )
     yield Log(f"Testing {rpc_tool} at address: {kwargs}")
 
     result = Runner.run_streamed(
         agent,
-        context=InternalToolDependencies(service),
+        context=SubagentToolDependencies(service),
         input=f"Call {rpc_tool} using these arguments: {kwargs}.",
     )
 

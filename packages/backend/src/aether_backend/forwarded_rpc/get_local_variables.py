@@ -1,16 +1,9 @@
-from aether_backend.utils.subagent.constants import SubagentTool
+from aether_backend.utils.get_rpc_service import AnyService
 from aether_rpc.capabilities.result import Result
 from aether_rpc.capabilities.types import LocalVar
-from agents import RunContextWrapper, function_tool
-
-from .tags import ToolDependencies, registry
 
 
-@registry.tag(SubagentTool.ANNOTATOR)
-@function_tool
-async def get_local_variables(
-    ctx: RunContextWrapper[ToolDependencies], *, function_name: str
-) -> Result[list[LocalVar]]:
+async def get_local_variables(service: AnyService, *, function_name: str) -> Result[list[LocalVar]]:
     """List all local variables in the decompiled pseudocode of a function.
 
     Args:
@@ -33,5 +26,4 @@ async def get_local_variables(
             get_local_variables("dynamic_buffer")
             get_local_variables("sub_DEADBEEF")
     """
-    service = ctx.context.service
     return service.get_local_variables(function_name=function_name)

@@ -1,15 +1,10 @@
-from aether_backend.utils.subagent.constants import SubagentTool
+from aether_backend.forwarded_rpc.get_data_at_address import AnyService
 from aether_rpc.capabilities.result import Result
 from aether_rpc.capabilities.types import RenameLocalVarResult
-from agents import RunContextWrapper, function_tool
-
-from .tags import ToolDependencies, registry
 
 
-@registry.tag(SubagentTool.ANNOTATOR)
-@function_tool
 async def rename_local_variable(
-    ctx: RunContextWrapper[ToolDependencies],
+    service: AnyService,
     *,
     function_address: str | int,
     old_var_name: str,
@@ -38,7 +33,6 @@ async def rename_local_variable(
     Example:
         rename_local_variable(0xDEADBEEF, "v1", "buffer")
     """
-    service = ctx.context.service
     return service.rename_local_variable(
         function_address=function_address, old_var_name=old_var_name, new_var_name=new_var_name
     )

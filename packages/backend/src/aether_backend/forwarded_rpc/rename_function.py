@@ -1,15 +1,10 @@
-from aether_backend.utils.subagent.constants import SubagentTool
+from aether_backend.forwarded_rpc.get_data_at_address import AnyService
 from aether_rpc.capabilities.result import Result
 from aether_rpc.capabilities.types import RenameFuncResult
-from agents import RunContextWrapper, function_tool
-
-from .tags import ToolDependencies, registry
 
 
-@registry.tag(SubagentTool.ANNOTATOR)
-@function_tool
 async def rename_function(
-    ctx: RunContextWrapper[ToolDependencies], *, address: str | int, new_name: str
+    service: AnyService, *, address: str | int, new_name: str
 ) -> Result[RenameFuncResult]:
     """Rename the function at the given address.
 
@@ -33,5 +28,4 @@ async def rename_function(
     Example:
         rename_function(0xDEADBEEF, "find_strlen")
     """
-    service = ctx.context.service
     return service.rename_function(address=address, new_name=new_name)

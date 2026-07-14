@@ -1,15 +1,10 @@
-from aether_backend.utils.subagent.constants import SubagentTool
+from aether_backend.utils.get_rpc_service.types import AnyService
 from aether_rpc.capabilities.result import Result
 from aether_rpc.capabilities.types import SetCommentResult
-from agents import RunContextWrapper, function_tool
-
-from .tags import ToolDependencies, registry
 
 
-@registry.tag(SubagentTool.ANNOTATOR)
-@function_tool
 async def set_comment(
-    ctx: RunContextWrapper[ToolDependencies], *, address: str | int, comment: str
+    service: AnyService, *, address: str | int, comment: str
 ) -> Result[SetCommentResult]:
     """Set a comment at the given address in the Hex-Rays decompiler view.
 
@@ -37,5 +32,4 @@ async def set_comment(
     Example:
         set_comment(0xDEADBEEF, "determines required buffer size")
     """
-    service = ctx.context.service
     return service.set_comment(address=address, comment=comment)
