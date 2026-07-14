@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:
-    from openai import AsyncOpenAI
+from openai import APIConnectionError, APIStatusError, AsyncOpenAI
 
 
 @dataclass(frozen=True)
@@ -24,37 +22,33 @@ async def probe_gateway(client: AsyncOpenAI, model: str) -> AgentSupport:
 
     Sends a minimal chat.completions request to the configured endpoint. To remain
     provider-agnostic (e.g., OpenRouter, llama.cpp), it avoids probing provider-specific
-    features or assuming uniform tool support.
-
-    Exposes status_code for custom branching and forwards the provider's own error
-    message via detail (except for 401s). Only openai client transport/HTTP errors
-    are handled; all others propagate.
+    features or assuming uniform tool support. On failure it reports the gateway's own
+    error message (except for 401, kept generic to avoid echoing a masked key).
     """
-    # Lazy import so importing this module (e.g. just for AgentSupport) skips openai.
-    from openai import APIConnectionError, APIStatusError, RateLimitError
-
     try:
         await client.chat.completions.create(
             model=model,
             messages=[{"role": "user", "content": "ping"}],
             max_tokens=1,
         )
-    except RateLimitError as e:  # key works, just rate-limited — inconclusive
-        msg = "Rate limited (429); the key works but the check couldn't complete."
-        return AgentSupport(False, msg, e.status_code)
     except APIStatusError as e:
-        if e.status_code == 401:
-            return AgentSupport(False, "The API key was rejected (401).", 401)
-        return AgentSupport(False, f"{_error_message(e)} (HTTP {e.status_code}).", e.status_code)
+        # A 401's message can echo a masked key fragment (and detail is logged), so
+        # keep that one generic; for every other status show the provider's own reason.
+        detail = "The API key was rejected (401)." if e.status_code == 401 else _error_message(e)
+        return AgentSupport(False, detail, e.status_code)
     except APIConnectionError:  # includes timeouts (APITimeoutError subclass)
         return AgentSupport(False, "Could not reach the gateway (network error).")
 
     return AgentSupport(True, "The gateway accepted the request and the API key is valid.", 200)
 
 
-def _error_message(error: Any) -> str:
-    """Cleanest message from an APIStatusError: the provider's ``body.error.message`` if
-    present, else the SDK's ``message``/``str`` (avoids the verbose ``Error code: NNN`` wrapper).
+def _error_message(error: APIStatusError) -> str:
+    """The provider's own error text, with fallbacks.
+
+    OpenAI-compatible gateways return a ``{"error": {"message": ...}}`` body; surface
+    that reason directly rather than guessing from the status code. A proxy or minimal
+    gateway may return non-JSON (an HTML 502, an empty 403), so fall back to the SDK's
+    message and finally the bare status code.
     """
     body = getattr(error, "body", None)
     if isinstance(body, dict):
@@ -63,5 +57,4 @@ def _error_message(error: Any) -> str:
             return str(err["message"])
         if isinstance(err, str) and err:
             return err
-    message = getattr(error, "message", None)
-    return str(message) if message else str(error)
+    return error.message or f"HTTP {error.status_code}"
