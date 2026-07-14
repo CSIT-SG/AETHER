@@ -167,7 +167,8 @@ async def test_mcp_connection_is_alive(mcp_client: Client[StreamableHttpTranspor
     except Exception as e:
         pytest.skip(f"MCP server could not be reached: {e}")
 
-@pytest.fixture(scope = "package")
+
+@pytest.fixture(scope="package")
 async def instance_ids(tmp_path_factory: pytest.TempPathFactory) -> AsyncGenerator:
     """Provides a temporary directory for the entire test session."""
     yield tmp_path_factory.mktemp("ID_Dir")

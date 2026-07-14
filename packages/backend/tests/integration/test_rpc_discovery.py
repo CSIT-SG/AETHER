@@ -13,6 +13,7 @@ from fastmcp.client.transports import StreamableHttpTransport
 
 pytestmark = pytest.mark.asyncio
 
+
 async def _list_rpc_connections_text(mcp_client: Client[StreamableHttpTransport]) -> str:
     response = await mcp_client.call_tool("list_rpc_connections")
     content = response.content
@@ -49,6 +50,7 @@ async def test_list_rpc_connections_includes_the_running_headless_instance(
             "derived from the binary stem, update this assertion to match "
             "the real id scheme."
         )
+
 
 @pytest.mark.dependency(scope="package")
 async def test_detect_new_rpc(instance_ids: Path, monkeypatch: pytest.MonkeyPatch) -> None:
