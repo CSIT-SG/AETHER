@@ -1,0 +1,38 @@
+{
+  "openai_api_key": "",
+  "openai_model": "qwen/qwen3-coder",
+  "openai_base_url": "https://openrouter.ai/api/v1",
+  "openai_extra_body": {},
+  "mcp_server_url": "http://127.0.0.1:8744/sse",
+  "subagents": {
+    "gatherer_model": "qwen/qwen3-coder",
+    "annotator_model": "qwen/qwen3-coder",
+    "ai_decomp_model": "qwen/qwen3-coder",
+    "single_analysis_model": "qwen/qwen3-coder",
+    "struct_creator_model": "qwen/qwen3-coder",
+    "index_agent_model": "qwen/qwen3-coder"
+  },
+  "max_iterations": 5,
+  "prompt_token_warning": 64000,
+  "annotator_max_tokens": 30000,
+  "deobfuscator_max_tokens": 16384,
+  "chatbot_max_tokens": 65536,
+  "system_prompt_at_bottom": false,
+  "chatbot_idx_dialog": false,
+  "always_prompt_model": true,
+  "use_desc": true,
+  "use_comments": true,
+  "rename_vars": true,
+  "rename_funcs": true,
+  "rename_filter_enabled": true,
+  "comment_every_line": false,
+  "debug": false,
+  "custom_ca_cert_path": "",
+  "client_cert_path": "",
+  "client_key_path": "",
+  "model_list": {
+    "Qwen: Qwen3 Coder 480B A35B": "qwen/qwen3-coder",
+    "OpenAI: gpt-oss-120b": "openai/gpt-oss-120b",
+    "Qwen: Qwen3 Next 80B A3B Instruct": "qwen/qwen3-next-80b-a3b-instruct"
+  }
+}
