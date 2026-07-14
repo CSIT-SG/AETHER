@@ -2,8 +2,8 @@ from collections.abc import AsyncIterator
 
 from aether_gui.runner import BaseTask
 
-from ..ida import IDAContext
 from ..llm import LLMResponse, OpenAIClient
+from ..types import IDAContext
 from .constants import TASK_TEMPLATE
 
 
@@ -22,7 +22,7 @@ class ChatBotTask(BaseTask[LLMResponse]):
         self.user_prompt = user_prompt
         self.ida_context = ida_context
 
-    async def run(self) -> AsyncIterator[LLMResponse]:  # type: ignore
+    async def run(self) -> AsyncIterator[LLMResponse]:
         prompt = TASK_TEMPLATE.render(prompt=self.user_prompt, ctx=self.ida_context)
 
         async for event in self.llm_client.submit(

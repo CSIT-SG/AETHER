@@ -52,7 +52,7 @@ class MessageArea(StyledComponent):
         self._messages_container = messages_container
         self._messages_layout = messages_layout
 
-    def add_message(self, message: Message) -> None:
+    def add_new_message_bubble(self, message: Message) -> None:
         card = MessageRow(message, self)
         messages_layout = cast(QVBoxLayout, self._messages_layout)
         messages_layout.addWidget(card)
@@ -62,7 +62,7 @@ class MessageArea(StyledComponent):
             self.scroll_to_bottom,
         )
 
-    def append_message(self, message: str) -> None:
+    def append_to_last_message(self, message: str) -> None:
         if self._messages_layout:
             last_widget = self._messages_layout.itemAt(self._messages_layout.count() - 1).widget()
             message_row = cast(MessageRow, last_widget)

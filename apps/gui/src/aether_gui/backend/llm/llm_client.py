@@ -9,15 +9,15 @@ from aether_utils.config import get_config
 from agents import Agent, Runner
 from agents.mcp import MCPServerStreamableHttp
 
+from .constants import SYSTEM_PROMPT
 from .llm_types import LLMResponse, ReasoningDelta, TextDelta, ToolCall, ToolOutput
 
 config = get_config()
-MAX_TOOL_ROUNDS = 5
 
 
 class OpenAIClient:
-    def __init__(self, system_prompt: str) -> None:
-        self.system_prompt = system_prompt
+    def __init__(self) -> None:
+        self.system_prompt = SYSTEM_PROMPT
 
     async def submit(
         self,
@@ -57,7 +57,7 @@ class OpenAIClient:
                         case "tool_call_item":
                             yield ToolCall(
                                 name=item.tool_name or "",
-                                arguments=getattr(item.raw_item, "arguments", ""),
+                                arguments=getattr(item.raw_item, "arguments", "<BLANK>"),
                                 call_id=item.call_id or "",
                             )
                         case "tool_call_output_item":

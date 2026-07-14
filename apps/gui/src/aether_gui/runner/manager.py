@@ -68,16 +68,14 @@ class WorkerManager[T]:
 
         def _consume() -> None:
             try:
-                while True:
-                    item = handle.results.get()
-                    if item is _SENTINEL:
-                        if handle.error is not None and on_error:
-                            on_error(handle.error)
-                        break
+                for item in iter(handle.results.get, _SENTINEL):
                     on_event(item)
             except BaseException as e:
                 if on_error:
                     on_error(e)
+            else:
+                if handle.error is not None and on_error:
+                    on_error(handle.error)
             finally:
                 if on_done:
                     on_done()
@@ -85,7 +83,7 @@ class WorkerManager[T]:
         threading.Thread(
             target=_consume,
             daemon=True,
-            name=f"consumer-{handle.task_id[:8]}",
+            name=f"consumer-{handle.task_id}",
         ).start()
 
     def cancel(self, task_id: str) -> bool:

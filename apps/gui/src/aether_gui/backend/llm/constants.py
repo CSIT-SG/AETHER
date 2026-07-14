@@ -12,5 +12,3 @@ If no suitable tool exists, say what information is missing.
 When suggesting IDA modifications, describe them as proposed actions.
 Do not claim that changes were applied unless the tool result confirms it.
 """
-
-MCP_URL = "http://127.0.0.1:8000/mcp/"

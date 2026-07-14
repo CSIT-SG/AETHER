@@ -1,17 +1,16 @@
 import json
 
 import ida_kernwin
-import ida_nalt
 import idaapi
 from aether_rpc.gui_server import GUIRPCServer
 from aether_utils.config import get_config
-from aether_utils.file_id import file_id
 from aether_utils.is_headless_ida import is_headless_ida
 from aether_utils.logger import get_logger
 
 from aether_gui.features.context_menu import AetherUIHooks
 from aether_gui.features.font_capture import AetherFontHook, FontEnablerHook
 from aether_gui.features.settings_menu import SettingsMenuHandler
+from aether_gui.utils.rpc_id import get_rpc_id
 
 ACTION_NAME = "aether:open_settings"
 
@@ -36,12 +35,10 @@ class _Aether(idaapi.plugin_t):
             logger.debug("Headless IDA detected, skipping GUI plugin initialization")
             return idaapi.PLUGIN_SKIP
 
-        path = ida_nalt.get_input_file_path()
-        if not path:
-            logger.warning("No input file path available yet")
+        rpc_id = get_rpc_id()
+        if rpc_id is None:
             return idaapi.PLUGIN_SKIP
-
-        self._rpc_server = GUIRPCServer(file_id=file_id(path))
+        self._rpc_server = GUIRPCServer(file_id=rpc_id)
 
         try:
             cfg = get_config()

@@ -126,6 +126,11 @@ class ConfigModel(BaseModel):
         title="Features",
         description="Feature flags and parameters for various components.",
     )
+    mcp_url: str = Field(
+        default="http://127.0.0.1:8000/mcp/",
+        title="MCP URL",
+        description="URL where MCP server is hosted",
+    )
     debug: bool | None = Field(
         default=None,
         title="Debug",

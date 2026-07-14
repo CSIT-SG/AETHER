@@ -1,22 +1,21 @@
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from enum import StrEnum
-
-
-# LLM APIs expect "assistant" instead of self defined aether
-class LLMRole(StrEnum):
-    USER = "user"
-    SYSTEM = "system"
-    ASSISTANT = "assistant"
-    TOOL = "tool"
-
 
 type LLMResponse = TextDelta | ReasoningDelta | ToolCall | ToolOutput
 
 
+class LLMOutput(ABC):
+    """Abstract class for different LLM outputs"""
+
+    @property
+    @abstractmethod
+    def output_string(self) -> str: ...
+
+
 @dataclass
-class TextDelta:
+class TextDelta(LLMOutput):
     """A chunk of streamed text output from the LLM."""
 
     delta: str
@@ -27,7 +26,7 @@ class TextDelta:
 
 
 @dataclass
-class ReasoningDelta:
+class ReasoningDelta(LLMOutput):
     """A chunk of streamed reasoning from the LLM (o1/o3 models)."""
 
     delta: str
@@ -38,7 +37,7 @@ class ReasoningDelta:
 
 
 @dataclass
-class ToolCall:
+class ToolCall(LLMOutput):
     """The LLM has committed to a tool call."""
 
     name: str
@@ -51,7 +50,7 @@ class ToolCall:
 
 
 @dataclass
-class ToolOutput:
+class ToolOutput(LLMOutput):
     """A tool executed and returned a result."""
 
     output: str

@@ -1,22 +1,75 @@
 from __future__ import annotations
 
+import ast
+from typing import cast
+
 import ida_kernwin
+from aether_utils.config import get_config
+from fastmcp.client.client import CallToolResult
 
 from aether_gui.runner import get_shared_worker_manager
+from aether_gui.utils.mcp import MCPTask
+from aether_gui.utils.rpc_id import get_rpc_id
 
 from .chat import ChatbotPanelRenderer
 from .chatbot_task import ChatBotTask
-from .constants import MCP_URL, SYSTEM_PROMPT
-from .ida import IDAContextProvider
-from .interfaces import ChatPanelProtocol
 from .llm import LLMResponse, OpenAIClient, ReasoningDelta, TextDelta, ToolCall, ToolOutput
+from .types import ChatPanelProtocol, IDAContext
+
+config = get_config()
 
 
 class ChatOrchestrator:
-    def __init__(self, chatbot_panel: ChatPanelProtocol) -> None:
-
-        self.ida_context_provider = IDAContextProvider()
+    def __init__(self, llm_client: OpenAIClient, chatbot_panel: ChatPanelProtocol) -> None:
+        self.llm_client = llm_client
         self.chat_renderer = ChatbotPanelRenderer(chatbot_panel)
+        self._get_context()
+
+    def _get_context(self) -> None:
+        current_ea = ida_kernwin.get_screen_ea()
+        rpc_id = get_rpc_id()
+        if rpc_id is None:
+            self.chat_renderer.render_error("RPC server does not exist")
+            raise Exception
+
+        task = MCPTask(
+            rpc_id=rpc_id,
+            tool_name="get_ida_context",
+            args={"address": hex(current_ea)},
+        )
+        worker_manager = get_shared_worker_manager()
+
+        handle = worker_manager.submit(task)
+        worker_manager.consume(
+            handle,
+            on_event=lambda e: self._format_context(e),
+            on_error=lambda err: self._run_on_ida_ui_thread(
+                lambda: self.chat_renderer.render_error(f"Failed to get IDA context {err}")
+            ),
+            on_done=None,
+        )
+
+    def _format_context(self, tool_result: CallToolResult) -> None:
+        if not tool_result.content or tool_result.content[0].type != "text":
+            raise ValueError("Failed to extract text: CallToolResult contains no text data.")
+
+        tool_text = tool_result.content[0].text
+        tool_text = tool_text.strip().strip('"')
+
+        context = ast.literal_eval(tool_text)
+        data, pseudocode = context["data"], context["pseudocode"]
+
+        if pseudocode is not None:
+            # pseudocode fields override data fields where they overlap (name)
+            merged = {**data, **pseudocode}
+        else:
+            merged = {
+                **data,
+                "name": data["name"] or "",
+                "start_address": "",
+                "pseudocode": "",
+            }
+        self.ida_context = cast(IDAContext, merged)
 
     def submit_user_prompt(self, prompt: str) -> None:
         """Called from IDA main thread. Returns immediately."""
@@ -24,22 +77,15 @@ class ChatOrchestrator:
         if not prompt:
             return
 
-        try:
-            ida_context = self.ida_context_provider.get_context()
-        except Exception as e:
-            self.chat_renderer.render_error(f"Failed to collect IDA context: {e}")
-            return
-
         worker_manager = get_shared_worker_manager()
 
         self.chat_renderer.render_status("Analyzing current context...")
 
-        llm_client = OpenAIClient(SYSTEM_PROMPT)
         task = ChatBotTask(
-            llm_client=llm_client,
-            mcp_url=MCP_URL,
+            llm_client=self.llm_client,
+            mcp_url=config.mcp_url,
             user_prompt=prompt,
-            ida_context=ida_context,
+            ida_context=self.ida_context,
         )
         handle = worker_manager.submit(task)
 
@@ -57,12 +103,10 @@ class ChatOrchestrator:
     def _handle_worker_result(self, result: LLMResponse) -> None:
         """Render UI and apply IDA actions here"""
 
-        match result:
-            case TextDelta() | ReasoningDelta():
-                self.chat_renderer.render_aether_message(result.output_string)
-
-            case ToolCall() | ToolOutput():
-                self.chat_renderer.render_tool_message(result.output_string)
+        if isinstance(result, (TextDelta, ReasoningDelta)):
+            self.chat_renderer.render_aether_message(result.output_string)
+        elif isinstance(result, (ToolCall, ToolOutput)):
+            self.chat_renderer.render_tool_message(result.output_string)
 
     def _run_on_ida_ui_thread(self, fn) -> None:
         """

@@ -1,7 +1,6 @@
 from .llm_client import OpenAIClient
 from .llm_types import (
     LLMResponse,
-    LLMRole,
     ReasoningDelta,
     TextDelta,
     ToolCall,
@@ -10,7 +9,6 @@ from .llm_types import (
 
 __all__ = [
     "LLMResponse",
-    "LLMRole",
     "OpenAIClient",
     "ReasoningDelta",
     "TextDelta",

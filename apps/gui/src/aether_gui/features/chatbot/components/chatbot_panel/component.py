@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import cast
 from uuid import uuid4
 
-from aether_gui.backend import ChatOrchestrator
+from aether_gui.backend import ChatOrchestrator, OpenAIClient
 from aether_gui.utils.ui import StyledComponent
 from PySide6 import QtCore, QtWidgets
 
@@ -24,7 +24,7 @@ class ChatbotPanel(StyledComponent):
         self._layout_container: QtWidgets.QVBoxLayout | None = None
         self._message_area: MessageArea | None = None
         self._chat_input: ChatInput | None = None
-        self.chat_orchestrator: ChatOrchestrator = ChatOrchestrator(self)
+        self.chat_orchestrator = ChatOrchestrator(OpenAIClient(), self)
 
     def init_ui(self) -> None:
         """Builds the panel with chat input field and enable themed background painting."""
@@ -58,7 +58,7 @@ class ChatbotPanel(StyledComponent):
         )
 
         message_area = cast(MessageArea, self._message_area)
-        message_area.add_message(message)
+        message_area.add_new_message_bubble(message)
 
         self._session.add_message(message)
 
@@ -68,20 +68,20 @@ class ChatbotPanel(StyledComponent):
         ### END TESTING ###
 
     # Backend call this function
-    def add_message(self, response: str) -> None:
+    def add_new_message_bubble(self, response: str) -> None:
         """Display Response After LLM Finishes Processing"""
         message = Message(
             id=str(uuid4()), role=MessageRole.AETHER, content=response, timestamp=datetime.now()
         )
 
         message_area = cast(MessageArea, self._message_area)
-        message_area.add_message(message)
+        message_area.add_new_message_bubble(message)
 
         self._session.add_message(message)
 
-    def append_message(self, response: str) -> None:
+    def append_to_last_message(self, response: str) -> None:
         if self._message_area:
-            self._message_area.append_message(response)
+            self._message_area.append_to_last_message(response)
 
     def load_message_history(self) -> None:
         """Loads existing messages onto MessageArea"""
@@ -90,7 +90,7 @@ class ChatbotPanel(StyledComponent):
 
         message_area = cast(MessageArea, self._message_area)
         for msg in self._session.messages:
-            message_area.add_message(msg)
+            message_area.add_new_message_bubble(msg)
 
     # TODO:
     # ADD AUTO SCROLL TO BOTTOM FUNCTION HERE
