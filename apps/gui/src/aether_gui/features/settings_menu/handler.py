@@ -1,8 +1,10 @@
 from aether_utils.config import get_config, set_config
+from aether_utils.get_support import AgentSupport
 from aether_utils.json import load_json_object
 from aether_utils.logger import get_logger
 from PySide6 import QtWidgets
 
+from .api_key_check import run_api_key_check
 from .config_box import ConfigBox, create_config_box
 from .config_buttons import (
     ApplyButton,
@@ -66,8 +68,25 @@ class SettingsMenuHandler(QtWidgets.QDialog):
         self._cfg_message.clear()
 
     def apply_config(self) -> None:
+        previous_key = get_config().provider.api_key
         if self._save_config():
-            self.on_success()
+            self._config_box.mark_saved()
+            new_key = get_config().provider.api_key
+            if new_key and new_key != previous_key:
+                # Validate changed keys without blocking the settings dialog.
+                self._cfg_message.show_info("Config applied. Checking API key…")
+                run_api_key_check(self._on_api_key_checked)
+            else:
+                self._cfg_message.show_success("Config applied!")
+
+    def _on_api_key_checked(self, result: AgentSupport) -> None:
+        try:
+            if result.supported:
+                self._cfg_message.show_success("Config applied. API key is valid.")
+            else:
+                self._cfg_message.show_error(f"Config applied. {result.detail}")
+        except RuntimeError:
+            pass
 
     def ok_config(self) -> None:
         if self._save_config():
@@ -83,14 +102,7 @@ class SettingsMenuHandler(QtWidgets.QDialog):
             set_config(formatted)
         except Exception as e:
             self.show_error_message()
-            # Log the real reason (JSON line/column, "not an object", or the
-            # pydantic ValidationError) — the shown message only points here.
+            # Log the full validation reason; the UI message stays brief.
             save_logger.error("Settings not saved: %s", e)
             return False
         return True
-
-    def on_success(self) -> None:
-        # Runs after a successful Apply: clear the dirty state (which disables the
-        # Apply button) and report success without closing the dialog.
-        self._config_box.mark_saved()
-        self._cfg_message.show_success("Config applied!")
