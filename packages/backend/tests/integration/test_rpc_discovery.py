@@ -9,6 +9,7 @@ from aether_backend.utils.rpc_discovery import RPCRegistry
 
 pytestmark = pytest.mark.asyncio
 
+
 @pytest.mark.dependency(scope="package")
 async def test_detect_new_rpc(instance_ids: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     registry = RPCRegistry(directory=instance_ids)
