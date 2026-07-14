@@ -8,7 +8,13 @@ from ..styles import MESSAGE_STATE_PROPERTY, MessageState
 
 
 class ConfigMessage(StyledComponent):
-    """Themed status line for the settings dialog."""
+    """Themed status line for the settings dialog.
+
+    Shows error / success / neutral text coloured from the theme's semantic
+    ``error`` and ``success`` colours (no hardcoded colours). The active state is
+    held in the ``messageState`` dynamic property so the QSS selects the colour;
+    it restyles automatically on theme change via the plugin's QSS re-render.
+    """
 
     def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
         super().__init__(parent, plugins=[FontPlugin()])
@@ -44,11 +50,6 @@ class ConfigMessage(StyledComponent):
         """Display a success message in the theme's success colour."""
         self._label.setText(text)
         self._set_state(MessageState.SUCCESS)
-
-    def show_info(self, text: str) -> None:
-        """Display a neutral status message (e.g. an in-progress check)."""
-        self._label.setText(text)
-        self._set_state(MessageState.NONE)
 
     def clear(self) -> None:
         """Clear the message and reset to neutral styling."""

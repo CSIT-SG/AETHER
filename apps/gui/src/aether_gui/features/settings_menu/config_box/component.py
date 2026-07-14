@@ -161,10 +161,6 @@ class ConfigBox(StyledComponent):
         """Whether the current form view has required fields left empty."""
         return (not self._in_json_mode()) and self._form_view.has_required_missing()
 
-    def set_field_invalid(self, name: str, message: str | None) -> None:
-        """Flag (or clear) a form field as invalid by name (e.g. a rejected API key)."""
-        self._form_view.set_field_invalid(name, message)
-
     # ------------------------------------------------------------------
     # output
     # ------------------------------------------------------------------

@@ -1,3 +1,3 @@
-from .get_support import AgentSupport, probe_gateway
+from .get_support import GatewaySupport, probe_gateway
 
-__all__ = ["AgentSupport", "probe_gateway"]
+__all__ = ["GatewaySupport", "probe_gateway"]

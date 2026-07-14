@@ -6,6 +6,7 @@ from aether_utils.get_support import probe_gateway
 from openai import (
     APIConnectionError,
     APIStatusError,
+    APITimeoutError,
     AsyncOpenAI,
     AuthenticationError,
     BadRequestError,
@@ -24,32 +25,48 @@ def _status_error(cls: type[APIStatusError], status: int) -> APIStatusError:
     return cls("provider message", response=_response(status), body=None)
 
 
-class _FakeCompletions:
-    def __init__(self, exc: Exception | None) -> None:
-        self._exc = exc
+class _RawResponse:
+    def __init__(self, status: int) -> None:
+        self.status_code = status
 
-    async def create(self, **_: Any) -> str:
+
+class _FakeWithRawResponse:
+    def __init__(self, exc: Exception | None, status: int) -> None:
+        self._exc = exc
+        self._status = status
+
+    async def create(self, **_: Any) -> _RawResponse:
         if self._exc is not None:
             raise self._exc
-        return "ok"
+        return _RawResponse(self._status)
+
+
+class _FakeCompletions:
+    def __init__(self, exc: Exception | None, status: int) -> None:
+        # probe_gateway calls chat.completions.with_raw_response.create(...)
+        self.with_raw_response = _FakeWithRawResponse(exc, status)
 
 
 class _FakeClient:
-    """Minimal stand-in for AsyncOpenAI exposing chat.completions.create."""
+    """Minimal stand-in for AsyncOpenAI exposing chat.completions.with_raw_response."""
 
-    def __init__(self, exc: Exception | None = None) -> None:
-        self.chat = type("Chat", (), {"completions": _FakeCompletions(exc)})()
-
-
-def _client(exc: Exception | None = None) -> AsyncOpenAI:
-    return cast(AsyncOpenAI, _FakeClient(exc))
+    def __init__(self, exc: Exception | None = None, status: int = 200) -> None:
+        self.chat = type("Chat", (), {"completions": _FakeCompletions(exc, status)})()
 
 
-async def test_supported() -> None:
-    result = await probe_gateway(_client(), "some-model")
-    assert result.supported is True
-    assert result.status_code == 200
-    assert result.invalid_key is False
+def _client(exc: Exception | None = None, status: int = 200) -> AsyncOpenAI:
+    return cast(AsyncOpenAI, _FakeClient(exc, status))
+
+
+@pytest.mark.parametrize(
+    ("status", "supported"),
+    # Only an exact 200 counts as valid; 201/302 must not be reported as valid.
+    [(200, True), (201, False), (302, False)],
+)
+async def test_success_status(status: int, supported: bool) -> None:
+    result = await probe_gateway(_client(status=status), "m")
+    assert result.supported is supported
+    assert result.status_code == status
 
 
 @pytest.mark.parametrize(
@@ -64,21 +81,29 @@ async def test_supported() -> None:
     ],
 )
 async def test_status_errors(exc: Exception, code: int) -> None:
-    result = await probe_gateway(_client(exc), "m")
+    result = await probe_gateway(_client(exc=exc), "m")
     assert result.supported is False
     assert result.status_code == code
-    assert result.detail  # non-empty text, taken from the provider's own error
+    assert result.detail  # non-empty, taken from the provider's own error
 
 
-async def test_invalid_key_only_on_401() -> None:
-    rejected = await probe_gateway(_client(_status_error(AuthenticationError, 401)), "m")
-    not_found = await probe_gateway(_client(_status_error(NotFoundError, 404)), "m")
-    assert rejected.invalid_key is True
-    assert not_found.invalid_key is False
+@pytest.mark.parametrize(
+    "body",
+    [
+        {"message": "bad key", "code": 401},  # inner error object (usual SDK shape)
+        {"error": {"message": "bad key"}},  # full envelope
+    ],
+)
+async def test_error_message_extracted(body: dict[str, Any]) -> None:
+    err = AuthenticationError("Error code: 401 - ...", response=_response(401), body=body)
+    result = await probe_gateway(_client(exc=err), "m")
+    assert result.detail == "bad key"  # provider's own reason, not the SDK wrapper
 
 
-async def test_network_error() -> None:
+async def test_no_response_has_no_status() -> None:
+    # No internet / unreachable gateway / timeout: no HTTP response, so status is None.
     request = httpx.Request("POST", "https://gateway.test")
-    result = await probe_gateway(_client(APIConnectionError(request=request)), "m")
-    assert result.supported is False
-    assert result.status_code is None
+    for exc in (APIConnectionError(request=request), APITimeoutError(request=request)):
+        result = await probe_gateway(_client(exc=exc), "m")
+        assert result.supported is False
+        assert result.status_code is None

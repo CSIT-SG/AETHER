@@ -9,6 +9,8 @@ JSON_BACK_OBJECT_NAME = "JsonBack"
 JSON_TOGGLE_OBJECT_NAME = "JsonToggle"
 SETTINGS_NAV_OBJECT_NAME = "SettingsNav"
 SETTINGS_JSON_OBJECT_NAME = "SettingsJson"
+# Small buttons attached to a field's control (e.g. show/hide, API-key check).
+FIELD_BUTTON_OBJECT_NAME = "FieldButton"
 
 # Dynamic property names and values used by QSS.
 SETTINGS_ROLE_PROPERTY = "settingsRole"

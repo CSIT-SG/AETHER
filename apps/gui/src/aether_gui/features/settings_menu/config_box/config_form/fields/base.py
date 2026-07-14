@@ -44,20 +44,12 @@ class FieldWidget(QtWidgets.QWidget):
         self._required_missing = False
         if self._required_label is not None:
             self._required_label.hide()
-        self._invalid_label = _make_label("", REQUIRED_ROLE)
-        self._invalid_label.hide()
-        self.changed.connect(lambda: self.set_invalid(None))
 
     def add_control(self, widget: QtWidgets.QWidget) -> None:
         """Place the editing control beneath the title/description."""
         self._layout.addWidget(widget)
         if self._required_label is not None:
             self._layout.addWidget(self._required_label)
-        self._layout.addWidget(self._invalid_label)
-
-    def set_invalid(self, message: str | None) -> None:
-        self._invalid_label.setText(message or "")
-        self._invalid_label.setVisible(bool(message))
 
     def _update_required(self, is_empty: bool) -> None:
         """Show the 'Required' hint only while a required field is empty."""

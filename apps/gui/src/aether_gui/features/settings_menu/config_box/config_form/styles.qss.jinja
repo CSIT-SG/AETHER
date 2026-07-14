@@ -58,3 +58,44 @@ QCheckBox {
     font-size: {{ fontstyles.size }}pt;
     font-weight: {{ fontstyles.weight }};
 }
+
+/* Small buttons sitting to the right of a field's control (show/hide, Check). */
+QPushButton#FieldButton {
+    background-color: {{ colors.button }};
+    color: {{ colors.buttontext }};
+    border: 1px solid {{ colors.mid }};
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-family: "{{ fontstyles.family }}";
+    font-size: {{ fontstyles.size }}pt;
+    font-weight: bold;
+}
+
+QPushButton#FieldButton:hover {
+    border: 1px solid {{ colors.highlight }};
+}
+
+QPushButton#FieldButton:disabled {
+    color: {{ colors.placeholdertext }};
+}
+
+/* Inline API-key check result, coloured from the theme's semantic colours. */
+QLabel[messageState="error"],
+QLabel[messageState="success"],
+QLabel[messageState="none"] {
+    font-family: "{{ fontstyles.family }}";
+    font-size: {{ fontstyles.size }}pt;
+    font-weight: {{ fontstyles.weight }};
+}
+
+QLabel[messageState="error"] {
+    color: {{ colors.error }};
+}
+
+QLabel[messageState="success"] {
+    color: {{ colors.success }};
+}
+
+QLabel[messageState="none"] {
+    color: {{ colors.placeholdertext }};
+}

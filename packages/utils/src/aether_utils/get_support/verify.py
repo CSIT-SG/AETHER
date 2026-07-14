@@ -4,18 +4,24 @@ from aether_utils.api_client import create_async_httpx_client, create_async_open
 from aether_utils.config import get_config
 from aether_utils.logger import get_logger
 
-from .get_support import AgentSupport, probe_gateway
+from .get_support import GatewaySupport, probe_gateway
 
 logger = get_logger("aether_utils.get_support")
 
 
-async def verify_provider() -> AgentSupport:
-    """Validate the currently-configured OpenAI-compatible provider/model and key."""
+async def verify_provider(api_key: str | None = None) -> GatewaySupport:
+    """Validate the currently-configured OpenAI-compatible provider/model and key.
+
+    If ``api_key`` is given, that key is checked instead of the saved one (the gateway
+    URL, model and TLS still come from the saved config), so the settings UI can validate
+    a key the user has typed but not yet saved.
+    """
     config = get_config()
     provider = config.provider
     model_id = provider.models.get(provider.default_model, provider.default_model)
     base_url = provider.gateway_url
-    api_key = provider.api_key or ""
+    if api_key is None:
+        api_key = provider.api_key or ""
 
     tls = config.tls
     httpx_client = create_async_httpx_client(

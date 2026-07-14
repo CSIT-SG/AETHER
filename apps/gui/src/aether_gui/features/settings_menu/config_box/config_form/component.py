@@ -67,12 +67,6 @@ class ConfigForm(StyledComponent):
         """Whether the form has any required fields left empty."""
         return self._form.has_required_missing() if self._form is not None else False
 
-    def set_field_invalid(self, name: str, message: str | None) -> None:
-        """Flag (or clear, when ``message`` is None) a field as invalid by name."""
-        field = self._form.field(name) if self._form is not None else None
-        if field is not None:
-            field.set_invalid(message)
-
     def scroll_to(self, title: str) -> None:
         """Scroll so the given category sits at the top of the viewport."""
         section = self._sections.get(title)

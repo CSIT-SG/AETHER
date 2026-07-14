@@ -5,7 +5,7 @@ import json
 from aether_gui.utils.json_format import JSON_INDENT
 from pydantic.fields import FieldInfo
 
-from ..fields import BoolField, FieldWidget, JsonField, StringField
+from ..fields import ApiKeyField, BoolField, FieldWidget, JsonField, StringField
 from .constants import SECRET_FIELD_NAMES
 from .resolved_field import ResolvedField
 
@@ -19,13 +19,23 @@ def make_leaf_field(field: ResolvedField) -> FieldWidget:
     if field.field_type is bool:
         return BoolField(field.title, field.description, field.value)
     if field.field_type is str:
+        if field.name in SECRET_FIELD_NAMES:
+            # The API key gets a masked field with show/hide plus a validity check.
+            return ApiKeyField(
+                field.title,
+                field.description,
+                field.value,
+                optional=field.optional,
+                required=not field.optional,
+                placeholder=placeholder,
+                example=tab_example,
+            )
         return StringField(
             field.title,
             field.description,
             field.value,
             optional=field.optional,
             required=not field.optional,
-            secret=field.name in SECRET_FIELD_NAMES,
             placeholder=placeholder,
             example=tab_example,
         )

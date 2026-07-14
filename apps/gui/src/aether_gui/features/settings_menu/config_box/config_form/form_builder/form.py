@@ -19,7 +19,6 @@ class SearchMeta:
     search_text: str
     widget: FieldWidget
     category: str
-    name: str
 
 
 class Section(TypedDict):
@@ -50,7 +49,3 @@ class SettingsForm:
     def has_required_missing(self) -> bool:
         """Whether any required field is currently empty."""
         return any(row.widget.is_required_missing() for row in self.rows)
-
-    def field(self, name: str) -> FieldWidget | None:
-        """Return the field widget registered under ``name``, if any."""
-        return next((row.widget for row in self.rows if row.name == name), None)
