@@ -1,6 +1,6 @@
 from typing import cast
 
-from aether_backend.utils.rpc_discovery import RPC_REGISTRY_KEY
+from aether_backend.services.rpc_discovery import RPC_REGISTRY_KEY
 from fastmcp.server.dependencies import get_context
 
 from .types import AnyService

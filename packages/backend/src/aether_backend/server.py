@@ -5,8 +5,8 @@ from starlette.applications import Starlette
 from starlette.routing import Mount
 
 from .constants import ToolChannels
+from .services.rpc_discovery import rpc_lifespan
 from .tools import app_provider
-from .utils.rpc_discovery import rpc_lifespan
 
 
 def get_disabled_channels() -> set[str]:

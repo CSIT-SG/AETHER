@@ -1,7 +1,7 @@
 from typing import cast
 
+from aether_backend.services.rpc_discovery import RPC_REGISTRY_KEY, RPCRegistry
 from aether_backend.utils.effect import Program, effectful
-from aether_backend.utils.rpc_discovery import RPC_REGISTRY_KEY, RPCRegistry
 from fastmcp.dependencies import CurrentContext
 from fastmcp.server.context import Context
 from fastmcp.tools import tool
