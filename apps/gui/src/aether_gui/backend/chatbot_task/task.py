@@ -1,10 +1,10 @@
 from collections.abc import AsyncIterator
 from pathlib import Path
+from typing import Any
 
 from aether_gui.runner import BaseTask
 
 from ..llm_client import LLMResponse, OpenAIClient
-from ..types import IDAContext
 from .constants import get_template
 
 SYSTEM_PROMPT = Path(__file__).parent / "prompts" / "system_prompt.md"
@@ -17,8 +17,8 @@ class ChatBotTask(BaseTask[LLMResponse]):
         llm_client: OpenAIClient,
         mcp_url: str,
         user_prompt: str,
-        ida_context: IDAContext,
-        template_path: str = str(TEMPLATE_PATH),
+        ida_context: dict[str, Any],
+        template_path: Path = TEMPLATE_PATH,
         name: str | None = None,
     ) -> None:
         super().__init__(name=name)
@@ -29,7 +29,7 @@ class ChatBotTask(BaseTask[LLMResponse]):
         self.template_path = template_path
 
     async def run(self) -> AsyncIterator[LLMResponse]:
-        template = get_template(self.template_path)
+        template = get_template(self.template_path.name)
         prompt = template.render(prompt=self.user_prompt, ctx=self.ida_context)
 
         system_prompt = SYSTEM_PROMPT.read_text(encoding="utf-8")

@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import ast
+import json
 from functools import wraps
-from typing import cast
 
 import ida_kernwin
 from aether_utils.config import get_config
@@ -15,7 +14,7 @@ from aether_gui.utils.rpc_id import get_rpc_id
 from .chat_renderer import ChatbotPanelRenderer
 from .chatbot_task import ChatBotTask
 from .llm_client import LLMResponse, OpenAIClient, ReasoningDelta, TextDelta, ToolCall, ToolOutput
-from .types import ChatPanelProtocol, IDAContext
+from .types import ChatPanelProtocol
 
 config = get_config()
 
@@ -24,6 +23,7 @@ class ChatOrchestrator:
     def __init__(self, llm_client: OpenAIClient, chatbot_panel: ChatPanelProtocol) -> None:
         self.llm_client = llm_client
         self.chat_renderer = ChatbotPanelRenderer(chatbot_panel)
+        self.ida_context = None
         self._get_context()
 
     def _get_context(self) -> None:
@@ -51,29 +51,22 @@ class ChatOrchestrator:
         )
 
     def _format_context(self, tool_result: CallToolResult) -> None:
-        if not tool_result.content or tool_result.content[0].type != "text":
+        if (
+            not tool_result.content
+            or not tool_result.content[0]
+            or tool_result.content[0].type != "text"
+        ):
             raise ValueError("Failed to extract text: CallToolResult contains no text data.")
 
         tool_text = tool_result.content[0].text
-        tool_text = tool_text.strip().strip('"')
-
-        context = ast.literal_eval(tool_text)
-        data, pseudocode = context["data"], context["pseudocode"]
-
-        if pseudocode is not None:
-            # pseudocode fields override data fields where they overlap (name)
-            merged = {**data, **pseudocode}
-        else:
-            merged = {
-                **data,
-                "name": data["name"] or "",
-                "start_address": "",
-                "pseudocode": "",
-            }
-        self.ida_context = cast(IDAContext, merged)
+        self.ida_context = json.loads(tool_text)
 
     def submit_user_prompt(self, prompt: str) -> None:
         """Called from IDA main thread. Returns immediately."""
+        if self.ida_context is None:
+            self.chat_renderer.render_status("IDA Context was not fetched")
+            return
+
         prompt = prompt.strip()
         if not prompt:
             return
