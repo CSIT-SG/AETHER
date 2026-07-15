@@ -15,7 +15,6 @@ logger = get_logger("settings_api_key_check")
 # Check button). Once Asher's GUI async runner lands, schedule verify_provider() on it
 # instead of QThreadPool.
 
-# Keep tasks referenced until their queued result is delivered on the UI thread.
 _active: set[_ApiKeyCheckTask] = set()
 
 
@@ -26,14 +25,14 @@ class _Signals(QtCore.QObject):
 class _ApiKeyCheckTask(QtCore.QRunnable):
     def __init__(self, api_key: str | None = None) -> None:
         super().__init__()
-        self.setAutoDelete(False)  # lifetime managed via _active, not the thread pool
+        self.setAutoDelete(False)
         self.signals = _Signals()
         self._api_key = api_key
 
     def run(self) -> None:
         try:
             result = asyncio.run(verify_provider(self._api_key))
-        except Exception as e:  # noqa: BLE001 - a worker thread must never crash the UI
+        except Exception as e:  # noqa: BLE001
             logger.exception("API key check failed to run")
             result = GatewaySupport(False, f"Could not run the API key check: {e}", None)
         self.signals.finished.emit(result)

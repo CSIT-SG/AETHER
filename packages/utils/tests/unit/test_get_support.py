@@ -43,7 +43,6 @@ class _FakeWithRawResponse:
 
 class _FakeCompletions:
     def __init__(self, exc: Exception | None, status: int) -> None:
-        # probe_gateway calls chat.completions.with_raw_response.create(...)
         self.with_raw_response = _FakeWithRawResponse(exc, status)
 
 
@@ -60,7 +59,6 @@ def _client(exc: Exception | None = None, status: int = 200) -> AsyncOpenAI:
 
 @pytest.mark.parametrize(
     ("status", "supported"),
-    # Only an exact 200 counts as valid; 201/302 must not be reported as valid.
     [(200, True), (201, False), (302, False)],
 )
 async def test_success_status(status: int, supported: bool) -> None:
@@ -84,24 +82,23 @@ async def test_status_errors(exc: Exception, code: int) -> None:
     result = await probe_gateway(_client(exc=exc), "m")
     assert result.supported is False
     assert result.status_code == code
-    assert result.detail  # non-empty, taken from the provider's own error
+    assert result.detail
 
 
 @pytest.mark.parametrize(
     "body",
     [
-        {"message": "bad key", "code": 401},  # inner error object (usual SDK shape)
-        {"error": {"message": "bad key"}},  # full envelope
+        {"message": "bad key", "code": 401},
+        {"error": {"message": "bad key"}},
     ],
 )
 async def test_error_message_extracted(body: dict[str, Any]) -> None:
     err = AuthenticationError("Error code: 401 - ...", response=_response(401), body=body)
     result = await probe_gateway(_client(exc=err), "m")
-    assert result.detail == "bad key"  # provider's own reason, not the SDK wrapper
+    assert result.detail == "bad key"
 
 
 async def test_no_response_has_no_status() -> None:
-    # No internet / unreachable gateway / timeout: no HTTP response, so status is None.
     request = httpx.Request("POST", "https://gateway.test")
     for exc in (APIConnectionError(request=request), APITimeoutError(request=request)):
         result = await probe_gateway(_client(exc=exc), "m")

@@ -9,9 +9,6 @@ from openai import APIConnectionError, APIStatusError, APITimeoutError, AsyncOpe
 class GatewaySupport:
     supported: bool
     detail: str
-    # HTTP status of the probe, or None when no response was received at all
-    # (offline, gateway unreachable, or a timeout). Use `status_code is None` to
-    # distinguish "couldn't connect" from a gateway that answered with an error.
     status_code: int | None = None
 
 
@@ -29,11 +26,11 @@ async def probe_gateway(client: AsyncOpenAI, model: str) -> GatewaySupport:
             messages=[{"role": "user", "content": "ping"}],
             max_tokens=1,
         )
-    except APIStatusError as e:  # any 4xx/5xx, incl. 401 — surface the provider's reason
+    except APIStatusError as e:  # any 4xx/5xx
         return GatewaySupport(False, _error_message(e), e.status_code)
-    except APITimeoutError:  # request sent but no reply in time (must precede the parent)
+    except APITimeoutError:  # request sent but no reply
         return GatewaySupport(False, "The gateway did not respond in time (timeout).", None)
-    except APIConnectionError:  # no response at all: offline, DNS failure, refused, bad URL
+    except APIConnectionError:  # no response
         return GatewaySupport(
             False,
             "Could not reach the gateway — check your internet connection or the gateway URL.",
@@ -58,9 +55,9 @@ def _error_message(error: APIStatusError) -> str:
     """
     body = getattr(error, "body", None)
     if isinstance(body, dict):
-        if body.get("message"):  # inner error object, as the SDK usually exposes it
+        if body.get("message"):
             return str(body["message"])
-        err = body.get("error")  # full envelope
+        err = body.get("error")
         if isinstance(err, dict) and err.get("message"):
             return str(err["message"])
         if isinstance(err, str) and err:

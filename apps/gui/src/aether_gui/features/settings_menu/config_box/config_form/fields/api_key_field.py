@@ -48,7 +48,6 @@ class ApiKeyField(StringField):
         self._status.setWordWrap(True)
         self._status.hide()
         self._layout.addWidget(self._status)
-        # Clear a stale result once the key is edited again.
         self._edit.textChanged.connect(lambda _: self._set_status("", MessageState.NONE))
 
     def _on_check(self) -> None:
@@ -56,8 +55,6 @@ class ApiKeyField(StringField):
         if not key:
             self._set_status("Enter an API key first.", MessageState.ERROR)
             return
-        # Lazy import: the worker lives higher in the settings package, so importing
-        # it at module load would risk a settings_menu import cycle.
         from aether_gui.features.settings_menu.api_key_check import run_check
 
         self._check_btn.setEnabled(False)
@@ -70,8 +67,6 @@ class ApiKeyField(StringField):
             state = MessageState.SUCCESS if result.supported else MessageState.ERROR
             self._set_status(result.detail, state)
         except RuntimeError:
-            # The field was torn down (dialog closed or form rebuilt) before the
-            # queued result arrived; nothing to update.
             pass
 
     def _set_status(self, text: str, state: MessageState) -> None:

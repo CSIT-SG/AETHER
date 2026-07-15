@@ -20,7 +20,6 @@ def make_leaf_field(field: ResolvedField) -> FieldWidget:
         return BoolField(field.title, field.description, field.value)
     if field.field_type is str:
         if field.name in SECRET_FIELD_NAMES:
-            # The API key gets a masked field with show/hide plus a validity check.
             return ApiKeyField(
                 field.title,
                 field.description,

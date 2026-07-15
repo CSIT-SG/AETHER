@@ -61,8 +61,6 @@ class StringField(FieldWidget):
         self._edit.textChanged.connect(self.changed)
         self._edit.textChanged.connect(lambda text: self._update_required(text == ""))
 
-        # Non-secret fields keep the plain control; secret fields get a control row
-        # (line edit + trailing buttons) so a show/hide toggle can sit to the right.
         self._row_layout: QtWidgets.QHBoxLayout | None = None
         if secret:
             self._edit.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
@@ -117,10 +115,7 @@ class StringField(FieldWidget):
         self._secret_toggle.setText(self._SECRET_HIDE if shown else self._SECRET_SHOW)
 
     def showEvent(self, event: QtGui.QShowEvent) -> None:
-        # Lock the toggle to the width of its wider label so it doesn't reflow when the
-        # text flips between "Show" and "Hide". Done on first show, once the button has
-        # been polished, so the measured size hint includes the theme's font and padding
-        # (no hardcoded pixel width).
+        """Reserve the show/hide toggle's width to its wider label so it never reflows."""
         super().showEvent(event)
         toggle = getattr(self, "_secret_toggle", None)
         if toggle is None or self._toggle_width_locked:
