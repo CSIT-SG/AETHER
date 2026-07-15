@@ -1,6 +1,8 @@
 from .get_data_at_address import get_data_at_address
 from .get_function_pseudocode import get_function_pseudocode
+from .get_functions_called_recursively import get_functions_called_recursively
 from .get_local_variables import get_local_variables
+from .get_xrefs_to import get_xrefs_to
 from .rename_function import rename_function
 from .rename_local_variable import rename_local_variable
 from .set_comment import set_comment
@@ -12,4 +14,6 @@ __all__ = [
     "rename_function",
     "set_comment",
     "rename_local_variable",
+    "get_xrefs_to",
+    "get_functions_called_recursively"
 ]
