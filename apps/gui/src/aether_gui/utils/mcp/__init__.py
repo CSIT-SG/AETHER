@@ -1,3 +1,3 @@
-from .mcp_task import MCPTask
+from .mcp_task import CallToolTask
 
-__all__ = ["MCPTask"]
+__all__ = ["CallToolTask"]

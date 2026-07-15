@@ -9,7 +9,7 @@ from fastmcp.client.client import CallToolResult
 from .mcp_client import MCPClient
 
 
-class MCPTask(BaseTask):
+class CallToolTask(BaseTask):
     def __init__(
         self,
         rpc_id: str,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+from functools import wraps
 from typing import cast
 
 import ida_kernwin
@@ -8,12 +9,12 @@ from aether_utils.config import get_config
 from fastmcp.client.client import CallToolResult
 
 from aether_gui.runner import get_shared_worker_manager
-from aether_gui.utils.mcp import MCPTask
+from aether_gui.utils.mcp import CallToolTask
 from aether_gui.utils.rpc_id import get_rpc_id
 
-from .chat import ChatbotPanelRenderer
+from .chat_renderer import ChatbotPanelRenderer
 from .chatbot_task import ChatBotTask
-from .llm import LLMResponse, OpenAIClient, ReasoningDelta, TextDelta, ToolCall, ToolOutput
+from .llm_client import LLMResponse, OpenAIClient, ReasoningDelta, TextDelta, ToolCall, ToolOutput
 from .types import ChatPanelProtocol, IDAContext
 
 config = get_config()
@@ -30,9 +31,9 @@ class ChatOrchestrator:
         rpc_id = get_rpc_id()
         if rpc_id is None:
             self.chat_renderer.render_error("RPC server does not exist")
-            raise Exception
+            raise Exception("RPC server does not exist")
 
-        task = MCPTask(
+        task = CallToolTask(
             rpc_id=rpc_id,
             tool_name="get_ida_context",
             args={"address": hex(current_ea)},
@@ -113,6 +114,7 @@ class ChatOrchestrator:
         Schedule func back on IDA main UI thread
         """
 
+        @wraps(fn)
         def wrapper() -> int:
             fn()
             return 1

@@ -9,18 +9,15 @@ from aether_utils.config import get_config
 from agents import Agent, Runner
 from agents.mcp import MCPServerStreamableHttp
 
-from .constants import SYSTEM_PROMPT
 from .llm_types import LLMResponse, ReasoningDelta, TextDelta, ToolCall, ToolOutput
 
 config = get_config()
 
 
 class OpenAIClient:
-    def __init__(self) -> None:
-        self.system_prompt = SYSTEM_PROMPT
-
     async def submit(
         self,
+        system_prompt: str,
         user_prompt: str,
         url: str,
     ) -> AsyncIterator[LLMResponse]:
@@ -34,9 +31,9 @@ class OpenAIClient:
                 name="Chatbot",
                 model=OpenAIGateway().get_model(
                     model_name=config.subagents.annotator_model if config.subagents else None,
-                    feature="annotator",
+                    feature="chatbot",
                 ),
-                instructions=self.system_prompt,
+                instructions=system_prompt,
                 mcp_servers=[mcp],
             )
 
@@ -57,7 +54,7 @@ class OpenAIClient:
                         case "tool_call_item":
                             yield ToolCall(
                                 name=item.tool_name or "",
-                                arguments=getattr(item.raw_item, "arguments", "<BLANK>"),
+                                arguments=getattr(item.raw_item, "arguments", None),
                                 call_id=item.call_id or "",
                             )
                         case "tool_call_output_item":

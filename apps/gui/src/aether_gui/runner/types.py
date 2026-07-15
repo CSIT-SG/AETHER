@@ -1,9 +1,6 @@
 import threading
 from dataclasses import dataclass, field
 from queue import Queue
-from typing import TypeVar
-
-T = TypeVar("T")
 
 
 @dataclass

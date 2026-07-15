@@ -129,7 +129,7 @@ class ConfigModel(BaseModel):
     mcp_url: str = Field(
         default="http://127.0.0.1:8000/mcp/",
         title="MCP URL",
-        description="URL where MCP server is hosted",
+        description="URL where the MCP client will connect to",
     )
     debug: bool | None = Field(
         default=None,

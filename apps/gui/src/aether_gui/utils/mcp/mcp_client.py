@@ -57,10 +57,6 @@ class MCPClient:
             self._tool_cache = None
             self.logger.info("Disconnected from MCP server")
 
-    async def _ensure_connected(self) -> None:
-        if not self._connected:
-            await self.connect()
-
     async def call_tool(
         self,
         rpc_id: str,
@@ -68,7 +64,9 @@ class MCPClient:
         args: dict[str, Any] | None = None,
     ) -> AsyncIterator[CallToolResult]:
         """Connects, runs the tool, and automatically closes the connection when done."""
-        await self._ensure_connected()
+        if not self._connected:
+            await self.connect()
+
         assert self._client is not None
         try:
             arguments = {"rpc_id": rpc_id, **(args or {})}

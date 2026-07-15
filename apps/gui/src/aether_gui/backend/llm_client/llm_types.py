@@ -41,12 +41,12 @@ class ToolCall(LLMOutput):
     """The LLM has committed to a tool call."""
 
     name: str
-    arguments: str
+    arguments: str | None
     call_id: str
 
     @property
     def output_string(self) -> str:
-        return f"Calling tool '{self.name}' with args: {self.arguments}"
+        return f"Calling tool '{self.name}' with args: {self.arguments if self.arguments else 'No arguments provided'}"
 
 
 @dataclass
