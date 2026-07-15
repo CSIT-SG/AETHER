@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import AsyncMock
 
 import pytest
-from aether_backend.utils.rpc_discovery import RPCRegistry
+from aether_backend.services.rpc_discovery import RPCRegistry
 
 pytestmark = pytest.mark.asyncio
 
