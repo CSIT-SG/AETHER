@@ -1,2 +1,3 @@
 GENERAL_CATEGORY = "General"
-SECRET_FIELD_NAMES = frozenset({"api_key"})
+API_KEY_FIELD_NAME = "api_key"
+SECRET_FIELD_NAMES = frozenset({API_KEY_FIELD_NAME})

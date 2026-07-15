@@ -18,7 +18,7 @@ async def verify_provider(api_key: str | None = None) -> GatewaySupport:
     """
     config = get_config()
     provider = config.provider
-    model_id = provider.models.get(provider.default_model, provider.default_model)
+    model_id = provider.models[provider.default_model]
     base_url = provider.gateway_url
     if api_key is None:
         api_key = provider.api_key or ""

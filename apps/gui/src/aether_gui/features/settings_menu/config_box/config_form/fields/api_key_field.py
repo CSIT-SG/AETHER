@@ -1,15 +1,16 @@
 from __future__ import annotations
 
+from aether_gui.features.settings_menu.api_key_check import run_check
 from aether_gui.features.settings_menu.styles import MESSAGE_STATE_PROPERTY, MessageState
 from aether_utils.get_support import GatewaySupport
 from PySide6 import QtWidgets
 
-from .string_field import StringField
+from .secret_field import SecretField
 
 
-class ApiKeyField(StringField):
-    """API-key field: a masked string field with a show/hide toggle and a ``Check``
-    button that validates the key against the configured gateway.
+class ApiKeyField(SecretField):
+    """Masked API-key field with a ``Check`` button that validates the key against
+    the configured gateway.
 
     The check runs off the UI thread and reports the gateway's own result inline
     below the field. It validates the key currently typed here; the gateway URL,
@@ -34,15 +35,14 @@ class ApiKeyField(StringField):
             value,
             optional=optional,
             required=required,
-            secret=True,
             placeholder=placeholder,
             example=example,
             parent=parent,
         )
-        self._check_btn = self._make_field_button(
+        self._check_btn = self._make_button(
             "Check", "Validate this API key against the gateway", self._on_check
         )
-        self.add_trailing_button(self._check_btn)
+        self._row_layout.addWidget(self._check_btn)
 
         self._status = QtWidgets.QLabel("", self)
         self._status.setWordWrap(True)
@@ -55,8 +55,6 @@ class ApiKeyField(StringField):
         if not key:
             self._set_status("Enter an API key first.", MessageState.ERROR)
             return
-        from aether_gui.features.settings_menu.api_key_check import run_check
-
         self._check_btn.setEnabled(False)
         self._set_status("Checking…", MessageState.NONE)
         run_check(self._on_result, api_key=key)
