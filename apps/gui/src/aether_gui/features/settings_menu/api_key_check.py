@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable
 
-from aether_utils.get_support import GatewaySupport
-from aether_utils.get_support.verify import verify_provider
 from aether_utils.logger import get_logger
+from aether_utils.provider_check import CheckResult, ResultCallback
+from aether_utils.provider_check.verify import verify_provider
 from PySide6 import QtCore
 
 logger = get_logger("settings_api_key_check")
@@ -19,7 +18,7 @@ _active: set[_ApiKeyCheckTask] = set()
 
 
 class _Signals(QtCore.QObject):
-    finished = QtCore.Signal(object)  # GatewaySupport
+    finished = QtCore.Signal(object)  # CheckResult
 
 
 class _ApiKeyCheckTask(QtCore.QRunnable):
@@ -34,16 +33,21 @@ class _ApiKeyCheckTask(QtCore.QRunnable):
             result = asyncio.run(verify_provider(self._api_key))
         except Exception as e:  # noqa: BLE001
             logger.exception("API key check failed to run")
-            result = GatewaySupport(False, f"Could not run the API key check: {e}", None)
+            result = CheckResult(False, f"Could not run the API key check: {e}", None)
         self.signals.finished.emit(result)
 
 
-def run_check(on_finished: Callable[[GatewaySupport], None], *, api_key: str | None = None) -> None:
-    """Probe the provider off the UI thread, optionally checking a specific ``api_key``."""
+def run_check(api_key: str, on_finished: ResultCallback) -> None:
+    """Validate ``api_key`` against the configured gateway off the UI thread, delivering
+    the :class:`CheckResult` result to ``on_finished`` on the UI thread.
+
+    Conforms to the field's ``CheckTask`` contract so it can be injected as the default
+    gateway check; swap in another callable for a different provider or in tests.
+    """
     task = _ApiKeyCheckTask(api_key)
     _active.add(task)
 
-    def _deliver(result: GatewaySupport) -> None:
+    def _deliver(result: CheckResult) -> None:
         _active.discard(task)
         on_finished(result)
 

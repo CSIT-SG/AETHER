@@ -4,12 +4,13 @@ from aether_utils.api_client import create_async_httpx_client, create_async_open
 from aether_utils.config import get_config
 from aether_utils.logger import get_logger
 
-from .get_support import GatewaySupport, probe_gateway
+from .contract import CheckResult
+from .gateway import probe_gateway
 
-logger = get_logger("aether_utils.get_support")
+logger = get_logger("aether_utils.provider_check")
 
 
-async def verify_provider(api_key: str | None = None) -> GatewaySupport:
+async def verify_provider(api_key: str | None = None) -> CheckResult:
     """Validate the currently-configured OpenAI-compatible provider/model and key.
 
     If ``api_key`` is given, that key is checked instead of the saved one (the gateway
@@ -36,7 +37,7 @@ async def verify_provider(api_key: str | None = None) -> GatewaySupport:
     finally:
         await httpx_client.aclose()
 
-    if result.supported:
+    if result.verdict:
         logger.info("Provider check OK for '%s': %s", model_id, result.detail)
     else:
         logger.warning(

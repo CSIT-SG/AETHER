@@ -1,20 +1,21 @@
 from __future__ import annotations
 
-from aether_gui.features.settings_menu.api_key_check import run_check
 from aether_gui.features.settings_menu.styles import MESSAGE_STATE_PROPERTY, MessageState
-from aether_utils.get_support import GatewaySupport
+from aether_utils.provider_check import CheckResult, CheckTask
 from PySide6 import QtWidgets
 
 from .secret_field import SecretField
 
 
 class ApiKeyField(SecretField):
-    """Masked API-key field with a ``Check`` button that validates the key against
-    the configured gateway.
+    """Masked API-key field with a ``Check`` button that runs an injected validation
+    ``task`` and shows the result inline below the field.
 
-    The check runs off the UI thread and reports the gateway's own result inline
-    below the field. It validates the key currently typed here; the gateway URL,
-    model and TLS settings come from the saved config.
+    The task is injected (dependency inversion) so the field depends only on the
+    :data:`CheckTask` contract, not on the gateway/OpenAI probe: it stays swappable
+    for other providers/conventions and trivial to fake in tests. A task receives the
+    typed value and a callback, runs off the UI thread, and delivers a
+    :class:`CheckResult` to the callback on the UI thread.
     """
 
     def __init__(
@@ -28,6 +29,7 @@ class ApiKeyField(SecretField):
         placeholder: str = "",
         example: str = "",
         parent: QtWidgets.QWidget | None = None,
+        task: CheckTask,
     ) -> None:
         super().__init__(
             title,
@@ -39,9 +41,8 @@ class ApiKeyField(SecretField):
             example=example,
             parent=parent,
         )
-        self._check_btn = self._make_button(
-            "Check", "Validate this API key against the gateway", self._on_check
-        )
+        self._task = task
+        self._check_btn = self._make_button("Check", "Validate this API key", self._on_check)
         self._row_layout.addWidget(self._check_btn)
 
         self._status = QtWidgets.QLabel("", self)
@@ -55,14 +56,17 @@ class ApiKeyField(SecretField):
         if not key:
             self._set_status("Enter an API key first.", MessageState.ERROR)
             return
+        # Return focus to the field before disabling: disabling a focused button makes
+        # Qt advance focus to the next field.
+        self._edit.setFocus()
         self._check_btn.setEnabled(False)
         self._set_status("Checking…", MessageState.NONE)
-        run_check(self._on_result, api_key=key)
+        self._task(key, self._on_result)
 
-    def _on_result(self, result: GatewaySupport) -> None:
+    def _on_result(self, result: CheckResult) -> None:
         try:
             self._check_btn.setEnabled(True)
-            state = MessageState.SUCCESS if result.supported else MessageState.ERROR
+            state = MessageState.SUCCESS if result.verdict else MessageState.ERROR
             self._set_status(result.detail, state)
         except RuntimeError:
             pass

@@ -2,7 +2,7 @@ from typing import Any, cast
 
 import httpx
 import pytest
-from aether_utils.get_support import probe_gateway
+from aether_utils.provider_check.gateway import probe_gateway
 from openai import (
     APIConnectionError,
     APIStatusError,
@@ -58,12 +58,12 @@ def _client(exc: Exception | None = None, status: int = 200) -> AsyncOpenAI:
 
 
 @pytest.mark.parametrize(
-    ("status", "supported"),
+    ("status", "expected"),
     [(200, True), (201, False), (302, False)],
 )
-async def test_success_status(status: int, supported: bool) -> None:
+async def test_success_status(status: int, expected: bool) -> None:
     result = await probe_gateway(_client(status=status), "m")
-    assert result.supported is supported
+    assert result.verdict is expected
     assert result.status_code == status
 
 
@@ -80,7 +80,7 @@ async def test_success_status(status: int, supported: bool) -> None:
 )
 async def test_status_errors(exc: Exception, code: int) -> None:
     result = await probe_gateway(_client(exc=exc), "m")
-    assert result.supported is False
+    assert result.verdict is False
     assert result.status_code == code
     assert result.detail
 
@@ -95,12 +95,12 @@ async def test_status_errors(exc: Exception, code: int) -> None:
 async def test_error_message_extracted(body: dict[str, Any]) -> None:
     err = AuthenticationError("Error code: 401 - ...", response=_response(401), body=body)
     result = await probe_gateway(_client(exc=err), "m")
-    assert result.detail == "bad key"
+    assert result.detail == "bad key (HTTP 401)"
 
 
 async def test_no_response_has_no_status() -> None:
     request = httpx.Request("POST", "https://gateway.test")
     for exc in (APIConnectionError(request=request), APITimeoutError(request=request)):
         result = await probe_gateway(_client(exc=exc), "m")
-        assert result.supported is False
+        assert result.verdict is False
         assert result.status_code is None

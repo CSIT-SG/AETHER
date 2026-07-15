@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 
+from aether_gui.features.settings_menu.api_key_check import run_check
 from aether_gui.utils.json_format import JSON_INDENT
 from pydantic.fields import FieldInfo
 
@@ -28,6 +29,7 @@ def make_leaf_field(field: ResolvedField) -> FieldWidget:
                 required=not field.optional,
                 placeholder=placeholder,
                 example=tab_example,
+                task=run_check,
             )
         if field.name in SECRET_FIELD_NAMES:
             return SecretField(

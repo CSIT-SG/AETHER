@@ -1,24 +1,18 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 from openai import APIConnectionError, APIStatusError, APITimeoutError, AsyncOpenAI
 
-
-@dataclass(frozen=True)
-class GatewaySupport:
-    supported: bool
-    detail: str
-    status_code: int | None = None
+from .contract import CheckResult
 
 
-async def probe_gateway(client: AsyncOpenAI, model: str) -> GatewaySupport:
+async def probe_gateway(client: AsyncOpenAI, model: str) -> CheckResult:
     """Verifies the gateway accepts the API key and handles OpenAI-compatible requests.
 
     Sends a minimal chat.completions request to the configured endpoint. To remain
     provider-agnostic (e.g., OpenRouter, llama.cpp), it avoids probing provider-specific
     features or assuming uniform tool support. On failure it reports the gateway's own
-    error message. Reads real HTTP status and on occasion other than 200 will print message
+    error message. The real HTTP status is read from the raw response, so only a 200 is
+    treated as success; any other status is returned with its code.
     """
     try:
         response = await client.chat.completions.with_raw_response.create(
@@ -27,11 +21,11 @@ async def probe_gateway(client: AsyncOpenAI, model: str) -> GatewaySupport:
             max_tokens=1,
         )
     except APIStatusError as e:  # any 4xx/5xx
-        return GatewaySupport(False, _error_message(e), e.status_code)
+        return CheckResult(False, f"{_error_message(e)} (HTTP {e.status_code})", e.status_code)
     except APITimeoutError:  # request sent but no reply
-        return GatewaySupport(False, "The gateway did not respond in time (timeout).", None)
+        return CheckResult(False, "The gateway did not respond in time (timeout).", None)
     except APIConnectionError:  # no response
-        return GatewaySupport(
+        return CheckResult(
             False,
             "Could not reach the gateway — check your internet connection or the gateway URL.",
             None,
@@ -39,8 +33,8 @@ async def probe_gateway(client: AsyncOpenAI, model: str) -> GatewaySupport:
 
     status = response.status_code
     if status == 200:
-        return GatewaySupport(True, f"The gateway accepted the request (HTTP {status}).", status)
-    return GatewaySupport(False, f"Unexpected non-success status (HTTP {status}).", status)
+        return CheckResult(True, f"The gateway accepted the request (HTTP {status}).", status)
+    return CheckResult(False, f"Unexpected non-success status (HTTP {status}).", status)
 
 
 def _error_message(error: APIStatusError) -> str:
@@ -62,4 +56,4 @@ def _error_message(error: APIStatusError) -> str:
             return str(err["message"])
         if isinstance(err, str) and err:
             return err
-    return error.message or f"HTTP {error.status_code}"
+    return error.message or "The gateway returned an error"
