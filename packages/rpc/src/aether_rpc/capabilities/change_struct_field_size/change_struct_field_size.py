@@ -88,8 +88,9 @@ class ChangeStructFieldSize(Capability):
             return Err(result="Failed to rebuild structure.")
 
         # Preserve the original name
+        til = ida_typeinf.get_idati()
         new_tif.set_named_type(
-            None,
+            til,
             struct_name,
             ida_typeinf.NTF_REPLACE,
         )

@@ -34,8 +34,9 @@ class DeleteStruct(Capability):
             return Err(result=f"Struct with the specified name or id {struct_id} does not exist.")
 
         struct_name = str(tif.get_type_name())
-        ordinal = ida_typeinf.get_type_ordinal(None, struct_name)
-        if ida_typeinf.del_numbered_type(None, ordinal):
+        til = ida_typeinf.get_idati()
+        ordinal = ida_typeinf.get_type_ordinal(til, struct_name)
+        if ida_typeinf.del_numbered_type(til, ordinal):
             return Ok(
                 result=StructResult(
                     struct_id=struct_id,
