@@ -8,11 +8,35 @@ async def get_functions_called_recursively(
 ) -> Result[FunctionTreeResult]:
     """Look up the function enclosing the given address and return its call tree.
 
+    Recursively walks callees starting from the enclosing function, building
+    a nested tree of every function it calls (directly or transitively).
+    Recursion stops at MAX_DEPTH levels deep, and each function name is only
+    visited once across the whole tree (this also guards against infinite
+    recursion on call cycles). Functions matching FILTERED_FUNCTIONS (e.g.
+    common library/runtime helpers) are excluded from the callee lists.
+
     Args:
-        address: Hex or decimal string address anywhere within the target function.
+        address (str | int): Hex address string (e.g. "0x140001000"),
+            decimal address string, or integer effective address, pointing
+            anywhere within the target function's bounds.
 
     Returns:
-        A Result whose ``result`` holds the call tree rooted at the starting function,
-        or an error message if the address is invalid or no function bounds it.
+        Ok[FunctionTreeResult]: A structured object containing:
+            - count (int): Total number of nodes in the tree, including the
+              root function itself.
+            - root (FunctionTreeNode): The root of the call tree, where each
+              node contains:
+                - function_name (str): The function's symbolic name.
+                - address (str): The function's start address as a hex
+                  string, e.g. "0x140001000".
+                - children (list[FunctionTreeNode]): Nested callee nodes,
+                  following the same structure.
+        Err[str]: An error message string in the following cases:
+            - The address could not be resolved to a valid effective address.
+            - No function in the database contains the given address.
+
+    Examples:
+        get_functions_called_recursively("0x140001000")
+        get_functions_called_recursively("sub_DEADBEEF")
     """
     return service.get_functions_called_recursively(address=address)
