@@ -59,6 +59,11 @@ class SubagentsModel(BaseModel):
         title="Single Analysis Model",
         description="Model override for the single analysis subagent.",
     )
+    unflattener_model: str | None = Field(
+        default=None,
+        title="Unflattener Model",
+        description="Model override for the unflattener subagent.",
+    )
     struct_creator_model: str | None = Field(
         default=None,
         title="Struct Creator Model",

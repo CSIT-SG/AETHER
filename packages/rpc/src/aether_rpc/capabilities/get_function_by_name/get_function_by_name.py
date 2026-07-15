@@ -31,4 +31,4 @@ class GetFunctionByName(Capability):
         if func is None:
             self.logger.error(f"Symbol '{function_name}' at {hex(ea)} is not a function")
             return Err(result=f"Symbol '{function_name}' at {hex(ea)} is not a function")
-        return Ok(result=FunctionMetadata(func))
+        return Ok(result=func)

@@ -21,6 +21,8 @@ class OpenAIGateway:
     def __init__(self) -> None:
         self.config = get_config()
 
+        set_tracing_disabled(True)
+
     def get_model(
         self,
         *,
@@ -45,8 +47,6 @@ class OpenAIGateway:
             httpx_client=httpx_client,
             feature=feature,
         )
-
-        set_tracing_disabled(True)
 
         if model_name is not None:
             resolved_model_name = self.config.provider.models[model_name]
