@@ -38,12 +38,7 @@ class _ApiKeyCheckTask(QtCore.QRunnable):
 
 
 def run_check(api_key: str, on_finished: ResultCallback) -> None:
-    """Validate ``api_key`` against the configured gateway off the UI thread, delivering
-    the :class:`CheckResult` result to ``on_finished`` on the UI thread.
-
-    Conforms to the field's ``CheckTask`` contract so it can be injected as the default
-    gateway check; swap in another callable for a different provider or in tests.
-    """
+    """Validate ``api_key`` against the configured gateway off the UI thread."""
     task = _ApiKeyCheckTask(api_key)
     _active.add(task)
 

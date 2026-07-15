@@ -8,15 +8,7 @@ from .secret_field import SecretField
 
 
 class ApiKeyField(SecretField):
-    """Masked API-key field with a ``Check`` button that runs an injected validation
-    ``task`` and shows the result inline below the field.
-
-    The task is injected (dependency inversion) so the field depends only on the
-    :data:`CheckTask` contract, not on the gateway/OpenAI probe: it stays swappable
-    for other providers/conventions and trivial to fake in tests. A task receives the
-    typed value and a callback, runs off the UI thread, and delivers a
-    :class:`CheckResult` to the callback on the UI thread.
-    """
+    """Masked API-key field with a ``Check`` button that runs an injected validation task."""
 
     def __init__(
         self,

@@ -9,11 +9,7 @@ from .string_field import StringField
 
 
 class SecretField(StringField):
-    """String field whose value is masked, with a show/hide toggle to its right.
-
-    A generic base for any secret (API keys, tokens, passwords). Subclasses can add
-    further trailing controls to the right of the line edit via :attr:`_row_layout`.
-    """
+    """String field whose value is masked, with a show/hide toggle to its right."""
 
     _SHOW = "Show"
     _HIDE = "Hide"

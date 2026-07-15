@@ -11,5 +11,5 @@ class CheckResult:
     status_code: int | None = None
 
 
-ResultCallback = Callable[[CheckResult], None]
-CheckTask = Callable[[str, ResultCallback], None]
+type ResultCallback = Callable[[CheckResult], None]
+type CheckTask = Callable[[str, ResultCallback], None]

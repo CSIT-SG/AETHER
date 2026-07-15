@@ -11,12 +11,7 @@ logger = get_logger("aether_utils.provider_check")
 
 
 async def verify_provider(api_key: str | None = None) -> CheckResult:
-    """Validate the currently-configured OpenAI-compatible provider/model and key.
-
-    If ``api_key`` is given, that key is checked instead of the saved one (the gateway
-    URL, model and TLS still come from the saved config), so the settings UI can validate
-    a key the user has typed but not yet saved.
-    """
+    """Validate the currently-configured OpenAI-compatible provider/model and key."""
     config = get_config()
     provider = config.provider
     model_id = provider.models[provider.default_model]

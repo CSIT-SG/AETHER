@@ -6,14 +6,7 @@ from .contract import CheckResult
 
 
 async def probe_gateway(client: AsyncOpenAI, model: str) -> CheckResult:
-    """Verifies the gateway accepts the API key and handles OpenAI-compatible requests.
-
-    Sends a minimal chat.completions request to the configured endpoint. To remain
-    provider-agnostic (e.g., OpenRouter, llama.cpp), it avoids probing provider-specific
-    features or assuming uniform tool support. On failure it reports the gateway's own
-    error message. The real HTTP status is read from the raw response, so only a 200 is
-    treated as success; any other status is returned with its code.
-    """
+    """Verifies the gateway accepts the API key and handles OpenAI-compatible requests."""
     try:
         response = await client.chat.completions.with_raw_response.create(
             model=model,
@@ -38,15 +31,7 @@ async def probe_gateway(client: AsyncOpenAI, model: str) -> CheckResult:
 
 
 def _error_message(error: APIStatusError) -> str:
-    """The provider's own error text, with fallbacks.
-
-    OpenAI-compatible gateways report the reason as a JSON error object; surface that
-    text directly rather than guessing from the status code. The SDK usually exposes it
-    already unwrapped on ``error.body`` (``{"message": ..., "code": ...}``), but some
-    return the full ``{"error": {"message": ...}}`` envelope, so handle both. A proxy or
-    minimal gateway may return non-JSON (an HTML 502, an empty 403), so fall back to the
-    SDK's message and the bare status code.
-    """
+    """The provider's own error text, with fallbacks."""
     body = getattr(error, "body", None)
     if isinstance(body, dict):
         if body.get("message"):
