@@ -43,12 +43,7 @@ class ChangeStructFieldSize(Capability):
             return Err(result=f"{struct_name} is not a structure.")
 
         # Locate member
-        member_index = -1
-        for i, member in enumerate(udt):
-            if member.name == field_name:
-                member_index = i
-                break
-
+        member_index = next((i for i, member in enumerate(udt) if member.name == field_name), -1)
         if member_index == -1:
             return Err(result=f"Field '{field_name}' does not exist in '{struct_name}'.")
 

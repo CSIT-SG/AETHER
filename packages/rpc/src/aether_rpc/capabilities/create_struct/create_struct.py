@@ -13,6 +13,22 @@ class CreateStruct(Capability):
     def name(self) -> str:
         return "create_struct"
 
+    def _make_member(self, field: StructField, offset: int) -> ida_typeinf.udm_t:
+        member = ida_typeinf.udm_t()
+        member.name = field.name
+        member.offset = offset
+        member.type = ida_typeinf.tinfo_t()
+
+        base = ida_typeinf.tinfo_t()
+        base.create_simple_type(TYPE_MAP[field.type])
+
+        if field.array_size is not None:
+            member.type.create_array(base, field.array_size)
+        else:
+            member.type = base
+
+        return member
+
     def execute(
         self, struct_name: str, fields: list[StructField] | None = None
     ) -> Result[StructResult]:
@@ -44,27 +60,16 @@ class CreateStruct(Capability):
         udt.pack = 1
         if fields:
             if not isinstance(fields, list):
-                return Err(result="""Fields must contain a list.""")
+                return Err(result="Fields must contain a list.")
             try:
-                next_offset = 0
                 fields = [StructField(*field) for field in fields]
+                offset = 0
                 for field in fields:
-                    member = ida_typeinf.udm_t()
-                    member.name = field.name
-                    member.offset = next_offset
-                    member.type = ida_typeinf.tinfo_t()
-
-                    if field.array_size is not None:
-                        base = ida_typeinf.tinfo_t()
-                        base.create_simple_type(TYPE_MAP[field.type])
-                        member.type.create_array(base, field.array_size)
-                    else:
-                        member.type.create_simple_type(TYPE_MAP[field.type])
-
-                    next_offset += member.type.get_size() * 8
+                    member = self._make_member(field, offset)
+                    offset += member.type.get_size() * 8
                     udt.push_back(member)
             except KeyError:
-                return Err(result="""Invalid type for field.""")
+                return Err(result="Invalid type for field.")
             except (ValueError, TypeError, SystemError):
                 return Err(
                     result="Invalid fields. Each field must be a tuple containing a field "
