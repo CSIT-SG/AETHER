@@ -3,9 +3,7 @@ from aether_rpc.capabilities.result import Result
 from aether_rpc.capabilities.types import XrefsResult
 
 
-async def get_xrefs_to(
-        service: AnyService, *, location: str | int
-) -> Result[XrefsResult]:
+async def get_xrefs_to(service: AnyService, *, location: str | int) -> Result[XrefsResult]:
     """Find all locations that reference the given address or symbol name.
 
     Args:
@@ -30,9 +28,9 @@ async def get_xrefs_to(
               (e.g. an invalid or corrupted address).
 
     Examples:
-        execute("assign_buffer")
-        execute("0x140001000")
-        execute("sub_DEADBEEF")
+        get_xrefs_to("assign_buffer")
+        get_xrefs_to("0x140001000")
+        get_xrefs_to("sub_DEADBEEF")
     """
 
     return service.get_xrefs_to(location=location)
