@@ -5,7 +5,7 @@ from typing import Any
 from aether_gui.runner import BaseTask
 from aether_gui.utils.rpc_id import get_rpc_id
 
-from ..llm_client import ChatbotClient, LLMResponse
+from ..client import ChatbotClient, LLMResponse
 from .constants import get_template
 
 SYSTEM_PROMPT_TEMPLATE = Path(__file__).parent / "prompts" / "system_prompt.md.jinja"

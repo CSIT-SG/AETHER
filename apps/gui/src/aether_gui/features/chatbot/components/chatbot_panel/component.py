@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import cast
 from uuid import uuid4
 
-from aether_gui.backend import ChatbotClient, ChatOrchestrator
+from aether_gui.backend.chatbot import ChatbotClient, ChatOrchestrator
 from aether_gui.utils.mcp import MCPClient
 from aether_gui.utils.ui import StyledComponent
 from PySide6 import QtCore, QtWidgets
