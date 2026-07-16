@@ -34,6 +34,8 @@ class ChatbotPanelForm(ida_kernwin.PluginForm):
     def OnClose(self, form: object) -> None:
         self.root = None
         self.parent = None
+        if self.chat_panel:
+            self.chat_panel.shutdown()
 
 
 class ChatbotHandler(ida_kernwin.action_handler_t):

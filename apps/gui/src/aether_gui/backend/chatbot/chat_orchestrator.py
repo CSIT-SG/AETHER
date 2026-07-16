@@ -26,6 +26,7 @@ class ChatOrchestrator:
         self.chat_renderer = ChatbotPanelRenderer(chatbot_panel)
         self.function_context = None
         self.mcp_client = mcp_client
+        self.handle = None
 
     def _get_context(self) -> None:
         current_ea = ida_kernwin.get_screen_ea()
@@ -37,14 +38,14 @@ class ChatOrchestrator:
         task = CallToolTask()
         worker_manager = get_shared_worker_manager()
 
-        handle = worker_manager.submit(
+        self.handle = worker_manager.submit(
             task,
             mcp_client=self.mcp_client,
             tool_name="get_function_context",
             tool_args={"rpc_id": rpc_id, "address": hex(current_ea)},
         )
         worker_manager.consume(
-            handle,
+            self.handle,
             on_event=lambda e: self._format_context(e),
             on_error=lambda err: self._run_on_ida_ui_thread(
                 lambda: self.chat_renderer.render_error(f"Failed to get IDA context {err}")
@@ -75,7 +76,7 @@ class ChatOrchestrator:
         worker_manager = get_shared_worker_manager()
 
         task = ChatBotTask()
-        handle = worker_manager.submit(
+        self.handle = worker_manager.submit(
             task,
             llm_client=self.llm_client,
             mcp_url=config.mcp_url,
@@ -84,7 +85,7 @@ class ChatOrchestrator:
         )
 
         worker_manager.consume(
-            handle,
+            self.handle,
             on_event=lambda e: self._run_on_ida_ui_thread(
                 lambda ev=e: self._handle_worker_result(ev)
             ),
@@ -116,3 +117,8 @@ class ChatOrchestrator:
             return 1
 
         ida_kernwin.execute_sync(wrapper, ida_kernwin.MFF_WRITE)
+
+    def shutdown(self):
+        if self.handle:
+            worker_manager = get_shared_worker_manager()
+            worker_manager.cancel(self.handle.task_id)

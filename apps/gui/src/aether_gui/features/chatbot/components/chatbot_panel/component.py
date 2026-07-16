@@ -102,6 +102,9 @@ class ChatbotPanel(StyledComponent):
         """Return the QSS template that paints the panel background."""
         return Path(__file__).resolve().parent / "styles.qss.jinja"
 
+    def shutdown(self):
+        self.chat_orchestrator.shutdown()
+
 
 def create_chatbot_panel(
     session: ChatSession, mcp_client: MCPClient, parent: QtWidgets.QWidget | None = None
