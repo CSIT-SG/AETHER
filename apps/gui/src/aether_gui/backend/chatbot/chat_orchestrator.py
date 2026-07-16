@@ -26,7 +26,6 @@ class ChatOrchestrator:
         self.chat_renderer = ChatbotPanelRenderer(chatbot_panel)
         self.function_context = None
         self.mcp_client = mcp_client
-        self._get_context()
 
     def _get_context(self) -> None:
         current_ea = ida_kernwin.get_screen_ea()
@@ -67,8 +66,7 @@ class ChatOrchestrator:
     def submit_user_prompt(self, prompt: str) -> None:
         """Called from IDA main thread. Returns immediately."""
         if self.function_context is None:
-            self.chat_renderer.render_status("IDA Context was not fetched")
-            return
+            self._get_context()
 
         prompt = prompt.strip()
         if not prompt:
