@@ -41,7 +41,7 @@ class ChatOrchestrator:
             task,
             mcp_client=self.mcp_client,
             tool_name="get_function_context",
-            args={"rpc_id": rpc_id, "address": hex(current_ea)},
+            tool_args={"rpc_id": rpc_id, "address": hex(current_ea)},
         )
         worker_manager.consume(
             handle,
