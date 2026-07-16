@@ -3,6 +3,7 @@ from typing import cast
 import ida_kernwin
 from aether_gui.features.chatbot import ChatbotHandler
 from aether_gui.features.chatbot.components.chat_session import ChatSession
+from aether_gui.utils.mcp import MCPClient
 from aether_utils.logger import get_logger
 
 from .menu_item import ContextMenuItem
@@ -23,8 +24,11 @@ class AetherUIHooks(ida_kernwin.UI_Hooks):
         super().__init__()
 
         self.session = ChatSession()
+        self.mcp_client = MCPClient()
         self.items = [
-            ContextMenuItem("aether:chatbot", "Open AI Chatbot", ChatbotHandler(self.session)),
+            ContextMenuItem(
+                "aether:chatbot", "Open AI Chatbot", ChatbotHandler(self.session, self.mcp_client)
+            ),
             ContextMenuItem("aether:whats_new", "What's new", DummyHandler()),
         ]
 

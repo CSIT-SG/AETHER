@@ -7,7 +7,7 @@ from aether_gui.runner import BaseTask
 from ..llm_client import LLMResponse, OpenAIClient
 from .constants import get_template
 
-SYSTEM_PROMPT = Path(__file__).parent / "prompts" / "system_prompt.md"
+SYSTEM_PROMPT = Path(__file__).parent / "prompts" / "system_prompt.jinja"
 TEMPLATE_PATH = Path(__file__).parent / "prompts" / "user_prompt.md.jinja"
 
 

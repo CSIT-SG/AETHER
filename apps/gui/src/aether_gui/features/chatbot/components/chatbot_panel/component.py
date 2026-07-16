@@ -4,6 +4,7 @@ from typing import cast
 from uuid import uuid4
 
 from aether_gui.backend import ChatOrchestrator, OpenAIClient
+from aether_gui.utils.mcp import MCPClient
 from aether_gui.utils.ui import StyledComponent
 from PySide6 import QtCore, QtWidgets
 
@@ -16,15 +17,16 @@ from ..messages.Messages import Message, MessageRole
 class ChatbotPanel(StyledComponent):
     """Container that owns the chat layout and background styling."""
 
-    def __init__(self, session: ChatSession, parent=None):
+    def __init__(self, session: ChatSession, mcp_client: MCPClient, parent=None):
         self._session = session
+        self.mcp_client = mcp_client
         super().__init__(parent)
 
     def setup(self) -> None:
         self._layout_container: QtWidgets.QVBoxLayout | None = None
         self._message_area: MessageArea | None = None
         self._chat_input: ChatInput | None = None
-        self.chat_orchestrator = ChatOrchestrator(OpenAIClient(), self)
+        self.chat_orchestrator = ChatOrchestrator(OpenAIClient(), self, self.mcp_client)
 
     def init_ui(self) -> None:
         """Builds the panel with chat input field and enable themed background painting."""
@@ -102,6 +104,6 @@ class ChatbotPanel(StyledComponent):
 
 
 def create_chatbot_panel(
-    session: ChatSession, parent: QtWidgets.QWidget | None = None
+    session: ChatSession, mcp_client: MCPClient, parent: QtWidgets.QWidget | None = None
 ) -> ChatbotPanel:
-    return ChatbotPanel(session, parent)
+    return ChatbotPanel(session, mcp_client, parent)
