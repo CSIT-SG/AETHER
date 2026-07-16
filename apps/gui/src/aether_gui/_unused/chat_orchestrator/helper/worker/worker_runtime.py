@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 
-from ..llm import LLMResponse, OpenAIClient
+from ..llm import ChatbotClient, LLMResponse
 from .constants import SYSTEM_PROMPT, TASK_TEMPLATE
 from .worker_types import WorkerTask
 
 
 class WorkerRuntime:
     def __init__(self, mcp_url: str) -> None:
-        self.llm_client = OpenAIClient(SYSTEM_PROMPT)
+        self.llm_client = ChatbotClient(SYSTEM_PROMPT)
         self.mcp_url = mcp_url
 
     async def run_task(self, task: WorkerTask) -> AsyncIterator[LLMResponse]:

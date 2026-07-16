@@ -1,4 +1,4 @@
-from .llm_client import OpenAIClient
+from .llm_client import ChatbotClient
 from .llm_types import (
     LLMResponse,
     LLMRole,
@@ -11,7 +11,7 @@ from .llm_types import (
 __all__ = [
     "LLMResponse",
     "LLMRole",
-    "OpenAIClient",
+    "ChatbotClient",
     "ReasoningDelta",
     "TextDelta",
     "ToolCall",

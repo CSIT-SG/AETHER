@@ -9,9 +9,8 @@ type LLMResponse = TextDelta | ReasoningDelta | ToolCall | ToolOutput
 class LLMOutput(ABC):
     """Abstract class for different LLM outputs"""
 
-    @property
     @abstractmethod
-    def output_string(self) -> str: ...
+    def __str__(self) -> str: ...
 
 
 @dataclass
@@ -20,8 +19,7 @@ class TextDelta(LLMOutput):
 
     delta: str
 
-    @property
-    def output_string(self) -> str:
+    def __str__(self) -> str:
         return self.delta
 
 
@@ -31,8 +29,7 @@ class ReasoningDelta(LLMOutput):
 
     delta: str
 
-    @property
-    def output_string(self) -> str:
+    def __str__(self) -> str:
         return f"[Reasoning]: {self.delta}"
 
 
@@ -44,8 +41,7 @@ class ToolCall(LLMOutput):
     arguments: str | None
     call_id: str
 
-    @property
-    def output_string(self) -> str:
+    def __str__(self) -> str:
         return f"Calling tool '{self.name}' with args: {self.arguments if self.arguments else 'No arguments provided'}"
 
 
@@ -56,6 +52,5 @@ class ToolOutput(LLMOutput):
     output: str
     call_id: str
 
-    @property
-    def output_string(self) -> str:
+    def __str__(self) -> str:
         return f"Result: {self.output}"

@@ -15,7 +15,7 @@ config = get_config()
 MAX_TOOL_ROUNDS = 5
 
 
-class OpenAIClient:
+class ChatbotClient:
     def __init__(self, system_prompt: str) -> None:
         self.system_prompt = system_prompt
 

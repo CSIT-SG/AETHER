@@ -1,9 +1,9 @@
 from .chat import ChatbotPanelRenderer
 from .ida import IDAContext, IDAContextProvider
 from .llm import (
+    ChatbotClient,
     LLMResponse,
     LLMRole,
-    OpenAIClient,
     ReasoningDelta,
     TextDelta,
     ToolCall,

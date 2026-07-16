@@ -13,7 +13,7 @@ from aether_gui.utils.rpc_id import get_rpc_id
 
 from .chat_renderer import ChatbotPanelRenderer
 from .chatbot_task import ChatBotTask
-from .llm_client import LLMResponse, OpenAIClient, ReasoningDelta, TextDelta, ToolCall, ToolOutput
+from .llm_client import ChatbotClient, LLMResponse, ReasoningDelta, TextDelta, ToolCall, ToolOutput
 from .types import ChatPanelProtocol
 
 config = get_config()
@@ -21,11 +21,11 @@ config = get_config()
 
 class ChatOrchestrator:
     def __init__(
-        self, llm_client: OpenAIClient, chatbot_panel: ChatPanelProtocol, mcp_client: MCPClient
+        self, llm_client: ChatbotClient, chatbot_panel: ChatPanelProtocol, mcp_client: MCPClient
     ) -> None:
         self.llm_client = llm_client
         self.chat_renderer = ChatbotPanelRenderer(chatbot_panel)
-        self.ida_context = None
+        self.function_context = None
         self.mcp_client = mcp_client
         self._get_context()
 
@@ -63,11 +63,11 @@ class ChatOrchestrator:
             raise ValueError("Failed to extract text: CallToolResult contains no text data.")
 
         tool_text = tool_result.content[0].text
-        self.ida_context = json.loads(tool_text)
+        self.function_context = json.loads(tool_text)
 
     def submit_user_prompt(self, prompt: str) -> None:
         """Called from IDA main thread. Returns immediately."""
-        if self.ida_context is None:
+        if self.function_context is None:
             self.chat_renderer.render_status("IDA Context was not fetched")
             return
 
@@ -85,7 +85,7 @@ class ChatOrchestrator:
             llm_client=self.llm_client,
             mcp_url=config.mcp_url,
             user_prompt=prompt,
-            ida_context=self.ida_context,
+            ida_context=self.function_context,
         )
 
         worker_manager.consume(
@@ -103,9 +103,9 @@ class ChatOrchestrator:
         """Render UI and apply IDA actions here"""
 
         if isinstance(result, (TextDelta, ReasoningDelta)):
-            self.chat_renderer.render_aether_message(result.output_string)
+            self.chat_renderer.render_aether_message(str(result))
         elif isinstance(result, (ToolCall, ToolOutput)):
-            self.chat_renderer.render_tool_message(result.output_string)
+            self.chat_renderer.render_tool_message(str(result))
 
     def _run_on_ida_ui_thread(self, fn) -> None:
         """

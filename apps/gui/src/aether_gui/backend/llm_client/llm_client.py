@@ -14,7 +14,7 @@ from .llm_types import LLMResponse, ReasoningDelta, TextDelta, ToolCall, ToolOut
 config = get_config()
 
 
-class OpenAIClient:
+class ChatbotClient:
     async def submit(
         self,
         system_prompt: str,

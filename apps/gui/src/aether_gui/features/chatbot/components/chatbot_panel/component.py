@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import cast
 from uuid import uuid4
 
-from aether_gui.backend import ChatOrchestrator, OpenAIClient
+from aether_gui.backend import ChatbotClient, ChatOrchestrator
 from aether_gui.utils.mcp import MCPClient
 from aether_gui.utils.ui import StyledComponent
 from PySide6 import QtCore, QtWidgets
@@ -26,7 +26,7 @@ class ChatbotPanel(StyledComponent):
         self._layout_container: QtWidgets.QVBoxLayout | None = None
         self._message_area: MessageArea | None = None
         self._chat_input: ChatInput | None = None
-        self.chat_orchestrator = ChatOrchestrator(OpenAIClient(), self, self.mcp_client)
+        self.chat_orchestrator = ChatOrchestrator(ChatbotClient(), self, self.mcp_client)
 
     def init_ui(self) -> None:
         """Builds the panel with chat input field and enable themed background painting."""
