@@ -35,9 +35,9 @@ class MCPClient:
             await self._client.__aenter__()
             self._connected = True
             self.logger.info(f"Connected to MCP server at {self.mcp_url}")
-        except Exception:
+        except Exception as e:
             self._client = None
-            raise
+            raise Exception("Unable to connect to MCP server") from e
 
     async def close(self) -> None:
         """Close the MCP server connection."""

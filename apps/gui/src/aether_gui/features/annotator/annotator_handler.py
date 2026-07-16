@@ -28,7 +28,9 @@ class AnnotatorHandler(ida_kernwin.action_handler_t):
         )
 
         while not handle.done:
-            print(handle.results.get())
+            if handle.error:
+                logger.error(handle.error)
+            logger.info(handle.results.get())
 
         return 0
 
