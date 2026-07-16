@@ -7,8 +7,8 @@ import ida_kernwin
 from aether_utils.config import get_config
 from fastmcp.client.client import CallToolResult
 
-from aether_gui.runner import GenericTask, get_shared_worker_manager
-from aether_gui.utils.mcp import MCPClient
+from aether_gui.runner import get_shared_worker_manager
+from aether_gui.utils.mcp import CallToolTask, MCPClient
 from aether_gui.utils.rpc_id import get_rpc_id
 
 from .chat_renderer import ChatbotPanelRenderer
@@ -36,15 +36,14 @@ class ChatOrchestrator:
             self.chat_renderer.render_error("RPC server does not exist")
             raise Exception("RPC server does not exist")
 
-        task = GenericTask()
+        task = CallToolTask()
         worker_manager = get_shared_worker_manager()
 
         handle = worker_manager.submit(
             task,
-            fn=self.mcp_client.call_tool,
-            rpc_id=rpc_id,
-            tool_name="get_ida_context",
-            args={"address": hex(current_ea)},
+            mcp_client=self.mcp_client,
+            tool_name="get_function_context",
+            args={"rpc_id": rpc_id, "address": hex(current_ea)},
         )
         worker_manager.consume(
             handle,
@@ -80,13 +79,14 @@ class ChatOrchestrator:
 
         self.chat_renderer.render_status("Analyzing current context...")
 
-        task = ChatBotTask(
+        task = ChatBotTask()
+        handle = worker_manager.submit(
+            task,
             llm_client=self.llm_client,
             mcp_url=config.mcp_url,
             user_prompt=prompt,
             ida_context=self.ida_context,
         )
-        handle = worker_manager.submit(task)
 
         worker_manager.consume(
             handle,

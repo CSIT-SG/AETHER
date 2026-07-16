@@ -14,9 +14,11 @@ INSTRUCTIONS = get_content(Path(__file__).parent, "instructions.md")
 
 @tool(
     description=INSTRUCTIONS,
-    annotations=ToolAnnotations(title="Get current IDA context", openWorldHint=True),
+    annotations=ToolAnnotations(
+        title="Fetch reverse-engineering context at address", openWorldHint=True
+    ),
 )  # tool is untyped in fastmcp
 @effectful  # type: ignore
-async def get_ida_context(rpc_id: str, address: HexAddress) -> Program:
+async def get_function_context(rpc_id: str, address: HexAddress) -> Program:
     async for effect in get_context(await get_rpc_service(rpc_id), address):
         yield effect

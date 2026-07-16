@@ -9,9 +9,9 @@ T = TypeVar("T")
 class BaseTask[T](ABC):
     """Abstract Base Class for asynchronous tasks managed manually by a Worker Manager."""
 
-    def __init__(self, name: str | None = None) -> None:
+    def __init__(self) -> None:
         self.id: str = str(uuid4())
-        self.name: str = name or self.__class__.__name__
+        self.name: str = self.__class__.__name__
         self.is_running: bool = False
         self.has_failed: bool = False
 
@@ -19,8 +19,7 @@ class BaseTask[T](ABC):
     def run(self, *args: Any, **kwargs: Any) -> AsyncIterator[T]:
         """Asynchronously execute the core workload.
 
-        Subclasses implement their heavy I/O boundaries (like network requests,
-        database queries, or LLM streams) using `await`.
+        Subtasks implement their own run logic that carries out heavy async workload that might block IDA thread.
         """
 
     @abstractmethod

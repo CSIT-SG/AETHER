@@ -1,4 +1,3 @@
-import asyncio
 from typing import Any, Literal, cast
 
 import ida_kernwin
@@ -35,14 +34,13 @@ class ChatbotPanelForm(ida_kernwin.PluginForm):
     def OnClose(self, form: object) -> None:
         self.root = None
         self.parent = None
-        asyncio.run(self.mcp_client.close())
 
 
 class ChatbotHandler(ida_kernwin.action_handler_t):
-    def __init__(self, session: ChatSession, mcp_client: MCPClient) -> None:
+    def __init__(self, mcp_client: MCPClient) -> None:
         ida_kernwin.action_handler_t.__init__(self)
         self.panel_title = "AETHER ChatBot"
-        self.session = session
+        self.session = ChatSession()
         self.mcp_client = mcp_client
 
     def activate(self, ctx: ida_kernwin.action_ctx_base_t) -> Literal[0]:

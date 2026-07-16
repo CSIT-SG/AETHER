@@ -1,8 +1,8 @@
+import asyncio
 from typing import cast
 
 import ida_kernwin
 from aether_gui.features.chatbot import ChatbotHandler
-from aether_gui.features.chatbot.components.chat_session import ChatSession
 from aether_gui.utils.mcp import MCPClient
 from aether_utils.logger import get_logger
 
@@ -23,12 +23,9 @@ class AetherUIHooks(ida_kernwin.UI_Hooks):
     def __init__(self) -> None:
         super().__init__()
 
-        self.session = ChatSession()
         self.mcp_client = MCPClient()
         self.items = [
-            ContextMenuItem(
-                "aether:chatbot", "Open AI Chatbot", ChatbotHandler(self.session, self.mcp_client)
-            ),
+            ContextMenuItem("aether:chatbot", "Open AI Chatbot", ChatbotHandler(self.mcp_client)),
             ContextMenuItem("aether:whats_new", "What's new", DummyHandler()),
         ]
 
@@ -68,4 +65,4 @@ class AetherUIHooks(ida_kernwin.UI_Hooks):
                 logger.warning("Failed to unregister context menu item: %s", e)
 
         self.items.clear()
-        self.session = None
+        asyncio.run(self.mcp_client.close())

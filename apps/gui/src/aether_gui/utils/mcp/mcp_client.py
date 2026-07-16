@@ -9,8 +9,6 @@ from fastmcp import Client
 from fastmcp.client.client import CallToolResult
 from fastmcp.client.transports import StreamableHttpTransport
 
-from mcp.types import Tool
-
 config = get_config()
 
 
@@ -23,7 +21,6 @@ class MCPClient:
         self.mcp_url = config.mcp_url
         self._client: Client[StreamableHttpTransport] | None = None
         self._connected: bool = False
-        self._tool_cache: list[Tool] | None = None
         self.logger = get_logger("MCPClient")
 
     async def connect(self) -> None:
@@ -59,7 +56,6 @@ class MCPClient:
 
     async def call_tool(
         self,
-        rpc_id: str,
         tool_name: str,
         args: dict[str, Any] | None = None,
     ) -> AsyncIterator[CallToolResult]:
@@ -69,7 +65,7 @@ class MCPClient:
 
         assert self._client is not None
         try:
-            arguments = {"rpc_id": rpc_id, **(args or {})}
+            arguments = {**(args or {})}
             yield await self._client.call_tool(tool_name, arguments=arguments)
         except Exception as e:
             self.logger.error(f"Tool call '{tool_name}' failed: {e}")
