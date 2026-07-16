@@ -1,1 +1,1 @@
-TIMEOUT_SECONDS = 300  # Timeout for annotating the function
+TIMEOUT_SECONDS = 600  # Timeout for annotating the function
