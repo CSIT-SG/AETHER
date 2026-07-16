@@ -12,8 +12,10 @@ class CallToolTask(BaseTask[Any]):
     def __init__(self) -> None:
         super().__init__()
 
-    async def run(self, mcp_client: MCPClient, tool_name: str, **kwargs: Any) -> AsyncIterator[Any]:
-        async for event in mcp_client.call_tool(tool_name=tool_name, **kwargs):
+    async def run(
+        self, mcp_client: MCPClient, tool_name: str, tool_args: dict[str, Any]
+    ) -> AsyncIterator[Any]:
+        async for event in mcp_client.call_tool(tool_name=tool_name, args=tool_args):
             yield event
 
     async def close(self) -> None:
