@@ -17,6 +17,10 @@ You should install one of of our clients (CLI or GUI) to use AETHER. You also ne
 - IDA Pro: Version `9.2` or later
 - LLM Gateway: You need a openai-compatible LLM gateway and api key to use Aether. The default is OpenRouter, but you can configure your own provider in the [configuration file](./configuration).
 
+<Callout type="info">
+  The commands below use `python`. If you have multiple Python versions installed, invoke `3.12`/`3.13` explicitly instead e.g. `py -3.13` on Windows or `python3.13` on Linux.
+</Callout>
+
 
 ## Graphical User Interface (GUI)
 
@@ -24,7 +28,7 @@ Download the release binaries.
 
 1. In the [repository](https://github.com/csitgovsg-acube/AETHER-next) click on `Releases`
 2. Click on latest release
-3. Download `aether_gui-<version>.zip`
+3. Download `aether_gui-v<version>.zip`
 
 The files are laid out in the following structure: 
 
@@ -38,6 +42,12 @@ The files are laid out in the following structure:
   </FileTree.Folder>
 </FileTree>
 
+<Callout type="warning">
+  The GUI plugin runs inside IDA's embedded Python, so its dependencies must be installed into the **same** Python that IDA uses.
+  Point IDA at a Python `3.12` or `3.13` install with `idapyswitch` (ships with IDA), then run the install script below
+  with that same interpreter. `python` must be `3.12` or `3.13` — the script exits otherwise.
+</Callout>
+
 Run the prod script.
 
 ```bash
@@ -46,7 +56,7 @@ python install_prod.py
 
 This will install the wheel bundles and copy the plugin entrypoint into the IDA plugins folder.
 
-You can specify a custom plugins folder with the `--plugin-path` argument, eg. `python ./scripts/install_prod.py --plugin-path /opt/ida-9.2`.
+You can install into a custom plugins folder with the `--plugin-path` argument. It defaults to `%APPDATA%\Hex-Rays\IDA Pro\plugins` (Windows) or `~/Hex-Rays/IDA Pro/plugins` (Linux), eg. `python install_prod.py --plugin-path "D:\ida-plugins"`.
 
 
 ## Headless Command-Line Interface (CLI)
@@ -55,7 +65,7 @@ Download the release binaries.
 
 1. In the [repository](https://github.com/csitgovsg-acube/AETHER-next) click on `Releases`
 2. Click on latest release
-3. Download `aether_cli-<version>.zip`
+3. Download `aether_cli-v<version>.zip`
 
 The files are laid out in the following structure: 
 
@@ -101,9 +111,9 @@ Choose a model on [OpenRouter](https://openrouter.ai/) and generate an API key. 
         "api_key": "YOUR_API_KEY",
         "models": {
             "claude-sonnet-5": "anthropic/claude-sonnet-5",
-            "qwen3.5-9b": "qwen/qwen3.5-9b",
+            "qwen3.5-9b": "qwen/qwen3.5-9b"
         },
-        "default_model": "claude-sonnet-5",
+        "default_model": "claude-sonnet-5"
     },
     ...rest of your config
 }
@@ -169,9 +179,10 @@ You should set the API key in the config to match the one you created. Then your
 Clone the repo and run the gui dev script.
 
 ```bash
-uv sync --all-packages
 git clone https://github.com/csitgovsg-acube/AETHER-next
-cd apps/gui && python ./scripts/install_dev.py
+cd AETHER-next
+uv sync --all-packages
+cd apps/gui && uv run python ./scripts/install_dev.py
 ```
 
 This will install the required dependencies for idapython and link the plugin entrypoint into the IDA plugins folder.

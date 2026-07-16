@@ -2,6 +2,8 @@
 
 GUI application for the AETHER project.
 
+> Run these with Python 3.12 or 3.13 — other versions are not supported.
+
 ```bash
 # Install the wheel bundle and copy the entrypoint into the IDA plugins folder
 python ./install_prod.py

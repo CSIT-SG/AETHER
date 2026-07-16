@@ -2,6 +2,8 @@
 
 CLI application for the AETHER project.
 
+> Run these with Python 3.12 or 3.13, other versions are not supported.
+
 ```bash
 # Install the wheel bundle
 python ./install.py
