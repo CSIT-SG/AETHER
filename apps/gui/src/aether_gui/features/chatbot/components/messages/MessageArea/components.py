@@ -68,6 +68,11 @@ class MessageArea(StyledComponent):
             message_row = cast(MessageRow, last_widget)
             message_row.append_text(message)
 
+            QtCore.QTimer.singleShot(
+                0,
+                self.scroll_to_bottom,
+            )
+
     # FIX: Scrollbar doesn't work yet
     def scroll_to_bottom(self, min_val, max_val) -> None:
         scrollbar = cast(QScrollArea, self._scroll_area).verticalScrollBar()

@@ -74,8 +74,6 @@ class ChatOrchestrator:
 
         worker_manager = get_shared_worker_manager()
 
-        self.chat_renderer.render_status("Analyzing current context...")
-
         task = ChatBotTask()
         handle = worker_manager.submit(
             task,
@@ -100,9 +98,12 @@ class ChatOrchestrator:
         """Render UI and apply IDA actions here"""
 
         if isinstance(result, (TextDelta, ReasoningDelta)):
-            self.chat_renderer.render_aether_message(str(result))
-        elif isinstance(result, (ToolCall, ToolOutput)):
+            if str(result) != "":
+                self.chat_renderer.render_aether_message(str(result))
+        elif isinstance(result, ToolCall):
             self.chat_renderer.render_tool_message(str(result))
+        elif isinstance(result, ToolOutput):
+            self.chat_renderer.render_tool_output(str(result))
 
     def _run_on_ida_ui_thread(self, fn) -> None:
         """
