@@ -2,11 +2,12 @@ from pathlib import Path
 
 from aether_backend.utils.effect import Program, effectful
 from aether_backend.utils.get_content import get_content
-from aether_backend.utils.validation import HexAddress, get_service
+from aether_backend.utils.get_rpc_service import get_rpc_service
+from aether_backend.utils.validation import HexAddress
 from fastmcp.tools import tool
 from mcp.types import ToolAnnotations
 
-from .get_ida_context import exec_code
+from .get_ida_context import get_context
 
 INSTRUCTIONS = get_content(Path(__file__).parent, "instructions.md")
 
@@ -17,5 +18,5 @@ INSTRUCTIONS = get_content(Path(__file__).parent, "instructions.md")
 )  # tool is untyped in fastmcp
 @effectful  # type: ignore
 async def get_ida_context(rpc_id: str, address: HexAddress) -> Program:
-    async for effect in exec_code(await get_service(rpc_id), address):
+    async for effect in get_context(await get_rpc_service(rpc_id), address):
         yield effect

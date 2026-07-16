@@ -5,7 +5,7 @@ from aether_backend.utils.effect import Program, Return
 from .types import IDAContext
 
 
-async def exec_code(service: Any, address: str | int) -> Program:
+async def get_context(service: Any, address: str | int) -> Program:
     data_at_address = dict(service.get_data_at_address(location=address).result)
     res = service.get_function_pseudocode(function_name=data_at_address["name"])
     pseudocode = res.result if res.success else None
