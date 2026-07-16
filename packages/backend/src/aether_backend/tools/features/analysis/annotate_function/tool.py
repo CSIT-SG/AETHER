@@ -10,6 +10,7 @@ from mcp.types import ToolAnnotations
 
 from .annotate_function import annotate
 from .constants import TIMEOUT_SECONDS
+from .get_interesting_child_functions import get_interesting_child_functions
 
 INSTRUCTIONS = get_content(Path(__file__).parent, "instructions.md")
 
@@ -32,5 +33,9 @@ async def annotate_function(
         "A hint regarding behavior for the subagent to guide analysis. Keep it less than 3 sentences.",
     ] = None,
 ) -> Program:
-    async for effect in annotate(await get_rpc_service(rpc_id), address, custom_prompt):
+
+    svc = await get_rpc_service(rpc_id)
+    funcs = await get_interesting_child_functions(svc, address, custom_prompt)
+
+    async for effect in annotate(svc, funcs, custom_prompt):
         yield effect

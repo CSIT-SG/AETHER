@@ -6,6 +6,8 @@ Prefer meaningful, evidence-based renames. Renaming `v1` → `var1` adds nothing
 
 MANDATORY REQUIREMENTS
 
+For all addresses you find, call `get_data_at_address` to obtain the name property before parsing that into `get_function_pseudocode`.
+
 Before finishing, you MUST:
 
 1. Rename every local variable. in the target function. Auto-generated names (`v0`, `a1`, `arg_10`) are unacceptable in the final output.

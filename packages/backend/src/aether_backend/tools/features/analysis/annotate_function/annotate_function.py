@@ -21,14 +21,16 @@ from aether_utils.config import get_config
 from aether_utils.get_content import get_content
 from agents import Agent, ModelSettings, Runner
 
+from .models import InterestingFunctions
+
 config = get_config()
 SYSTEM_PROMPT = get_content(Path(__file__).parent, "prompt.md")
 
 
-async def annotate(service: Any, function_address: str | int, custom_prompt: str | None) -> Program:
+async def annotate(service: Any, funcs: InterestingFunctions, custom_prompt: str | None) -> Program:
     if config.backup:
         service.take_snapshot()
-
+    yield Log(funcs.model_dump_json())
     agent = Agent(
         name="Annotator",
         model=OpenAIGateway().get_model(
@@ -54,10 +56,14 @@ async def annotate(service: Any, function_address: str | int, custom_prompt: str
 
     if custom_prompt is None:
         custom_prompt = ""
+
     result = Runner.run_streamed(
         agent,
         context=SubagentToolDependencies(service),
-        input=f"Analyze the function at address {function_address} and provide annotations for the psuedocode.\n{custom_prompt}",
+        input=(
+            f"Analyze the following functions and provide annotations for the psuedocode"
+            f"{funcs.model_dump_json()}\n{custom_prompt}"
+        ),
         max_turns=None,
     )
 
@@ -73,6 +79,9 @@ async def annotate(service: Any, function_address: str | int, custom_prompt: str
         elif run_item.type == "tool_call_output_item":
             yield Log(str(run_item.output))
 
-    service.refresh_pseudocode(function_address=function_address)
+    addresses = [item.address for item in funcs.root]
+
+    for address in addresses:
+        service.refresh_pseudocode(function_address=address)
 
     yield Return(result.final_output)
