@@ -8,7 +8,7 @@
 		"build": "next build",
 		"prebuild": "bun run src/scripts/prebuild/index.ts",
 		"postbuild": "bun run src/scripts/postbuild/index.ts",
-		"start": "next start",
+		"start": "node .next/standalone/server.js",
 		"lint": "biome check",
 		"format": "biome format --write"
 	},

@@ -24,12 +24,11 @@ RUN bun install --frozen-lockfile
 WORKDIR /repo
 COPY . .
 
-# switch back to the docs app and build it
+# switch back to the docs app and build it.
+# `bun run build` also runs the postbuild step, which generates the Pagefind
+# search index and stages static assets + public/ into .next/standalone.
 WORKDIR /repo/apps/docs
 RUN bun run build
-RUN mkdir -p .next/standalone/.next \
-    && cp -r .next/static .next/standalone/.next/static \
-    && cp -r public .next/standalone/public
 
 FROM node:24-slim AS runner
 WORKDIR /app
