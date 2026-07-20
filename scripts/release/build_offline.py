@@ -1,4 +1,3 @@
-import argparse
 import re
 import shutil
 import tempfile
@@ -29,14 +28,7 @@ def split_export(text: str) -> tuple[list[str], list[str]]:
     return local_paths, kept_lines
 
 
-def prune_app_deps(
-    app: str,
-    requirements_path: Path,
-    wheels_dir: Path,
-    *,
-    python_version: str | None,
-    platforms: list[str],
-) -> None:
+def prune_app_deps(app: str, requirements_path: Path, wheels_dir: Path) -> None:
 
     with tempfile.TemporaryDirectory() as tmp:
         raw_path = Path(tmp) / f"reqs-raw-{uuid.uuid4().hex}.txt"
@@ -60,30 +52,25 @@ def prune_app_deps(
         ext_path = Path(tmp) / f"reqs-ext-{uuid.uuid4().hex}.txt"
         ext_path.write_text("\n".join(external_deps))
 
-        # uv has no `pip download`; run pip ephemerally via `uv run --with pip`
-        download_cmd = [
-            "uv",
-            "run",
-            "--with",
-            "pip",
-            "--",
-            "python",
-            "-m",
-            "pip",
-            "download",
-            "-r",
-            str(ext_path),
-            "--dest",
-            str(wheels_dir),
-            "--no-deps",  # closure already fully resolved by `uv export`
-        ]
-        if python_version or platforms:
-            download_cmd.append("--only-binary=:all:")  # required for cross target downloads
-        if python_version:
-            download_cmd += ["--python-version", python_version]
-        for platform in platforms:
-            download_cmd += ["--platform", platform]
-        sh(download_cmd)
+        # native to this runner's os/python (matrix supplies targeting)
+        sh(
+            [
+                "uv",
+                "run",
+                "--with",
+                "pip",
+                "--",
+                "python",
+                "-m",
+                "pip",
+                "wheel",
+                "-r",
+                str(ext_path),
+                "--wheel-dir",
+                str(wheels_dir),
+                "--no-deps",  # closure already fully resolved by `uv export`
+            ]
+        )
         print(f"Downloaded external dependencies for {app} to {wheels_dir}")
 
     for pkg_path in local_deps:
@@ -97,13 +84,6 @@ def prune_app_deps(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--python-version", dest="python_version", default=None)
-    parser.add_argument(
-        "--platform", dest="platforms", action="append", default=[]
-    )  # repeatable, e.g. --platform manylinux2014_x86_64
-    args = parser.parse_args()
-
     if OUTPUT_DIR.exists():
         shutil.rmtree(OUTPUT_DIR)
 
@@ -117,13 +97,7 @@ def main() -> None:
         mkdir(wheels_dir)
 
         # prune the app's dependencies and build wheels
-        prune_app_deps(
-            app,
-            requirements_path,
-            wheels_dir,
-            python_version=args.python_version,
-            platforms=args.platforms,
-        )
+        prune_app_deps(app, requirements_path, wheels_dir)
 
         for inode in cfg["extra_inodes"]:
             cp_r(inode, app_out / inode.name)
