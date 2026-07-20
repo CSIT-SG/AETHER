@@ -21,14 +21,14 @@ from aether_utils.config import get_config
 from aether_utils.get_content import get_content
 from agents import Agent, ModelSettings, Runner
 
-from .types import InterestingFunc_TD
+from .types import InterestingFunc
 
 config = get_config()
 SYSTEM_PROMPT = get_content(Path(__file__).parent, "prompt.md")
 
 
 async def annotate(
-    service: Any, funcs: list[InterestingFunc_TD], custom_prompt: str | None
+    service: Any, funcs: list[InterestingFunc], custom_prompt: str | None
 ) -> Program:
     if config.backup:
         service.take_snapshot()
