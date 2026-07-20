@@ -142,12 +142,12 @@ This project was created and/or upgraded thanks to the following organizations a
 <h3>Centre for Strategic Infocomm Technologies</h3>
 
 <a href="https://www.csit.gov.sg/">
-    <img src="apps/docs/public/9559_csit-logo_fa-01.png" width="25%" alt="CSIT logo">
+    <img src="apps/docs/public/csit-logo.png" width="25%" alt="CSIT logo">
 </a>
 <h3>The Digital and Intelligence Service</h3>
 
 <a href="https://www.dis.gov.sg/">
-    <img src="apps/docs/public/DIS_LOGO.avif" width="25%" alt="DIS logo">
+    <img src="apps/docs/public/dis-logo.avif" width="25%" alt="DIS logo">
 </a>
 
 AETHER is made possible through the dedication of Cyber Specialists under the Digital and Intelligence Service’s (DIS) Defence Cyber Command (DCCOM).
