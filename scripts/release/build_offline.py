@@ -33,6 +33,7 @@ def prune_app_deps(
     app: str,
     requirements_path: Path,
     wheels_dir: Path,
+    *,
     python_version: str | None,
     platforms: list[str],
 ) -> None:
@@ -116,7 +117,13 @@ def main() -> None:
         mkdir(wheels_dir)
 
         # prune the app's dependencies and build wheels
-        prune_app_deps(app, requirements_path, wheels_dir, args.python_version, args.platforms)
+        prune_app_deps(
+            app,
+            requirements_path,
+            wheels_dir,
+            python_version=args.python_version,
+            platforms=args.platforms,
+        )
 
         for inode in cfg["extra_inodes"]:
             cp_r(inode, app_out / inode.name)
