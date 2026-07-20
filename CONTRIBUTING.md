@@ -8,7 +8,6 @@ Requires:
 
 For IDE setup, developer tooling, the config migration tool, and the release process, see the
 **Contributing** and **Release** pages in the docs. There's no hosted docs site yet, so run it
-locally with `bun` (see [apps/docs/README.md](apps/docs/README.md)), then open
-`http://localhost:3000/development/contributing` and `http://localhost:3000/development/release`.
+locally with `bun` (see [apps/docs/README.md](apps/docs/README.md)).
 
 For package-specific commands, go to the respective package's `README.md`.

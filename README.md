@@ -10,7 +10,6 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/IDA_Pro-9.2+-blueviolet?logo=hex-rays&logoColor=white" alt="IDA Pro">
-  <img src="https://img.shields.io/badge/ida--pro--mcp-1.5.0a8-orange" alt="IDA Pro MCP Version">
   <img src="https://img.shields.io/badge/python-3.12_|_3.13-blue?logo=python&logoColor=white" alt="Python 3.12 | 3.13">
   <img src="https://img.shields.io/badge/platform-Windows_|_Linux-red" alt="Platform">
 </p>
@@ -19,18 +18,22 @@
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Key Features](#key-features)
-- [Improvements over Raw IDA Pro MCP](#improvements-over-raw-ida-pro-mcp)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Documentation](#documentation)
-- [Limitations](#limitations)
-- [Contributing](#contributing)
-- [Authors/Maintainers](#authorsmaintainers)
-- [License](#license)
-- [Acknowledgments](#acknowledgments)
-- [Sources](#sources)
+- [AETHER - AI-Powered IDA Pro Reverse Engineering Plugin](#aether---ai-powered-ida-pro-reverse-engineering-plugin)
+  - [Table of Contents](#table-of-contents)
+  - [Overview](#overview)
+  - [Key Features](#key-features)
+  - [Improvements over Raw IDA Pro MCP](#improvements-over-raw-ida-pro-mcp)
+  - [Requirements](#requirements)
+    - [Minimum System Requirements](#minimum-system-requirements)
+    - [API Requirements](#api-requirements)
+  - [Installation](#installation)
+  - [Documentation](#documentation)
+  - [Limitations](#limitations)
+  - [Contributing](#contributing)
+  - [Authors/Maintainers](#authorsmaintainers)
+  - [License](#license)
+  - [Acknowledgments](#acknowledgments)
+  - [Sources](#sources)
 
 ---
 
@@ -62,11 +65,13 @@ _Coming soon._
 ## Requirements
 
 ### Minimum System Requirements
+
 - **Operating System**: Windows or Linux
 - **Python**: 3.12 or 3.13 (Python 3.14 is not supported by IDA Pro)
 - **IDA Pro**: Version 9.2 or above
 
 ### API Requirements
+
 - **LLM Gateway**: An OpenAI-compatible LLM gateway and API key. The default is OpenRouter, but you can configure your own provider.
 - **Network**: Internet connection for LLM API calls (or a local LLM server setup)
 
@@ -88,6 +93,7 @@ All documentation lives in [`apps/docs`](apps/docs). Run docs locally (see [apps
 ---
 
 ## Limitations
+
 - LLM's accuracy is variable
 - Comments are generally less trustable than function and var names - working on it
 - Occasional formatting issues now and then
@@ -104,6 +110,7 @@ For developers, see [CONTRIBUTING.md](CONTRIBUTING.md) and the **Contributing** 
 ## Authors/Maintainers
 
 This project is authored by:
+
 - Ang Guang Yao ([@guangyaoa123](https://github.com/guangyaoa123))
 - Ang Ian ([@Ang-Ian](https://github.com/Ang-Ian))
 - Asher Cheng ([@Ash2234](https://github.com/Ash2234))
@@ -150,6 +157,7 @@ AETHER is made possible through the dedication of Cyber Specialists under the Di
 ---
 
 ## Sources
+
 - IDA Pro MCP - https://github.com/mrexodia/ida-pro-mcp/tree/main
 - Plugin optimised for [`Qwen: Qwen3 Next 80B A3B Instruct`](https://openrouter.ai/qwen/qwen3-next-80b-a3b-instruct)
 - Thanks to all who provided feedback and annotated IDA files

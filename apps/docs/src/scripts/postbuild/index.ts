@@ -1,9 +1,7 @@
 import { generatePagefind } from "./pagefind";
-import { stageStandalone } from "./standalone";
 
 async function main() {
 	await generatePagefind();
-	stageStandalone();
 }
 
 main().catch((error) => {

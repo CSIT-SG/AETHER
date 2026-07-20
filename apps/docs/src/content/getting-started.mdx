@@ -17,10 +17,6 @@ You should install one of of our clients (CLI or GUI) to use AETHER. You also ne
 - IDA Pro: Version `9.2` or later
 - LLM Gateway: You need a openai-compatible LLM gateway and api key to use Aether. The default is OpenRouter, but you can configure your own provider in the [configuration file](./configuration).
 
-<Callout type="info">
-  The commands below use `python`. If you have multiple Python versions installed, invoke `3.12`/`3.13` explicitly instead e.g. `py -3.13` on Windows or `python3.13` on Linux.
-</Callout>
-
 
 ## Graphical User Interface (GUI)
 
@@ -45,7 +41,7 @@ The files are laid out in the following structure:
 <Callout type="warning">
   The GUI plugin runs inside IDA's embedded Python, so its dependencies must be installed into the **same** Python that IDA uses.
   Point IDA at a Python `3.12` or `3.13` install with `idapyswitch` (ships with IDA), then run the install script below
-  with that same interpreter. `python` must be `3.12` or `3.13` — the script exits otherwise.
+  with that same interpreter.
 </Callout>
 
 Run the prod script.
