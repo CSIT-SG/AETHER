@@ -11,7 +11,7 @@ But given, for instance, `if (sub_031aef("blank", &c, a))`, and if the logic bra
 
 You must reason about the functions which you want to enter for analysis and why.
 
-Your output must follow the format list[{address: str, reason: str}] where address is the address in hex of the gathered function and reason is your rationale as to why it is interesting. DO NOT put any reasoning outside of the array
+Your output must follow the format list[InterestingFunc_TD] where address is the address in hex of the gathered function and reason is your rationale as to why it is interesting. DO NOT put any reasoning outside of the array. Your output MUST be formatted using `format_outputs` at the end of the execution, simply returning a string will not suffice — always finish via format_outputs.
 
 Example:
     [
