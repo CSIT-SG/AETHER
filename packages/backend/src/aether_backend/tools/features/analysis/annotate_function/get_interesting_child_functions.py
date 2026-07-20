@@ -17,7 +17,7 @@ from aether_utils.config import get_config
 from agents import Agent, ModelSettings, Runner, function_tool
 from agents.agent import StopAtTools
 
-from .types import InterestingFunc_TD
+from .types import InterestingFunc
 
 CONFIG = get_config()
 SYSTEM_PROMPT = get_content(Path(__file__).parent, "interesting_children_prompt.md")
@@ -26,24 +26,24 @@ TOOL_NAME = "format_outputs"
 
 async def get_interesting_child_functions(
     service: Any, function_address: HexAddress, custom_prompt: str | None
-) -> list[InterestingFunc_TD]:
+) -> list[InterestingFunc]:
     """
-    should return  list[InterestingFunc_TD]
+    should return  list[InterestingFunc]
 
-    InterestingFunc_TD is a dict of shape {address: HexAddress, reason: str}
+    InterestingFunc is a dict of shape {address: HexAddress, reason: str}
     """
     if CONFIG.backup:
         service.take_snapshot()
 
-    base: InterestingFunc_TD = {
+    base: InterestingFunc = {
         "address": function_address,
         "reason": "This is the base function, the end goal is to figure out the main functionality of this function",
     }
-    captured_output: list[InterestingFunc_TD] = [base]
+    captured_output: list[InterestingFunc] = [base]
 
     # Ensures structured outputs, stored in captured_output
     @function_tool(name_override=TOOL_NAME, description_override="formats outputs")
-    async def format_output(args: list[InterestingFunc_TD]) -> None:
+    async def format_output(args: list[InterestingFunc]) -> None:
         captured_output.extend(args)
         return None
 

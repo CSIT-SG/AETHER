@@ -5,6 +5,8 @@ At this current stage of analysis, you are collecting the psuedocode of callees 
 Given the C-like psuedocode of the user requested function and any callees collected so far, you are selecting the callees which are interesting and integral to the function's logic.
 You're allowed to recurse (e.g. if the user requested function called fn1 and it's significant, and inside fn1 you saw fn2 which is significant and not in the context, you can request fn2 to be added), but you must not request functions whose psueodocode is already provided.
 
+Once you have found interesting addresses, you just need to remember it's address and not pseudocode.
+
 ## Examples
 For instance, given an example function `sub_0f13ae("hello %n world", &c)`, you can make an inference that it is printf and hence you would not enter it.
 But given, for instance, `if (sub_031aef("blank", &c, a))`, and if the logic branch seems to be in a significant part of the function, then you can request its psuedocode.
