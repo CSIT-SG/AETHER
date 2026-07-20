@@ -10,3 +10,9 @@ python entrypoint.py --idb <path-to-your-idb> --ida-dir <path-to-your-ida-instal
 ```
 
 Read more in `apps/docs` (follow the setup guide).
+
+To uninstall,
+
+```bash
+pip uninstall -r requirements.txt
+```
