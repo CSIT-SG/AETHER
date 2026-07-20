@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import threading
 from collections.abc import Callable
 from concurrent.futures import Future
@@ -19,7 +20,7 @@ class WorkerManager[T]:
         self._thread = threading.Thread(target=self._run_loop, daemon=True)
         self._thread.start()
         self._ready.wait()
-        self._tasks: dict[str, Future] = {}
+        self._tasks: dict[str, tuple[BaseTask, Future]] = {}
 
     def _run_loop(self) -> None:
         asyncio.set_event_loop(self._loop)
@@ -32,7 +33,7 @@ class WorkerManager[T]:
             self._drive(handle, task, *args, **kwargs),
             self._loop,
         )
-        self._tasks[task.id] = future
+        self._tasks[task.id] = (task, future)
         return handle
 
     async def _drive(
@@ -42,13 +43,17 @@ class WorkerManager[T]:
         *args: Any,
         **kwargs: Any,
     ) -> None:
+        task.is_running = True
         try:
             async for item in task.run(*args, **kwargs):
                 handle.results.put(item)
         except BaseException as exc:
+            task.has_failed = True
             handle.error = exc
         finally:
-            await task.close()
+            task.is_running = False
+            with contextlib.suppress(Exception):
+                await task.close()
             handle.results.put(_SENTINEL)
             handle.done.set()
             self._tasks.pop(handle.task_id, None)
@@ -86,14 +91,28 @@ class WorkerManager[T]:
             name=f"consumer-{handle.task_id}",
         ).start()
 
-    def cancel(self, task_id: str) -> bool:
-        future = self._tasks.get(task_id)
-        if future is None or future.done():
-            return False
-        return future.cancel()
+    def cancel(self, task_id: str) -> None:
+        task_data = self._tasks.get(task_id)
+        if task_data is None:
+            return
+
+        task, future = task_data
+        if not task.is_running or task.has_failed:
+            return
+
+        if future.done():
+            return
+
+        with contextlib.suppress(Exception):
+            asyncio.run_coroutine_threadsafe(task.close(), self._loop).result()
+        future.cancel()
 
     def shutdown(self) -> None:
-        for future in list(self._tasks.values()):
+        for task, future in list(self._tasks.values()):
+            if task.is_running and not task.has_failed:
+                with contextlib.suppress(Exception):
+                    asyncio.run_coroutine_threadsafe(task.close(), self._loop).result()
+
             if not future.done():
                 future.cancel()
         self._loop.call_soon_threadsafe(self._loop.stop)

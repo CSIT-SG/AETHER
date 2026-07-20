@@ -19,7 +19,7 @@ class BaseTask[T](ABC):
     def run(self, *args: Any, **kwargs: Any) -> AsyncIterator[T]:
         """Asynchronously execute the core workload.
 
-        Subtasks implement their own run logic that carries out heavy async workload that might block IDA thread.
+        Subtasks implement their own run logic that carries out heavy async workload that might block main thread.
         """
 
     @abstractmethod

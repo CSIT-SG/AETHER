@@ -51,7 +51,6 @@ class MCPClient:
         finally:
             self._client = None
             self._connected = False
-            self._tool_cache = None
             self.logger.info("Disconnected from MCP server")
 
     async def call_tool(
