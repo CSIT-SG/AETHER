@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from functools import wraps
+from typing import Any
 
 import ida_kernwin
 from aether_gui.runner import get_shared_worker_manager
@@ -10,9 +12,8 @@ from aether_gui.utils.rpc_id import get_rpc_id
 from aether_utils.config import get_config
 from fastmcp.client.client import CallToolResult
 
-from .renderer import ChatbotPanelRenderer
+from .renderer import ChatbotPanelRenderer, ChatPanelProtocol, MessageType
 from .task import ChatBotTask, LLMResponse, ReasoningDelta, TextDelta, ToolCall, ToolOutput
-from .types import ChatPanelProtocol
 
 config = get_config()
 
@@ -79,29 +80,40 @@ class ChatOrchestrator:
             ida_context=self.function_context,
         )
 
+        handler = self._handle_worker_result()
         worker_manager.consume(
             self.handle,
-            on_event=lambda e: self._run_on_ida_ui_thread(
-                lambda ev=e: self._handle_worker_result(ev)
-            ),
+            on_event=lambda e: self._run_on_ida_ui_thread(lambda ev=e: handler(ev)),
             on_error=lambda err: self._run_on_ida_ui_thread(
                 lambda: self.chat_renderer.render_error(f"Stream failed: {err}")
             ),
             on_done=None,
         )
 
-    def _handle_worker_result(self, result: LLMResponse) -> None:
+    def _handle_worker_result(self) -> Callable[[LLMResponse], None]:
         """Render UI and apply IDA actions here"""
+        last_message_type: MessageType = "text"
+        message_created: bool = False
 
-        if isinstance(result, (TextDelta, ReasoningDelta)):
-            if str(result) != "":
-                self.chat_renderer.render_aether_message(str(result))
-        elif isinstance(result, ToolCall):
-            self.chat_renderer.render_tool_message(str(result))
-        elif isinstance(result, ToolOutput):
-            self.chat_renderer.render_tool_output(str(result))
+        def _call_renderer(result: LLMResponse) -> None:
+            nonlocal last_message_type, message_created
+            current_type = last_message_type
+            current_created = message_created
+            if isinstance(result, (TextDelta, ReasoningDelta)):
+                if str(result) != "":
+                    last_message_type = "text"
+                    message_created = True
+                    self.chat_renderer.render_aether_message(
+                        str(result), current_type, current_created
+                    )
+            elif isinstance(result, (ToolCall, ToolOutput)):
+                last_message_type = "tool"
+                message_created = True
+                self.chat_renderer.render_tool_message(str(result), current_created)
 
-    def _run_on_ida_ui_thread(self, fn) -> None:
+        return _call_renderer
+
+    def _run_on_ida_ui_thread(self, fn: Callable[..., Any]) -> None:
         """
         Schedule func back on IDA main UI thread
         """
@@ -113,7 +125,7 @@ class ChatOrchestrator:
 
         ida_kernwin.execute_sync(wrapper, ida_kernwin.MFF_WRITE)
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         if self.handle:
             worker_manager = get_shared_worker_manager()
             worker_manager.cancel(self.handle.task_id)

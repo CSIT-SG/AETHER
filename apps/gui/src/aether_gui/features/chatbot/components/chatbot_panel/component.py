@@ -1,6 +1,6 @@
 from datetime import datetime
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 from uuid import uuid4
 
 from aether_gui.backend.chatbot import ChatOrchestrator
@@ -14,10 +14,10 @@ from ..messages.MessageArea import MessageArea
 from ..messages.Messages import Message, MessageRole
 
 
-class ChatbotPanel(StyledComponent):
+class ChatbotPanel(StyledComponent):  # type: ignore[misc]
     """Container that owns the chat layout and background styling."""
 
-    def __init__(self, session: ChatSession, mcp_client: MCPClient, parent=None):
+    def __init__(self, session: ChatSession, mcp_client: MCPClient, parent: Any = None) -> None:
         self._session = session
         self.mcp_client = mcp_client
         super().__init__(parent)
@@ -71,7 +71,6 @@ class ChatbotPanel(StyledComponent):
 
     # Backend call this function
     def add_new_message_bubble(self, response: str) -> None:
-        """Display Response After LLM Finishes Processing"""
         message = Message(
             id=str(uuid4()), role=MessageRole.AETHER, content=response, timestamp=datetime.now()
         )
@@ -81,9 +80,18 @@ class ChatbotPanel(StyledComponent):
 
         self._session.add_message(message)
 
-    def append_to_last_message(self, response: str) -> None:
+    def add_new_paragraph(self, response: str) -> None:
+        """Display Response After LLM Finishes Processing"""
+        message = Message(
+            id=str(uuid4()), role=MessageRole.AETHER, content=response, timestamp=datetime.now()
+        )
+
+        message_area = cast(MessageArea, self._message_area)
+        message_area.add_new_paragraph(message)
+
+    def append_to_last_paragraph(self, response: str) -> None:
         if self._message_area:
-            self._message_area.append_to_last_message(response)
+            self._message_area.append_to_last_paragraph(response)
 
     def load_message_history(self) -> None:
         """Loads existing messages onto MessageArea"""
@@ -92,7 +100,7 @@ class ChatbotPanel(StyledComponent):
 
         message_area = cast(MessageArea, self._message_area)
         for msg in self._session.messages:
-            message_area.add_new_message_bubble(msg)
+            message_area.add_new_paragraph(msg)
 
     # TODO:
     # ADD AUTO SCROLL TO BOTTOM FUNCTION HERE
@@ -102,7 +110,7 @@ class ChatbotPanel(StyledComponent):
         """Return the QSS template that paints the panel background."""
         return Path(__file__).resolve().parent / "styles.qss.jinja"
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         self.chat_orchestrator.shutdown()
 
 

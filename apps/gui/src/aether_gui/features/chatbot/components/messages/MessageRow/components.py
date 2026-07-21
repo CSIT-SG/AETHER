@@ -1,7 +1,8 @@
 from pathlib import Path
+from typing import Any
 
 from aether_gui.utils.ui import FontPlugin, StyledComponent
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, Qt
 from PySide6.QtWidgets import (
     QApplication,
     QGraphicsOpacityEffect,
@@ -12,7 +13,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ..MessageBubble import MessageBubble
+from ..MessageParagraph import MessageParagraph
 from ..Messages import Message, MessageRole
 from .utils import ButtonComponent
 
@@ -20,37 +21,37 @@ from .utils import ButtonComponent
 class MessageRow(StyledComponent):
     """Message Card"""
 
-    def __init__(self, message: Message, parent=None):
-        self._message = message
+    def __init__(self, message: Message, parent: Any = None) -> None:
+        self._messages = [message]
         super().__init__(parent, plugins=[FontPlugin()])
 
     def setup(self) -> None:
-        self._copy_btn = None
-        self._timestamp = None
-        self._name_label = None
-        self._bubble = None
+        self._copy_btn: ButtonComponent | None = None
+        self._timestamp: QLabel | None = None
+        self._name_label: QLabel | None = None
+        self._paragraphs: list[MessageParagraph] | None = None
 
     def init_ui(self) -> None:
         """
         # NEW LAYOUT BUILT IN FOLLOWING FORMAT
         # HEADER - USER/AETHER AND TIMESTAMP
-        # BODY - MARKDOWN CONTENT (MESSAGEBUBBLE)
+        # BODY - MARKDOWN CONTENT (MESSAGEParagraph)
         # FOOTER - COPY BUTTON and future button widget implementations
         """
 
         # Layout
-        main_layout = QHBoxLayout(self)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
-
         message_card_container = QWidget(self)
         message_card_container.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Preferred,
         )
 
-        card_layout = QVBoxLayout(message_card_container)
-        card_layout.setSpacing(0)
+        main_layout = QHBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+
+        self.card_layout = QVBoxLayout(message_card_container)
+        self.card_layout.setSpacing(0)
 
         ### HEADER - USER + TIMESTAMP ###
         header_container = QWidget(self)
@@ -58,7 +59,7 @@ class MessageRow(StyledComponent):
         header_layout.setContentsMargins(0, 0, 0, 2)
         header_layout.setSpacing(8)
 
-        time_label = QLabel(self._message.formatted_timestamp)
+        time_label = QLabel(self._messages[0].formatted_timestamp)
         time_label.setObjectName("Timestamp")
         time_label_opacity = QGraphicsOpacityEffect(time_label)
         time_label_opacity.setOpacity(0.60)  # 60%
@@ -66,8 +67,8 @@ class MessageRow(StyledComponent):
 
         self._timestamp = time_label
 
-        name_label = QLabel(self._message.role.value)
-        match self._message.role:
+        name_label = QLabel(self._messages[0].role.value)
+        match self._messages[0].role:
             case MessageRole.USER:
                 header_layout.addStretch()
                 header_layout.addWidget(name_label)
@@ -84,13 +85,21 @@ class MessageRow(StyledComponent):
         name_label.setObjectName("Username")
         self._name_label = name_label
 
-        card_layout.addWidget(header_container)
+        self.card_layout.addWidget(header_container)
         ### END HEADER ###
 
         ### BODY - MARKDOWN CONTENT ###
-        bubble = MessageBubble(self._message, self)
-        card_layout.addWidget(bubble)
-        self._bubble = bubble
+        paragraph = MessageParagraph(self._messages[0], self)
+        match self._messages[0].role:
+            case MessageRole.USER:
+                self.card_layout.addWidget(paragraph)
+
+            case MessageRole.AETHER:
+                self.card_layout.addWidget(paragraph, alignment=Qt.AlignmentFlag.AlignCenter)
+            case _:
+                name_label = QLabel("Unknown")
+                raise Exception("MessageRow: Unknown Role")
+        self._paragraphs = [paragraph]
         ### END BODY ###
 
         ### FOOTER - OTHER WIDGETS (e.g. copy button) ###
@@ -108,10 +117,10 @@ class MessageRow(StyledComponent):
         footer_layout.addStretch()
         footer_layout.addWidget(copy_btn)
 
-        card_layout.addWidget(footer_container)
+        self.card_layout.addWidget(footer_container)
         ### END FOOTER ###
 
-        match self._message.role:
+        match self._messages[0].role:
             case MessageRole.USER:
                 main_layout.addStretch(1)
                 main_layout.addWidget(message_card_container, stretch=4)
@@ -122,14 +131,24 @@ class MessageRow(StyledComponent):
                 main_layout.addStretch()
                 main_layout.addWidget(message_card_container)
 
-    def _copy_message(self):
+    def _copy_message(self) -> None:
         clipboard = QApplication.clipboard()
-        clipboard.setText(self._message.content)
+        clipboard.setText(self._messages[0].content)
 
-    def append_text(self, message: str) -> None:
-        self._message.content += message
-        if self._bubble:
-            self._bubble.refresh()
+    def add_new_paragraph(self, message: Message) -> None:
+        if self._paragraphs:
+            paragraph = MessageParagraph(message, self)
+            footer_index = self.card_layout.count() - 1
+            self.card_layout.insertWidget(
+                footer_index, paragraph, alignment=Qt.AlignmentFlag.AlignCenter
+            )
+            self._messages.append(message)
+            self._paragraphs.append(paragraph)
+
+    def append_last_paragraph(self, message: str) -> None:
+        self._messages[-1].content += message
+        if self._paragraphs:
+            self._paragraphs[-1].refresh()
 
     def style_file(self) -> Path | None:
         return Path(__file__).resolve().parent / "styles.qss.jinja"

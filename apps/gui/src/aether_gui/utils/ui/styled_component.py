@@ -32,7 +32,7 @@ class StyledComponent(AbstractComponentPluginManager):
 
     def __init__(
         self,
-        parent=None,
+        parent: Any = None,
         *,
         plugins: Iterable[AbstractComponentPlugin] | None = None,
     ) -> None:
@@ -137,7 +137,7 @@ class StyledComponent(AbstractComponentPluginManager):
         """
         pass
 
-    def _apply_styles(self, **_kwargs) -> None:
+    def _apply_styles(self, **_kwargs: dict[str, Any]) -> None:
         """Render QSS and apply it to the widget. ThemePlugin calls this method before on_theme_change.
 
         Args:

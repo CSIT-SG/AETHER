@@ -1,27 +1,28 @@
 from pathlib import Path
+from typing import Any, cast
 
 from aether_gui.utils.ui import FontPlugin, StyledComponent
 from markdown import markdown
 from PySide6 import QtCore
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QResizeEvent
 from PySide6.QtWidgets import QSizePolicy, QTextBrowser, QTextEdit, QVBoxLayout
 
 from ..Messages import Message, MessageRole
 
 
-class MessageBubble(StyledComponent):
-    """Message Bubbles - contain markdown content"""
+class MessageParagraph(StyledComponent):  # type: ignore[misc]
+    """Message Paragraphs - contain markdown content"""
 
-    def __init__(self, message: Message, parent=None) -> None:
+    def __init__(self, message: Message, parent: Any = None) -> None:
         self._message = message
         super().__init__(parent, plugins=[FontPlugin()])
 
     def setup(self) -> None:
-        self._browser = None
-        self._bubble = None
+        self._browser: QTextBrowser | None = None
+        self._paragraph = None
 
     def init_ui(self) -> None:
-        """Builds bubble widget with custom background theme"""
+        """Builds paragraph widget with custom background theme"""
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground, True)
 
         """Pair QTextBrowser and markdown to render content in markdown format"""
@@ -72,14 +73,14 @@ class MessageBubble(StyledComponent):
         # Styling
         match self._message.role:
             case MessageRole.USER:
-                self.setObjectName("UserBubble")
+                self.setObjectName("UserParagraph")
 
             case MessageRole.AETHER:
-                self.setObjectName("AetherBubble")
+                self.setObjectName("AetherParagraph")
 
         self._browser = md_browser
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, event: QResizeEvent) -> None:
         super().resizeEvent(event)
         self._adjust_height()
 
@@ -122,4 +123,4 @@ class MessageBubble(StyledComponent):
             if the font plugin is unavailable.
         """
 
-        return self.get_plugin(FontPlugin).current_font
+        return cast(QFont, self.get_plugin(FontPlugin).current_font)
