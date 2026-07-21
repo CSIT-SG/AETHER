@@ -15,7 +15,7 @@ async def set_comment(
     the pseudocode view after a successful write.
 
     Args:
-        address (str | int): Hex or decimal address of the comment target.
+        address (str | int): Hex address of the comment target.
         comment (str): Text to write. Pass an empty string to clear an existing comment.
 
     Returns:

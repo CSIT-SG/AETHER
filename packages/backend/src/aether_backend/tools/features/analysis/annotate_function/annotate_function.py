@@ -66,7 +66,7 @@ async def annotate(
         input=(
             f"Analyze the following functions and provide annotations for the psuedocode"
             f"{base_addr} is the base function, your main goal is to figure out what this does and annotate it"
-            f"Here are the rest of teh functions: \n{funcs}\n{custom_prompt}"
+            f"Here are the functions that it calls. These will be useful for determining the purpose of the base function, analyse these too: \n{funcs}\n{custom_prompt}"
         ),
         max_turns=None,
     )

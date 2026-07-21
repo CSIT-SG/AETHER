@@ -13,7 +13,7 @@ async def rename_local_variable(
     """Rename a local variable in the Hex-Rays decompiled view.
 
     Args:
-        function_address (str | int): Hex or decimal address inside the target function.
+        function_address (str | int): Hex address inside the target function.
         old_var_name (str): Current name of the variable to rename.
         new_var_name (str): New name to assign.
 

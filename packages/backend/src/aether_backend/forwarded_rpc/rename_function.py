@@ -13,7 +13,7 @@ async def rename_function(
     of whether the provided address points to the start or interior of the function.
 
     Args:
-        address (str | int): Hex or decimal address within the target function.
+        address (str | int): Hex address within the target function.
         new_name (str): The new name to assign to the function.
 
     Returns:
