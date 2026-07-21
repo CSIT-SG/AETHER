@@ -7,7 +7,6 @@ from aether_backend.forwarded_rpc import (
     get_local_variables,
 )
 from aether_backend.utils.effect import Log, Program, Return
-from aether_backend.utils.get_content import get_content
 from aether_backend.utils.subagent import (
     SubagentToolDependencies,
     build_subagent_tool,
@@ -16,6 +15,7 @@ from aether_utils.api_client import (
     OpenAIGateway,
 )
 from aether_utils.config import get_config
+from aether_utils.get_content import get_content
 from agents import Agent, Runner
 
 config = get_config()

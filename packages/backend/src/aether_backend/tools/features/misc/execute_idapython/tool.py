@@ -2,8 +2,8 @@ from pathlib import Path
 from typing import Annotated
 
 from aether_backend.utils.effect import Program, effectful
-from aether_backend.utils.get_content import get_content
 from aether_backend.utils.get_rpc_service import get_rpc_service
+from aether_utils.get_content import get_content
 from fastmcp.tools import tool
 from mcp.types import ToolAnnotations
 

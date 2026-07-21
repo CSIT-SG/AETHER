@@ -3,7 +3,7 @@ from typing import Annotated
 
 from aether_backend.tools.features.planning.utils import PlanCrudAction, PlanStatus
 from aether_backend.utils.effect import Program, effectful
-from aether_backend.utils.get_content import get_content
+from aether_utils.get_content import get_content
 from fastmcp.tools import tool
 from mcp.types import ToolAnnotations
 
