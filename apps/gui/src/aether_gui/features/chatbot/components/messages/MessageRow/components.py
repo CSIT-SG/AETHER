@@ -128,6 +128,13 @@ class MessageRow(StyledComponent):
         clipboard = QApplication.clipboard()
         clipboard.setText(self._messages[0].content)
 
+    def _adjust_height(self) -> None:
+        if self.card_layout:
+            self.card_layout.invalidate()
+
+        self.adjustSize()
+        self.updateGeometry()
+
     def add_new_paragraph(self, message: Message) -> None:
         if self._paragraphs:
             paragraph = MessageParagraph(message, self)
@@ -135,6 +142,8 @@ class MessageRow(StyledComponent):
             self.card_layout.insertWidget(footer_index, paragraph)
             self._messages.append(message)
             self._paragraphs.append(paragraph)
+
+            self._adjust_height()
 
     def append_last_paragraph(self, message: str) -> None:
         self._messages[-1].content += message
@@ -145,7 +154,7 @@ class MessageRow(StyledComponent):
         return Path(__file__).resolve().parent / "styles.qss.jinja"
 
     def on_font_change(self, font: QFont) -> None:
-        pass
+        self._adjust_height()
 
     def _current_font(self) -> QFont:
         """Return the current font.

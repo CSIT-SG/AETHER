@@ -3,11 +3,9 @@ from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import Any
 
-from aether_backend.utils.subagent import (
-    OpenAIGateway,
-)
 from aether_gui.runner import BaseTask
 from aether_gui.utils.rpc_id import get_rpc_id
+from aether_utils.api_client import OpenAIGateway
 from agents import Agent, Runner, RunResultStreaming
 from agents.mcp import MCPServerStreamableHttp
 

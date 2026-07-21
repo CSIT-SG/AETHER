@@ -36,22 +36,17 @@ class MessageParagraph(StyledComponent):  # type: ignore[misc]
         md_browser.setObjectName("ChatBox")
 
         # Style
-        md_browser.setSizePolicy(
-            QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Preferred,
-        )
         md_browser.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
 
         md_browser.setReadOnly(True)
         md_browser.setOpenExternalLinks(True)
 
-        # TODO: Horizontal scrollbar should be in code blocks only
         md_browser.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         md_browser.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 
         md_browser.setSizePolicy(
             QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Maximum,
+            QSizePolicy.Policy.Fixed,
         )
 
         md_browser.setFrameShape(QTextBrowser.Shape.NoFrame)
@@ -101,12 +96,16 @@ class MessageParagraph(StyledComponent):  # type: ignore[misc]
 
         document = self._browser.document()
 
-        # Force document width to match viewport width
-        document.setTextWidth(self._browser.viewport().width())
+        viewport_width = self._browser.viewport().width()
+        if viewport_width > 0:
+            document.setTextWidth(viewport_width - 10)
+        exact_height = int(document.documentLayout().documentSize().height())
 
-        height = int(document.size().height())
+        if exact_height > 0:
+            self._browser.setFixedHeight(exact_height)
+            self.setFixedHeight(exact_height)
 
-        self._browser.setFixedHeight(height)
+        self.updateGeometry()
 
     def style_file(self) -> Path | None:
         """Return the QSS template that paints the panel background."""
@@ -114,7 +113,7 @@ class MessageParagraph(StyledComponent):  # type: ignore[misc]
 
     def on_font_change(self, font: QFont) -> None:
         if self._browser:
-            self.refresh()
+            self._adjust_height()
 
     def _current_font(self) -> QFont:
         """Return the current font.
