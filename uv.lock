@@ -171,6 +171,7 @@ source = { editable = "packages/utils" }
 dependencies = [
     { name = "httpx" },
     { name = "openai" },
+    { name = "openai-agents" },
     { name = "platformdirs" },
     { name = "pydantic" },
 ]
@@ -179,6 +180,7 @@ dependencies = [
 requires-dist = [
     { name = "httpx", specifier = "==0.28.1" },
     { name = "openai", specifier = "==2.41.0" },
+    { name = "openai-agents", specifier = "==0.17.5" },
     { name = "platformdirs", specifier = "==4.10.0" },
     { name = "pydantic", specifier = "==2.13.4" },
 ]
