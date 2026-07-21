@@ -19,11 +19,12 @@ from aether_utils.get_content import get_content
 from agents import Agent, ModelSettings, Runner, function_tool
 from agents.agent import StopAtTools
 
+from .models import InterestingFunctions
 from .types import InterestingFunc
 
 CONFIG = get_config()
 SYSTEM_PROMPT = get_content(Path(__file__).parent, "interesting_children_prompt.md")
-TOOL_NAME = "format_outputs"
+TOOL_NAME = "submit_output"
 
 
 async def get_interesting_child_functions(
@@ -41,7 +42,7 @@ async def get_interesting_child_functions(
 
     # Ensures structured outputs, stored in captured_output
     @function_tool(name_override=TOOL_NAME, description_override="formats outputs")
-    async def format_output(args: list[InterestingFunc]) -> None:
+    async def submit_output(args: list[InterestingFunc]) -> None:
         captured_output.extend(args)
         return None
 
@@ -57,7 +58,7 @@ async def get_interesting_child_functions(
                 build_subagent_tool,
                 [get_data_at_address, get_function_pseudocode, get_functions_called_recursively],
             ),
-            format_output,
+            submit_output,
         ],
         tool_use_behavior=StopAtTools(stop_at_tool_names=[TOOL_NAME]),
         model_settings=ModelSettings(tool_choice="required"),
@@ -72,9 +73,14 @@ async def get_interesting_child_functions(
         input=f"Gather interesing and relevant child functions called in {function_address} \n{custom_prompt}",
         max_turns=None,
     )
-    print(result.final_output)
-    print([t.name for t in agent.tools])
+
     try:
-        return captured_output
+        if len(captured_output) > 0:
+            return captured_output
+        else:
+            parsed = InterestingFunctions.model_validate_json(result.final_output)
+            return [
+                InterestingFunc(address=item.address, reason=item.reason) for item in parsed.root
+            ]
     except Exception as e:
-        raise RuntimeError("Model returned invalid value. Please try again.") from e
+        raise RuntimeError(f"Model returned invalid value. Please try again. \nerror: {e}") from e

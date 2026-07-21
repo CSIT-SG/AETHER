@@ -33,7 +33,6 @@ async def annotate(
 ) -> Program:
     if config.backup:
         service.take_snapshot()
-    yield Log(str(funcs))
     agent = Agent(
         name="Annotator",
         model=OpenAIGateway().get_model(

@@ -10,10 +10,8 @@ async def get_functions_called_recursively(
 
     Recursively walks callees starting from the enclosing function, building
     a nested tree of every function it calls (directly or transitively).
-    Recursion stops at MAX_DEPTH levels deep, and each function name is only
-    visited once across the whole tree (this also guards against infinite
-    recursion on call cycles). Functions matching FILTERED_FUNCTIONS (e.g.
-    common library/runtime helpers) are excluded from the callee lists.
+    Functions matching common library/runtime helpers are excluded from the callee lists.
+    Use get_function_pseudocode to get the full function contex
 
     Args:
         address (str | int): Hex address string (e.g. "0x140001000"),
