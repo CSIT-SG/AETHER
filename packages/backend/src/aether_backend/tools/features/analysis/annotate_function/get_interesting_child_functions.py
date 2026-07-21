@@ -6,14 +6,16 @@ from aether_backend.forwarded_rpc import (
     get_function_pseudocode,
     get_functions_called_recursively,
 )
-from aether_backend.utils.get_content import get_content
 from aether_backend.utils.subagent import (
-    OpenAIGateway,
     SubagentToolDependencies,
     build_subagent_tool,
 )
 from aether_backend.utils.validation import HexAddress
+from aether_utils.api_client import (
+    OpenAIGateway,
+)
 from aether_utils.config import get_config
+from aether_utils.get_content import get_content
 from agents import Agent, ModelSettings, Runner, function_tool
 from agents.agent import StopAtTools
 
