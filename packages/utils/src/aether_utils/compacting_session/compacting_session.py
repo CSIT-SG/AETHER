@@ -1,10 +1,12 @@
+from uuid import uuid4
+
 from agents import Agent, Runner, SQLiteSession, TResponseInputItem
 
 
 class CompactingSession(SQLiteSession):
     def __init__(
         self,
-        session_id: str,
+        session_id: str = str(uuid4()),
         db_path: str = ":memory:",
         *,
         summarizer: Agent,
