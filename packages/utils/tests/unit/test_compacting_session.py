@@ -2,7 +2,7 @@
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from aether_utils.compacting_session import CompactingSession
+from aether_utils.compacting_session.compacting_session import CompactingSession
 from agents import Agent
 
 
