@@ -2,6 +2,8 @@ from uuid import uuid4
 
 from agents import Agent, Runner, SQLiteSession, TResponseInputItem
 
+from aether_utils.logger import get_logger
+
 
 class CompactingSession(SQLiteSession):
     def __init__(
@@ -18,6 +20,7 @@ class CompactingSession(SQLiteSession):
         self._summarizer = summarizer
         self._threshold = threshold
         self._keep_last_n = keep_last_n
+        self.logger = get_logger(f"compacting_session-{session_id}")
 
     async def add_items(self, items: list[TResponseInputItem]) -> None:
         await super().add_items(items)
@@ -37,6 +40,8 @@ class CompactingSession(SQLiteSession):
         await super().add_items([compacted_item, *tail])
 
     async def _compact_history(self, history: list[TResponseInputItem]) -> TResponseInputItem:
+
+        self.logger.info(f"Compacting history of {len(history)} items.")
         result = await Runner.run(
             self._summarizer,
             input=history,
