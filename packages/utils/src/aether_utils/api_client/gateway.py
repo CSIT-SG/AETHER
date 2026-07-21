@@ -1,10 +1,11 @@
-from aether_utils.api_client import create_async_httpx_client, create_async_openai_client
-from aether_utils.config import get_config
 from agents import (
     Model,
     OpenAIChatCompletionsModel,
     set_tracing_disabled,
 )
+
+from aether_utils.api_client import create_async_httpx_client, create_async_openai_client
+from aether_utils.config import get_config
 
 
 class OpenAIGateway:

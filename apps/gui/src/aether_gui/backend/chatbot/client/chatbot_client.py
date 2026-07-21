@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 
-from aether_backend.utils.subagent import (
+from aether_utils.api_client import (
     OpenAIGateway,
 )
 from aether_utils.config import get_config

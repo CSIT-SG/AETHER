@@ -1,18 +1,12 @@
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
 from dataclasses import fields as dc_fields
 from typing import Any, get_type_hints
 
-from aether_backend.utils.get_rpc_service import AnyService
 from agents import FunctionTool, RunContextWrapper
 from agents.strict_schema import ensure_strict_json_schema
 from pydantic import create_model
 
-
-@dataclass
-class ToolDependencies:
-    service: AnyService
-
+from .models import ToolDependencies
 
 # dependency names, in order, as declared on ToolDependencies -- this makes
 # build_tool's positional-arg check generic over ToolDependencies' fields

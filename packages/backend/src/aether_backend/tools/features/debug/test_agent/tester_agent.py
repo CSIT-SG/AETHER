@@ -12,9 +12,11 @@ from aether_backend.forwarded_rpc import (
 from aether_backend.utils.effect import Log, Program, Return
 from aether_backend.utils.get_content import get_content
 from aether_backend.utils.subagent import (
-    OpenAIGateway,
     SubagentToolDependencies,
     build_subagent_tool,
+)
+from aether_utils.api_client import (
+    OpenAIGateway,
 )
 from aether_utils.config import get_config
 from agents import Agent, Runner

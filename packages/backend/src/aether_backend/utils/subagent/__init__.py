@@ -1,5 +1,4 @@
-from .build_subagent_tool import ToolDependencies as SubagentToolDependencies
 from .build_subagent_tool import build_subagent_tool
-from .gateway import OpenAIGateway
+from .models import ToolDependencies as SubagentToolDependencies
 
-__all__ = ["OpenAIGateway", "build_subagent_tool", "SubagentToolDependencies"]
+__all__ = ["build_subagent_tool", "SubagentToolDependencies"]
