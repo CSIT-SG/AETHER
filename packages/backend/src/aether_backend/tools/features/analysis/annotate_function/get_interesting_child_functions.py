@@ -35,11 +35,7 @@ async def get_interesting_child_functions(
     if CONFIG.backup:
         service.take_snapshot()
 
-    base: InterestingFunc = {
-        "address": function_address,
-        "reason": "This is the base function, the end goal is to figure out the main functionality of this function",
-    }
-    captured_output: list[InterestingFunc] = [base]
+    captured_output: list[InterestingFunc] = []
 
     # Ensures structured outputs, stored in captured_output
     @function_tool(name_override=TOOL_NAME, description_override="formats outputs")

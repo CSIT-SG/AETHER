@@ -12,9 +12,15 @@ Before finishing, you MUST:
 
 1. Rename every local variable. in the target function. Auto-generated names (`v0`, `a1`, `arg_10`) are unacceptable in the final output.
 2. Rename every sub-function called by the target, plus the target itself. Names like `sub_140009050` or `loc_140008EB0` are unacceptable in the final output.
-3. Set comments on non-trivial lines. Explain why, not what — a good rename removes the need for a comment.
+3. Set comments on non-trivial lines. Explain why, not what.
 
-Prefer renaming over commenting.
+COMMENTING
+
+1. Be liberal with your comments, add as many as you deem necessary.
+2. Use them to explain complex blocks of instructions and loops in the pseudocode, also mention how it is applied in the context of the binary.
+3. Add descriptive header comments to the start of the base function, the reader should be able to get a general understanding of the function, its purpose and how it is applied in the binary from this comment.
+
+Use ALL the tools in tandem to produce an easily readable pseudocode view, increasing the efficiency of the reverse engineering process. Commenting and renaming are NOT mutually exclusive.
 
 VERIFICATION LOOP
 
@@ -22,7 +28,8 @@ After you believe you are done:
 
 1. Re-fetch the target function's pseudocode with `get_function_pseudocode`.
 2. Check for: any remaining `v0`/`a1`/`arg_X` names, any remaining `sub_XXX`/`loc_XXX` names, missing comments you intended to set.
-3. If any issue is found, fix it and repeat.
+3. Ensure that you have set relevant comments.
+4. If any issue is found, fix it and repeat.
 
 Do not declare completion until the re-fetched pseudocode contains zero auto-generated names and all intended annotations are present.
 

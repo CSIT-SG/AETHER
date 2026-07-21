@@ -37,5 +37,5 @@ async def annotate_function(
     svc = await get_rpc_service(rpc_id)
     funcs = await get_interesting_child_functions(svc, address, custom_prompt)
 
-    async for effect in annotate(svc, funcs, custom_prompt):
+    async for effect in annotate(svc, address, funcs, custom_prompt):
         yield effect

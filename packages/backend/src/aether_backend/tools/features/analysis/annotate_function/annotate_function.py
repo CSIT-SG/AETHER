@@ -14,6 +14,7 @@ from aether_backend.utils.subagent import (
     SubagentToolDependencies,
     build_subagent_tool,
 )
+from aether_backend.utils.validation import HexAddress
 from aether_utils.api_client import (
     OpenAIGateway,
 )
@@ -28,7 +29,7 @@ SYSTEM_PROMPT = get_content(Path(__file__).parent, "prompt.md")
 
 
 async def annotate(
-    service: Any, funcs: list[InterestingFunc], custom_prompt: str | None
+    service: Any, base_addr: HexAddress, funcs: list[InterestingFunc], custom_prompt: str | None
 ) -> Program:
     if config.backup:
         service.take_snapshot()
@@ -64,7 +65,8 @@ async def annotate(
         context=SubagentToolDependencies(service),
         input=(
             f"Analyze the following functions and provide annotations for the psuedocode"
-            f"{funcs}\n{custom_prompt}"
+            f"{base_addr} is the base function, your main goal is to figure out what this does and annotate it"
+            f"Here are the rest of teh functions: \n{funcs}\n{custom_prompt}"
         ),
         max_turns=None,
     )
