@@ -69,7 +69,7 @@ class ChatInput(StyledComponent):
         # Call _adjust_height to adjust height to single line
         self._adjust_height()
 
-    def _adjust_height(self):
+    def _adjust_height(self) -> None:
         textbox = cast(QtWidgets.QTextEdit, self._textbox)
 
         document_height = textbox.document().documentLayout().documentSize().height()
@@ -95,7 +95,7 @@ class ChatInput(StyledComponent):
         return Path(__file__).with_name("styles.qss.jinja")
 
     def on_font_change(self, font: QFont) -> None:
-        pass
+        self._adjust_height()
 
     def _current_font(self) -> QFont:
         """Return the current font.

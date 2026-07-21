@@ -28,7 +28,7 @@ class MessageParagraph(StyledComponent):  # type: ignore[misc]
         """Pair QTextBrowser and markdown to render content in markdown format"""
         # Layout
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(12, 8, 12, 8)
+        layout.setContentsMargins(12, 0, 12, 0)
         layout.setSpacing(0)
 
         # Markdown rendering Browser
@@ -106,14 +106,15 @@ class MessageParagraph(StyledComponent):  # type: ignore[misc]
 
         height = int(document.size().height())
 
-        self._browser.setFixedHeight(height + 10)
+        self._browser.setFixedHeight(height)
 
     def style_file(self) -> Path | None:
         """Return the QSS template that paints the panel background."""
         return Path(__file__).resolve().parent / "styles.qss.jinja"
 
     def on_font_change(self, font: QFont) -> None:
-        pass
+        if self._browser:
+            self.refresh()
 
     def _current_font(self) -> QFont:
         """Return the current font.

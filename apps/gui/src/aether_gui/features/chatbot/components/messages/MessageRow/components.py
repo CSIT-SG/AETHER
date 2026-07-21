@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any
 
 from aether_gui.utils.ui import FontPlugin, StyledComponent
-from PySide6.QtGui import QFont, Qt
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QApplication,
     QGraphicsOpacityEffect,
@@ -40,15 +40,15 @@ class MessageRow(StyledComponent):
         """
 
         # Layout
+        main_layout = QHBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+
         message_card_container = QWidget(self)
         message_card_container.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Preferred,
         )
-
-        main_layout = QHBoxLayout(self)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
 
         self.card_layout = QVBoxLayout(message_card_container)
         self.card_layout.setSpacing(0)
@@ -90,15 +90,7 @@ class MessageRow(StyledComponent):
 
         ### BODY - MARKDOWN CONTENT ###
         paragraph = MessageParagraph(self._messages[0], self)
-        match self._messages[0].role:
-            case MessageRole.USER:
-                self.card_layout.addWidget(paragraph)
-
-            case MessageRole.AETHER:
-                self.card_layout.addWidget(paragraph, alignment=Qt.AlignmentFlag.AlignCenter)
-            case _:
-                name_label = QLabel("Unknown")
-                raise Exception("MessageRow: Unknown Role")
+        self.card_layout.addWidget(paragraph)
         self._paragraphs = [paragraph]
         ### END BODY ###
 
@@ -125,8 +117,9 @@ class MessageRow(StyledComponent):
                 main_layout.addStretch(1)
                 main_layout.addWidget(message_card_container, stretch=4)
             case MessageRole.AETHER:
-                main_layout.addWidget(message_card_container, stretch=4)
-                main_layout.addStretch(1)
+                main_layout.addStretch()
+                main_layout.addWidget(message_card_container, stretch=1)
+                main_layout.addStretch()
             case _:
                 main_layout.addStretch()
                 main_layout.addWidget(message_card_container)
@@ -139,9 +132,7 @@ class MessageRow(StyledComponent):
         if self._paragraphs:
             paragraph = MessageParagraph(message, self)
             footer_index = self.card_layout.count() - 1
-            self.card_layout.insertWidget(
-                footer_index, paragraph, alignment=Qt.AlignmentFlag.AlignCenter
-            )
+            self.card_layout.insertWidget(footer_index, paragraph)
             self._messages.append(message)
             self._paragraphs.append(paragraph)
 

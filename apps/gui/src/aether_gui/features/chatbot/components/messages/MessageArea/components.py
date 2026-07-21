@@ -3,11 +3,10 @@ from typing import cast
 
 from aether_gui.utils.ui import StyledComponent
 from PySide6 import QtCore
-from PySide6.QtGui import Qt
 from PySide6.QtWidgets import QFrame, QScrollArea, QVBoxLayout, QWidget
 
 from ..MessageRow import MessageRow
-from ..Messages import Message, MessageRole
+from ..Messages import Message
 
 
 class MessageArea(StyledComponent):  # type: ignore[misc]
@@ -57,10 +56,7 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
         """Creates new message row"""
         card = MessageRow(message, self)
         messages_layout = cast(QVBoxLayout, self._messages_layout)
-        if message.role == MessageRole.USER:
-            messages_layout.addWidget(card)
-        else:
-            messages_layout.addWidget(card, alignment=Qt.AlignmentFlag.AlignCenter)
+        messages_layout.addWidget(card)
 
         QtCore.QTimer.singleShot(
             0,
