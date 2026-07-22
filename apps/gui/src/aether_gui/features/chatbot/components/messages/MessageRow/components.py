@@ -22,7 +22,7 @@ class MessageRow(StyledComponent):
     """Message Card"""
 
     def __init__(self, message: Message, parent: Any = None) -> None:
-        self._last_message = message
+        self._last_message_data = message
         super().__init__(parent, plugins=[FontPlugin()])
 
     def setup(self) -> None:
@@ -59,7 +59,7 @@ class MessageRow(StyledComponent):
         header_layout.setContentsMargins(0, 0, 0, 2)
         header_layout.setSpacing(8)
 
-        time_label = QLabel(self._last_message.formatted_timestamp)
+        time_label = QLabel(self._last_message_data.formatted_timestamp)
         time_label.setObjectName("Timestamp")
         time_label_opacity = QGraphicsOpacityEffect(time_label)
         time_label_opacity.setOpacity(0.60)  # 60%
@@ -67,8 +67,8 @@ class MessageRow(StyledComponent):
 
         self._timestamp = time_label
 
-        name_label = QLabel(self._last_message.role.value)
-        match self._last_message.role:
+        name_label = QLabel(self._last_message_data.role.value)
+        match self._last_message_data.role:
             case MessageRole.USER:
                 header_layout.addStretch()
                 header_layout.addWidget(name_label)
@@ -89,7 +89,7 @@ class MessageRow(StyledComponent):
         ### END HEADER ###
 
         ### BODY - MARKDOWN CONTENT ###
-        paragraph = MessageParagraph(self._last_message, self)
+        paragraph = MessageParagraph(self._last_message_data, self)
         self.card_layout.addWidget(paragraph)
         self._last_paragraph = paragraph
         ### END BODY ###
@@ -112,7 +112,7 @@ class MessageRow(StyledComponent):
         self.card_layout.addWidget(footer_container)
         ### END FOOTER ###
 
-        match self._last_message.role:
+        match self._last_message_data.role:
             case MessageRole.USER:
                 main_layout.addStretch(1)
                 main_layout.addWidget(message_card_container, stretch=4)
@@ -126,7 +126,7 @@ class MessageRow(StyledComponent):
 
     def _copy_message(self) -> None:
         clipboard = QApplication.clipboard()
-        clipboard.setText(self._last_message.content)
+        clipboard.setText(self._last_message_data.content)
 
     def _adjust_height(self) -> None:
         if self.card_layout:
@@ -140,13 +140,13 @@ class MessageRow(StyledComponent):
             paragraph = MessageParagraph(message, self)
             footer_index = self.card_layout.count() - 1
             self.card_layout.insertWidget(footer_index, paragraph)
-            self._last_message = message
+            self._last_message_data = message
             self._last_paragraph = paragraph
 
             self._adjust_height()
 
     def append_last_paragraph(self, message: str) -> None:
-        self._last_message.content += message
+        self._last_message_data.content += message
         if self._last_paragraph:
             self._last_paragraph.refresh()
 

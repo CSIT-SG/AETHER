@@ -11,7 +11,7 @@ from PySide6 import QtCore, QtWidgets
 from ..chat_input import ChatInput
 from ..chat_session import ChatSession
 from ..messages.MessageArea import MessageArea
-from ..messages.Messages import Message, MessageRole
+from ..messages.Messages import MessageRole
 
 
 class ChatbotPanel(StyledComponent):  # type: ignore[misc]
@@ -26,7 +26,7 @@ class ChatbotPanel(StyledComponent):  # type: ignore[misc]
         self._layout_container: QtWidgets.QVBoxLayout | None = None
         self._message_area: MessageArea | None = None
         self._chat_input: ChatInput | None = None
-        self.chat_orchestrator = ChatOrchestrator(self, self.mcp_client)
+        self.chat_orchestrator: ChatOrchestrator
 
     def init_ui(self) -> None:
         """Builds the panel with chat input field and enable themed background painting."""
@@ -37,7 +37,7 @@ class ChatbotPanel(StyledComponent):  # type: ignore[misc]
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(8)
 
-        message_area = MessageArea(self)
+        message_area = MessageArea(self._session, parent=self)
 
         layout.addWidget(message_area)
 
@@ -50,60 +50,19 @@ class ChatbotPanel(StyledComponent):  # type: ignore[misc]
         self._layout_container = layout
         self._message_area = message_area
         self._chat_input = chat_input
+        self.chat_orchestrator = ChatOrchestrator(self._message_area, self.mcp_client)
 
-        self.load_message_history()
+        self._message_area.load_message_history()
 
     def _on_message_submitted(self, user_input: str) -> None:
         """Display User Entered Message on MessageArea Widget"""
-        message = Message(
-            id=str(uuid4()), role=MessageRole.USER, content=user_input, timestamp=datetime.now()
-        )
-
         message_area = cast(MessageArea, self._message_area)
-        message_area.add_new_message_bubble(message)
-
-        self._session.add_message(message)
+        message_area.add_new_message_row(user_input, str(uuid4()), datetime.now(), MessageRole.USER)
 
         # Backend message handling logic goes here
         ### TESTING ###
         self.chat_orchestrator.submit_user_prompt(user_input)
         ### END TESTING ###
-
-    # Backend call this function
-    def add_new_message_bubble(self, response: str) -> None:
-        message = Message(
-            id=str(uuid4()), role=MessageRole.AETHER, content=response, timestamp=datetime.now()
-        )
-
-        message_area = cast(MessageArea, self._message_area)
-        message_area.add_new_message_bubble(message)
-
-        self._session.add_message(message)
-
-    def add_new_paragraph(self, response: str) -> None:
-        """Display Response After LLM Finishes Processing"""
-        message = Message(
-            id=str(uuid4()), role=MessageRole.AETHER, content=response, timestamp=datetime.now()
-        )
-
-        message_area = cast(MessageArea, self._message_area)
-        message_area.add_new_paragraph(message)
-
-        self._session.append_to_last_message("\n" + response)
-
-    def append_to_last_paragraph(self, response: str) -> None:
-        if self._message_area:
-            self._message_area.append_to_last_paragraph(response)
-            self._session.append_to_last_message(response)
-
-    def load_message_history(self) -> None:
-        """Loads existing messages onto MessageArea"""
-        if not self._session.messages:
-            return
-
-        message_area = cast(MessageArea, self._message_area)
-        for msg in self._session.messages:
-            message_area.add_new_message_bubble(msg)
 
     # TODO:
     # ADD AUTO SCROLL TO BOTTOM FUNCTION HERE

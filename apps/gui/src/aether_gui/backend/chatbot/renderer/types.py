@@ -1,11 +1,16 @@
+from datetime import datetime
 from typing import Literal, Protocol
+
+from aether_gui.features.chatbot.components.messages.Messages import MessageRole
 
 type MessageType = Literal["tool", "text", "error"]
 
 
-class ChatPanelProtocol(Protocol):
-    def add_new_message_bubble(self, response: str) -> None: ...
+class ChatAreaProtocol(Protocol):
+    def add_new_message_row(
+        self, message: str, id: str, timestamp: datetime, role: MessageRole
+    ) -> None: ...
 
-    def add_new_paragraph(self, response: str) -> None: ...
+    def add_paragraph(self, message: str, role: MessageRole) -> None: ...
 
-    def append_to_last_paragraph(self, response: str) -> None: ...
+    def append_to_last_paragraph(self, message: str) -> None: ...

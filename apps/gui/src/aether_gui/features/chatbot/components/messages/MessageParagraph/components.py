@@ -53,10 +53,7 @@ class MessageParagraph(StyledComponent):  # type: ignore[misc]
 
         html = markdown(
             self._message.content,
-            extensions=[
-                "fenced_code",
-                "tables",
-            ],
+            extensions=["fenced_code", "tables", "nl2br"],
         )
 
         md_browser.setHtml(html)

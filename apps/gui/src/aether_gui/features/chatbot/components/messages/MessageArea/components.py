@@ -1,16 +1,23 @@
+from datetime import datetime
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
+from uuid import uuid4
 
+from aether_gui.features.chatbot.components.chat_session import ChatSession
 from aether_gui.utils.ui import StyledComponent
 from PySide6 import QtCore
 from PySide6.QtWidgets import QFrame, QScrollArea, QVBoxLayout, QWidget
 
 from ..MessageRow import MessageRow
-from ..Messages import Message
+from ..Messages import Message, MessageRole
 
 
 class MessageArea(StyledComponent):  # type: ignore[misc]
     """Message area where message bubbles are placed"""
+
+    def __init__(self, session: ChatSession, *, parent: Any = None):
+        self._session = session
+        super().__init__(parent)
 
     def setup(self) -> None:
         self._scroll_area: QScrollArea | None = None
@@ -52,9 +59,12 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
         self._messages_container = messages_container
         self._messages_layout = messages_layout
 
-    def add_new_message_bubble(self, message: Message) -> None:
+    def add_new_message_row(
+        self, message: str, id: str, timestamp: datetime, role: MessageRole
+    ) -> None:
         """Creates new message row"""
-        card = MessageRow(message, self)
+        message_data = Message(id=id, role=role, content=message, timestamp=timestamp)
+        card = MessageRow(message_data, self)
         messages_layout = cast(QVBoxLayout, self._messages_layout)
         messages_layout.addWidget(card)
 
@@ -63,41 +73,58 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
             self.scroll_to_bottom,
         )
 
-    def add_new_paragraph(self, message: Message) -> None:
-        """Calls add new paragraph on current message row"""
-        if not self._messages_layout:
-            return
+        for data in self._session.messages:
+            if data.id == id:
+                return
+        self._session.add_message(message_data)
 
-        layout = self._messages_layout.itemAt(self._messages_layout.count() - 1)
-        if not layout:
-            return
+    def add_paragraph(self, message: str, role: MessageRole) -> None:
+        """Add a new paragraph to the last message row."""
+        last_widget = self._get_last_widget()
 
-        last_widget = layout.widget()
-        message_row = cast(MessageRow, last_widget)
-        message_row.add_new_paragraph(message)
+        if last_widget:
+            message_data = Message(
+                id=str(uuid4()), role=role, content=message, timestamp=datetime.now()
+            )
+            message_row = cast(MessageRow, last_widget)
+            message_row.add_new_paragraph(message_data)
+            self._session.append_to_last_message("\n\n" + message_data.content)
 
-        QtCore.QTimer.singleShot(
-            0,
-            self.scroll_to_bottom,
-        )
+            QtCore.QTimer.singleShot(
+                0,
+                self.scroll_to_bottom,
+            )
 
     def append_to_last_paragraph(self, message: str) -> None:
-        """Calls append paragraph on current message row"""
-        if not self._messages_layout:
+        """Append text to the last paragraph of the last message row."""
+        last_widget = self._get_last_widget()
+
+        if last_widget:
+            message_row = cast(MessageRow, last_widget)
+            message_row.append_last_paragraph(message)
+            self._session.append_to_last_message(message)
+
+            QtCore.QTimer.singleShot(
+                0,
+                self.scroll_to_bottom,
+            )
+
+    def load_message_history(self) -> None:
+        if not self._session.messages:
             return
+
+        for msg in self._session.messages:
+            self.add_new_message_row(msg.content, msg.id, msg.timestamp, msg.role)
+
+    def _get_last_widget(self) -> QWidget | None:
+        if not self._messages_layout:
+            return None
 
         layout = self._messages_layout.itemAt(self._messages_layout.count() - 1)
         if not layout:
-            return
+            return None
 
-        last_widget = layout.widget()
-        message_row = cast(MessageRow, last_widget)
-        message_row.append_last_paragraph(message)
-
-        QtCore.QTimer.singleShot(
-            0,
-            self.scroll_to_bottom,
-        )
+        return layout.widget()
 
     # FIX: Scrollbar doesn't work yet
     def scroll_to_bottom(self, min_val: int, max_val: int) -> None:

@@ -1,8 +1,8 @@
-from .chat_render import ChatbotPanelRenderer
-from .types import ChatPanelProtocol, MessageType
+from .chat_render import ChatbotAreaRenderer
+from .types import ChatAreaProtocol, MessageType
 
 __all__ = [
-    "ChatbotPanelRenderer",
-    "ChatPanelProtocol",
+    "ChatbotAreaRenderer",
+    "ChatAreaProtocol",
     "MessageType",
 ]

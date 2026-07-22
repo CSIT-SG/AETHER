@@ -12,15 +12,15 @@ from aether_gui.utils.rpc_id import get_rpc_id
 from aether_utils.config import get_config
 from fastmcp.client.client import CallToolResult
 
-from .renderer import ChatbotPanelRenderer, ChatPanelProtocol, MessageType
+from .renderer import ChatAreaProtocol, ChatbotAreaRenderer, MessageType
 from .task import ChatBotTask, LLMResponse, ReasoningDelta, TextDelta, ToolCall, ToolOutput
 
 config = get_config()
 
 
 class ChatOrchestrator:
-    def __init__(self, chatbot_panel: ChatPanelProtocol, mcp_client: MCPClient) -> None:
-        self.chat_renderer = ChatbotPanelRenderer(chatbot_panel)
+    def __init__(self, chatbot_panel: ChatAreaProtocol, mcp_client: MCPClient) -> None:
+        self.chat_renderer = ChatbotAreaRenderer(chatbot_panel)
         self.function_context = None
         self.mcp_client = mcp_client
         self.handle = None
