@@ -22,14 +22,14 @@ class MessageRow(StyledComponent):
     """Message Card"""
 
     def __init__(self, message: Message, parent: Any = None) -> None:
-        self._messages = [message]
+        self._last_message = message
         super().__init__(parent, plugins=[FontPlugin()])
 
     def setup(self) -> None:
         self._copy_btn: ButtonComponent | None = None
         self._timestamp: QLabel | None = None
         self._name_label: QLabel | None = None
-        self._paragraphs: list[MessageParagraph] | None = None
+        self._last_paragraph: MessageParagraph | None = None
 
     def init_ui(self) -> None:
         """
@@ -59,7 +59,7 @@ class MessageRow(StyledComponent):
         header_layout.setContentsMargins(0, 0, 0, 2)
         header_layout.setSpacing(8)
 
-        time_label = QLabel(self._messages[0].formatted_timestamp)
+        time_label = QLabel(self._last_message.formatted_timestamp)
         time_label.setObjectName("Timestamp")
         time_label_opacity = QGraphicsOpacityEffect(time_label)
         time_label_opacity.setOpacity(0.60)  # 60%
@@ -67,8 +67,8 @@ class MessageRow(StyledComponent):
 
         self._timestamp = time_label
 
-        name_label = QLabel(self._messages[0].role.value)
-        match self._messages[0].role:
+        name_label = QLabel(self._last_message.role.value)
+        match self._last_message.role:
             case MessageRole.USER:
                 header_layout.addStretch()
                 header_layout.addWidget(name_label)
@@ -89,9 +89,9 @@ class MessageRow(StyledComponent):
         ### END HEADER ###
 
         ### BODY - MARKDOWN CONTENT ###
-        paragraph = MessageParagraph(self._messages[0], self)
+        paragraph = MessageParagraph(self._last_message, self)
         self.card_layout.addWidget(paragraph)
-        self._paragraphs = [paragraph]
+        self._last_paragraph = paragraph
         ### END BODY ###
 
         ### FOOTER - OTHER WIDGETS (e.g. copy button) ###
@@ -112,7 +112,7 @@ class MessageRow(StyledComponent):
         self.card_layout.addWidget(footer_container)
         ### END FOOTER ###
 
-        match self._messages[0].role:
+        match self._last_message.role:
             case MessageRole.USER:
                 main_layout.addStretch(1)
                 main_layout.addWidget(message_card_container, stretch=4)
@@ -126,7 +126,7 @@ class MessageRow(StyledComponent):
 
     def _copy_message(self) -> None:
         clipboard = QApplication.clipboard()
-        clipboard.setText(self._messages[0].content)
+        clipboard.setText(self._last_message.content)
 
     def _adjust_height(self) -> None:
         if self.card_layout:
@@ -136,19 +136,19 @@ class MessageRow(StyledComponent):
         self.updateGeometry()
 
     def add_new_paragraph(self, message: Message) -> None:
-        if self._paragraphs:
+        if self._last_paragraph:
             paragraph = MessageParagraph(message, self)
             footer_index = self.card_layout.count() - 1
             self.card_layout.insertWidget(footer_index, paragraph)
-            self._messages.append(message)
-            self._paragraphs.append(paragraph)
+            self._last_message = message
+            self._last_paragraph = paragraph
 
             self._adjust_height()
 
     def append_last_paragraph(self, message: str) -> None:
-        self._messages[-1].content += message
-        if self._paragraphs:
-            self._paragraphs[-1].refresh()
+        self._last_message.content += message
+        if self._last_paragraph:
+            self._last_paragraph.refresh()
 
     def style_file(self) -> Path | None:
         return Path(__file__).resolve().parent / "styles.qss.jinja"

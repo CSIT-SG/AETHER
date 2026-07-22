@@ -12,16 +12,16 @@ class ChatbotPanelRenderer:
         self.panel = panel
 
     def render_aether_message(
-        self, message: str, last_message: MessageType, message_created: bool
+        self, message: str, last_message_type: MessageType, *, message_created: bool
     ) -> None:
         if not message_created:
             self.panel.add_new_message_bubble(message)
-        elif last_message == "text":
+        elif last_message_type == "text":
             self.panel.append_to_last_paragraph(message)
         else:
             self.panel.add_new_paragraph(message)
 
-    def render_tool_message(self, message: str, message_created: bool) -> None:
+    def render_tool_message(self, message: str, *, message_created: bool) -> None:
         if not message_created:
             self.panel.add_new_message_bubble(message + "\n")
         else:

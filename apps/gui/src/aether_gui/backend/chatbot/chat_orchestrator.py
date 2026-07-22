@@ -104,12 +104,12 @@ class ChatOrchestrator:
                     last_message_type = "text"
                     message_created = True
                     self.chat_renderer.render_aether_message(
-                        str(result), current_type, current_created
+                        str(result), current_type, message_created=current_created
                     )
             elif isinstance(result, (ToolCall, ToolOutput)):
                 last_message_type = "tool"
                 message_created = True
-                self.chat_renderer.render_tool_message(str(result), current_created)
+                self.chat_renderer.render_tool_message(str(result), message_created=current_created)
 
         return _call_renderer
 
