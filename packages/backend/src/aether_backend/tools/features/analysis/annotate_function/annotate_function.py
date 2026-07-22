@@ -24,7 +24,7 @@ from agents import Agent, ModelSettings, Runner
 
 from .types import InterestingFunc
 
-SYSTEM_PROMPT = get_content(Path(__file__).parent, "prompt.md")
+SYSTEM_PROMPT = get_content(Path(__file__).parent, "annotate_function_prompt.md")
 
 config = get_config()
 
@@ -63,7 +63,7 @@ async def annotate(
             f"{base_addr} is the base function, your main goal is to figure out what this does and annotate it"
             f"Here are the functions that it calls. These will be useful for determining the purpose of the base function, analyse these too: \n{funcs}\n{custom_prompt}"
         ),
-        max_turns=None,
+        max_turns=100000,
     )
 
     async for event in result.stream_events():

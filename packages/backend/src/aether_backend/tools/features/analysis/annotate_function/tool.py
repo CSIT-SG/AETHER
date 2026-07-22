@@ -46,7 +46,7 @@ async def annotate_function(
     if custom_prompt is None:
         custom_prompt = ""
 
-    funcs = await get_interesting_child_functions(svc, address, custom_prompt)
+    funcs = await get_interesting_child_functions(svc, address)
     yield Log(f"Found {len(funcs)} interesting child functions for {address}.")
     async for effect in annotate(svc, address, funcs, custom_prompt):
         yield effect

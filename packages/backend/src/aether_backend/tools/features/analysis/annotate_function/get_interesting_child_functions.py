@@ -26,7 +26,7 @@ SYSTEM_PROMPT = get_content(Path(__file__).parent, "interesting_children_prompt.
 
 
 async def get_interesting_child_functions(
-    service: Any, function_address: HexAddress, custom_prompt: str | None
+    service: Any, function_address: HexAddress
 ) -> list[InterestingFunc]:
     """
     Get interesting child functions called by the function at the given address.
@@ -61,8 +61,8 @@ async def get_interesting_child_functions(
     result = await Runner.run(
         agent,
         context=SubagentToolDependencies(service),
-        input=f"Gather interesing and relevant child functions called in {function_address}. \n{custom_prompt}",
-        max_turns=None,
+        input=f"Gather interesing and relevant child functions called in {function_address}.",
+        max_turns=1000,
     )
 
     _max = 3
