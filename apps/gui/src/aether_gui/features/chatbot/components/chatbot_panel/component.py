@@ -89,9 +89,12 @@ class ChatbotPanel(StyledComponent):  # type: ignore[misc]
         message_area = cast(MessageArea, self._message_area)
         message_area.add_new_paragraph(message)
 
+        self._session.append_to_last_message("\n" + response)
+
     def append_to_last_paragraph(self, response: str) -> None:
         if self._message_area:
             self._message_area.append_to_last_paragraph(response)
+            self._session.append_to_last_message(response)
 
     def load_message_history(self) -> None:
         """Loads existing messages onto MessageArea"""
@@ -100,7 +103,7 @@ class ChatbotPanel(StyledComponent):  # type: ignore[misc]
 
         message_area = cast(MessageArea, self._message_area)
         for msg in self._session.messages:
-            message_area.add_new_paragraph(msg)
+            message_area.add_new_message_bubble(msg)
 
     # TODO:
     # ADD AUTO SCROLL TO BOTTOM FUNCTION HERE
