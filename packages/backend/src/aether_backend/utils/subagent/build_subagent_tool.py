@@ -1,10 +1,11 @@
+import json
 from collections.abc import Awaitable, Callable
 from dataclasses import fields as dc_fields
 from typing import Any, get_type_hints
 
 from agents import FunctionTool, RunContextWrapper
 from agents.strict_schema import ensure_strict_json_schema
-from pydantic import create_model
+from pydantic import ValidationError, create_model
 
 from .models import ToolDependencies
 
@@ -46,7 +47,16 @@ def build_subagent_tool(func: Callable[..., Awaitable[Any]]) -> FunctionTool:
 
     # resolves all dependencies from ctx.context, validates args, calls through
     async def on_invoke_tool(ctx: RunContextWrapper[ToolDependencies], args_json: str) -> Any:
-        parsed = model.model_validate_json(args_json)
+        try:
+            parsed = model.model_validate_json(args_json)
+
+        except (ValidationError, json.JSONDecodeError) as e:
+            return (
+                f"Error calling `{func.__name__}`: invalid arguments.\n"
+                f"{e}\n"
+                f"Required arguments: {json.dumps(model.model_json_schema())}\n"
+                "Please retry the tool call with all required arguments included."
+            )
         deps = (getattr(ctx.context, name) for name in _DEP_NAMES)
         return await func(*deps, **parsed.model_dump())
 
