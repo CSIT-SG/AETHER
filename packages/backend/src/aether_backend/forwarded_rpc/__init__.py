@@ -15,5 +15,5 @@ __all__ = [
     "set_comment",
     "rename_local_variable",
     "get_xrefs_to",
-    "get_functions_called_recursively"
+    "get_functions_called_recursively",
 ]

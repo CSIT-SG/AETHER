@@ -24,15 +24,14 @@ from agents import Agent, ModelSettings, Runner
 
 from .types import InterestingFunc
 
-config = get_config()
 SYSTEM_PROMPT = get_content(Path(__file__).parent, "prompt.md")
+
+config = get_config()
 
 
 async def annotate(
     service: Any, base_addr: HexAddress, funcs: list[InterestingFunc], custom_prompt: str | None
 ) -> Program:
-    if config.backup:
-        service.take_snapshot()
     agent = Agent(
         name="Annotator",
         model=OpenAIGateway().get_model(
@@ -55,9 +54,6 @@ async def annotate(
         ),
         model_settings=ModelSettings(parallel_tool_calls=False),
     )
-
-    if custom_prompt is None:
-        custom_prompt = ""
 
     result = Runner.run_streamed(
         agent,
@@ -82,9 +78,8 @@ async def annotate(
         elif run_item.type == "tool_call_output_item":
             yield Log(str(run_item.output))
 
-    addresses = [item["address"] for item in funcs]
-
-    for address in addresses:
+    for address in [item["address"] for item in funcs]:
         service.refresh_pseudocode(function_address=address)
+    service.refresh_pseudocode(function_address=base_addr)
 
     yield Return(result.final_output)
