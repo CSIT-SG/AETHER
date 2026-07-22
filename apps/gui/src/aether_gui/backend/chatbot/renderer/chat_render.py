@@ -22,15 +22,15 @@ class ChatbotAreaRenderer:
         if not message_created:
             self.area.add_new_message_row(message, str(uuid4()), datetime.now(), MessageRole.AETHER)
         elif last_message_type == "text":
-            self.area.append_to_last_paragraph(message)
+            self.area.append_to_last_paragraph_of_last_row(message)
         else:
-            self.area.add_paragraph(message, MessageRole.AETHER)
+            self.area.add_paragraph_to_last_row(message, MessageRole.AETHER)
 
     def render_tool_message(self, message: str, *, message_created: bool) -> None:
         if not message_created:
             self.area.add_new_message_row(message, str(uuid4()), datetime.now(), MessageRole.AETHER)
         else:
-            self.area.add_paragraph(message, MessageRole.AETHER)
+            self.area.add_paragraph_to_last_row(message, MessageRole.AETHER)
 
     def render_error(self, message: str) -> None:
         self.area.add_new_message_row(

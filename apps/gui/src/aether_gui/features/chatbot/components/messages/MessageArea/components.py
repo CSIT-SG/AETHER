@@ -8,7 +8,7 @@ from aether_gui.utils.ui import StyledComponent
 from PySide6 import QtCore
 from PySide6.QtWidgets import QFrame, QScrollArea, QVBoxLayout, QWidget
 
-from ..MessageRow import MessageRow
+from ..MessageColumn import MessageColumn
 from ..Messages import Message, MessageRole
 
 
@@ -64,7 +64,7 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
     ) -> None:
         """Creates new message row"""
         message_data = Message(id=id, role=role, content=message, timestamp=timestamp)
-        card = MessageRow(message_data, self)
+        card = MessageColumn(message_data, self)
         messages_layout = cast(QVBoxLayout, self._messages_layout)
         messages_layout.addWidget(card)
 
@@ -78,7 +78,7 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
                 return
         self._session.add_message(message_data)
 
-    def add_paragraph(self, message: str, role: MessageRole) -> None:
+    def add_paragraph_to_last_row(self, message: str, role: MessageRole) -> None:
         """Add a new paragraph to the last message row."""
         last_widget = self._get_last_widget()
 
@@ -86,7 +86,7 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
             message_data = Message(
                 id=str(uuid4()), role=role, content=message, timestamp=datetime.now()
             )
-            message_row = cast(MessageRow, last_widget)
+            message_row = cast(MessageColumn, last_widget)
             message_row.add_new_paragraph(message_data)
             self._session.append_to_last_message("\n\n" + message_data.content)
 
@@ -95,12 +95,12 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
                 self.scroll_to_bottom,
             )
 
-    def append_to_last_paragraph(self, message: str) -> None:
+    def append_to_last_paragraph_of_last_row(self, message: str) -> None:
         """Append text to the last paragraph of the last message row."""
         last_widget = self._get_last_widget()
 
         if last_widget:
-            message_row = cast(MessageRow, last_widget)
+            message_row = cast(MessageColumn, last_widget)
             message_row.append_last_paragraph(message)
             self._session.append_to_last_message(message)
 

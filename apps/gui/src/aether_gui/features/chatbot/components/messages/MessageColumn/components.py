@@ -18,7 +18,7 @@ from ..Messages import Message, MessageRole
 from .utils import ButtonComponent
 
 
-class MessageRow(StyledComponent):
+class MessageColumn(StyledComponent):
     """Message Card"""
 
     def __init__(self, message: Message, parent: Any = None) -> None:
