@@ -26,9 +26,9 @@ class ChangeStructFieldSize(Capability):
         Returns:
             A Result object whose ``result`` attribute contains the outcome.
         """
-        try:
-            struct_id = int(struct)
-        except ValueError:
+        if isinstance(struct, int):
+            struct_id = struct
+        else:
             temp = get_struct_id_by_name(str(struct))
             if temp is None:
                 return Err(result=f"Struct with the specified id {struct} does not exist.")
