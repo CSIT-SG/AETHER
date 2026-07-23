@@ -17,7 +17,8 @@ class TestValidateYaraRule:
     status against the actual binary loaded in the running IDA instance."""
 
     def test_rule_matching_known_string_in_binary_succeeds(
-        self, ida_client: rpyc.Connection, get_binary: Callable[..., Path], BIN_NAME: str
+        self,
+        ida_client: rpyc.Connection,
     ) -> None:
         # "weird_payload" is a string literal compiled into foo_make()'s body,
         # so it's guaranteed to land in a loaded data segment IDA maps.
@@ -36,7 +37,8 @@ class TestValidateYaraRule:
         assert result.result == "known_string_match"
 
     def test_rule_with_absent_string_fails_to_match(
-        self, ida_client: rpyc.Connection, get_binary: Callable[..., Path], BIN_NAME: str
+        self,
+        ida_client: rpyc.Connection,
     ) -> None:
         rule_text = """
         rule absent_string_no_match {
