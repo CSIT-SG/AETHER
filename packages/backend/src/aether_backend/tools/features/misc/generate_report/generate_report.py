@@ -56,10 +56,6 @@ async def generate_report(service: Any, function_address: HexAddress) -> Program
     async for log in _stream_logs(result):
         yield log
 
-    print(result.final_output)
-
-    # Gateway bug means output_type isn't reliable; nudge for a forced
-    # submit_output call if the model didn't already emit one in the stream.
     report: GeneratedReport = await force_structured_output(agent, GeneratedReport, result)
 
     rules, report_text = report["yara_rules"], report["report"]
