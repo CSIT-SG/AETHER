@@ -96,6 +96,9 @@ class SetCommentResult(TypedDict):
 class FuncNameAddr(TypedDict):
     function_name: str
     address: str
+    size: int
+    is_lib: bool
+    is_thunk: bool
 
 
 class ListFunctionResult(TypedDict):
