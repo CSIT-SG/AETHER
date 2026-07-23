@@ -81,7 +81,10 @@ def export_requirements(uv_path: str) -> Path:
 
 
 def install_requirements(uv_path: str, requirements_path: Path) -> None:
-    run([uv_path, "pip", "install", "-r", str(requirements_path)], cwd=requirements_path.parent)
+    run(
+        [uv_path, "pip", "install", "--system", "-r", str(requirements_path)],
+        cwd=requirements_path.parent,
+    )
 
 
 def link_entrypoint(plugin_path: Path) -> None:
