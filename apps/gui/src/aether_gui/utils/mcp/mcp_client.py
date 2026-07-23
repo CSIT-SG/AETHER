@@ -29,7 +29,7 @@ class MCPClient:
             return
 
         transport = StreamableHttpTransport(url=self.mcp_url)
-        self._client = Client(transport)
+        self._client = Client(transport, timeout=None)
 
         try:
             await self._client.__aenter__()

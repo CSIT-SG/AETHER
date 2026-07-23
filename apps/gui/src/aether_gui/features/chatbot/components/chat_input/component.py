@@ -6,7 +6,7 @@ from PySide6 import QtCore, QtWidgets
 from PySide6.QtGui import QFont, QKeySequence, QShortcut, QTextOption
 
 
-class ChatInput(StyledComponent):
+class ChatInput(StyledComponent):  # type: ignore[misc]
     """Chat bar to enter user input"""
 
     # Submit Signal
