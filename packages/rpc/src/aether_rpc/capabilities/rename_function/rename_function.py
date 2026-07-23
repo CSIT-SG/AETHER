@@ -25,6 +25,8 @@ class RenameFunction(Capability):
             A Result whose ``success`` reports whether the rename succeeded and
             whose ``result`` carries the function address and new name.
         """
+        if not new_name.startswith("AETHER_"):
+            new_name = "AETHER_" + new_name
         ea = resolve_effective_address(address)
         if ea is None:
             self.logger.error(f"Invalid address: {address}")
