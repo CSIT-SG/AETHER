@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from aether_gui.utils.ui import FontPlugin, StyledComponent
 from PySide6.QtGui import QFont
@@ -18,7 +18,7 @@ from ..Messages import Message, MessageRole
 from .utils import ButtonComponent
 
 
-class MessageColumn(StyledComponent):
+class MessageColumn(StyledComponent):  # type: ignore[misc]
     """Message Card"""
 
     def __init__(self, message: Message, parent: Any = None) -> None:
@@ -164,4 +164,4 @@ class MessageColumn(StyledComponent):
             if the font plugin is unavailable.
         """
 
-        return self.get_plugin(FontPlugin).current_font
+        return cast(QFont, self.get_plugin(FontPlugin).current_font)

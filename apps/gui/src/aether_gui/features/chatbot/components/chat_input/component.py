@@ -105,7 +105,7 @@ class ChatInput(StyledComponent):  # type: ignore[misc]
             if the font plugin is unavailable.
         """
 
-        return self.get_plugin(FontPlugin).current_font
+        return cast(QFont, self.get_plugin(FontPlugin).current_font)
 
 
 def create_chat_input(parent: QtWidgets.QWidget | None = None) -> ChatInput:
