@@ -20,4 +20,5 @@ EXPORTS: dict[str, str] = {
     "CreateStruct": ".create_struct",
     "ChangeStructFieldSize": ".change_struct_field_size",
     "ValidateYaraRule": ".validate_yara_rule",
+    "GetBinaryMetadata": ".get_binary_metadata",
 }

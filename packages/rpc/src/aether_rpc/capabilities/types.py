@@ -141,3 +141,27 @@ class StructField(NamedTuple):
     name: str
     type: str
     array_size: int | None = None
+
+
+class SectionInfo(TypedDict):
+    name: str
+    start: str  # hex address
+    end: str  # hex address
+    size: int
+    perms: str  # e.g. "RWX"
+
+
+class BinaryMetadataResult(TypedDict):
+    file_name: str
+    file_path: str
+    file_size: int
+    sha256: str
+    md5: str
+    crc32: str
+    architecture: str
+    bitness: int
+    file_type: str
+    entry_point: str  # hex address
+    image_base: str  # hex address
+    section_count: int
+    sections: list[SectionInfo]
