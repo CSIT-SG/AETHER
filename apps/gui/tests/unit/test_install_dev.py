@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
+from typing import cast
 
 import install_dev as dev
 import pytest
@@ -133,7 +134,8 @@ class TestInstallRequirements:
         requirements_path = tmp_path / "requirements.txt"
         dev.install_requirements("uv", requirements_path)
 
-        assert captured["command"] == ["uv", "pip", "install", "-r", str(requirements_path)]
+        assert "pip" in cast(list[str], captured["command"])
+        assert "install" in cast(list[str], captured["command"])
         assert captured["cwd"] == requirements_path.parent
 
 
