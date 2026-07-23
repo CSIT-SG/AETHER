@@ -6,6 +6,7 @@ from .get_xrefs_to import get_xrefs_to
 from .rename_function import rename_function
 from .rename_local_variable import rename_local_variable
 from .set_comment import set_comment
+from .validate_yara_rule import validate_yara_rule
 
 __all__ = [
     "get_data_at_address",
@@ -16,4 +17,5 @@ __all__ = [
     "rename_local_variable",
     "get_xrefs_to",
     "get_functions_called_recursively",
+    "validate_yara_rule",
 ]
