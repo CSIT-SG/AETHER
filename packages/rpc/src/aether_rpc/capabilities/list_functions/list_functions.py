@@ -16,9 +16,6 @@ class ListFunctions(Capability):
     def execute(self) -> Result[ListFunctionResult]:
         """Return the name and address of every function in the binary.
 
-        Runs on the main thread via execute_sync since IDA API calls
-        are not safe to invoke from background threads.
-
         Returns:
             A Result whose ``result`` holds the list of functions (name and
             address) and their count.
