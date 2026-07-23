@@ -20,7 +20,7 @@ class WorkerManager[T]:
         self._thread = threading.Thread(target=self._run_loop, daemon=True)
         self._thread.start()
         self._ready.wait()
-        self._tasks: dict[str, tuple[BaseTask, Future]] = {}
+        self._tasks: dict[str, tuple[BaseTask[Any], Future[None]]] = {}
 
     def _run_loop(self) -> None:
         asyncio.set_event_loop(self._loop)

@@ -32,7 +32,7 @@ class ThemePlugin(AbstractComponentPlugin):
         return "theme"
 
     @property
-    def priority(self):
+    def priority(self) -> int:
         """Return install priority for theme-aware plugins.
 
         Returns:

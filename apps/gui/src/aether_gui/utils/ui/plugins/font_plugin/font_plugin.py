@@ -35,7 +35,7 @@ class FontPlugin(AbstractComponentPlugin):
         return "font"
 
     @property
-    def priority(self):
+    def priority(self) -> int:
         """Return install priority for font-aware plugins.
 
         Returns:
@@ -59,8 +59,8 @@ class FontPlugin(AbstractComponentPlugin):
         if not isinstance(widget, FontPluginProtocol):
             raise TypeError("Widget must implement FontPluginProtocol")
 
-        w = widget
-        title = widget.windowTitle()
+        w: QWidget | None = widget
+        title = widget.windowTitle() if isinstance(widget, QWidget) else ""
         while w is not None:
             title = w.windowTitle()
             if title.startswith(WINDOW_PREFIX):

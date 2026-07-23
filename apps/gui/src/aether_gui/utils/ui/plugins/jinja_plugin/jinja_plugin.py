@@ -45,8 +45,8 @@ class JinjaPlugin(AbstractComponentPlugin):
         Returns:
             Rendered QSS string.
         """
-        inline = widget.styles() if widget.styles else None
-        file = widget.style_file() if widget.style_file else None
+        inline = widget.styles()
+        file = widget.style_file()
 
         return self._renderer.render_qss(inline=inline, file=file, **context)
 
@@ -60,7 +60,7 @@ class JinjaPlugin(AbstractComponentPlugin):
         Returns:
             Rendered HTML string.
         """
-        inline = widget.template() if widget.template else None
-        file = widget.template_file() if widget.template_file else None
+        inline = widget.template()
+        file = widget.template_file()
 
         return self._renderer.render_html(inline=inline, file=file, **context)

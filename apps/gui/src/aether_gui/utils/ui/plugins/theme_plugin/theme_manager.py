@@ -19,14 +19,14 @@ class ThemeManager(QObject):
 
     theme_change_event = Signal(str, dict)
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the theme manager and read the current palette."""
         super().__init__()
         self._installed = False
         self.current_theme: Theme = self.detect_theme()
         self.theme_colors: ThemeColors = self._read_palette()  # read only, no emit yet
 
-    def eventFilter(self, obj, event) -> bool:
+    def eventFilter(self, obj: QObject, event: QEvent) -> bool:
         """Handle palette changes and emit theme updates.
 
         Args:
@@ -65,7 +65,7 @@ class ThemeManager(QObject):
         assert isinstance(app, QApplication)
         return app
 
-    def install_event_filter(self):
+    def install_event_filter(self) -> None:
         """Install the global palette change event filter."""
         if self._installed:
             return

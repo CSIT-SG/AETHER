@@ -12,7 +12,7 @@ def get_rpc_id() -> str | None:
         path = ida_nalt.get_input_file_path()
         if not path:
             logger.warning("No input file path available yet")
-            return
+            return None
         _shared_rpc_id = file_id(path)
 
     return _shared_rpc_id

@@ -29,9 +29,11 @@ class ChangeStructFieldSize(Capability):
         try:
             struct_id = int(struct)
         except ValueError:
-            struct_id = get_struct_id_by_name(str(struct))
-            if not struct_id:
-                return Err(result=f"Type with the specified id {struct} does not exist.")
+            temp = get_struct_id_by_name(str(struct))
+            if temp is None:
+                return Err(result=f"Struct with the specified id {struct} does not exist.")
+            struct_id = temp
+
         tif = ida_typeinf.tinfo_t()
         if not tif.get_type_by_tid(struct_id):
             return Err(result=f"Type with the specified id {struct_id} does not exist.")

@@ -8,7 +8,7 @@ from aether_gui.runner.base_task import BaseTask
 from .mcp_client import MCPClient
 
 
-class CallToolTask(BaseTask[Any]):
+class CallToolTask(BaseTask[Any]):  # type: ignore[misc]
     def __init__(self) -> None:
         super().__init__()
         self._mcp_client: MCPClient | None = None

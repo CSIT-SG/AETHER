@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
 from collections.abc import Iterable
-from typing import TypeVar, cast
+from typing import Any, TypeVar, cast
 
 from aether_utils.logger import get_logger
+from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import QWidget
 
 from .abstract_component_plugin import AbstractComponentPlugin
@@ -12,7 +13,7 @@ from .abstract_component_plugin import AbstractComponentPlugin
 TPlugin = TypeVar("TPlugin", bound=AbstractComponentPlugin)
 
 
-class _WidgetABCMeta(ABCMeta, type(QWidget)):
+class _WidgetABCMeta(ABCMeta, type(QWidget)):  # type: ignore[misc]
     """Metaclass to allow AbstractComponentPluginManager to be both an ABC and a QWidget."""
 
     pass
@@ -32,7 +33,7 @@ class AbstractComponentPluginManager(QWidget, metaclass=_WidgetABCMeta):
 
     def __init__(
         self,
-        parent=None,
+        parent: Any = None,
         *,
         plugins: Iterable[AbstractComponentPlugin] | None = None,
     ) -> None:
@@ -105,7 +106,7 @@ class AbstractComponentPluginManager(QWidget, metaclass=_WidgetABCMeta):
     # Qt lifecycle
     # -------------------------
 
-    def closeEvent(self, event) -> None:
+    def closeEvent(self, event: QCloseEvent) -> None:
         """Handle widget close and uninstall plugins.
 
         Args:

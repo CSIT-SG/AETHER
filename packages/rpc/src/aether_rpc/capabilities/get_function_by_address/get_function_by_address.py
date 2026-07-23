@@ -32,4 +32,4 @@ class GetFunctionByAddress(Capability):
             self.logger.warning(f"No function found containing address {hex(ea)}")
             return Err(result=f"No function found containing address {hex(ea)}")
 
-        return Ok(result=FunctionMetadata(func))
+        return Ok(result=func)

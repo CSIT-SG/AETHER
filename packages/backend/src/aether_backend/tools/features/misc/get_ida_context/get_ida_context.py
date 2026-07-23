@@ -14,5 +14,14 @@ async def get_context(service: Any, address: str | int) -> Program:
     res = service.get_function_pseudocode(function_name=data_at_address["name"])
     pseudocode_str = res.result["pseudocode"] if res.success else res.result
 
-    result = IDAContext(**data_at_address, pseudocode=pseudocode_str)
+    result = IDAContext(
+        name=data_at_address["name"],
+        function=data_at_address["function"],
+        disassembly=data_at_address["disassembly"],
+        is_code=data_at_address["is_code"],
+        is_data=data_at_address["is_data"],
+        xrefs_to=data_at_address["xrefs_to"],
+        xrefs_from=data_at_address["xrefs_from"],
+        pseudocode=pseudocode_str,
+    )
     yield Return(result)

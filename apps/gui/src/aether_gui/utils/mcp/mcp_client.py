@@ -32,7 +32,7 @@ class MCPClient:
         self._client = Client(transport, timeout=None)
 
         try:
-            await self._client.__aenter__()
+            await self._client.__aenter__()  # type: ignore[no-untyped-call]
             self._connected = True
             self.logger.info(f"Connected to MCP server at {self.mcp_url}")
         except Exception as e:
@@ -45,7 +45,7 @@ class MCPClient:
             return
 
         try:
-            await self._client.__aexit__(None, None, None)
+            await self._client.__aexit__(None, None, None)  # type: ignore[no-untyped-call]
         except Exception as e:
             self.logger.warning(f"Error closing MCP client: {e}")
         finally:
