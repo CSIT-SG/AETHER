@@ -1,6 +1,6 @@
 from typing import cast
 
-from agents import Agent, Runner, RunResult, function_tool
+from agents import Agent, ModelSettings, Runner, RunResult, RunResultStreaming, function_tool
 from agents.agent import StopAtTools
 
 MAX_SUBMIT_RETRIES = 3
@@ -9,7 +9,7 @@ MAX_SUBMIT_RETRIES = 3
 async def force_structured_output[T](
     agent: Agent,
     output_type: type[T],
-    result: RunResult | None = None,
+    result: RunResult | RunResultStreaming,
     *,
     max_turns: int = 10,
 ) -> T:
@@ -48,8 +48,9 @@ async def force_structured_output[T](
     submit_output = function_tool(_submit_output, name_override="submit_output")
 
     submission_agent = agent.clone(
-        tools=[submit_output],
+        tools=[*agent.tools, submit_output],
         tool_use_behavior=StopAtTools(stop_at_tool_names=[submit_output.name]),
+        model_settings=ModelSettings(tool_choice="required"),
     )
 
     retries = MAX_SUBMIT_RETRIES
@@ -57,11 +58,11 @@ async def force_structured_output[T](
         # Model ignored the tool-call requirement
         result = await Runner.run(
             submission_agent,
-            input=(result.to_input_list() if result else [])
+            input=result.to_input_list()
             + [
                 {
                     "role": "user",
-                    "content": f"You did not call {submit_output.name}. You must call it now with your findings.",
+                    "content": f"Call {submit_output.name} with your findings to submit it properly.",
                 }
             ],
             max_turns=max_turns,
