@@ -11,7 +11,7 @@ dependencies = [
     "aether_utils",
     "aether_rpc",
     "openai-agents==0.17.5",
-    "watchfiles==1.2.0"
+    "watchfiles==1.2.0",
 ]
 
 [tool.mypy]

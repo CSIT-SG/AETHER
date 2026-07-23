@@ -9,6 +9,7 @@ dependencies = [
     "pydantic==2.13.4",
     "rpyc==6.0.2",
     "aether_utils",
+    "yara-x>=1.19.0",
 ]
 
 [tool.mypy]
