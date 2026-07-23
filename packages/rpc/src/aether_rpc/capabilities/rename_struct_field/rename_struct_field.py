@@ -28,12 +28,11 @@ class RenameStructField(Capability):
             whose ``result`` carries the struct id, name, old field name and new field name.
         """
         if isinstance(struct, int):
-            struct_id = struct
+            struct_id: int | None = struct
         else:
-            temp = get_struct_id_by_name(str(struct))
-            if temp is None:
-                return Err(result=f"Struct with the specified id {struct} does not exist.")
-            struct_id = temp
+            struct_id = get_struct_id_by_name(str(struct))
+        if struct_id is None:
+            return Err(result=f"Struct with the specified id {struct} does not exist.")
 
         tif = ida_typeinf.tinfo_t()
         if not tif.get_type_by_tid(struct_id):
