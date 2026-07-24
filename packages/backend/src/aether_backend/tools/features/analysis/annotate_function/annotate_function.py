@@ -32,6 +32,7 @@ config = get_config()
 async def annotate(
     service: Any, base_addr: HexAddress, funcs: list[InterestingFunc], custom_prompt: str | None
 ) -> Program:
+    print("GIGANIGGA ANNOTATING FUNCS")
     agent = Agent(
         name="Annotator",
         model=OpenAIGateway().get_model(

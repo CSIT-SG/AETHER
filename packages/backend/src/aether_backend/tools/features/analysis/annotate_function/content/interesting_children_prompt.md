@@ -15,17 +15,21 @@ You must reason about the functions which you want to enter for analysis and why
 
 ## Output
 
-Your output must follow the format {address: str, reason: str}[] where address is the hexadecimal address in of the function and reason is your rationale as to why it is interesting. DO NOT put any reasoning outside of the array. Your output MUST be submitted using `submit_output` at the end of the execution, simply returning a string will not suffice, always use `submit_output`.
+Your output must follow the format [{address: str, reason: str}] where address is the hexadecimal address in of the function and reason is your rationale as to how it contributes to the target function. DO NOT put any reasoning outside of the array. Your output MUST be submitted using `submit_output` at the end of the execution, simply returning a string will not suffice, always use `submit_output`.
 
 Example of `submit_output`:
     [
         {
-            address: "0xDEADBEEF",
-            reason: "Initialises C2 connection"
+            "address": "0x004048F0",
+            "reason": "Intercepts execution flow by installing an inline API hook on {api_name}"
         },
         {
-            address: "0x10000000",
-            reason: "performs DLL injection"
+            "address": "0x00405200",
+            "reason": "Spawns target process {filename} in a suspended state for process hollowing"
+        },
+        {
+            "address": "0x004060C0",
+            "reason": "Resolves API functions dynamically at runtime using Hash/CRC table lookups"
         }
     ]
 
