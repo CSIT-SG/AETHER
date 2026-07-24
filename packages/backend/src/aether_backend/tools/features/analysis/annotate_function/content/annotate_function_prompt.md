@@ -8,7 +8,9 @@ Use ALL the tools in tandem to produce an easily readable pseudocode view, incre
 
 ## Input values
 
-You will be given input following the format [{address: str, reason: str}] where address is the hexadecimal address in of the function and reason is your rationale as to how it contributes to the target function.
+You will be given input following the format [{address: str, reason: str}] where:
+- `address` is the hexadecimal address in of the function
+- `reason` is your rationale as to how it contributes to the target function.
 
 Example:
 

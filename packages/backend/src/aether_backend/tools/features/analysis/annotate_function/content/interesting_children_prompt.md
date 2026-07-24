@@ -15,9 +15,11 @@ You must reason about the functions which you want to enter for analysis and why
 
 ## Output
 
-Your output must follow the format [{address: str, reason: str}] where address is the hexadecimal address in of the function and reason is your rationale as to how it contributes to the target function. DO NOT put any reasoning outside of the array. Your output MUST be submitted using `submit_output` at the end of the execution, simply returning a string will not suffice, always use `submit_output`.
+Your output must follow the format [{address: str, reason: str}] where:
+- `address` is the hexadecimal address in of the function
+- `reason` is your rationale as to how it contributes to the target function. DO NOT put any reasoning outside of the array.
 
-Example of `submit_output`:
+Example of a valid output:
     [
         {
             "address": "0x004048F0",
