@@ -28,4 +28,6 @@ async def rename_function(
     Example:
         rename_function(0xDEADBEEF, "find_strlen")
     """
+    if not new_name.startswith("AETHER_"):
+        new_name = "AETHER_" + new_name
     return service.rename_function(address=address, new_name=new_name)
