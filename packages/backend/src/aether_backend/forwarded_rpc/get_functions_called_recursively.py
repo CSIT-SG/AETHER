@@ -37,4 +37,5 @@ async def get_functions_called_recursively(
         get_functions_called_recursively("0x140001000")
         get_functions_called_recursively("sub_DEADBEEF")
     """
-    return service.get_functions_called_recursively(address=address)
+    result = service.get_functions_called_recursively(address=address)
+    return result

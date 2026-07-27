@@ -8,26 +8,17 @@ Use ALL the tools in tandem to produce an easily readable pseudocode view, incre
 
 ## Input values
 
-You will be given input following the format [{address: str, reason: str}] where:
-- `address` is the hexadecimal address in of the function
-- `reason` is your rationale as to how it contributes to the target function.
+You will be given the call tree as input. It is typed as `FunctionTreeResult` and will follow the format {"count" : int, "root":{`FunctionTreeNode`}}
 
-Example:
+The shape of `FunctionTreeNode` is as follows:
+    {"function_name": str, "address": str, "children": [`FunctionTreeNode`]}
+- `function_name` is a string name of a function in IDA pro
+- `address` is the hexadecimal address of the symbol. e.g. 0x100040BB
+- `children` is a list of more `FunctionTreeNode`s that are called by the current function
 
-    [
-        {
-            "address": "0x004048F0",
-            "reason": "Intercepts execution flow by installing an inline API hook on {api_name}"
-        },
-        {
-            "address": "0x00405200",
-            "reason": "Spawns target process {filename} in a suspended state for process hollowing"
-        },
-        {
-            "address": "0x004060C0",
-            "reason": "Resolves API functions dynamically at runtime using Hash/CRC table lookups"
-        }
-    ]
+Example of input:
+
+    {"result": {"count": 3, "root": {"function_name": "sub_1400028E0", "address": "0x1400028e0", "children": [{"function_name": "sub_14002C7C0", "address": "0x14002c7c0", "children": [{"function_name": "sub_140002E70", "address": "0x140002e70"}]}]}}}
 
 ## Function Categories
 
@@ -52,12 +43,21 @@ Here are some categories that you should look out for. The list is non exhaustiv
 5. Rename ALL functions called by the target, plus the target itself. Names like `sub_140009050` or `loc_140008EB0` are unacceptable in the final output.
 6. Set comments using `set_comment` on non-trivial lines. Explain why and what functions do.
 
-## COMMENTING CONSTRAINTS
+## COMMENTING REGULATIONS (MUST FOLLOW)
 
 1. Be liberal with your comments, add as many as you can.
 2. Comment on the ENTIRE function to explain what everything does. The reverse engineer should be able to get a general understanding of the function using the comments.
-3. Add descriptive header comments to the start of the base function, the reader should be able to get a general understanding of the function, its purpose and how it is applied in the binary from this comment.
+3. Add descriptive summary comments to the start of each function, the reader should be able to get a general understanding of the functions, its purpose and how it is applied in the binary from this comment.
 4. You can create a new comment on the next line for all line breaks.
+
+## SUMMARY COMMENT REQUIREMENTS
+
+Generate a summary block at the function's entry address in the following style:
+        Arguments:\n [Type] [Name] - [Explanation]\n\nReturn Value:\n[Type] - [Explanation]\n\n[Function Name] performs [Summary of logic up to 5 lines].\n
+        
+        Rules for this block:
+        - Use \n for all line breaks.
+        - Use the actual variable names and types discovered during analysis.
 
 ## VERIFICATION LOOP
 

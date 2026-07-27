@@ -11,7 +11,9 @@ from mcp.types import ToolAnnotations
 
 from .annotate_function import annotate
 from .constants import TIMEOUT_SECONDS
-from .get_interesting_child_functions import get_interesting_child_functions
+
+# from .get_interesting_child_functions import get_interesting_child_functions
+from .manual_gather import manually_gather
 
 INSTRUCTIONS = get_content(Path(__file__).parent, "instructions.md")
 
@@ -46,7 +48,7 @@ async def annotate_function(
     if custom_prompt is None:
         custom_prompt = ""
 
-    funcs = await get_interesting_child_functions(svc, address)
-    yield Log(f"Found {len(funcs)} interesting child functions for {address}.")
+    funcs = await manually_gather(svc, address)
+    yield Log(f"Found {funcs['count']} interesting child functions for {address}.")
     async for effect in annotate(svc, address, funcs, custom_prompt):
         yield effect

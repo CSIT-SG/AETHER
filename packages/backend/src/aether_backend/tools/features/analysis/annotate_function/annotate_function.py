@@ -1,3 +1,4 @@
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +16,7 @@ from aether_backend.utils.subagent import (
     build_subagent_tool,
 )
 from aether_backend.utils.validation import HexAddress
+from aether_rpc.capabilities.types import FunctionTreeNode, FunctionTreeResult
 from aether_utils.api_client import (
     OpenAIGateway,
 )
@@ -22,15 +24,21 @@ from aether_utils.config import get_config
 from aether_utils.get_content import get_content
 from agents import Agent, ModelSettings, Runner
 
-from .types import InterestingFunc
+# from .types import InterestingFunc
 
 SYSTEM_PROMPT = get_content(Path(__file__).parent, "annotate_function_prompt.md")
 
 config = get_config()
 
 
+def iter_addresses(node: FunctionTreeNode) -> Iterator[str]:
+    yield node["address"]
+    for child in node["children"]:
+        yield from iter_addresses(child)
+
+
 async def annotate(
-    service: Any, base_addr: HexAddress, funcs: list[InterestingFunc], custom_prompt: str | None
+    service: Any, base_addr: HexAddress, funcs: FunctionTreeResult, custom_prompt: str | None
 ) -> Program:
     agent = Agent(
         name="Annotator",
@@ -77,9 +85,17 @@ async def annotate(
 
         elif run_item.type == "tool_call_output_item":
             yield Log(str(run_item.output))
-
-    for address in [item["address"] for item in funcs]:
+    try:
+        addresses: dict[str, None] = dict.fromkeys(iter_addresses(funcs["root"]))
+        for address in addresses:
+            service.refresh_pseudocode(function_address=address)
+        service.refresh_pseudocode(function_address=base_addr)
+    except Exception as e:
+        yield Return(e)
+    """
+    for address in [item["address"] for item in funcs["root"]]:
         service.refresh_pseudocode(function_address=address)
     service.refresh_pseudocode(function_address=base_addr)
-
+    """
+    print(result.final_output)
     yield Return(result.final_output)
