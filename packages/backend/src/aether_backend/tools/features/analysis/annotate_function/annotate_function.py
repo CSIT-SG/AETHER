@@ -24,8 +24,6 @@ from aether_utils.config import get_config
 from aether_utils.get_content import get_content
 from agents import Agent, ModelSettings, Runner
 
-# from .types import InterestingFunc
-
 SYSTEM_PROMPT = get_content(Path(__file__).parent, "annotate_function_prompt.md")
 
 config = get_config()
@@ -92,5 +90,4 @@ async def annotate(
         service.refresh_pseudocode(function_address=base_addr)
     except Exception as e:
         yield Return(e)
-    print(result.final_output)
     yield Return(result.final_output)
