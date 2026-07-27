@@ -74,17 +74,12 @@ UNDERSCORE_WHITELIST = {
 }
 
 
-def is_non_common_function(
-    name: str, is_lib: bool, is_thunk: bool, size: int, min_size: int = 16
-) -> bool:
+def is_non_common_function(name: str, is_lib: bool, is_thunk: bool) -> bool:
     """Return True if *name* looks like a real function worth analyzing."""
     if not name:
         return False
 
     if is_lib or is_thunk:
-        return False
-
-    if size > 0 and size < min_size:
         return False
 
     if name in COMMON_LIBC_NAMES:

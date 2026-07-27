@@ -25,6 +25,7 @@ async def index_functions(
 
     svc = await get_rpc_service(rpc_id)
     async for pseudocode_yield in collect_pseudocode(svc):
+        # await asyncio.sleep(0.01)
         if pseudocode_yield.success:
             yield Log(f"Successfully retrieved pseudocode:\n{pseudocode_yield.result}")
         else:
