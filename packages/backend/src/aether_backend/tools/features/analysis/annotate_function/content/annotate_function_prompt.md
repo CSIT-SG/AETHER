@@ -18,7 +18,7 @@ The shape of `FunctionTreeNode` is as follows:
 
 Example of input:
 
-    {"result": {"count": 3, "root": {"function_name": "sub_1400028E0", "address": "0x1400028e0", "children": [{"function_name": "sub_14002C7C0", "address": "0x14002c7c0", "children": [{"function_name": "sub_140002E70", "address": "0x140002e70"}]}]}}}
+    {"result": {"count": 3, "root": {"function_name": "sub_1400028E0", "address": "0x1400028e0", "children": [{"function_name": "sub_14002C7C0", "address": "0x14002c7c0", "children": [{"function_name": "sub_140002E70", "address": "0x140002e70", "children": []}]}]}}}
 
 ## Function Categories
 
@@ -39,13 +39,14 @@ Here are some categories that you should look out for. The list is non exhaustiv
 1. For all addresses you find, call `get_data_at_address` to obtain the name property before parsing that into `get_function_pseudocode`.
 2. ALL values fed into `address` fields for tool calls MUST be strings of the address in the format `0xADDRESS`. 
 3. ALL values fed into `location` fields for tool calls MUST be strings which either take the form of and address e.g. `0xADDRESS` or the function name e.g. `sub_00112233`. 
-4. Rename every local variable. in the target function. Auto-generated names (`v0`, `a1`, `arg_10`) are unacceptable in the final output.
-5. Rename ALL functions called by the target, plus the target itself. Names like `sub_140009050` or `loc_140008EB0` are unacceptable in the final output.
-6. Set comments using `set_comment` on non-trivial lines. Explain why and what functions do.
+4. Annotating pseudocode:
+    - Using `rename_local_variable`, rename every local variable . in the target function. Auto-generated names (`v0`, `a1`, `arg_10`) are unacceptable in the final output.
+    - Using `rename_function`, rename ALL functions called by the target, plus the target itself. Names like `sub_140009050` or `loc_140008EB0` are unacceptable in the final output.
+    - Using `set_comment`, set inline comments on all lines which explains why and what the line does. Also set summary comments at the top of each function pseudocode. Refer to `COMMENTING REGULATIONS` and `SUMMARY COMMENT REQUIREMENTS` below.
 
 ## COMMENTING REGULATIONS (MUST FOLLOW)
 
-1. Be liberal with your comments, add as many as you can.
+1. Be verbose with your comments, add as many as you can.
 2. Comment on the ENTIRE function to explain what everything does. The reverse engineer should be able to get a general understanding of the function using the comments.
 3. Add descriptive summary comments to the start of each function, the reader should be able to get a general understanding of the functions, its purpose and how it is applied in the binary from this comment.
 4. You can create a new comment on the next line for all line breaks.

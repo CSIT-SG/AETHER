@@ -86,16 +86,11 @@ async def annotate(
         elif run_item.type == "tool_call_output_item":
             yield Log(str(run_item.output))
     try:
-        addresses: dict[str, None] = dict.fromkeys(iter_addresses(funcs["root"]))
+        addresses: set[str] = set(iter_addresses(funcs["root"]))
         for address in addresses:
             service.refresh_pseudocode(function_address=address)
         service.refresh_pseudocode(function_address=base_addr)
     except Exception as e:
         yield Return(e)
-    """
-    for address in [item["address"] for item in funcs["root"]]:
-        service.refresh_pseudocode(function_address=address)
-    service.refresh_pseudocode(function_address=base_addr)
-    """
     print(result.final_output)
     yield Return(result.final_output)
