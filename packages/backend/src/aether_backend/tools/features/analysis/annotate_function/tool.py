@@ -11,7 +11,7 @@ from mcp.types import ToolAnnotations
 
 from .annotate_function import annotate
 from .constants import TIMEOUT_SECONDS
-from .manual_gather import manually_gather
+from .utils import manually_gather
 
 INSTRUCTIONS = get_content(Path(__file__).parent, "instructions.md")
 

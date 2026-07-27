@@ -1,4 +1,3 @@
-from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
@@ -16,7 +15,7 @@ from aether_backend.utils.subagent import (
     build_subagent_tool,
 )
 from aether_backend.utils.validation import HexAddress
-from aether_rpc.capabilities.types import FunctionTreeNode, FunctionTreeResult
+from aether_rpc.capabilities.types import FunctionTreeResult
 from aether_utils.api_client import (
     OpenAIGateway,
 )
@@ -24,15 +23,11 @@ from aether_utils.config import get_config
 from aether_utils.get_content import get_content
 from agents import Agent, ModelSettings, Runner
 
+from .utils import iter_addresses
+
 SYSTEM_PROMPT = get_content(Path(__file__).parent, "annotate_function_prompt.md")
 
 config = get_config()
-
-
-def iter_addresses(node: FunctionTreeNode) -> Iterator[str]:
-    yield node["address"]
-    for child in node["children"]:
-        yield from iter_addresses(child)
 
 
 async def annotate(
