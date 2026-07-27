@@ -1,3 +1,4 @@
+from .get_binary_metadata import get_binary_metadata
 from .get_data_at_address import get_data_at_address
 from .get_function_pseudocode import get_function_pseudocode
 from .get_functions_called_recursively import get_functions_called_recursively
@@ -18,4 +19,5 @@ __all__ = [
     "get_xrefs_to",
     "get_functions_called_recursively",
     "validate_yara_rule",
+    "get_binary_metadata",
 ]

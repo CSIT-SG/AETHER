@@ -1,14 +1,17 @@
+from collections.abc import AsyncIterator
 from typing import Any
 
-from aether_rpc.capabilities.types import FunctionPseudocode
+from aether_rpc.capabilities.result import Result
+from aether_rpc.capabilities.types import FuncNameAddr, FunctionPseudocode, ListFunctionResult
 
 from .is_non_common_function import is_non_common_function
+from .types import PseudocodeYield
 
 
-def collect_functions_with_pseudocode(
+async def collect_pseudocode(
     service: Any,
     min_size: int = 16,
-) -> tuple[list[FunctionPseudocode], list[FunctionPseudocode]]:
+) -> AsyncIterator[PseudocodeYield]:
     """Return pseudocode for every non-common function in the binary.
 
     Composes service.list_functions() -> is_non_common_function filter ->
@@ -23,32 +26,37 @@ def collect_functions_with_pseudocode(
             analyzing (passed to is_non_common_function).
 
     Returns:
-        A tuple containing the list of successfully decompiled functions and the list of failed functions.
+        An async iterator yielding PseudocodeYield objects for each function.
     """
-    list_result = service.list_functions()
+    list_result: Result[ListFunctionResult] = service.list_functions()
+    print(f"list_result: {list_result}")
     if not list_result.success:
         raise RuntimeError(f"Failed to list functions: {list_result.result}")
 
+    assert not isinstance(list_result.result, str), (
+        "Invariant violation: list_result.result should not be a string on success"
+    )
+
+    functions: list[FuncNameAddr] = list_result.result["functions"]
+
     candidates = [
         f
-        for f in list_result.result.functions
+        for f in functions
         if is_non_common_function(
-            name=f.function_name,
-            is_lib=f.is_lib,
-            is_thunk=f.is_thunk,
-            size=f.size,
+            name=f["function_name"],
+            is_lib=f["is_lib"],
+            is_thunk=f["is_thunk"],
+            size=f["size"],
             min_size=min_size,
         )
     ]
 
-    decompiled: list[FunctionPseudocode] = []
-    failed: list[FunctionPseudocode] = []
-
     for func in candidates:
-        pc_result = service.get_function_pseudocode(function_name=func.function_name)
-        if pc_result.success is False:
-            failed.append(func)
-            continue
-        decompiled.append(pc_result.result)
+        pc_result: Result[FunctionPseudocode] = service.get_function_pseudocode(
+            function_name=func["function_name"]
+        )
 
-    return decompiled, failed
+        if pc_result.success is False:
+            yield PseudocodeYield(success=False, result=pc_result.result)
+        else:
+            yield PseudocodeYield(success=True, result=pc_result.result["pseudocode"])
