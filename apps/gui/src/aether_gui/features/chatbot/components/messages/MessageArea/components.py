@@ -102,7 +102,6 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
         if last_widget:
             message_row = cast(MessageColumn, last_widget)
             message_row.append_last_paragraph(message)
-            self._session.append_to_last_message(message)
 
             QtCore.QTimer.singleShot(
                 0,

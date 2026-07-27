@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, Template
 
 _TEMPLATES_DIR = Path(__file__).resolve().parent / "prompts"
 
@@ -12,5 +12,5 @@ _env = Environment(
 )
 
 
-def get_template(filename: str):
+def get_template(filename: str) -> Template:
     return _env.get_template(filename)

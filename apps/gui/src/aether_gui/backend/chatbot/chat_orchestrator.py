@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable
+from concurrent.futures import Future
 from functools import wraps
 from typing import Any
 
 import ida_kernwin
 from aether_gui.runner import get_shared_worker_manager
+from aether_gui.runner.types import TaskHandle
 from aether_gui.utils.mcp import CallToolTask, MCPClient
 from aether_gui.utils.rpc_id import get_rpc_id
 from aether_utils.config import get_config
@@ -23,9 +25,10 @@ class ChatOrchestrator:
         self.chat_renderer = ChatbotAreaRenderer(chatbot_panel)
         self.function_context = None
         self.mcp_client = mcp_client
-        self.handle = None
+        self.handles: list[TaskHandle] = []
+        self.prompt: str | None = None
 
-    def _get_context(self) -> None:
+    def _get_context(self) -> Future[dict[str, Any]]:
         current_ea = ida_kernwin.get_screen_ea()
         rpc_id = get_rpc_id()
         if rpc_id is None:
@@ -35,54 +38,59 @@ class ChatOrchestrator:
         task = CallToolTask()
         worker_manager = get_shared_worker_manager()
 
-        self.handle = worker_manager.submit(
+        handle = worker_manager.submit(
             task,
             mcp_client=self.mcp_client,
             tool_name="get_function_context",
             tool_args={"rpc_id": rpc_id, "address": hex(current_ea)},
         )
+        self.handles.append(handle)
+
+        fut: Future[dict[str, Any]] = Future()
         worker_manager.consume(
-            self.handle,
-            on_event=lambda e: self._format_context(e),
+            handle,
+            on_event=lambda e: self._format_context(e, fut),
             on_error=lambda err: self._run_on_ida_ui_thread(
                 lambda: self.chat_renderer.render_error(f"Failed to get IDA context {err}")
             ),
             on_done=None,
         )
+        return fut
 
-    def _format_context(self, tool_result: CallToolResult) -> None:
+    def _format_context(self, tool_result: CallToolResult, future: Future[dict[str, Any]]) -> None:
+        if future.done():
+            return
         if (
             not tool_result.content
             or not tool_result.content[0]
             or tool_result.content[0].type != "text"
         ):
-            raise ValueError("Failed to extract text: CallToolResult contains no text data.")
-
-        tool_text = tool_result.content[0].text
-        self.function_context = json.loads(tool_text)
+            future.set_exception(ValueError("CallToolResult contains no text data"))
+            return
+        future.set_result(json.loads(tool_result.content[0].text))
 
     def submit_user_prompt(self, prompt: str) -> None:
         """Called from IDA main thread. Returns immediately."""
-        if self.function_context is None:
-            self._get_context()
+        ida_context = self._get_context()
 
-        prompt = prompt.strip()
+        self.prompt = prompt.strip()
         if not prompt:
             return
 
         worker_manager = get_shared_worker_manager()
 
         task = ChatBotTask()
-        self.handle = worker_manager.submit(
+        handle = worker_manager.submit(
             task,
-            mcp_url=config.mcp_url,
-            user_prompt=prompt,
-            ida_context=self.function_context,
+            ida_context=ida_context,
+            mcp_client=self.mcp_client,
+            user_prompt=self.prompt,
         )
+        self.handles.append(handle)
 
         handler = self._handle_worker_result()
         worker_manager.consume(
-            self.handle,
+            handle,
             on_event=lambda e: self._run_on_ida_ui_thread(lambda ev=e: handler(ev)),
             on_error=lambda err: self._run_on_ida_ui_thread(
                 lambda: self.chat_renderer.render_error(f"Stream failed: {err}")
@@ -126,6 +134,7 @@ class ChatOrchestrator:
         ida_kernwin.execute_sync(wrapper, ida_kernwin.MFF_WRITE)
 
     def shutdown(self) -> None:
-        if self.handle:
-            worker_manager = get_shared_worker_manager()
-            worker_manager.cancel(self.handle.task_id)
+        worker_manager = get_shared_worker_manager()
+        for handle in self.handles:
+            worker_manager.cancel(handle.task_id)
+        self.handles.clear()

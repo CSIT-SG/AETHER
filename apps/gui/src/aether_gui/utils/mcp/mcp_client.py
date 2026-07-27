@@ -9,6 +9,8 @@ from fastmcp import Client
 from fastmcp.client.client import CallToolResult
 from fastmcp.client.transports import StreamableHttpTransport
 
+from mcp.types import Tool
+
 config = get_config()
 
 
@@ -33,7 +35,7 @@ class MCPClient:
 
         try:
             await self._client.__aenter__()  # type: ignore[no-untyped-call]
-            self._connected = True
+            self._connected = self._client.is_connected()
             self.logger.info(f"Connected to MCP server at {self.mcp_url}")
         except Exception as e:
             self._client = None
@@ -52,6 +54,16 @@ class MCPClient:
             self._client = None
             self._connected = False
             self.logger.info("Disconnected from MCP server")
+
+    async def list_tools(self) -> list[Tool]:
+        if not self._connected:
+            await self.connect()
+        assert self._client is not None
+        try:
+            return await self._client.list_tools()
+        except Exception as e:
+            self.logger.error(f"Failed to list tools: {e}")
+            raise
 
     async def call_tool(
         self,

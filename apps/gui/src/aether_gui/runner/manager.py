@@ -8,12 +8,10 @@ from concurrent.futures import Future
 from typing import Any
 
 from .base_task import BaseTask
-from .types import TaskHandle
-
-_SENTINEL = object()
+from .types import SENTINEL, TaskHandle
 
 
-class WorkerManager[T]:
+class WorkerManager:
     def __init__(self) -> None:
         self._loop = asyncio.new_event_loop()
         self._ready = threading.Event()
@@ -27,8 +25,8 @@ class WorkerManager[T]:
         self._ready.set()
         self._loop.run_forever()
 
-    def submit(self, task: BaseTask[T], *args: Any, **kwargs: Any) -> TaskHandle:
-        handle = TaskHandle(task_id=task.id)
+    def submit[T](self, task: BaseTask[T], *args: Any, **kwargs: Any) -> TaskHandle[T]:
+        handle = TaskHandle[T](task_id=task.id)
         future = asyncio.run_coroutine_threadsafe(
             self._drive(handle, task, *args, **kwargs),
             self._loop,
@@ -36,9 +34,9 @@ class WorkerManager[T]:
         self._tasks[task.id] = (task, future)
         return handle
 
-    async def _drive(
+    async def _drive[T](
         self,
-        handle: TaskHandle,
+        handle: TaskHandle[T],
         task: BaseTask[T],
         *args: Any,
         **kwargs: Any,
@@ -54,13 +52,13 @@ class WorkerManager[T]:
             task.is_running = False
             with contextlib.suppress(Exception):
                 await task.close()
-            handle.results.put(_SENTINEL)
+            handle.results.put(SENTINEL)
             handle.done.set()
             self._tasks.pop(handle.task_id, None)
 
-    def consume(
+    def consume[T](
         self,
-        handle: TaskHandle,
+        handle: TaskHandle[T],
         on_event: Callable[[T], None],
         on_error: Callable[[BaseException], None] | None = None,
         on_done: Callable[[], None] | None = None,
@@ -73,7 +71,7 @@ class WorkerManager[T]:
 
         def _consume() -> None:
             try:
-                for item in iter(handle.results.get, _SENTINEL):
+                while (item := handle.results.get()) is not SENTINEL:
                     on_event(item)
             except BaseException as e:
                 if on_error:
