@@ -6,7 +6,6 @@ from aether_utils.config import get_config
 from fastmcp.tools import tool
 from mcp.types import ToolAnnotations
 
-from .collect_pseudocode import collect_pseudocode
 from .constants import TIMEOUT_SECONDS
 
 config = get_config()
@@ -24,9 +23,4 @@ async def index_functions(
 ) -> Program:
 
     svc = await get_rpc_service(rpc_id)
-    async for pseudocode_yield in collect_pseudocode(svc):
-        # await asyncio.sleep(0.01)
-        if pseudocode_yield.success:
-            yield Log(f"Successfully retrieved pseudocode:\n{pseudocode_yield.result}")
-        else:
-            yield Log(f"Failed to retrieve pseudocode: {pseudocode_yield.result}")
+    yield Log(f"Using RPC service {rpc_id} at {svc.port} for indexing functions.")
