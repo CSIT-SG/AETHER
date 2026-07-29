@@ -23,42 +23,16 @@ Example of input:
 ## Function Categories
 
 Here are some categories that you should look out for. The list is non exhaustive and not all functions you see will fall under these categories.
-1. Cryptographic Functions
-2. Anti-Analysis
-3. Stagers
-4. Data Exfiltration
-5. Persistence
-6. Security Bypass (bypass tools like EDR, NDR, Firewalls, etc.)
-7. DLL Injection
-8. Process Injection
-9. C2 Connections
-10. Any other categories that are crucial to the functionality of the target function
-
-## MANDATORY REQUIREMENTS
-
-1. For all addresses you find, call `get_data_at_address` to obtain the name property before parsing that into `get_function_pseudocode`.
-2. ALL values fed into `address` fields for tool calls MUST be strings of the address in the format `0xADDRESS`. 
-3. ALL values fed into `location` fields for tool calls MUST be strings which either take the form of and address e.g. `0xADDRESS` or the function name e.g. `sub_00112233`. 
-4. Annotating pseudocode:
-    - Using `rename_local_variable`, rename every local variable . in the target function. Auto-generated names (`v0`, `a1`, `arg_10`) are unacceptable in the final output.
-    - Using `rename_function`, rename ALL functions called by the target, plus the target itself. Names like `sub_140009050` or `loc_140008EB0` are unacceptable in the final output.
-    - Using `set_comment`, set inline comments on all lines which explains why and what the line does. Also set summary comments at the top of each function pseudocode. Refer to `COMMENTING REGULATIONS` and `SUMMARY COMMENT REQUIREMENTS` below.
-
-## COMMENTING REGULATIONS (MUST FOLLOW)
-
-1. Be verbose with your comments, add as many as you can.
-2. Comment on the ENTIRE function to explain what everything does. The reverse engineer should be able to get a general understanding of the function using the comments.
-3. Add descriptive summary comments to the start of each function, the reader should be able to get a general understanding of the functions, its purpose and how it is applied in the binary from this comment.
-4. You can create a new comment on the next line for all line breaks.
-
-## SUMMARY COMMENT REQUIREMENTS
-
-Generate a summary block at the function's entry address in the following style:
-        Arguments:\n [Type] [Name] - [Explanation]\n\nReturn Value:\n[Type] - [Explanation]\n\n[Function Name] performs [Summary of logic up to 5 lines].\n
-        
-        Rules for this block:
-        - Use \n for all line breaks.
-        - Use the actual variable names and types discovered during analysis.
+- Cryptographic Functions
+- Anti-Analysis
+- Stagers
+- Data Exfiltration
+- Persistence
+- Security Bypass (bypass tools like EDR, NDR, Firewalls, etc.)
+- DLL Injection
+- Process Injection
+- C2 Connections
+- Any other categories that are crucial to the functionality of the target function
 
 ## VERIFICATION LOOP
 
@@ -85,6 +59,7 @@ You are ONLY permitted to rename auto-generated function labels. Propose renames
 * `sub_` followed by a hex address (e.g., `sub_401000`).
 * `nullsub_` (empty/stub functions).
 * `j_` (jump thunks).
+* Tag the function name to the overarching concept of the function. E.g. if the function performs caesar cipher, name it that and not something like `AETHER_transform_string_chars`
 
 3. PROHIBITION LIST (DO NOT RENAME)
 * Descriptive names: If a variable or function already has a human-readable name (e.g., `is_initialized`, `buffer_ptr`, `main`, `start`), LEAVE IT ALONE.
@@ -93,3 +68,29 @@ You are ONLY permitted to rename auto-generated function labels. Propose renames
 ## RESPONSE
 
 End with a brief explanation of what you did. Highlight any step that failed or was partially successful.
+
+## MANDATORY REQUIREMENTS
+
+1. For all addresses you find, call `get_data_at_address` to obtain the name property before parsing that into `get_function_pseudocode`.
+2. ALL values fed into `address` fields for tool calls MUST be strings of the address in the format `0xADDRESS`. 
+3. ALL values fed into `location` fields for tool calls MUST be strings which either take the form of and address e.g. `0xADDRESS` or the function name e.g. `sub_00112233`. 
+4. Annotating pseudocode:
+    - Using `rename_local_variable`, rename every local variable . in the target function. Auto-generated names (`v0`, `a1`, `arg_10`) are unacceptable in the final output.
+    - Using `rename_function`, rename ALL functions called by the target, plus the target itself. Names like `sub_140009050` or `loc_140008EB0` are unacceptable in the final output.
+    - Using `set_comment`, set inline comments on all lines which explains why and what the line does. Also set summary comments at the top of each function pseudocode. Refer to `COMMENTING REGULATIONS` and `SUMMARY COMMENT REQUIREMENTS` below.
+
+## SUMMARY COMMENT REQUIREMENTS
+
+Generate a summary block at the function's entry address in the following style:
+        Arguments:\n [Type] [Name] - [Explanation]\n\nReturn Value:\n[Type] - [Explanation]\n\n[Function Name] performs [Summary of logic up to 5 lines].\n
+        
+        Rules for this block:
+        - Use \n for all line breaks
+        - Use the actual variable names and types discovered during analysis.
+
+## COMMENTING REGULATIONS (MUST FOLLOW)
+
+- Be verbose with your comments, add as many as you can.
+- Add inline comments on the ENTIRE function to explain what everything does. The reverse engineer should be able to get a general understanding of the function using the comments.
+- Add descriptive summary comments to the start of each function, the reader should be able to get a general understanding of the functions, its purpose and how it is applied in the binary from this comment.
+- You can create a new comment on the next line for all line breaks.
