@@ -60,7 +60,7 @@ class ChatbotPanel(StyledComponent):  # type: ignore[misc]
         """Display User Entered Message on MessageArea Widget"""
         message_area = cast(MessageArea, self._message_area)
         message_area.add_new_message_column(
-            user_input, str(uuid4()), datetime.now(), MessageRole.USER
+            message=user_input, id=str(uuid4()), timestamp=datetime.now(), role=MessageRole.USER
         )
 
         # Backend message handling logic goes here

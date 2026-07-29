@@ -113,7 +113,9 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
             return
 
         for msg in self._session.messages:
-            self.add_new_message_column(msg.content, msg.id, msg.timestamp, msg.role)
+            self.add_new_message_column(
+                message=msg.content, id=msg.id, timestamp=msg.timestamp, role=msg.role
+            )
 
     def _get_last_widget(self) -> QWidget | None:
         if not self._messages_layout:
