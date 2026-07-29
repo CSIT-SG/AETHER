@@ -4,12 +4,12 @@ from typing import Any, cast
 from uuid import uuid4
 
 from aether_gui.backend.chatbot import ChatOrchestrator
+from aether_gui.utils.chat_session import ChatSession
 from aether_gui.utils.mcp import MCPClient
 from aether_gui.utils.ui import StyledComponent
 from PySide6 import QtCore, QtWidgets
 
 from ..chat_input import ChatInput
-from ..chat_session import ChatSession
 from ..messages.MessageArea import MessageArea
 from ..messages.Messages import MessageRole
 
@@ -50,14 +50,18 @@ class ChatbotPanel(StyledComponent):  # type: ignore[misc]
         self._layout_container = layout
         self._message_area = message_area
         self._chat_input = chat_input
-        self.chat_orchestrator = ChatOrchestrator(self._message_area, self.mcp_client)
+        self.chat_orchestrator = ChatOrchestrator(
+            self._message_area, self.mcp_client, self._session
+        )
 
         self._message_area.load_message_history()
 
     def _on_message_submitted(self, user_input: str) -> None:
         """Display User Entered Message on MessageArea Widget"""
         message_area = cast(MessageArea, self._message_area)
-        message_area.add_new_message_row(user_input, str(uuid4()), datetime.now(), MessageRole.USER)
+        message_area.add_new_message_column(
+            user_input, str(uuid4()), datetime.now(), MessageRole.USER
+        )
 
         # Backend message handling logic goes here
         ### TESTING ###

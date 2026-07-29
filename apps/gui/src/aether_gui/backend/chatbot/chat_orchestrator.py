@@ -9,6 +9,7 @@ from typing import Any
 import ida_kernwin
 from aether_gui.runner import get_shared_worker_manager
 from aether_gui.runner.types import TaskHandle
+from aether_gui.utils.chat_session import ChatSession
 from aether_gui.utils.mcp import CallToolTask, MCPClient
 from aether_gui.utils.rpc_id import get_rpc_id
 from aether_utils.config import get_config
@@ -21,12 +22,15 @@ config = get_config()
 
 
 class ChatOrchestrator:
-    def __init__(self, chatbot_panel: ChatAreaProtocol, mcp_client: MCPClient) -> None:
+    def __init__(
+        self, chatbot_panel: ChatAreaProtocol, mcp_client: MCPClient, session: ChatSession
+    ) -> None:
         self.chat_renderer = ChatbotAreaRenderer(chatbot_panel)
         self.function_context = None
         self.mcp_client = mcp_client
         self.handles: list[TaskHandle] = []
         self.prompt: str | None = None
+        self.session = session
 
     def _get_context(self) -> Future[dict[str, Any]]:
         current_ea = ida_kernwin.get_screen_ea()
@@ -85,6 +89,7 @@ class ChatOrchestrator:
             ida_context=ida_context,
             mcp_client=self.mcp_client,
             user_prompt=self.prompt,
+            session=self.session,
         )
         self.handles.append(handle)
 

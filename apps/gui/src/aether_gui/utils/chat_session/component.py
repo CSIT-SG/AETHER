@@ -1,9 +1,11 @@
-from ..messages.Messages import Message
+from aether_gui.features.chatbot.components.messages.Messages import Message
+from aether_utils.compacting_session import CompactingSession, get_compacting_agent
 
 
 class ChatSession:
     def __init__(self) -> None:
         self.messages: list[Message] = []
+        self.chat_session = CompactingSession(summarizer=get_compacting_agent())
 
     def add_message(self, msg: Message) -> None:
         self.messages.append(msg)

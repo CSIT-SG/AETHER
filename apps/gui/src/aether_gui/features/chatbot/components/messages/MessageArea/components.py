@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, cast
 from uuid import uuid4
 
-from aether_gui.features.chatbot.components.chat_session import ChatSession
+from aether_gui.utils.chat_session import ChatSession
 from aether_gui.utils.ui import StyledComponent
 from PySide6 import QtCore
 from PySide6.QtWidgets import QFrame, QScrollArea, QVBoxLayout, QWidget
@@ -59,10 +59,10 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
         self._messages_container = messages_container
         self._messages_layout = messages_layout
 
-    def add_new_message_row(
+    def add_new_message_column(
         self, message: str, id: str, timestamp: datetime, role: MessageRole
     ) -> None:
-        """Creates new message row"""
+        """Creates new message column"""
         message_data = Message(id=id, role=role, content=message, timestamp=timestamp)
         card = MessageColumn(message_data, self)
         messages_layout = cast(QVBoxLayout, self._messages_layout)
@@ -78,16 +78,16 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
                 return
         self._session.add_message(message_data)
 
-    def add_paragraph_to_last_row(self, message: str, role: MessageRole) -> None:
-        """Add a new paragraph to the last message row."""
+    def add_paragraph_to_last_column(self, message: str, role: MessageRole) -> None:
+        """Add a new paragraph to the last message column."""
         last_widget = self._get_last_widget()
 
         if last_widget:
             message_data = Message(
                 id=str(uuid4()), role=role, content=message, timestamp=datetime.now()
             )
-            message_row = cast(MessageColumn, last_widget)
-            message_row.add_new_paragraph(message_data)
+            message_column = cast(MessageColumn, last_widget)
+            message_column.add_new_paragraph(message_data)
             self._session.append_to_last_message("\n\n" + message_data.content)
 
             QtCore.QTimer.singleShot(
@@ -95,13 +95,13 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
                 self.scroll_to_bottom,
             )
 
-    def append_to_last_paragraph_of_last_row(self, message: str) -> None:
-        """Append text to the last paragraph of the last message row."""
+    def append_to_last_paragraph_of_last_column(self, message: str) -> None:
+        """Append text to the last paragraph of the last message column."""
         last_widget = self._get_last_widget()
 
         if last_widget:
-            message_row = cast(MessageColumn, last_widget)
-            message_row.append_last_paragraph(message)
+            message_column = cast(MessageColumn, last_widget)
+            message_column.append_last_paragraph(message)
 
             QtCore.QTimer.singleShot(
                 0,
@@ -113,7 +113,7 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
             return
 
         for msg in self._session.messages:
-            self.add_new_message_row(msg.content, msg.id, msg.timestamp, msg.role)
+            self.add_new_message_column(msg.content, msg.id, msg.timestamp, msg.role)
 
     def _get_last_widget(self) -> QWidget | None:
         if not self._messages_layout:

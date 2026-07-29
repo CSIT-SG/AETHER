@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from aether_gui.runner import BaseTask
+from aether_gui.utils.chat_session import ChatSession
 from aether_gui.utils.mcp import MCPClient
 from aether_gui.utils.rpc_id import get_rpc_id
 from aether_utils.api_client import OpenAIGateway
@@ -33,6 +34,7 @@ class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
         ida_context: Future[dict[str, Any]],
         mcp_client: MCPClient,
         user_prompt: str,
+        session: ChatSession,
     ) -> AsyncIterator[LLMResponse]:
         ctx = await asyncio.wait_for(asyncio.wrap_future(ida_context), timeout=30)
         template = get_template(USER_PROMPT_TEMPLATE.name)
@@ -51,8 +53,9 @@ class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
                 instructions=system_prompt,
                 tools=tools,
             )
-
-            self._result = Runner.run_streamed(agent, input=user_prompt, max_turns=None)
+            self._result = Runner.run_streamed(
+                agent, input=user_prompt, max_turns=None, session=session.chat_session
+            )
 
             async for event in self._result.stream_events():
                 if event.type == "raw_response_event":

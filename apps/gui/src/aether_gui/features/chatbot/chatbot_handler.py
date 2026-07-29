@@ -6,7 +6,7 @@ from aether_gui.features.chatbot.components import (
     ChatbotPanel,
     create_chatbot_panel,
 )
-from aether_gui.features.chatbot.components.chat_session import ChatSession
+from aether_gui.utils.chat_session import ChatSession
 from aether_gui.utils.mcp import MCPClient
 from aether_utils.logger import get_logger
 from PySide6 import QtWidgets
