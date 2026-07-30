@@ -1,3 +1,4 @@
+import copy
 from datetime import datetime
 from pathlib import Path
 from typing import Any, cast
@@ -76,7 +77,7 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
         for data in self._session.messages:
             if data.id == id:
                 return
-        self._session.add_message(message_data)
+        self._session.add_message(copy.copy(message_data))
 
     def add_paragraph_to_last_column(self, message: str, role: MessageRole) -> None:
         """Add a new paragraph to the last message column."""
@@ -107,6 +108,8 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
                 0,
                 self.scroll_to_bottom,
             )
+
+        self._session.append_to_last_message(message)
 
     def load_message_history(self) -> None:
         if not self._session.messages:

@@ -57,6 +57,7 @@ class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
                 agent, input=user_prompt, max_turns=None, session=session.chat_session
             )
 
+            # No touchy touchy
             async for event in self._result.stream_events():
                 if event.type == "raw_response_event":
                     raw = event.data
@@ -79,6 +80,7 @@ class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
                                 output=str(item.output),
                                 call_id=item.call_id or "",
                             )
+            # No touchy touchy end
         finally:
             await self._cleanup()
 

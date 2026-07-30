@@ -1,4 +1,4 @@
-from typing import cast
+from typing import Any, Literal, cast
 
 import ida_kernwin
 from aether_gui.utils.ui import get_shared_font_manager
@@ -6,11 +6,11 @@ from PySide6 import QtWidgets
 from shiboken6 import wrapInstance
 
 
-class SetFontHandler(ida_kernwin.action_handler_t):
-    def __init__(self):
+class SetFontHandler(ida_kernwin.action_handler_t):  # type: ignore[misc]
+    def __init__(self) -> None:
         super().__init__()
 
-    def activate(self, ctx) -> int:  # type: ignore[override]
+    def activate(self, ctx: Any) -> Literal[0]:
         cur = ida_kernwin.get_current_widget()
         if cur is None:
             return 0
@@ -28,5 +28,5 @@ class SetFontHandler(ida_kernwin.action_handler_t):
 
         return 0
 
-    def update(self, ctx) -> int:  # type: ignore[overrride]
-        return ida_kernwin.AST_ENABLE_ALWAYS
+    def update(self, ctx: Any) -> int:
+        return int(ida_kernwin.AST_ENABLE_ALWAYS)
