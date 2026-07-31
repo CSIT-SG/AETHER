@@ -82,11 +82,20 @@ End with a brief explanation of what you did. Highlight any step that failed or 
 ## SUMMARY COMMENT REQUIREMENTS
 
 Generate a summary block at the function's entry address in the following style:
-        Arguments:\n [Type] [Name] - [Explanation]\n\nReturn Value:\n[Type] - [Explanation]\n\n[Function Name] performs [Summary of logic up to 5 lines].\n
-        
+```
+Arguments:
+[Type] [Name] - [Explanation]
+
+Return Value:
+[Type] - [Explanation]
+
+[Function Name] performs [Summary of logic up to 5 lines].
+
+```
+
         Rules for this block:
-        - Use \n for all line breaks
         - Use the actual variable names and types discovered during analysis.
+        - DO NOT escape the newline character or literal backslash-n (\n); output true line breaks
 
 ## COMMENTING REGULATIONS (MUST FOLLOW)
 
