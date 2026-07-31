@@ -4,11 +4,10 @@ import asyncio
 import contextlib
 import threading
 from collections.abc import Callable
-from concurrent.futures import Future
 from typing import Any
 
 from .base_task import BaseTask
-from .types import SENTINEL, TaskHandle
+from .types import SENTINEL, TaskHandle, TaskRecord
 
 
 class WorkerManager:
@@ -18,7 +17,7 @@ class WorkerManager:
         self._thread = threading.Thread(target=self._run_loop, daemon=True)
         self._thread.start()
         self._ready.wait()
-        self._tasks: dict[str, tuple[BaseTask[Any], Future[None]]] = {}
+        self._tasks: dict[str, TaskRecord] = {}
 
     def _run_loop(self) -> None:
         asyncio.set_event_loop(self._loop)
@@ -31,7 +30,7 @@ class WorkerManager:
             self._drive(handle, task, *args, **kwargs),
             self._loop,
         )
-        self._tasks[task.id] = (task, future)
+        self._tasks[task.id] = TaskRecord(task, future, handle)
         return handle
 
     async def _drive[T](
@@ -41,6 +40,7 @@ class WorkerManager:
         *args: Any,
         **kwargs: Any,
     ) -> None:
+        handle.aio_task = asyncio.current_task()
         task.is_running = True
         try:
             async for item in task.run(*args, **kwargs):
@@ -83,6 +83,8 @@ class WorkerManager:
                 if on_done:
                     on_done()
 
+        # Resources are automatically cleaned up
+        # I think
         threading.Thread(
             target=_consume,
             daemon=True,
@@ -94,7 +96,7 @@ class WorkerManager:
         if task_data is None:
             return
 
-        task, future = task_data
+        task, future, handle = task_data
         if not task.is_running or task.has_failed:
             return
 
@@ -102,16 +104,14 @@ class WorkerManager:
             return
 
         with contextlib.suppress(Exception):
-            asyncio.run_coroutine_threadsafe(task.close(), self._loop).result()
+            asyncio.run_coroutine_threadsafe(task.close(), self._loop).result(timeout=5)
+
+        if handle.aio_task is not None:
+            self._loop.call_soon_threadsafe(handle.aio_task.cancel)
         future.cancel()
 
     def shutdown(self) -> None:
-        for task, future in list(self._tasks.values()):
-            if task.is_running and not task.has_failed:
-                with contextlib.suppress(Exception):
-                    asyncio.run_coroutine_threadsafe(task.close(), self._loop).result()
-
-            if not future.done():
-                future.cancel()
+        for task_id in self._tasks:
+            self.cancel(task_id)
         self._loop.call_soon_threadsafe(self._loop.stop)
         self._thread.join(timeout=5)
