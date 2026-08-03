@@ -7,7 +7,8 @@ from aether_backend.forwarded_rpc import (
     get_local_variables,
     rename_function,
     rename_local_variable,
-    set_comment,
+    set_inline_comment,
+    set_summary_comment,
 )
 from aether_backend.utils.effect import Log, Program, Return
 from aether_backend.utils.subagent import (
@@ -47,7 +48,8 @@ async def annotate(service: Any, funcs: FunctionTreeResult, custom_prompt: str |
                     get_function_pseudocode,
                     get_local_variables,
                     rename_function,
-                    set_comment,
+                    set_inline_comment,
+                    set_summary_comment,
                     rename_local_variable,
                 ],
             )

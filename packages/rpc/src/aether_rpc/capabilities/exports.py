@@ -22,4 +22,6 @@ EXPORTS: dict[str, str] = {
     "ValidateYaraRule": ".validate_yara_rule",
     "GetBinaryMetadata": ".get_binary_metadata",
     "ListFunctions": ".list_functions",
+    "SetInlineComment": ".set_inline_comment",
+    "SetSummaryComment": ".set_summary_comment",
 }

@@ -12,7 +12,8 @@ Use ALL the tools in tandem to produce an easily readable pseudocode view, incre
 - Annotating pseudocode:
     - Using `rename_local_variable`, rename every local variable . in the target function. Auto-generated names (`v0`, `a1`, `arg_10`) are unacceptable in the final output.
     - Using `rename_function`, rename ALL functions called by the target, plus the target itself. Names like `sub_140009050` or `loc_140008EB0` are unacceptable in the final output.
-    - Using `set_comment`, set inline comments on all lines which explains why and what the line does. Also set summary comments at the top of each function pseudocode. Refer to `COMMENTING REGULATIONS` and `SUMMARY COMMENT REQUIREMENTS` below.
+    - Using `set_inline_comment`, set inline comments on all lines which explains why and what the line does. Refer to `COMMENTING REGULATIONS` and `SUMMARY COMMENT REQUIREMENTS` 
+    - Using `set_summary_comment` set summary comments at the top of each function pseudocode. Refer to `COMMENTING REGULATIONS` and `SUMMARY COMMENT REQUIREMENTS` below.
 
 ## RESPONSE
 

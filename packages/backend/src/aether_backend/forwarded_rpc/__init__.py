@@ -7,6 +7,8 @@ from .get_xrefs_to import get_xrefs_to
 from .rename_function import rename_function
 from .rename_local_variable import rename_local_variable
 from .set_comment import set_comment
+from .set_inline_comment import set_inline_comment
+from .set_summary_comment import set_summary_comment
 from .validate_yara_rule import validate_yara_rule
 
 __all__ = [
@@ -20,4 +22,6 @@ __all__ = [
     "get_functions_called_recursively",
     "validate_yara_rule",
     "get_binary_metadata",
+    "set_inline_comment",
+    "set_summary_comment",
 ]
