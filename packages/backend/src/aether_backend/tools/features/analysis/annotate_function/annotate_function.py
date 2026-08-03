@@ -4,6 +4,7 @@ from typing import Any
 from aether_backend.forwarded_rpc import (
     get_data_at_address,
     get_function_pseudocode,
+    get_local_variables,
     rename_function,
     rename_local_variable,
     set_comment,
@@ -44,6 +45,7 @@ async def annotate(service: Any, funcs: FunctionTreeResult, custom_prompt: str |
                 [
                     get_data_at_address,
                     get_function_pseudocode,
+                    get_local_variables,
                     rename_function,
                     set_comment,
                     rename_local_variable,
@@ -79,5 +81,8 @@ async def annotate(service: Any, funcs: FunctionTreeResult, custom_prompt: str |
     try:
         for address in addresses:
             service.refresh_pseudocode(function_address=address)
+        service.refresh_pseudocode(function_address=base_addr)
     except Exception as e:
         yield Return(e)
+
+    yield Return(result.final_output)
