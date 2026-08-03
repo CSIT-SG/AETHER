@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Any, cast
 
 from aether_gui.utils.ui import FontPlugin, StyledComponent
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QApplication,
@@ -71,12 +72,12 @@ class MessageColumn(StyledComponent):  # type: ignore[misc]
         match self._last_message_data.role:
             case MessageRole.USER:
                 header_layout.addStretch()
-                header_layout.addWidget(name_label)
-                header_layout.addWidget(time_label)
+                header_layout.addWidget(name_label, 0, Qt.AlignmentFlag.AlignVCenter)
+                header_layout.addWidget(time_label, 0, Qt.AlignmentFlag.AlignVCenter)
 
             case MessageRole.AETHER:
-                header_layout.addWidget(name_label)
-                header_layout.addWidget(time_label)
+                header_layout.addWidget(name_label, 0, Qt.AlignmentFlag.AlignVCenter)
+                header_layout.addWidget(time_label, 0, Qt.AlignmentFlag.AlignVCenter)
                 header_layout.addStretch()
             case _:
                 name_label = QLabel("Unknown")

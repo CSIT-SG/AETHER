@@ -91,11 +91,6 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
             message_column.add_new_paragraph(message_data)
             self._session.append_to_last_message("\n\n" + message_data.content)
 
-            QtCore.QTimer.singleShot(
-                0,
-                self.scroll_to_bottom,
-            )
-
     def append_to_last_paragraph_of_last_column(self, message: str) -> None:
         """Append text to the last paragraph of the last message column."""
         last_widget = self._get_last_widget()
@@ -103,11 +98,6 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
         if last_widget:
             message_column = cast(MessageColumn, last_widget)
             message_column.append_last_paragraph(message)
-
-            QtCore.QTimer.singleShot(
-                0,
-                self.scroll_to_bottom,
-            )
 
         self._session.append_to_last_message(message)
 
@@ -130,13 +120,9 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
 
         return layout.widget()
 
-    # FIX: Scrollbar doesn't work yet
-    def scroll_to_bottom(self, min_val: int, max_val: int) -> None:
+    def scroll_to_bottom(self) -> None:
         scrollbar = cast(QScrollArea, self._scroll_area).verticalScrollBar()
-
-        # Scroll to bottom only if user is already close to bottom
-        if scrollbar.value() >= max_val - 50:
-            scrollbar.setValue(max_val)
+        scrollbar.setValue(scrollbar.maximum())
 
     def style_file(self) -> Path | None:
         return Path(__file__).resolve().parent / "styles.qss.jinja"

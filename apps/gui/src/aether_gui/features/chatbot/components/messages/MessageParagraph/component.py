@@ -28,7 +28,7 @@ class MessageParagraph(StyledComponent):  # type: ignore[misc]
         """Pair QTextBrowser and markdown to render content in markdown format"""
         # Layout
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(12, 0, 12, 0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
         # Markdown rendering Browser

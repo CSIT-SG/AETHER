@@ -1,3 +1,3 @@
-from .components import MessageParagraph
+from .component import MessageParagraph
 
 __all__ = ["MessageParagraph"]
