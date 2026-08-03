@@ -116,4 +116,5 @@ class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
             description=tool.description or "",
             params_json_schema=tool.inputSchema,
             on_invoke_tool=on_invoke,
+            strict_json_schema=False,
         )
