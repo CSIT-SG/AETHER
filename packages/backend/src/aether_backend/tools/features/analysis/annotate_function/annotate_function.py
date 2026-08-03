@@ -4,7 +4,6 @@ from typing import Any
 from aether_backend.forwarded_rpc import (
     get_data_at_address,
     get_function_pseudocode,
-    get_local_variables,
     rename_function,
     rename_local_variable,
     set_comment,
@@ -14,7 +13,6 @@ from aether_backend.utils.subagent import (
     SubagentToolDependencies,
     build_subagent_tool,
 )
-from aether_backend.utils.validation import HexAddress
 from aether_rpc.capabilities.types import FunctionTreeResult
 from aether_utils.api_client import (
     OpenAIGateway,
@@ -30,9 +28,9 @@ SYSTEM_PROMPT = get_content(Path(__file__).parent, "annotate_function_prompt.md"
 config = get_config()
 
 
-async def annotate(
-    service: Any, base_addr: HexAddress, funcs: FunctionTreeResult, custom_prompt: str | None
-) -> Program:
+async def annotate(service: Any, funcs: FunctionTreeResult, custom_prompt: str | None) -> Program:
+    base_addr = funcs["root"]["address"]
+    addresses = iter_addresses(funcs["root"])
     agent = Agent(
         name="Annotator",
         model=OpenAIGateway().get_model(
@@ -46,7 +44,6 @@ async def annotate(
                 [
                     get_data_at_address,
                     get_function_pseudocode,
-                    get_local_variables,
                     rename_function,
                     set_comment,
                     rename_local_variable,
@@ -78,6 +75,15 @@ async def annotate(
 
         elif run_item.type == "tool_call_output_item":
             yield Log(str(run_item.output))
+
+    try:
+        for address in addresses:
+            service.refresh_pseudocode(function_address=address)
+    except Exception as e:
+        yield Return(e)
+
+
+"""
     try:
         addresses: set[str] = set(iter_addresses(funcs["root"]))
         for address in addresses:
@@ -86,3 +92,4 @@ async def annotate(
     except Exception as e:
         yield Return(e)
     yield Return(result.final_output)
+    """

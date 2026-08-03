@@ -62,7 +62,7 @@ class GetFunctionPseudocode(Capability):
                     addr_str = hex(line_ea)
 
             line_text = ida_lines.tag_remove(sl.line)
-            rendered_lines.append(f"{addr_str.ljust(12)} {line_text}")
+            rendered_lines.append(f"{addr_str.ljust(12)}: {line_text}")
 
         pseudocode_text = "\n".join(rendered_lines)
 

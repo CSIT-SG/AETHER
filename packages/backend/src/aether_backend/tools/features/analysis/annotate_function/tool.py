@@ -48,5 +48,5 @@ async def annotate_function(
 
     funcs = await manually_gather(svc, address)
     yield Log(f"Found {funcs['count']} interesting child functions for {address}.")
-    async for effect in annotate(svc, address, funcs, custom_prompt):
+    async for effect in annotate(svc, funcs, custom_prompt):
         yield effect
