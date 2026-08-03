@@ -7,6 +7,7 @@ from aether_gui.features.chatbot.components import (
     create_chatbot_panel,
 )
 from aether_gui.utils.chat_session import ChatSession
+from aether_gui.utils.constants import WINDOW_PREFIX
 from aether_gui.utils.mcp import MCPClient
 from aether_utils.logger import get_logger
 from PySide6 import QtWidgets
@@ -41,7 +42,7 @@ class ChatbotPanelForm(ida_kernwin.PluginForm):
 class ChatbotHandler(ida_kernwin.action_handler_t):
     def __init__(self, mcp_client: MCPClient) -> None:
         ida_kernwin.action_handler_t.__init__(self)
-        self.panel_title = "AETHER ChatBot"
+        self.panel_title = f"{WINDOW_PREFIX} Chatbot"
         self.session = ChatSession()
         self.mcp_client = mcp_client
 

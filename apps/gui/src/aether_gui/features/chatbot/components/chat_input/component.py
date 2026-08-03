@@ -36,7 +36,6 @@ class ChatInput(StyledComponent):  # type: ignore[misc]
 
         textbox.setAcceptRichText(True)
 
-        textbox.setMinimumHeight(40)
         textbox.setMaximumHeight(120)
         textbox.setSizePolicy(
             QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Minimum
@@ -72,10 +71,18 @@ class ChatInput(StyledComponent):  # type: ignore[misc]
     def _adjust_height(self) -> None:
         textbox = cast(QtWidgets.QTextEdit, self._textbox)
 
-        document_height = textbox.document().documentLayout().documentSize().height()
+        # Set the text width to the width of the viewport to ensure proper wrapping
+        textbox.document().setTextWidth(textbox.viewport().width())
 
-        height = min(max(40, int(document_height + 10)), 120)
+        doc_height = textbox.document().documentLayout().documentSize().height()
 
+        margins = textbox.contentsMargins()
+        frame = 2 * textbox.frameWidth()
+        vpadding = margins.top() + margins.bottom() + frame
+
+        min_height = textbox.fontMetrics().lineSpacing() + vpadding + 12
+
+        height = min(max(min_height, int(doc_height + vpadding + 4)), 120)
         textbox.setFixedHeight(height)
 
     def _submit(self) -> None:
