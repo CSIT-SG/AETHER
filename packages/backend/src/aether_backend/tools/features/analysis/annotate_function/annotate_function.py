@@ -81,15 +81,3 @@ async def annotate(service: Any, funcs: FunctionTreeResult, custom_prompt: str |
             service.refresh_pseudocode(function_address=address)
     except Exception as e:
         yield Return(e)
-
-
-"""
-    try:
-        addresses: set[str] = set(iter_addresses(funcs["root"]))
-        for address in addresses:
-            service.refresh_pseudocode(function_address=address)
-        service.refresh_pseudocode(function_address=base_addr)
-    except Exception as e:
-        yield Return(e)
-    yield Return(result.final_output)
-    """
