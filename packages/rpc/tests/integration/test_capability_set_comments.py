@@ -11,7 +11,7 @@ class TestSetComment:
         # Assert comment set at function header (start_ea)
         data = ida_client.root.get_function_by_name(function_name="foo_comment")
         start_addr = data.result["start_address"]
-        success = ida_client.root.set_comment(address=f"{start_addr}", comment="balls")
+        success = ida_client.root.set_summary_comment(address=f"{start_addr}", comment="balls")
 
         assert success.success is True
 
@@ -27,7 +27,9 @@ class TestSetComment:
         start_addr = data.result["start_address"]
         end_addr = data.result["end_address"]
         middle_addr = int(start_addr, 16) + ((int(end_addr, 16) - int(start_addr, 16)) / 2)
-        success = ida_client.root.set_comment(address=f"{middle_addr}", comment="smth like this")
+        success = ida_client.root.set_inline_comment(
+            address=f"{middle_addr}", comment="smth like this"
+        )
 
         assert success.success is True
 

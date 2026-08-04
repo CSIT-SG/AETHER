@@ -9,7 +9,6 @@ EXPORTS: dict[str, str] = {
     "GetXrefsTo": ".get_xrefs_to",
     "RenameFunction": ".rename_function",
     "RenameLocalVariable": ".rename_local_variable",
-    "SetComment": ".set_comment",
     "ExecuteIDAPython": ".execute_idapython",
     "RefreshPseudocode": ".refresh_pseudocode",
     "TakeSnapshot": ".take_snapshot",

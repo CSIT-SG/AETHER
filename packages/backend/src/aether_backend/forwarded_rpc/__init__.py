@@ -6,7 +6,6 @@ from .get_local_variables import get_local_variables
 from .get_xrefs_to import get_xrefs_to
 from .rename_function import rename_function
 from .rename_local_variable import rename_local_variable
-from .set_comment import set_comment
 from .set_inline_comment import set_inline_comment
 from .set_summary_comment import set_summary_comment
 from .validate_yara_rule import validate_yara_rule
@@ -16,7 +15,6 @@ __all__ = [
     "get_function_pseudocode",
     "get_local_variables",
     "rename_function",
-    "set_comment",
     "rename_local_variable",
     "get_xrefs_to",
     "get_functions_called_recursively",
