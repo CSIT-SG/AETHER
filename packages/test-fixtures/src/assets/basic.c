@@ -1,6 +1,39 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(_WIN32)
+  #define SECTION_ATTR __declspec(allocate(".text"))
+#else
+  #define SECTION_ATTR __attribute__((section(".text")))
+#endif
+
+#if defined(_WIN32)
+
+SECTION_ATTR
+__declspec(noinline)
+unsigned char test_shellcode[] = {
+    0x90, 0x90, 0x90, 0x90,
+    0xC3
+};
+
+#else
+
+__attribute__((used))
+__attribute__((retain))
+
+SECTION_ATTR
+unsigned char test_shellcode[] = {
+    0x90, 0x90, 0x90, 0x90,
+    0xC3
+};
+
+#endif
+
+void run_test_shellcode(void) {
+    void (*volatile f)(void) = (void (*)(void))test_shellcode;
+    f();
+}
+
 typedef struct node {
     int a;
     char *b;
@@ -88,6 +121,7 @@ int main() {
     pool *p = baz_pool(4);
     qux_fill(p);
     zap_free(p);
+    run_test_shellcode();
     return 0;
 }
 
