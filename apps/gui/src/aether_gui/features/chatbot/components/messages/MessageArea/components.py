@@ -7,7 +7,7 @@ from uuid import uuid4
 from aether_gui.utils.chat_session import ChatSession
 from aether_gui.utils.ui import StyledComponent
 from PySide6 import QtCore
-from PySide6.QtWidgets import QFrame, QScrollArea, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QFrame, QLabel, QScrollArea, QStackedWidget, QVBoxLayout, QWidget
 
 from ..MessageColumn import MessageColumn
 from ..Messages import Message, MessageRole
@@ -24,41 +24,58 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
         self._scroll_area: QScrollArea | None = None
         self._messages_container: QWidget | None = None
         self._messages_layout: QVBoxLayout | None = None
+        self._stack: QStackedWidget | None = None
+        self._empty_state: QWidget | None = None
 
     def init_ui(self) -> None:
-        """Builds scrollable message area and adds message bubbles"""
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground, True)
 
-        # Layout
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(8)
 
-        # Scroll Area
+        # --- Stack holds either the empty-state CTA or the scroll area ---
+        stack = QStackedWidget(self)
+
+        # Empty state (centered CTA)
+        empty_state = QWidget(self)
+        empty_layout = QVBoxLayout(empty_state)
+        empty_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+
+        cta_label = QLabel("No conversation loaded.\nType something to get started!", empty_state)
+        cta_label.setObjectName("EmptyStateLabel")
+        cta_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        empty_layout.addWidget(cta_label)
+
+        self._empty_state = empty_state
+
+        # Scroll Area (existing)
         scroll_area = QScrollArea(self)
         scroll_area.setWidgetResizable(True)
         scroll_area.setFrameShape(QFrame.Shape.NoFrame)
 
-        # Style Scrollbar
         scrollbar = scroll_area.verticalScrollBar()
         scrollbar.rangeChanged.connect(self.scroll_to_bottom)
         scrollbar.setObjectName("ChatScrollBar")
 
-        # Messages layout (for scrollable layout)
         messages_container = QWidget(self)
-
         messages_layout = QVBoxLayout(messages_container)
         messages_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
-
         messages_layout.addStretch()
         messages_layout.setSpacing(12)
 
         scroll_area.setWidget(messages_container)
-        layout.addWidget(scroll_area)
+
+        stack.addWidget(empty_state)  # index 0
+        stack.addWidget(scroll_area)  # index 1
+        stack.setCurrentIndex(0)  # start empty
+
+        layout.addWidget(stack)
 
         self._scroll_area = scroll_area
         self._messages_container = messages_container
         self._messages_layout = messages_layout
+        self._stack = stack
 
     def add_new_message_column(
         self, message: str, id: str, timestamp: datetime, role: MessageRole
@@ -69,10 +86,10 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
         messages_layout = cast(QVBoxLayout, self._messages_layout)
         messages_layout.addWidget(card)
 
-        QtCore.QTimer.singleShot(
-            0,
-            self.scroll_to_bottom,
-        )
+        if self._stack:
+            self._stack.setCurrentIndex(1)  # switch to message list
+
+        QtCore.QTimer.singleShot(0, self.scroll_to_bottom)
 
         for data in self._session.messages:
             if data.id == id:
