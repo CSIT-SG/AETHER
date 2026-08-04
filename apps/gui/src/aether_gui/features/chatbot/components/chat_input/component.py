@@ -56,9 +56,15 @@ class ChatInput(StyledComponent):  # type: ignore[misc]
         submit_btn = QtWidgets.QPushButton("\u2191", self._textbox)
         submit_btn.clicked.connect(self._submit)
         submit_btn.setObjectName("SendButton")
+        submit_btn.setSizePolicy(
+            QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred
+        )
+        submit_btn.setFixedWidth(32)
+
         layout.addWidget(
             submit_btn, 0, QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignBottom
         )
+        layout.setSpacing(8)
         # Map "Ctrl+Enter" to submit_btn
         shortcut = QShortcut(QKeySequence("Ctrl+Return"), self)
         shortcut.activated.connect(submit_btn.animateClick)
@@ -66,10 +72,11 @@ class ChatInput(StyledComponent):  # type: ignore[misc]
         self._send_button = submit_btn
 
         # Call _adjust_height to adjust height to single line
-        self._adjust_height()
+        QtCore.QTimer.singleShot(0, self._adjust_height)
 
     def _adjust_height(self) -> None:
         textbox = cast(QtWidgets.QTextEdit, self._textbox)
+        submit_btn = cast(QtWidgets.QPushButton, self._send_button)
 
         # Set the text width to the width of the viewport to ensure proper wrapping
         textbox.document().setTextWidth(textbox.viewport().width())
@@ -84,6 +91,7 @@ class ChatInput(StyledComponent):  # type: ignore[misc]
 
         height = min(max(min_height, int(doc_height + vpadding + 4)), 120)
         textbox.setFixedHeight(height)
+        submit_btn.setFixedHeight(height)
 
     def _submit(self) -> None:
         textbox = cast(QtWidgets.QTextEdit, self._textbox)
@@ -102,7 +110,10 @@ class ChatInput(StyledComponent):  # type: ignore[misc]
         return Path(__file__).with_name("styles.qss.jinja")
 
     def on_font_change(self, font: QFont) -> None:
-        self._adjust_height()
+        QtCore.QTimer.singleShot(0, self._adjust_height)
+
+    def on_theme_change(self, *, theme, colors) -> None:
+        QtCore.QTimer.singleShot(0, self._adjust_height)
 
     def _current_font(self) -> QFont:
         """Return the current font.
