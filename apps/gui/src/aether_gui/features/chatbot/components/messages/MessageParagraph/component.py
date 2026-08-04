@@ -112,6 +112,10 @@ class MessageParagraph(StyledComponent):  # type: ignore[misc]
         if self._browser:
             self._adjust_height()
 
+    def on_theme_change(self, *, theme, colors) -> None:
+        if theme == "dark" and self._message.role == MessageRole.USER:
+            self.setProperty("theme", "dark")
+
     def _current_font(self) -> QFont:
         """Return the current font.
 

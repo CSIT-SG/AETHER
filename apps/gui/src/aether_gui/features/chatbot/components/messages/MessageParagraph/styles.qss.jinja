@@ -11,21 +11,14 @@ QTextBrowser#ChatBox QScrollBar:horizontal {
     border: none;
 }
 
-QTextBrowser#ChatBox QScrollBar::handle:horizontal {
-    border-radius: 5px;
-}
 
 #UserParagraph {
     background-color: {{ colors.base }};
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
-    border-bottom-left-radius: 12px;
-    border-bottom-right-radius: 2px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    border-bottom-left-radius: 4px;
 }
 
-#AetherParagraph {
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
-    border-bottom-right-radius: 12px;
-    border-bottom-left-radius: 2px;
+#UserParagraph[theme="dark"] {
+    border: 1px solid {{ colors.accent }};
 }
