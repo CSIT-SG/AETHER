@@ -3,6 +3,7 @@ from typing import cast
 
 from aether_gui.utils.ui import FontPlugin, StyledComponent
 from PySide6 import QtCore, QtWidgets
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QKeySequence, QShortcut, QTextOption
 
 
@@ -60,6 +61,8 @@ class ChatInput(StyledComponent):  # type: ignore[misc]
             QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred
         )
         submit_btn.setFixedWidth(32)
+
+        submit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         layout.addWidget(
             submit_btn, 0, QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignBottom

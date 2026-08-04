@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any, cast
 
 from aether_gui.utils.ui import FontPlugin, StyledComponent
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QApplication,
@@ -128,6 +128,18 @@ class MessageColumn(StyledComponent):  # type: ignore[misc]
     def _copy_message(self) -> None:
         clipboard = QApplication.clipboard()
         clipboard.setText(self._last_message_data.content)
+
+        copy_btn = cast(ButtonComponent, self._copy_btn)
+
+        copy_btn.setText("\u2713")  # checkmark
+        copy_btn.setEnabled(False)  # prevent re-click spam mid-animation
+        QTimer.singleShot(1000, self._revert_copy_icon)
+
+    def _revert_copy_icon(self) -> None:
+
+        copy_btn = cast(ButtonComponent, self._copy_btn)
+        copy_btn.setText("\u29c9")  # back to original icon
+        copy_btn.setEnabled(True)
 
     def _adjust_height(self) -> None:
         if self.card_layout:

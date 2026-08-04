@@ -16,12 +16,10 @@ QPushButton#CopyButton {
     background-color: {{ colors.base }};
     background: transparent;
     border: none;
+    
+    font-size: 16px;
 }
 
-QPushButton#CopyButton:hover {
-    border: 2px solid {{ colors.link }};
-}
-
-QPushButton#CopyButton:pressed {
-    background-color: {{ colors.link }};
+QPushButton#CopyButton:disabled {
+    color: {{ colors.text }}; 
 }

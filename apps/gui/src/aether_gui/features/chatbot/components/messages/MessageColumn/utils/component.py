@@ -1,3 +1,4 @@
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QPushButton
 
 
@@ -7,3 +8,5 @@ class ButtonComponent(QPushButton):
 
         self.setObjectName(obj_name)
         self.setToolTip(tooltip)
+
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
