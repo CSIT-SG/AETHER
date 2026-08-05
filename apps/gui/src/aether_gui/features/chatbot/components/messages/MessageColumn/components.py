@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
 
 from ..MessageParagraph import MessageParagraph
 from ..Messages import Message, MessageRole
-from .utils import ButtonComponent
+from .ButtonComponent import ButtonComponent
 
 COPY_ICON = "\u29c9"  # ⧉
 
