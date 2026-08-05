@@ -146,6 +146,19 @@ class StructField(NamedTuple):
     array_size: int | None = None
 
 
+class StructFieldWithOffset(NamedTuple):
+    name: str
+    type: str
+    size: int
+    offset: int
+
+
+class StructInfo(NamedTuple):
+    struct_id: str
+    struct_name: str
+    struct_fields: int
+
+
 class SectionInfo(TypedDict):
     name: str
     start: str  # hex address
