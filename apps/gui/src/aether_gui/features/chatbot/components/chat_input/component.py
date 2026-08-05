@@ -6,6 +6,8 @@ from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QKeySequence, QShortcut, QTextOption
 
+UPARROW_ICON = "\u2191"  # ↑
+
 
 class ChatInput(StyledComponent):  # type: ignore[misc]
     """Chat bar to enter user input"""
@@ -54,7 +56,7 @@ class ChatInput(StyledComponent):  # type: ignore[misc]
         self._textbox = textbox
 
         # Submit Button
-        submit_btn = QtWidgets.QPushButton("\u2191", self._textbox)
+        submit_btn = QtWidgets.QPushButton(UPARROW_ICON, self._textbox)
         submit_btn.clicked.connect(self._submit)
         submit_btn.setObjectName("SendButton")
         submit_btn.setSizePolicy(

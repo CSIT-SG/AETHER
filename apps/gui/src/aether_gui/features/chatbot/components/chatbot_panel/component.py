@@ -64,12 +64,9 @@ class ChatbotPanel(StyledComponent):  # type: ignore[misc]
         )
 
         # Backend message handling logic goes here
-        ### TESTING ###
         self.chat_orchestrator.submit_user_prompt(user_input)
-        ### END TESTING ###
 
     # TODO:
-    # ADD AUTO SCROLL TO BOTTOM FUNCTION HERE
     # ADD LOADING FEATURE WHILE LLM IS PROCESSING
 
     def style_file(self) -> Path | None:

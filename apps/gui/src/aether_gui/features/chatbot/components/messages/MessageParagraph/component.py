@@ -115,6 +115,8 @@ class MessageParagraph(StyledComponent):  # type: ignore[misc]
     def on_theme_change(self, *, theme, colors) -> None:
         if theme == "dark" and self._message.role == MessageRole.USER:
             self.setProperty("theme", "dark")
+        else:
+            self.setProperty("theme", "_")
 
     def _current_font(self) -> QFont:
         """Return the current font.

@@ -18,6 +18,8 @@ from ..MessageParagraph import MessageParagraph
 from ..Messages import Message, MessageRole
 from .utils import ButtonComponent
 
+COPY_ICON = "\u29c9"  # ⧉
+
 
 class MessageColumn(StyledComponent):  # type: ignore[misc]
     """Message Card"""
@@ -80,7 +82,6 @@ class MessageColumn(StyledComponent):  # type: ignore[misc]
                 header_layout.addWidget(time_label, 0, Qt.AlignmentFlag.AlignVCenter)
                 header_layout.addStretch()
             case _:
-                name_label = QLabel("Unknown")
                 raise Exception("MessageRow: Unknown Role")
 
         name_label.setObjectName("Username")
@@ -102,7 +103,7 @@ class MessageColumn(StyledComponent):  # type: ignore[misc]
         footer_layout.setSpacing(4)
 
         # NOTE: Future Iteration should move buttons to a footer class which contains all footer buttons
-        copy_btn = ButtonComponent(icon="\u29c9", obj_name="CopyButton", tooltip="Copy")
+        copy_btn = ButtonComponent(icon=COPY_ICON, obj_name="CopyButton", tooltip="Copy")
         copy_btn.clicked.connect(self._copy_message)
 
         self._copy_btn = copy_btn
@@ -122,8 +123,7 @@ class MessageColumn(StyledComponent):  # type: ignore[misc]
                 main_layout.addWidget(message_card_container, stretch=1)
                 main_layout.addStretch()
             case _:
-                main_layout.addStretch()
-                main_layout.addWidget(message_card_container)
+                raise Exception("MessageRow: Unknown Role")
 
     def _copy_message(self) -> None:
         clipboard = QApplication.clipboard()
@@ -131,14 +131,14 @@ class MessageColumn(StyledComponent):  # type: ignore[misc]
 
         copy_btn = cast(ButtonComponent, self._copy_btn)
 
-        copy_btn.setText("\u2713")  # checkmark
+        copy_btn.setText("Copied!")
         copy_btn.setEnabled(False)  # prevent re-click spam mid-animation
         QTimer.singleShot(1000, self._revert_copy_icon)
 
     def _revert_copy_icon(self) -> None:
 
         copy_btn = cast(ButtonComponent, self._copy_btn)
-        copy_btn.setText("\u29c9")  # back to original icon
+        copy_btn.setText(COPY_ICON)  # back to original icon
         copy_btn.setEnabled(True)
 
     def _adjust_height(self) -> None:
