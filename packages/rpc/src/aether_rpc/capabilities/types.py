@@ -159,6 +159,12 @@ class StructInfo(NamedTuple):
     struct_fields: int
 
 
+class RenameStructResult(TypedDict):
+    struct_id: int
+    old_struct_name: str
+    new_struct_name: str
+
+
 class SectionInfo(TypedDict):
     name: str
     start: str  # hex address
