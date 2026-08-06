@@ -59,7 +59,7 @@ class ChatbotHandler(ida_kernwin.action_handler_t):
 
         panel.Show(
             self.panel_title,
-            options=ida_kernwin.PluginForm.WOPN_DP_RIGHT | ida_kernwin.PluginForm.WOPN_RESTORE,
+            options=ida_kernwin.PluginForm.WOPN_RESTORE,
         )
 
         new_widget = ida_kernwin.find_widget(self.panel_title)
