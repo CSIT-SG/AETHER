@@ -3,8 +3,6 @@ from typing import cast
 from agents import Agent, ModelSettings, Runner, RunResult, RunResultStreaming, function_tool
 from agents.agent import StopAtTools
 
-MAX_SUBMIT_RETRIES = 3
-
 
 async def force_structured_output[T](
     agent: Agent,
@@ -12,6 +10,7 @@ async def force_structured_output[T](
     result: RunResult | RunResultStreaming,
     *,
     max_turns: int = 10,
+    max_retries: int = 3,
 ) -> T:
     """Run an agent and force it to return structured output via a tool call,
     working around gateway providers that don't support structured content
@@ -19,7 +18,7 @@ async def force_structured_output[T](
 
     Clones `agent` with a `submit_output` tool typed to `output_type` appended,
     and stops the run as soon as it's called. If the model finishes without
-    calling it, nudges it up to `MAX_SUBMIT_RETRIES` times.
+    calling it, nudges it up to `max_retries` times.
 
     Args:
         agent: The agent to run.
@@ -53,7 +52,7 @@ async def force_structured_output[T](
         model_settings=ModelSettings(tool_choice="required"),
     )
 
-    retries = MAX_SUBMIT_RETRIES
+    retries = max_retries
     while captured_output is None and retries > 0:
         # Model ignored the tool-call requirement
         result = await Runner.run(
@@ -70,8 +69,6 @@ async def force_structured_output[T](
         retries -= 1
 
     if captured_output is None:
-        raise RuntimeError(
-            f"Model did not call {submit_output.name} after {MAX_SUBMIT_RETRIES} retries."
-        )
+        raise RuntimeError(f"Model did not call {submit_output.name} after {max_retries} retries.")
 
     return captured_output
