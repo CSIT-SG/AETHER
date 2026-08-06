@@ -31,6 +31,13 @@ class AetherUIHooks(ida_kernwin.UI_Hooks):
                 "aether:annotator", "Annotate Function", AnnotatorHandler(self.mcp_client)
             ),
             ContextMenuItem("aether:whats_new", "What's new", DummyHandler()),
+            ContextMenuItem(
+                label="Experimental",
+                children=[
+                    ContextMenuItem("aether:experimental:foo", "Foo", DummyHandler()),
+                    ContextMenuItem("aether:experimental:bar", "Bar", DummyHandler()),
+                ],
+            ),
         ]
 
     def finish_populating_widget_popup(
@@ -49,8 +56,6 @@ class AetherUIHooks(ida_kernwin.UI_Hooks):
         if wtype != ida_kernwin.BWN_PSEUDOCODE:
             return
 
-        menu_path = "aether-next/"
-
         for item in self.items:
             try:
                 item.register()
@@ -58,7 +63,7 @@ class AetherUIHooks(ida_kernwin.UI_Hooks):
             except Exception as e:
                 logger.error("Failed to register context menu item: %s", e)
 
-            item.attach_to_popup(widget, popup_handle, default_menu_path=menu_path)
+            item.attach_to_popup(widget, popup_handle)
 
     def unregister(self) -> None:
         for item in self.items:
