@@ -83,8 +83,6 @@ class SettingsMenuHandler(QtWidgets.QDialog):
             set_config(formatted)
         except Exception as e:
             self.show_error_message()
-            # Log the real reason (JSON line/column, "not an object", or the
-            # pydantic ValidationError) — the shown message only points here.
             save_logger.error("Settings not saved: %s", e)
             return False
         return True
@@ -94,3 +92,6 @@ class SettingsMenuHandler(QtWidgets.QDialog):
         # Apply button) and report success without closing the dialog.
         self._config_box.mark_saved()
         self._cfg_message.show_success("Config applied!")
+        save_logger.info(
+            "Settings were saved. You may need to restart IDA for changes to take effect."
+        )

@@ -5,11 +5,13 @@ import ida_kernwin
 from aether_gui.features.annotator import AnnotatorHandler
 from aether_gui.features.chatbot import ChatbotHandler
 from aether_gui.utils.mcp import MCPClient
+from aether_utils.config import get_config
 from aether_utils.logger import get_logger
 
 from .menu_item import ContextMenuItem
 
 logger = get_logger("context_menu")
+config = get_config()
 
 
 class DummyHandler(ida_kernwin.action_handler_t):
@@ -31,13 +33,6 @@ class AetherUIHooks(ida_kernwin.UI_Hooks):
                 "aether:annotator", "Annotate Function", AnnotatorHandler(self.mcp_client)
             ),
             ContextMenuItem("aether:whats_new", "What's new", DummyHandler()),
-            ContextMenuItem(
-                label="Experimental",
-                children=[
-                    ContextMenuItem("aether:experimental:foo", "Foo", DummyHandler()),
-                    ContextMenuItem("aether:experimental:bar", "Bar", DummyHandler()),
-                ],
-            ),
         ]
 
     def finish_populating_widget_popup(
