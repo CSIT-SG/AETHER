@@ -1,33 +1,67 @@
 # Rubric Schema
 
-Simplified rubric:
+AETHER benchmark schematic uses a declarative YAML format to define quality standards. Rubrics are grouped by **functional domain** (e.g., networking, cryptography, memory management) rather than hardcoded memory addresses.
+
+## Schema Specification
+
+### Rubric Structure
+
+| Field | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| `name` | String | Yes | A unique identifier for the rubric group. |
+| `description` | String | No | Context for the evaluator. **Supports address mapping** and notes. |
+| `weight` | Float | No | Importance of this group. Defaults to `1.0`. |
+| `criteria` | List | Yes | A list of specific requirements to fulfill. |
+
+---
+
+## Drafting Guidelines
+
+When creating a new rubric, follow these best practices to ensure your evaluation is both flexible and descriptive:
+
+### 1. Weighting
+Weights are optional. Use them to signal which functional domains are critical to the system's security or stability.
+*   **Default:** If omitted, the system assumes a weight of `1.0`.
+*   **Critical paths:** Use weights `> 1.0` for core logic (e.g., packet parsing, crypto).
+
+### 2. Contextual Mapping
+The `description` field is used to provide additional context for any given rubric criteria. You can include:
+*   **Addresses:** List specific function offsets for the evaluator (e.g., `Targets: 0x4010A0, 0x4010B0`).
+*   **Scope:** Describe the functional scope (e.g., `Covers all AES-related transformation functions`).
+*   **Context:** Explain why this rubric matters for the specific binary.
+
+---
+
+## Example Configuration
+
+Below is the standard format. Note how the `description` field is used to map specific functions to the criteria.
+
 ```yaml
 name: "Reference Handler Analysis"
 version: "1.0.0"
+description: "Evaluates the quality of reverse-engineered packet processing functions."
 
 rubrics:
-  - id: "packet_parsing_logic"
-    function_address: "0x4010A0"
+  - name: "packet_parsing_logic"
+    # Note: Description includes context and addresses
+    description: "Evaluates packet headers at 0x4010A0 (Main Parser) and 0x4010B0 (Sub-Parser)."
     weight: 2.0
     criteria:
-      - description: "Constants are replaced with named enums or defines"
+      - "Constants (magic numbers) are replaced with meaningful Enums or Defines"
+      - "Struct pointer usage is correctly applied for packet headers"
+      - "Error handling paths (e.g., length checks) are explicitly named"
+
+  - name: "cryptographic_constants"
+    description: "Applies to all transformation primitives in the 0x4025C0 range."
+    weight: 1.5
+    criteria:
+      - "The S-Box or initialization vector arrays are clearly named"
+      - "The function is tagged with the appropriate cryptographic algorithm name (e.g., AES, XOR)"
+
+  - name: "documentation_standards"
+    # Weight is omitted; defaults to 1.0
+    description: "General code maintainability requirements."
+    criteria:
+      - "Function documentation follows project docstring convention"
+      - "Key bitwise operations have comments explaining the bitmask intent"
 ```
-
-## Required fields
-
-- `name`: rubric title
-- `version`: schema version string
-- `rubrics`: list of rubric entries
-- each entry needs:
-  - `id`
-  - `function_address` in hex format like `0x4010A0`
-  - `weight` as a positive number
-  - `criteria` as a list of objects with `description`
-
-## Notes
-
-- `description` is optional at both the rubric and criterion level.
-- `weight` must be greater than `0`.
-- `function_address` must match the hex pattern `0x...`.
-
-See the example at `packages/benchmark/example_rubric.yaml`

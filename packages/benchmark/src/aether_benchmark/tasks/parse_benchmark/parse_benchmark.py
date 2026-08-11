@@ -1,16 +1,42 @@
+import asyncio
 from pathlib import Path
 from typing import Any
 
+import yaml
+from aether_benchmark.tasks.parse_benchmark.models import RubricsSchema
 from aether_benchmark.utils.task import Task
-from pydantic import BaseModel
+from pydantic import ValidationError
 
 
-class ParseBenchmarkTask(Task[[BaseModel, Path], dict[str, Any]]):  # type: ignore[misc]
-    async def start(self, schema: BaseModel, task_path: Path) -> dict[str, Any]:
-        # parse the yaml benchmark file, validate it and return the parsed object
-        # use a typeddict as return value
-        return {}
+class ParseBenchmarkTask(Task[[Path], dict[str, Any]]):  # type: ignore[misc]
+    def __init__(self) -> None:
+        self._cancelled = False
+
+    async def start(self, task_path: Path) -> dict[str, Any]:
+        """Load and validate a benchmark rubric YAML file."""
+        self._cancelled = False
+
+        if not task_path.exists():
+            raise FileNotFoundError(f"Benchmark file not found: {task_path}")
+
+        try:
+            with task_path.open("r", encoding="utf-8") as handle:
+                data = yaml.safe_load(handle) or {}
+        except yaml.YAMLError as exc:  # pragma: no cover - exercised at runtime
+            raise ValueError(f"Invalid YAML in benchmark file '{task_path}': {exc}") from exc
+
+        if not isinstance(data, dict):
+            raise ValueError(f"Benchmark file '{task_path}' must contain a YAML object at the top level")
+
+        try:
+            validated = RubricsSchema.model_validate(data)
+        except ValidationError as exc:
+            raise ValueError(f"Benchmark schema validation failed for '{task_path}': {exc}") from exc
+
+        if self._cancelled:
+            raise asyncio.CancelledError("Benchmark parsing cancelled")
+
+        return validated.model_dump(mode="python")
 
     async def cancel(self) -> None:
-        # intentionally left blank, as this task does not have any long-running operations to cancel
-        pass
+        self._cancelled = True

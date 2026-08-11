@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 from abc import ABC, abstractmethod
 from collections.abc import Generator
 from typing import Any, Self
@@ -61,8 +62,6 @@ class Run[**P, T]:
     async def __aexit__(self, *exc_info: object) -> bool:
         assert self._future is not None, "Run must be called before exiting the context"
         self._future.cancel()
-        try:
+        with contextlib.suppress(asyncio.CancelledError):
             await self._future
-        except asyncio.CancelledError:
-            pass
         return False
