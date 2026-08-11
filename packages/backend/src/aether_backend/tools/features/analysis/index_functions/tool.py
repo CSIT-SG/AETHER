@@ -1,3 +1,4 @@
+"""
 from typing import Annotated
 
 from aether_backend.utils.effect import Log, Program, effectful
@@ -24,3 +25,4 @@ async def index_functions(
 
     svc = await get_rpc_service(rpc_id)
     yield Log(f"Using RPC service {rpc_id} at {svc.port} for indexing functions.")
+"""
