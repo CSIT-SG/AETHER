@@ -1,6 +1,14 @@
 from typing import cast
 
-from agents import Agent, ModelSettings, Runner, RunResult, RunResultStreaming, function_tool
+from agents import (
+    Agent,
+    ModelBehaviorError,
+    ModelSettings,
+    Runner,
+    RunResult,
+    RunResultStreaming,
+    function_tool,
+)
 from agents.agent import StopAtTools
 
 
@@ -69,6 +77,8 @@ async def force_structured_output[T](
         retries -= 1
 
     if captured_output is None:
-        raise RuntimeError(f"Model did not call {submit_output.name} after {max_retries} retries.")
+        raise ModelBehaviorError(
+            f"Model did not call {submit_output.name} after {max_retries} retries."
+        )
 
     return captured_output

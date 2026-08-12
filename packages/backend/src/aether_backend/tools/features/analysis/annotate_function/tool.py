@@ -1,9 +1,11 @@
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, cast
 
+from aether_backend.forwarded_rpc import get_functions_called_recursively
 from aether_backend.utils.effect import Log, Program, effectful
 from aether_backend.utils.get_rpc_service import get_rpc_service
 from aether_backend.utils.validation import HexAddress
+from aether_rpc.capabilities.types import FunctionTreeResult
 from aether_utils.config import get_config
 from aether_utils.get_content import get_content
 from fastmcp.tools import tool
@@ -11,7 +13,6 @@ from mcp.types import ToolAnnotations
 
 from .annotate_function import annotate
 from .constants import TIMEOUT_SECONDS
-from .utils import manually_gather
 
 INSTRUCTIONS = get_content(Path(__file__).parent, "instructions.md")
 
@@ -46,7 +47,8 @@ async def annotate_function(
     if custom_prompt is None:
         custom_prompt = ""
 
-    funcs = await manually_gather(svc, address)
+    res = await get_functions_called_recursively(svc, address=address)
+    funcs = cast(FunctionTreeResult, res.result)
     yield Log(f"Found {funcs['count']} interesting child functions for {address}.")
     async for effect in annotate(svc, funcs, custom_prompt):
         yield effect
