@@ -11,7 +11,8 @@ async def fetch_url_stream(url: str) -> Program:
         httpx.AsyncClient(timeout=timeout, follow_redirects=True, verify=False) as client,
         client.stream("GET", url) as resp,
     ):
-        resp.raise_for_status()
+        if resp.status_code >= 400:
+            yield Return(f"Failed to fetch {url}: {resp.status_code} {resp.reason_phrase}")
 
         total = resp.headers.get("Content-Length")
         total = int(total) if total and total.isdigit() else 0
