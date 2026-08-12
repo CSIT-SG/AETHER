@@ -183,4 +183,15 @@ cd apps/gui && uv run python ./scripts/install_dev.py
 
 This will install the required dependencies for idapython and link the plugin entrypoint into the IDA plugins folder.
 
+Start the backend server.
+
+```bash
+cd packages/backend
+uv run python ./scripts/run_headless.py
+```
+
+<Callout type="info">
+Ensure that AETHER backend is running in the background as this bridges the RPC layer with the GUI instance.
+</Callout>
+
 Follow the workspace README files for more information.
