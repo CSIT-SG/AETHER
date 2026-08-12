@@ -36,7 +36,7 @@ class ChangeStructFieldSize(Capability):
         tif = ida_typeinf.tinfo_t()
         if not tif.get_type_by_tid(struct_id):
             return Err(result=f"Struct with the specified id {struct_id} does not exist.")
-        
+
         if not tif.is_struct():
             return Err(result=f"{struct} is not a struct.")
 
