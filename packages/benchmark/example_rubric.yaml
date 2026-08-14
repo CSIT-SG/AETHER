@@ -2,32 +2,33 @@
 # Save this file and run:
 #   aether-benchmark --idb <your.i64> --rubric example_rubric.yaml
 
-benchmark:
-  name: "AETHER Annotation Quick Test"
-  version: "0.1.0"
-  description: "Quick smoke-test of AETHER annotation capabilities"
+name: "Reference Handler Analysis"
+version: "1.0.0"
+# description is optional
+description: "Evaluates the quality of reverse-engineered packet processing functions."
 
 rubrics:
-  - id: "rename_easy"
-    feature: "annotation"
-    difficulty: "easy"
-    description: "Function should be renamed from auto-generated name"
-    function_address: "0x14E373"
-    weight: 1.0
+  - id: "packet_parsing_logic"
+    # description is optional
+    description: "Parsing logic should be identified and structured"
+    function_address: "0x4010A0"
+    weight: 2.0
     criteria:
-      - id: "c1"
-        description: "Function has been renamed from sub_* to a meaningful name"
-      - id: "c2"
-        description: "Function has a header comment explaining its purpose"
+      - description: "Constants (magic numbers) are replaced with meaningful Enums or Defines"
+      - description: "Struct pointer usage is correctly applied for packet headers"
+      - description: "Error handling paths (e.g., length checks) are explicitly named"
 
-  - id: "variables_easy"
-    feature: "annotation"
-    difficulty: "easy"
-    description: "Local variables should have meaningful names"
-    function_address: "0x1264B0"
-    weight: 1.0
+  - id: "cryptographic_constants"
+    function_address: "0x4025C0"
+    weight: 1.5
     criteria:
-      - id: "c1"
-        description: "Local variables have been renamed from placeholders (v1, a1, etc.) to meaningful names"
-      - id: "c2"
-        description: "Function has inline comments explaining key operations"
+      - description: "The S-Box or initialization vector arrays are clearly named"
+      - description: "The function is tagged with the appropriate cryptographic algorithm name (e.g., AES, XOR)"
+
+  - id: "documentation_standards"
+    # description is optional
+    function_address: "0x403A20"
+    weight: 0.5
+    criteria:
+      - description: "Function documentation follows project docstring convention"
+      - description: "Key bitwise operations have comments explaining the bitmask intent"
