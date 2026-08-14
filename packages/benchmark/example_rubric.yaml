@@ -1,6 +1,6 @@
 # Example rubric for AETHER benchmark
 # Save this file and run:
-#   aether-benchmark --idb <your.i64> --rubric example_rubric.yaml
+#   python -m aether_benchmark.cli --idb <your.i64> --rubric example_rubric.yaml
 
 name: "Reference Handler Analysis"
 version: "1.0.0"
