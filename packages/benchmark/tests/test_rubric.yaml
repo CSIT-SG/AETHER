@@ -1,0 +1,53 @@
+# Test rubric — 3 entries: 1 good, 1 mixed, 1 bad
+# Run with:
+#   aether-benchmark --state-json tests/test_state.json --rubric tests/test_rubric.yaml --api-key <key>
+
+benchmark:
+  name: "AETHER Annotation Smoke Test"
+  version: "0.1.0"
+  description: "Smoke test with synthetic data to validate the evaluation pipeline"
+
+rubrics:
+  - id: "good_annotation"
+    feature: "annotation"
+    difficulty: "easy"
+    description: "Function was properly annotated — renamed, commented, variables renamed"
+    function_address: "0x401000"
+    weight: 1.0
+    criteria:
+      - id: "c1"
+        description: "Function has been renamed from auto-generated name (sub_*) to a meaningful name"
+      - id: "c2"
+        description: "Local variables have meaningful names (no v1, a1, arg_0 placeholders)"
+      - id: "c3"
+        description: "Function has a header comment explaining purpose, arguments, and return value"
+      - id: "c4"
+        description: "Function has inline comments explaining key operations"
+
+  - id: "mixed_annotation"
+    feature: "annotation"
+    difficulty: "medium"
+    description: "Partially annotated function — some improvements, some gaps"
+    function_address: "0x402000"
+    weight: 1.0
+    criteria:
+      - id: "c1"
+        description: "Function has been renamed from auto-generated name to a meaningful name"
+      - id: "c2"
+        description: "Local variables have meaningful names (no v1, a1, arg_0 placeholders)"
+      - id: "c3"
+        description: "Function has a header comment explaining purpose, arguments, and return value"
+      - id: "c4"
+        description: "Callee functions called from this function have been renamed meaningfully"
+
+  - id: "bad_annotation"
+    feature: "annotation"
+    difficulty: "easy"
+    description: "Function was NOT annotated — everything is still auto-generated"
+    function_address: "0x403000"
+    weight: 1.0
+    criteria:
+      - id: "c1"
+        description: "Function has been renamed from sub_* to a meaningful name"
+      - id: "c2"
+        description: "Local variables have meaningful names (no v1, a1, arg_0 placeholders)"
