@@ -1,15 +1,19 @@
 import copy
+from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any, cast
 from uuid import uuid4
 
+from aether_gui.features.chatbot.components.searchbar import SearchBar
 from aether_gui.utils.chat_session import ChatSession
 from aether_gui.utils.ui import StyledComponent
 from PySide6 import QtCore
+from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import QFrame, QLabel, QScrollArea, QStackedWidget, QVBoxLayout, QWidget
 
 from ..MessageColumn import MessageColumn
+from ..MessageParagraph import MessageParagraph
 from ..Messages import Message, MessageRole
 
 
@@ -76,6 +80,109 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
         self._messages_container = messages_container
         self._messages_layout = messages_layout
         self._stack = stack
+
+        search_bar = SearchBar(self)
+        search_bar.hide()
+        search_bar.search_changed.connect(self._on_search_changed)
+        search_bar.next_requested.connect(self.goto_next_match)
+        search_bar.prev_requested.connect(self.goto_prev_match)
+        search_bar.closed.connect(self.close_search)
+
+        layout.addWidget(search_bar)
+        layout.addWidget(stack)
+
+        self._search_bar = search_bar
+        self._matches: list[tuple[MessageParagraph, tuple[int, int]]] = []
+        self._current_match_index: int = -1
+
+        shortcut = QShortcut(QKeySequence(QKeySequence.StandardKey.Find), self)
+        shortcut.setContext(QtCore.Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        shortcut.activated.connect(self.open_search)
+        self._find_shortcut = shortcut
+
+    def open_search(self) -> None:
+        if self._search_bar:
+            self._search_bar.show()
+            self._search_bar.focus_input()
+
+    def close_search(self) -> None:
+        self._clear_highlights()
+        self._matches = []
+        self._current_match_index = -1
+        if self._search_bar:
+            self._search_bar.hide()
+
+    def _iter_paragraphs(self):
+        layout = cast(QVBoxLayout, self._messages_layout)
+        for i in range(layout.count()):
+            item = layout.itemAt(i)
+            widget = cast(MessageColumn, item.widget()) if item else None
+            if widget is None:
+                continue
+            for paragraph in widget.paragraphs:
+                yield paragraph
+
+    def _on_search_changed(self, text: str) -> None:
+        self._clear_highlights()
+        self._matches = (
+            [
+                (paragraph, match)
+                for paragraph in self._iter_paragraphs()
+                for match in paragraph.find_matches(text)
+            ]
+            if text
+            else []
+        )
+        self._current_match_index = 0 if self._matches else -1
+
+        if self._matches:
+            self._apply_highlights()
+            self._scroll_to_current_match()
+
+        if self._search_bar:
+            self._search_bar.update_count(
+                self._current_match_index + 1 if self._matches else 0, len(self._matches)
+            )
+
+    def _apply_highlights(self) -> None:
+        grouped: dict[MessageParagraph, list[tuple[int, int]]] = defaultdict(list)
+        for paragraph, rng in self._matches:
+            grouped[paragraph].append(rng)
+
+        current = (
+            self._matches[self._current_match_index] if self._current_match_index >= 0 else None
+        )
+        for paragraph, ranges in grouped.items():
+            current_range = current[1] if current and current[0] is paragraph else None
+            paragraph.set_highlights(ranges, current_range)
+
+    def _clear_highlights(self) -> None:
+        for paragraph in self._iter_paragraphs():
+            paragraph.clear_highlights()
+
+    def goto_next_match(self) -> None:
+        if not self._matches:
+            return
+        self._current_match_index = (self._current_match_index + 1) % len(self._matches)
+        self._apply_highlights()
+        self._scroll_to_current_match()
+        if self._search_bar:
+            self._search_bar.update_count(self._current_match_index + 1, len(self._matches))
+
+    def goto_prev_match(self) -> None:
+        if not self._matches:
+            return
+        self._current_match_index = (self._current_match_index - 1) % len(self._matches)
+        self._apply_highlights()
+        self._scroll_to_current_match()
+        if self._search_bar:
+            self._search_bar.update_count(self._current_match_index + 1, len(self._matches))
+
+    def _scroll_to_current_match(self) -> None:
+        if self._current_match_index < 0 or not self._scroll_area:
+            return
+        paragraph, _ = self._matches[self._current_match_index]
+        self._scroll_area.ensureWidgetVisible(paragraph, 0, 40)
 
     def add_new_message_column(
         self, message: str, id: str, timestamp: datetime, role: MessageRole

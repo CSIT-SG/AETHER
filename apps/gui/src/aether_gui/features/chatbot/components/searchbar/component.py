@@ -29,8 +29,8 @@ class SearchBar(StyledComponent):  # type: ignore[misc]
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(4, 4, 4, 4)
-        layout.setSpacing(6)
+        layout.setContentsMargins(0, 0, 0, 1)
+        layout.setSpacing(4)
 
         search_input = QLineEdit(self)
         search_input.setObjectName("SearchInput")
@@ -43,17 +43,17 @@ class SearchBar(StyledComponent):  # type: ignore[misc]
 
         prev_btn = QPushButton("↑", self)
         prev_btn.setObjectName("SearchPrevButton")
-        prev_btn.setFixedWidth(28)
+        prev_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         prev_btn.clicked.connect(self.prev_requested.emit)
 
         next_btn = QPushButton("↓", self)
         next_btn.setObjectName("SearchNextButton")
-        next_btn.setFixedWidth(28)
+        next_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         next_btn.clicked.connect(self.next_requested.emit)
 
         close_btn = QPushButton("✕", self)
         close_btn.setObjectName("SearchCloseButton")
-        close_btn.setFixedWidth(28)
+        close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         close_btn.clicked.connect(self.closed.emit)
 
         layout.addWidget(search_input, 1)
@@ -111,11 +111,6 @@ class SearchBar(StyledComponent):  # type: ignore[misc]
         ):
             if widget is not None:
                 widget.setFont(font)
-
-    def on_theme_change(self, *, theme, colors) -> None:
-        # Re-polish so the qss.jinja picks up new theme colors immediately.
-        self.style().unpolish(self)
-        self.style().polish(self)
 
     def _current_font(self) -> QFont:
         return cast(QFont, self.get_plugin(FontPlugin).current_font)
