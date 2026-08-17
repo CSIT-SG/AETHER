@@ -33,11 +33,11 @@ async def mange_struct_field(
     ],
     struct_name: Annotated[str, "name of the struct which being referenced."],
     field_name: Annotated[
-        str | None,
+        str,
         "name of the field to modify or create.",
-    ] = None,
+    ],
     field_size: Annotated[int | None, "size of the field specified in field_name."] = None,
-    field_type: Annotated[str | None, "type of data for the field specified in field_name."] = None,
+    field_type: Annotated[str | None, "data type to change the field to."] = None,
     field_new_name: Annotated[str | None, "new field name for rename operations."] = None,
     custom_prompt: Annotated[
         str | None,
@@ -55,10 +55,16 @@ async def mange_struct_field(
 
     match operation:
         case StructFieldOperation.UPDATE_NAME:
+            if field_new_name is None:
+                raise ValueError("field_new_name is required for rename operations.")
             ...
         case StructFieldOperation.UPDATE_SIZE:
+            if field_size is None:
+                raise ValueError("field_size is required for update size operation.")
             ...
         case StructFieldOperation.UPDATE_TYPE:
+            if field_type is None:
+                raise ValueError("field_type is required for update type operation.")
             ...
         case StructFieldOperation.DELETE:
             ...

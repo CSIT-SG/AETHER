@@ -55,14 +55,20 @@ async def mange_struct(
 
     match operation:
         case StructOperation.CREATE:
+            if fields is None:
+                raise ValueError("Field is required for stuct creation.")
             ...
         case StructOperation.UPDATE_NAME:
+            if new_name is None:
+                raise ValueError("new_name is required for rename operation.")
             ...
         case StructOperation.GET:
             ...
         case StructOperation.DELETE:
             ...
         case StructOperation.ADD_FIELDS:
+            if fields is None:
+                raise ValueError("Field is required to add fields.")
             ...
         case _:
             raise ValueError(f"invalid operation: {operation}")
