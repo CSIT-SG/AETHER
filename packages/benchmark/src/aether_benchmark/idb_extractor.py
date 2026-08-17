@@ -13,44 +13,11 @@ from __future__ import annotations
 
 import os
 import re
-import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-# ── IDA discovery ──────────────────────────────────────────────────────────────
-# idapro needs IDADIR set to find IDA's Python modules. Try the env var, then
-# common install locations, and set IDADIR before importing idapro so it works
-# even when run from a plain system Python (not IDA's bundled interpreter).
-_COMMON_IDA_DIRS = [
-    Path(os.environ.get("IDADIR", "")),
-    Path(os.environ.get("AETHER_IDA_DIR", "")),
-    Path(r"C:\Program Files\IDA Professional 9.2"),
-    Path(r"C:\Program Files\IDA Professional"),
-    Path(r"C:\Program Files\idaPro 9.2"),
-    Path(r"C:\Program Files\idaPro"),
-    Path(r"C:\Program Files\Hex-Rays\IDA Pro 9.2"),
-    Path(r"C:\Program Files\IDA Pro 9.2"),
-    Path(r"C:\Program Files\IDA Pro"),
-    Path(r"C:\IDA Pro 9.2"),
-    Path("/opt/ida-pro"),
-]
-
-
-def _set_ida_dir() -> str | None:
-    if os.environ.get("IDADIR"):
-        return os.environ["IDADIR"]
-    for candidate in _COMMON_IDA_DIRS:
-        if candidate.is_dir():
-            os.environ["IDADIR"] = str(candidate)
-            return str(candidate)
-    return None
-
-
-_ida_dir = _set_ida_dir()
-if _ida_dir and _ida_dir not in sys.path:
-    sys.path.insert(0, _ida_dir)
-
+# The user must set IDADIR or pass --ida-dir for idapro to be importable.
 try:
     from idapro import close_database, open_database
 
@@ -123,6 +90,13 @@ def extract_function_state(
 
     if ida_dir:
         os.environ.setdefault("IDADIR", ida_dir)
+
+    if not os.environ.get("IDADIR"):
+        return FunctionState(
+            address=str(address),
+            function_name="",
+            error="IDADIR not set. Pass --ida-dir or set the IDADIR environment variable.",
+        )
 
     addr = int(address, 16) if isinstance(address, str) else address
 
