@@ -344,5 +344,6 @@ def _load_state_json(path: str) -> dict[str, FunctionState]:
 def _env_key() -> str | None:
     return os.environ.get("OPENROUTER_API_KEY") or os.environ.get("OPENAI_API_KEY")
 
+
 if __name__ == "__main__":
     main()

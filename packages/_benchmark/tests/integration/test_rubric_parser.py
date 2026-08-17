@@ -16,6 +16,7 @@ rubrics:
 """
     assert lint_rubric(yaml_input).name == "Valid Test"
 
+
 # --- Invalid Cases ---
 def test_invalid_hex_address():
     yaml_input = """
@@ -31,6 +32,7 @@ rubrics:
     with pytest.raises(ValidationError):
         lint_rubric(yaml_input)
 
+
 def test_missing_required_field():
     yaml_input = """
 name: "Missing Weight"
@@ -43,6 +45,7 @@ rubrics:
 """
     with pytest.raises(ValidationError):
         lint_rubric(yaml_input)
+
 
 def test_negative_weight():
     yaml_input = """
