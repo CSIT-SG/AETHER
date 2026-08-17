@@ -29,7 +29,7 @@ async def mange_struct(
     ],
     operation: Annotated[
         StructOperation,
-        "Struct Operation is an enum of operations that can be performed on a struct.",
+        "Operation to be performed on a struct.",
     ],
     name: Annotated[str, "name of the struct to create."],
     new_name: Annotated[
@@ -53,8 +53,18 @@ async def mange_struct(
     if custom_prompt is None:
         custom_prompt = ""
 
-    """
-    add logic here
-    """
+    match operation:
+        case StructOperation.CREATE:
+            ...
+        case StructOperation.UPDATE_NAME:
+            ...
+        case StructOperation.GET:
+            ...
+        case StructOperation.DELETE:
+            ...
+        case StructOperation.ADD_FIELDS:
+            ...
+        case _:
+            raise ValueError(f"invalid operation: {operation}")
 
     return True  # getting mypy to stop erroring for now

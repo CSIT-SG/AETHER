@@ -8,6 +8,7 @@ from aether_utils.get_content import get_content
 from fastmcp.tools import tool
 from mcp.types import ToolAnnotations
 
+from ..types import StructFieldOperation
 from .constants import TIMEOUT_SECONDS
 
 INSTRUCTIONS = get_content(Path(__file__).parent, "instructions.md")
@@ -26,13 +27,17 @@ async def mange_struct_field(
     rpc_id: Annotated[
         str, "The ID of the RPC service/IDB to use. Formatted as `<file_name>_<date>-<time>`."
     ],
+    operation: Annotated[
+        StructFieldOperation,
+        "operation to be performed on a specified struct field.",
+    ],
     struct_name: Annotated[str, "name of the struct which being referenced."],
     field_name: Annotated[
         str | None,
         "name of the field to modify or create.",
     ] = None,
     field_size: Annotated[int | None, "size of the field specified in field_name."] = None,
-    field_type: Annotated[str | None, "type of data for thefield specified in field_name."] = None,
+    field_type: Annotated[str | None, "type of data for the field specified in field_name."] = None,
     field_new_name: Annotated[str | None, "new field name for rename operations."] = None,
     custom_prompt: Annotated[
         str | None,
@@ -48,8 +53,16 @@ async def mange_struct_field(
     if custom_prompt is None:
         custom_prompt = ""
 
-    """
-    add logic here
-    """
+    match operation:
+        case StructFieldOperation.UPDATE_NAME:
+            ...
+        case StructFieldOperation.UPDATE_SIZE:
+            ...
+        case StructFieldOperation.UPDATE_TYPE:
+            ...
+        case StructFieldOperation.DELETE:
+            ...
+        case _:
+            raise ValueError(f"invalid field operation: {operation}")
 
     return True  # getting mypy to stop erroring for now
