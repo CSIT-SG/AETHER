@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Annotated
 
-from aether_backend.utils.effect import effectful
+from aether_backend.utils.effect import Program, Return, effectful
 from aether_backend.utils.get_rpc_service import get_rpc_service
 from aether_utils.config import get_config
 from aether_utils.get_content import get_content
@@ -43,7 +43,7 @@ async def mange_struct(
         str | None,
         "A hint regarding behavior for the subagent to guide analysis. Keep it less than 3 sentences.",
     ] = None,
-) -> bool:
+) -> Program:
 
     svc = await get_rpc_service(rpc_id)
 
@@ -73,4 +73,4 @@ async def mange_struct(
         case _:
             raise ValueError(f"invalid operation: {operation}")
 
-    return True  # getting mypy to stop erroring for now
+    yield Return("hush hush mypy")  # change this
