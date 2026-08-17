@@ -19,7 +19,7 @@ config = get_config()
 
 @tool(
     description=INSTRUCTIONS,
-    annotations=ToolAnnotations(title="Annotate Function", destructiveHint=True),
+    annotations=ToolAnnotations(title="Manage Struct Field", destructiveHint=True),
     timeout=TIMEOUT_SECONDS,
 )  # tool is untyped in fastmcp
 @effectful  # type: ignore
