@@ -32,7 +32,11 @@ class MessageColumn(StyledComponent):  # type: ignore[misc]
         self._copy_btn: ButtonComponent | None = None
         self._timestamp: QLabel | None = None
         self._name_label: QLabel | None = None
-        self._last_paragraph: MessageParagraph | None = None
+        self._paragraphs: list[MessageParagraph] = []
+
+    @property
+    def paragraphs(self) -> list[MessageParagraph]:
+        return self._paragraphs
 
     def init_ui(self) -> None:
         """
@@ -93,7 +97,7 @@ class MessageColumn(StyledComponent):  # type: ignore[misc]
         ### BODY - MARKDOWN CONTENT ###
         paragraph = MessageParagraph(self._last_message_data, self)
         self.card_layout.addWidget(paragraph)
-        self._last_paragraph = paragraph
+        self._paragraphs.append(paragraph)
         ### END BODY ###
 
         ### FOOTER - OTHER WIDGETS (e.g. copy button) ###
@@ -127,7 +131,7 @@ class MessageColumn(StyledComponent):  # type: ignore[misc]
 
     def _copy_message(self) -> None:
         clipboard = QApplication.clipboard()
-        clipboard.setText(self._last_message_data.content)
+        clipboard.setText("\n\n".join([p._message.content for p in self._paragraphs]))
 
         copy_btn = cast(ButtonComponent, self._copy_btn)
 
@@ -149,25 +153,27 @@ class MessageColumn(StyledComponent):  # type: ignore[misc]
         self.updateGeometry()
 
     def add_new_paragraph(self, message: Message) -> None:
-        if self._last_paragraph:
-            paragraph = MessageParagraph(message, self)
-            footer_index = self.card_layout.count() - 1
-            self.card_layout.insertWidget(footer_index, paragraph)
-            self._last_message_data = message
-            self._last_paragraph = paragraph
+        if not self._paragraphs:
+            return
 
-            self._adjust_height()
+        paragraph = MessageParagraph(message, self)
+        footer_index = self.card_layout.count() - 1
+        self.card_layout.insertWidget(footer_index, paragraph)
+        self._last_message_data = message
+        self._paragraphs.append(paragraph)
+
+        QTimer.singleShot(0, self._adjust_height)
 
     def append_last_paragraph(self, message: str) -> None:
         self._last_message_data.content += message
-        if self._last_paragraph:
-            self._last_paragraph.refresh()
+        if self._paragraphs:
+            self._paragraphs[-1].refresh()
 
     def style_file(self) -> Path | None:
         return Path(__file__).resolve().parent / "styles.qss.jinja"
 
     def on_font_change(self, font: QFont) -> None:
-        self._adjust_height()
+        QTimer.singleShot(0, self._adjust_height)
 
     def _current_font(self) -> QFont:
         """Return the current font.
