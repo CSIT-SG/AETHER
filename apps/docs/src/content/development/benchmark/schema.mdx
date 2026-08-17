@@ -1,0 +1,33 @@
+# Rubric Schema
+
+Simplified rubric:
+```yaml
+name: "Reference Handler Analysis"
+version: "1.0.0"
+
+rubrics:
+  - id: "packet_parsing_logic"
+    function_address: "0x4010A0"
+    weight: 2.0
+    criteria:
+      - description: "Constants are replaced with named enums or defines"
+```
+
+## Required fields
+
+- `name`: rubric title
+- `version`: schema version string
+- `rubrics`: list of rubric entries
+- each entry needs:
+  - `id`
+  - `function_address` in hex format like `0x4010A0`
+  - `weight` as a positive number
+  - `criteria` as a list of objects with `description`
+
+## Notes
+
+- `description` is optional at both the rubric and criterion level.
+- `weight` must be greater than `0`.
+- `function_address` must match the hex pattern `0x...`.
+
+See the example at `packages/benchmark/example_rubric.yaml`

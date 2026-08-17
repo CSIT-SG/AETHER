@@ -10,4 +10,5 @@ export default {
 	cli: "CLI",
 	rpc: "RPC",
 	backend: "Backend",
+	benchmark: "Benchmark",
 } satisfies MetaRecord;
