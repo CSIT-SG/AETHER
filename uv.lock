@@ -11,6 +11,7 @@ resolution-markers = [
 members = [
     "aether-backend",
     "aether-benchmark",
+    "aether-benchmark-tmp",
     "aether-cli",
     "aether-docs",
     "aether-gui",
@@ -47,6 +48,23 @@ requires-dist = [
 
 [[package]]
 name = "aether-benchmark"
+version = "0.1.0"
+source = { editable = "packages/benchmark" }
+dependencies = [
+    { name = "openai-agents" },
+    { name = "pydantic" },
+    { name = "pyyaml" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "openai-agents", specifier = "==0.17.5" },
+    { name = "pydantic", specifier = "==2.13.4" },
+    { name = "pyyaml", specifier = ">=6.0" },
+]
+
+[[package]]
+name = "aether-benchmark-tmp"
 version = "0.1.0"
 source = { editable = "packages/_benchmark" }
 dependencies = [
