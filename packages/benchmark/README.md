@@ -40,4 +40,21 @@ See [example_rubric.yaml](./example_rubric.yaml) for a sample.
 
 - Python 3.12+
 - IDA Pro 9.x (for `--idb` mode — requires the `idapro` PyPI package)
-- OpenRouter or OpenAI API keys
+- OpenRouter or OpenAI API key
+
+## IDA Directory
+
+The benchmark needs to know where IDA Pro is installed. Provide it via:
+
+```bash
+aether-benchmark --idb binary.i64 --rubric rubric.yaml --api-key <key> --ida-dir "C:\Program Files\IDA Professional 9.2"
+```
+
+Or set the `IDADIR` environment variable:
+
+```bash
+export IDADIR="C:\Program Files\IDA Professional 9.2"
+aether-benchmark --idb binary.i64 --rubric rubric.yaml --api-key <key>
+```
+
+The `idapro` package must be importable — `IDADIR` must point to the IDA installation that contains `idalib.dll`. No auto-detection is performed; the benchmark will fail with a clear error if neither `--ida-dir` nor `IDADIR` is set.
