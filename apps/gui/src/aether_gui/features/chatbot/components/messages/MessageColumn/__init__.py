@@ -1,4 +1,4 @@
-from .components import MessageColumn
+from .component import MessageColumn
 
 __all__ = [
     "MessageColumn",
