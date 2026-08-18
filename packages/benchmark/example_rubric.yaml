@@ -1,34 +1,25 @@
-# Example rubric for AETHER benchmark
-# Save this file and run:
-#   python -m aether_benchmark.cli --idb <your.i64> --rubric example_rubric.yaml
-
 name: "Reference Handler Analysis"
 version: "1.0.0"
-# description is optional
 description: "Evaluates the quality of reverse-engineered packet processing functions."
 
 rubrics:
-  - id: "packet_parsing_logic"
-    # description is optional
-    description: "Parsing logic should be identified and structured"
-    function_address: "0x4010A0"
+  - name: "packet_parsing_logic"
+    description: "Evaluates packet headers at 0x4010A0 (Main Parser) and 0x4010B0 (Sub-Parser)."
     weight: 2.0
     criteria:
-      - description: "Constants (magic numbers) are replaced with meaningful Enums or Defines"
-      - description: "Struct pointer usage is correctly applied for packet headers"
-      - description: "Error handling paths (e.g., length checks) are explicitly named"
+      - "Constants (magic numbers) are replaced with meaningful Enums or Defines"
+      - "Struct pointer usage is correctly applied for packet headers"
+      - "Error handling paths (e.g., length checks) are explicitly named"
 
-  - id: "cryptographic_constants"
-    function_address: "0x4025C0"
+  - name: "cryptographic_constants"
+    description: "Applies to all transformation primitives in the 0x4025C0 range."
     weight: 1.5
     criteria:
-      - description: "The S-Box or initialization vector arrays are clearly named"
-      - description: "The function is tagged with the appropriate cryptographic algorithm name (e.g., AES, XOR)"
+      - "The S-Box or initialization vector arrays are clearly named"
+      - "The function is tagged with the appropriate cryptographic algorithm name (e.g., AES, XOR)"
 
-  - id: "documentation_standards"
-    # description is optional
-    function_address: "0x403A20"
-    weight: 0.5
+  - name: "documentation_standards"
+    description: "General code maintainability requirements."
     criteria:
-      - description: "Function documentation follows project docstring convention"
-      - description: "Key bitwise operations have comments explaining the bitmask intent"
+      - "Function documentation follows project docstring convention"
+      - "Key bitwise operations have comments explaining the bitmask intent"

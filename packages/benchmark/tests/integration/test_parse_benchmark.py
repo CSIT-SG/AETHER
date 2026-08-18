@@ -1,62 +1,141 @@
 import pytest
-from aether_benchmark.linter import ValidationError, lint_rubric
+from aether_benchmark.tasks.parse_benchmark import ParseBenchmarkTask
 
 
-# --- Valid Case ---
-def test_valid_rubric():
-    yaml_input = """
-name: "Valid Test"
+@pytest.mark.asyncio
+async def test_valid_rubric(tmp_path):
+    rubric_path = tmp_path / "valid_rubric.yaml"
+    rubric_path.write_text(
+        """
+name: "Reference Handler Analysis"
 version: "1.0.0"
+description: "Evaluates the quality of reverse-engineered packet processing functions."
+
 rubrics:
-  - id: "test_1"
-    function_address: "0x123"
-    weight: 1.0
+  - name: "packet_parsing_logic"
+    description: "Evaluates packet headers at 0x4010A0 (Main Parser)."
+    weight: 2.0
     criteria:
-      - description: "Is valid"
-"""
-    assert lint_rubric(yaml_input).name == "Valid Test"
+      - "Constants are replaced with named enums or defines"
+      - "Struct pointer usage is correctly applied for packet headers"
+""".strip(),
+        encoding="utf-8",
+    )
+
+    parsed = await ParseBenchmarkTask().start(rubric_path)
+
+    assert parsed["name"] == "Reference Handler Analysis"
+    assert parsed["rubrics"][0]["name"] == "packet_parsing_logic"
+    assert parsed["rubrics"][0]["weight"] == 2.0
+    assert parsed["rubrics"][0]["criteria"][0] == "Constants are replaced with named enums or defines"
 
 
-# --- Invalid Cases ---
-def test_invalid_hex_address():
-    yaml_input = """
-name: "Bad Hex"
+@pytest.mark.asyncio
+async def test_missing_required_field(tmp_path):
+    rubric_path = tmp_path / "missing_field.yaml"
+    rubric_path.write_text(
+        """
+name: "Broken Rubric"
 version: "1.0.0"
 rubrics:
-  - id: "test_2"
-    function_address: "invalid_address"
-    weight: 1.0
+  - description: "Missing name field"
     criteria:
-      - description: "Must fail"
-"""
-    with pytest.raises(ValidationError):
-        lint_rubric(yaml_input)
+      - "This should fail"
+""".strip(),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError):
+        await ParseBenchmarkTask().start(rubric_path)
 
 
-def test_missing_required_field():
-    yaml_input = """
-name: "Missing Weight"
+@pytest.mark.asyncio
+async def test_negative_weight(tmp_path):
+    rubric_path = tmp_path / "negative_weight.yaml"
+    rubric_path.write_text(
+        """
+name: "Broken Weight"
 version: "1.0.0"
 rubrics:
-  - id: "err"
-    function_address: "0x123"
-    criteria:
-      - description: "Missing weight"
-"""
-    with pytest.raises(ValidationError):
-        lint_rubric(yaml_input)
-
-
-def test_negative_weight():
-    yaml_input = """
-name: "Negative Weight"
-version: "1.0.0"
-rubrics:
-  - id: "err"
-    function_address: "0x123"
+  - name: "bad_weight"
     weight: -1.0
     criteria:
-      - description: "Weight must be > 0"
-"""
-    with pytest.raises(ValidationError):
-        lint_rubric(yaml_input)
+      - "This should fail"
+""".strip(),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError):
+        await ParseBenchmarkTask().start(rubric_path)
+
+
+@pytest.mark.asyncio
+async def test_default_weight_is_used_when_omitted(tmp_path):
+    rubric_path = tmp_path / "default_weight.yaml"
+    rubric_path.write_text(
+        """
+name: "Default Weight"
+version: "1.0.0"
+rubrics:
+  - name: "documentation_standards"
+    criteria:
+      - "Documentation is present"
+""".strip(),
+        encoding="utf-8",
+    )
+
+    parsed = await ParseBenchmarkTask().start(rubric_path)
+    assert parsed["rubrics"][0]["weight"] == 1.0
+
+
+@pytest.mark.asyncio
+async def test_string_criteria_is_allowed(tmp_path):
+    rubric_path = tmp_path / "string_criteria.yaml"
+    rubric_path.write_text(
+        """
+name: "String Criteria"
+version: "1.0.0"
+rubrics:
+  - name: "checksum_validation"
+    weight: 1.5
+    criteria:
+      - "Checksum values are validated before use"
+""".strip(),
+        encoding="utf-8",
+    )
+
+    parsed = await ParseBenchmarkTask().start(rubric_path)
+    assert parsed["rubrics"][0]["criteria"][0] == "Checksum values are validated before use"
+
+
+@pytest.mark.asyncio
+async def test_missing_rubrics_key_is_rejected(tmp_path):
+    rubric_path = tmp_path / "missing_rubrics.yaml"
+    rubric_path.write_text(
+        """
+name: "Missing Rubrics"
+version: "1.0.0"
+""".strip(),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError):
+        await ParseBenchmarkTask().start(rubric_path)
+
+
+@pytest.mark.asyncio
+async def test_invalid_yaml_is_rejected(tmp_path):
+    rubric_path = tmp_path / "invalid_yaml.yaml"
+    rubric_path.write_text(
+        """
+name: "Bad YAML"
+version: "1.0.0"
+rubrics:
+  - name: "broken"
+    criteria: [
+""".strip(),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError):
+        await ParseBenchmarkTask().start(rubric_path)
