@@ -135,7 +135,7 @@ class ChangeStructFieldSizeResult(TypedDict):
     new_size: str
 
 
-class AddStructFieldResult(TypedDict):
+class StructFieldResult(TypedDict):
     struct_id: int
     struct_name: str
     field_name: str

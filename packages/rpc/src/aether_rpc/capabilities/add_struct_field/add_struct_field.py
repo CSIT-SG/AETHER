@@ -2,7 +2,7 @@ import ida_typeinf
 
 from ..base import Capability
 from ..result import Err, Ok, Result
-from ..types import AddStructFieldResult
+from ..types import StructFieldResult
 from ..utils import get_struct_id_by_name
 from .constants import TYPE_MAP
 
@@ -21,7 +21,7 @@ class AddStructField(Capability):
         field_type: str,
         offset: int,
         array_size: int | None,
-    ) -> Result[AddStructFieldResult]:
+    ) -> Result[StructFieldResult]:
         """Add a field to a structure.
 
         Args:
@@ -161,7 +161,7 @@ class AddStructField(Capability):
             return Err(result=f"Failed to add struct field '{field_name}'.")
 
         return Ok(
-            result=AddStructFieldResult(
+            result=StructFieldResult(
                 struct_id=struct_id,
                 struct_name=struct_name,
                 field_name=field_name,
