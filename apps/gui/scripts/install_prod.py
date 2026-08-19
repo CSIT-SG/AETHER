@@ -31,6 +31,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--force-reinstall",
         help="Force reinstall even if the plugin already exists",
+        action="store_true",
         default=False,
     )
     return parser.parse_args()
