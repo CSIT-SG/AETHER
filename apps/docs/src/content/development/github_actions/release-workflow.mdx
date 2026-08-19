@@ -24,108 +24,63 @@ Automates building, packaging, tagging, and publishing a GitHub Release. Trigger
 
 Runs on `ubuntu-latest`.
 
+## Summary Flow
+
+![Summary Flow](/flowchart.svg)
+
 ### 1. Checkout code
 Uses `actions/checkout@v7` with `fetch-depth: 0` (full git history), which is required for GitHub's auto-generated release notes.
 
 ### 2. Resolve release version
-- Uses the `version` input if provided, otherwise reads the `VERSION` file.
-- Strips all whitespace (guards against trailing newlines in `VERSION`).
-- Validates the result against a semver-like pattern: `MAJOR.MINOR.PATCH` with an optional `-prerelease` or `+build` suffix (e.g. `1.2.3`, `1.2.3-rc.1`, `1.2.3+build.5`).
-- Fails the run (`::error::`) if validation fails.
-- Exposes the cleaned value as the `steps.version.outputs.version` output for later steps.
+Validates the result against a semver-like pattern: `MAJOR.MINOR.PATCH` with an optional `-prerelease` or `+build` suffix (e.g. `1.2.3`, `1.2.3-rc.1`, `1.2.3+build.5`).
+
+Exposes the cleaned value as the `steps.version.outputs.version` output for later steps.
 
 ### 3. Set up Python
 Installs Python 3.12 via `actions/setup-python@v5`.
 
 ### 4. Install `uv`
-Installs the [`uv`](https://github.com/astral-sh/uv) Python package manager via `astral-sh/setup-uv`, pinned to a commit SHA, with dependency caching enabled.
+Installs the [`uv`](https://github.com/astral-sh/uv) Python package manager via `astral-sh/setup-uv`.
+
+`uv` will be used to configure the virtual environment, and create and manage packages
 
 ### 5. Build release bundles
-Runs:
-```bash
-uv run python -m scripts.release.build
-```
-Executes `scripts/release/build.py`, which populates `dist/` with one self-contained, pip-installable directory per app defined in `scripts/release/config.py`. See [Appendix: Build Script Internals](#appendix-build-script-internals) for the full breakdown.
+Executes `scripts/release/build.py`, which populates `dist/` with one self-contained, pip-installable directory per app defined in `scripts/release/config.py`.
+
+1. Separates workspace and external dependencies
+2. Builds a wheel for workspace dependencies
+3. Appends requirements to a `requiements.txt` 
 
 ### 6. Verify build output
+Deletes existing `dist/` to ensure a clean build
+
 Fails the run if `dist/` is missing or empty, to catch silent build failures before packaging.
 
 ### 7. Zip release bundles
-For each subdirectory of `dist/`, creates a zip named:
-```
-<app-name>-v<version>.zip
-```
+Creates zips named: `<app-name>-v<version>.zip` for each subdirectory of `dist/`
+
 placed in `release-zips/`. Lists the resulting files for the run log.
 
 ### 8. Create Git tag
-- Configures a bot git identity (`github-actions[bot]`).
-- Builds the tag name as `v<version>`.
-- Checks the remote for an existing tag of that name — if found, fails the run to prevent overwriting a prior release.
-- Otherwise creates and pushes the tag `v<version>` using the workflow's `GITHUB_TOKEN` for authentication.
+Builds the tag name as `v x.x.x`.
+
+Checks the remote for an existing tag of the same name
+
+Creates and pushes the tag `v x.x.x` using the workflow's `GITHUB_TOKEN` for authentication.
 
 ### 9. Create GitHub Release
-Uses `softprops/action-gh-release@v3.0.1` to:
-- Create a release for tag `v<version>`, named `Release v<version>`.
-- Auto-generate release notes from commit history (`generate_release_notes: true`).
-- Attach all files in `release-zips/*.zip`.
-- Mark the release as a **draft** only when running under [`act`](https://nektosact.com/) (local Actions runner, which auto-sets `ACT=true`) — real CI runs publish immediately.
+Creates a release for tag `v x.x.x`, named `Release v x.x.x`.
 
-## Summary Flow
+Auto-generate release notes from commit history (`generate_release_notes: true`).
 
-![Summary Flow](/flowchart.svg)
+Attach all files in `release-zips/*.zip`.
 
-## Appendix: Build Script Internals
+Mark the release as a **draft** only when running under [`act`](https://nektosact.com/) (local Actions runner, which auto-sets `ACT=true`) — real CI runs publish immediately.
 
-`scripts/release/build.py` (invoked as `scripts.release.build`).
-
-### `split_export(text)`
-Parses the output of `uv export` (a `requirements.txt`-style listing) and separates it into two groups:
-- **Local/editable deps** — lines matching `-e <path>` (workspace packages), returned as plain paths using regex(e.g. `./packages/backend`).
-- **Everything else** — kept as-is, to be treated as external (PyPI) dependencies.
-
-### `prune_app_deps(app, requirements_path, wheels_dir)`
-For a single app:
-1. Runs `uv export --package <app> --no-dev --no-hashes` to a temp file, producing that app's full dependency closure.
-2. Splits it via `split_export` into local workspace deps vs. external deps.
-3. For each local dep, runs `uv build --wheel --out-dir <wheels_dir> <pkg_path>` — building an installable wheel for that in-repo package (since it won't exist on PyPI).
-4. Appends to `requirements_path`:
-   - A `--find-links wheels` line, so `pip install -r requirements.txt` can resolve local wheels.
-   - One line per built wheel (`wheels/<wheel-file>.whl`).
-   - The external dependency lines carried over from the export.
-
-Net effect: each app ships with a `requirements.txt` that installs cleanly via `pip`, without needing access to the monorepo's workspace packages or a private index — local packages are vendored as wheels instead of expressed as path/editable dependencies.
-
-### `main()`
-1. Deletes `dist/` if it already exists (clean build).
-2. For each app in `APPS`:
-   - Creates `dist/<app>/` and `dist/<app>/wheels/`.
-   - Calls `prune_app_deps` to build wheels and write `dist/<app>/requirements.txt`.
-   - Copies each of the app's `extra_inodes` into `dist/<app>/` (preserving the original filename).
-
-### Resulting `dist/` layout
-
-```
-dist/
-├── aether_gui/
-│   ├── wheels/
-│   │   └── *.whl              # wheels for aether_gui's local workspace deps
-│   ├── requirements.txt       # --find-links wheels + wheel entries + external deps
-│   ├── plugin.py
-│   ├── install_prod.py
-│   └── README.md
-└── aether_cli/
-    ├── wheels/
-    │   └── *.whl              # wheels for aether_cli's local workspace deps
-    ├── requirements.txt
-    ├── entrypoint.py
-    ├── install.py
-    └── README.md
-```
-
-This is exactly what step 7 of the workflow (**Zip release bundles**) zips up — each `dist/<app>/` folder becomes `release-zips/<app>-v<version>.zip`.
 ## Notes / Things to Watch
 
-- **Version source of truth**: manual input always overrides the `VERSION` file — useful for re-releasing a hotfix without touching the file, but can drift from `VERSION` if not kept in sync afterward.
-- **Duplicate tag protection**: the workflow will not overwrite an existing tag; bump `VERSION` or pass a new `version` input to retry.
-- **Pinning consistency**: `astral-sh/setup-uv` is pinned to a commit SHA, while `actions/checkout@v7` and `softprops/action-gh-release@v3.0.1` are pinned to tags. Tags can be moved by the action author (a supply-chain risk); pinning all third-party actions to SHAs is more defensive if that matters for this repo's threat model.
+- **Version source of truth**: manual input always overrides the `VERSION` file
+    - useful for re-releasing a hotfix without touching the file, but can drift from `VERSION` if not kept in sync afterward.
+- **Duplicate tag protection**: the workflow will not overwrite an existing tag
+    - bump `VERSION` or pass a new `version` input to retry.
 - **Local testing**: the draft-on-`ACT` behavior means this workflow can be dry-run locally with `act` without publishing a real release.
