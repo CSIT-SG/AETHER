@@ -11,6 +11,7 @@ from aether_gui.utils.ui import StyledComponent
 from PySide6 import QtCore
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import QFrame, QLabel, QScrollArea, QStackedWidget, QVBoxLayout, QWidget
+from shiboken6 import isValid
 
 from ..MessageColumn import MessageColumn
 from ..MessageParagraph import MessageParagraph
@@ -245,7 +246,11 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
         return layout.widget()
 
     def scroll_to_bottom(self) -> None:
-        scrollbar = cast(QScrollArea, self._scroll_area).verticalScrollBar()
+        if self._scroll_area is None or not isValid(self._scroll_area):
+            return
+        scrollbar = self._scroll_area.verticalScrollBar()
+        if not isValid(scrollbar):
+            return
         scrollbar.setValue(scrollbar.maximum())
 
     def style_file(self) -> Path | None:
