@@ -15,7 +15,7 @@ Automates building, packaging, tagging, and publishing a GitHub Release. Trigger
 
 ![Summary Flow](/flowchart.svg)
 
-### Building release bundles
+## Building release bundles
 Executes `scripts/release/build.py`, which populates `dist/` with one self-contained, pip-installable directory per app defined in `scripts/release/config.py`.
 
 1. Deletes `dist/` to ensure a clean build
@@ -24,15 +24,7 @@ Executes `scripts/release/build.py`, which populates `dist/` with one self-conta
 4. Appends requirements to a `requirements.txt`
 5. Copies extra files like entrypoint into `OUTPUT_DIR/app`
 
-## config.py
-`config.py` houses release configureation variables like `OUTPUT_DIR`, `ROOT_DIR`, adn `APPS`.
+`config.py` houses release configureation variables like `OUTPUT_DIR`, `ROOT_DIR`, and `APPS`.
 modifications to the workflow settings should be made here.
 
-
-## Notes / Things to Watch
-
-- **Version source of truth**: manual input always overrides the `VERSION` file
-    - useful for re-releasing a hotfix without touching the file, but can drift from `VERSION` if not kept in sync afterward.
-- **Duplicate tag protection**: the workflow will not overwrite an existing tag
-    - bump `VERSION` or pass a new `version` input to retry.
-- **Local testing**: the draft-on-`ACT` behavior means this workflow can be dry-run locally with `act` without publishing a real release.
+`extra_inodes` is a list of files to include in each release zip. They differ based on whether the gui or cli release is being zipped.
