@@ -11,71 +11,23 @@ Automates building, packaging, tagging, and publishing a GitHub Release. Trigger
 | `workflow_dispatch` | Manual run from the GitHub Actions UI |
 | Input: `version` | Optional. Release version, e.g. `1.2.3`. If omitted, the version is read from the repo's `VERSION` file. |
 
-## Concurrency
-
-- Runs are grouped by `release-${{ github.ref }}`.
-- `cancel-in-progress: false` — a new run will **queue** rather than cancel an in-flight release, so a run can never be killed mid-way through tagging/pushing.
-
-## Permissions
-
-- `contents: write` — required to push tags and create releases.
-
-## Job: `release`
-
-Runs on `ubuntu-latest`.
-
 ## Summary Flow
 
 ![Summary Flow](/flowchart.svg)
 
-### 1. Checkout code
-Uses `actions/checkout@v7` with `fetch-depth: 0` (full git history), which is required for GitHub's auto-generated release notes.
-
-### 2. Resolve release version
-Validates the result against a semver-like pattern: `MAJOR.MINOR.PATCH` with an optional `-prerelease` or `+build` suffix (e.g. `1.2.3`, `1.2.3-rc.1`, `1.2.3+build.5`).
-
-Exposes the cleaned value as the `steps.version.outputs.version` output for later steps.
-
-### 3. Set up Python
-Installs Python 3.12 via `actions/setup-python@v5`.
-
-### 4. Install `uv`
-Installs the [`uv`](https://github.com/astral-sh/uv) Python package manager via `astral-sh/setup-uv`.
-
-`uv` will be used to configure the virtual environment, and create and manage packages
-
-### 5. Build release bundles
+### Building release bundles
 Executes `scripts/release/build.py`, which populates `dist/` with one self-contained, pip-installable directory per app defined in `scripts/release/config.py`.
 
-1. Separates workspace and external dependencies
-2. Builds a wheel for workspace dependencies
-3. Appends requirements to a `requiements.txt` 
+1. Deletes `dist/` to ensure a clean build
+2. Separates workspace and external dependencies
+3. Builds a wheel for workspace dependencies
+4. Appends requirements to a `requirements.txt`
+5. Copies extra files like entrypoint into `OUTPUT_DIR/app`
 
-### 6. Verify build output
-Deletes existing `dist/` to ensure a clean build
+## config.py
+`config.py` houses release configureation variables like `OUTPUT_DIR`, `ROOT_DIR`, adn `APPS`.
+modifications to the workflow settings should be made here.
 
-Fails the run if `dist/` is missing or empty, to catch silent build failures before packaging.
-
-### 7. Zip release bundles
-Creates zips named: `<app-name>-v<version>.zip` for each subdirectory of `dist/`
-
-placed in `release-zips/`. Lists the resulting files for the run log.
-
-### 8. Create Git tag
-Builds the tag name as `v x.x.x`.
-
-Checks the remote for an existing tag of the same name
-
-Creates and pushes the tag `v x.x.x` using the workflow's `GITHUB_TOKEN` for authentication.
-
-### 9. Create GitHub Release
-Creates a release for tag `v x.x.x`, named `Release v x.x.x`.
-
-Auto-generate release notes from commit history (`generate_release_notes: true`).
-
-Attach all files in `release-zips/*.zip`.
-
-Mark the release as a **draft** only when running under [`act`](https://nektosact.com/) (local Actions runner, which auto-sets `ACT=true`) — real CI runs publish immediately.
 
 ## Notes / Things to Watch
 
