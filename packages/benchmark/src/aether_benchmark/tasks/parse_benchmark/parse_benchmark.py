@@ -1,18 +1,16 @@
 import asyncio
 from pathlib import Path
-from typing import Any
 
 import yaml
-from aether_benchmark.tasks.parse_benchmark.models import RubricsSchema
 from aether_benchmark.utils.task import Task
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 
-class ParseBenchmarkTask(Task[[Path], dict[str, Any]]):  # type: ignore[misc]
+class ParseBenchmarkTask[T: BaseModel](Task[[T, Path], T]):  # type: ignore[misc]
     def __init__(self) -> None:
         self._cancelled = False
 
-    async def start(self, task_path: Path) -> dict[str, Any]:
+    async def start(self, schema: T, task_path: Path) -> T:
         """Load and validate a benchmark rubric YAML file."""
         self._cancelled = False
 
@@ -26,17 +24,21 @@ class ParseBenchmarkTask(Task[[Path], dict[str, Any]]):  # type: ignore[misc]
             raise ValueError(f"Invalid YAML in benchmark file '{task_path}': {exc}") from exc
 
         if not isinstance(data, dict):
-            raise ValueError(f"Benchmark file '{task_path}' must contain a YAML object at the top level")
+            raise ValueError(
+                f"Benchmark file '{task_path}' must contain a YAML object at the top level"
+            )
 
         try:
-            validated = RubricsSchema.model_validate(data)
+            validated = schema.model_validate(data)
         except ValidationError as exc:
-            raise ValueError(f"Benchmark schema validation failed for '{task_path}': {exc}") from exc
+            raise ValueError(
+                f"Benchmark schema validation failed for '{task_path}': {exc}"
+            ) from exc
 
         if self._cancelled:
             raise asyncio.CancelledError("Benchmark parsing cancelled")
 
-        return validated.model_dump(mode="python")
+        return validated
 
     async def cancel(self) -> None:
         self._cancelled = True
