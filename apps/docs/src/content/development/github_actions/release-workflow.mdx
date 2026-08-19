@@ -72,23 +72,7 @@ Uses `softprops/action-gh-release@v3.0.1` to:
 
 ## Summary Flow
 
-```
-workflow_dispatch (version?)
-        ↓
-resolve & validate version ──(invalid semver)---→ fail
-        ↓
-setup Python + uv
-        ↓
-build → dist/
-        ↓
-verify dist/ non-empty ──(empty)---→ fail
-        ↓
-zip each dist/<app> → release-zips/<app>-v<version>.zip
-        ↓
-create + push tag v<version> ──(tag exists)---→ fail
-        ↓
-publish GitHub Release (attach zips, auto notes)
-```
+![Summary Flow](/flowchart.svg)
 
 ## Appendix: Build Script Internals
 
@@ -96,7 +80,7 @@ publish GitHub Release (attach zips, auto notes)
 
 ### `split_export(text)`
 Parses the output of `uv export` (a `requirements.txt`-style listing) and separates it into two groups:
-- **Local/editable deps** — lines matching `-e <path>` (workspace packages), returned as plain paths using regex (e.g. `./packages/backend`).
+- **Local/editable deps** — lines matching `-e <path>` (workspace packages), returned as plain paths using regex(e.g. `./packages/backend`).
 - **Everything else** — kept as-is, to be treated as external (PyPI) dependencies.
 
 ### `prune_app_deps(app, requirements_path, wheels_dir)`
