@@ -22,20 +22,22 @@ class MCPClient:
     def __init__(self) -> None:
         self.mcp_url = config.mcp_url
         self._client: Client[StreamableHttpTransport] | None = None
-        self._connected: bool = False
         self.logger = get_logger("MCPClient")
+
+    def is_connected(self) -> bool:
+        """Check if the client is connected to the MCP server."""
+        return self._client is not None and self._client.is_connected()
 
     async def connect(self) -> None:
         """Open the MCP server connection."""
-        if self._connected:
+        if self.is_connected():
             return
 
         transport = StreamableHttpTransport(url=self.mcp_url)
-        self._client = Client(transport, timeout=None)
+        self._client = Client(transport, timeout=10.0)
 
         try:
             await self._client.__aenter__()  # type: ignore[no-untyped-call]
-            self._connected = self._client.is_connected()
             self.logger.info(f"Connected to MCP server at {self.mcp_url}")
         except Exception as e:
             self._client = None
@@ -43,7 +45,7 @@ class MCPClient:
 
     async def close(self) -> None:
         """Close the MCP server connection."""
-        if not self._connected or self._client is None:
+        if not self.is_connected() or self._client is None:
             return
 
         try:
@@ -52,11 +54,10 @@ class MCPClient:
             self.logger.warning(f"Error closing MCP client: {e}")
         finally:
             self._client = None
-            self._connected = False
             self.logger.info("Disconnected from MCP server")
 
     async def list_tools(self) -> list[Tool]:
-        if not self._connected:
+        if not self.is_connected():
             await self.connect()
         assert self._client is not None
         try:
@@ -71,7 +72,7 @@ class MCPClient:
         args: dict[str, Any] | None = None,
     ) -> AsyncIterator[CallToolResult]:
         """Connects, runs the tool, and automatically closes the connection when done."""
-        if not self._connected:
+        if not self.is_connected():
             await self.connect()
 
         assert self._client is not None
