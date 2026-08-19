@@ -4,7 +4,6 @@ import ida_kernwin
 from aether_gui.utils.ui import get_shared_font_manager
 from PySide6 import QtWidgets
 from PySide6.QtGui import QFont
-from shiboken6 import wrapInstance
 
 
 class FontSizeDecreaseHandler(ida_kernwin.action_handler_t):
@@ -15,7 +14,7 @@ class FontSizeDecreaseHandler(ida_kernwin.action_handler_t):
         cur = ida_kernwin.get_current_widget()
         if cur is None:
             return 0
-        window = cast(QtWidgets.QWidget, wrapInstance(int(cur), QtWidgets.QWidget))
+        window = cast(QtWidgets.QWidget, ida_kernwin.PluginForm.TWidgetToQtPythonWidget(cur))
 
         mgr = get_shared_font_manager(window.windowTitle())
 

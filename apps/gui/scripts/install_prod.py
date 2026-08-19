@@ -28,6 +28,11 @@ def parse_args() -> argparse.Namespace:
         default=default_plugin_path(),
         help="IDA plugins directory to install into",
     )
+    parser.add_argument(
+        "--force-reinstall",
+        help="Force reinstall even if the plugin already exists",
+        default=False,
+    )
     return parser.parse_args()
 
 
@@ -62,19 +67,19 @@ def resource_dir() -> Path:
     raise SystemExit("Production wheel bundle was not found")
 
 
-def install_requirements(bundle_dir: Path) -> None:
-    run(
-        [
-            sys.executable,
-            "-m",
-            "pip",
-            "install",
-            "--user",
-            "-r",
-            str(bundle_dir / "requirements.txt"),
-        ],
-        cwd=bundle_dir,
-    )
+def install_requirements(*, bundle_dir: Path, force_reinstall: bool) -> None:
+    cmd = [
+        sys.executable,
+        "-m",
+        "pip",
+        "install",
+        "--user",
+        "-r",
+        str(bundle_dir / "requirements.txt"),
+    ]
+    if force_reinstall:
+        cmd.append("--force-reinstall")
+    run(cmd, cwd=bundle_dir)
 
 
 def copy_entrypoint(plugin_path: Path, bundle_dir: Path) -> None:
@@ -96,7 +101,7 @@ def main() -> None:
 
     bundle_dir = resource_dir()
     ensure_plugin_path(args.plugin_path)
-    install_requirements(bundle_dir)
+    install_requirements(bundle_dir=bundle_dir, force_reinstall=args.force_reinstall)
     copy_entrypoint(args.plugin_path, bundle_dir)
     print(f"Installed AETHER GUI production plugin in: {args.plugin_path}")
 

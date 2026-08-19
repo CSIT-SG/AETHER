@@ -28,7 +28,6 @@ class _Aether(idaapi.plugin_t):
         super().__init__()
         self._rpc_server = None
         self.hooks: dict[str, ida_kernwin.UI_Hooks]
-        self._settings_handler = None
 
     def init(self) -> int:
         if is_headless_ida():
