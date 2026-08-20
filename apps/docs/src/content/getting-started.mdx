@@ -26,18 +26,6 @@ Download the release binaries.
 2. Click on latest release
 3. Download `aether_gui-v<version>.zip`
 
-The files are laid out in the following structure: 
-
-<FileTree>
-  <FileTree.Folder name="aether_gui" defaultOpen>
-    <FileTree.Folder name="wheels" />
-    <FileTree.File name="requirements.txt" />
-    <FileTree.File name="install_prod.py" />
-    <FileTree.File name="plugin.py" />
-    <FileTree.File name="README.md" />
-  </FileTree.Folder>
-</FileTree>
-
 <Callout type="warning">
   The GUI plugin runs inside IDA's embedded Python, so its dependencies must be installed into the **same** Python that IDA uses.
   Point IDA at a Python `3.12` or `3.13` install with `idapyswitch` (ships with IDA), then run the install script below
@@ -54,10 +42,13 @@ This will install the wheel bundles and copy the plugin entrypoint into the IDA 
 
 You can install into a custom plugins folder with the `--plugin-path` argument. It defaults to `%APPDATA%\Hex-Rays\IDA Pro\plugins` (Windows) or `~/Hex-Rays/IDA Pro/plugins` (Linux), eg. `python install_prod.py --plugin-path "D:\ida-plugins"`.
 
-5. 
+5. Start the backend server.
 
+```bash
+python run_prod_backend.py
+```
 
-
+You will need to keep the backend server running in the background as this bridges the RPC layer with the GUI instance.
 
 ## Headless Command-Line Interface (CLI)
 
@@ -66,20 +57,7 @@ Download the release binaries.
 1. In the [repository](https://github.com/csitgovsg-acube/AETHER-next) click on `Releases`
 2. Click on latest release
 3. Download `aether_cli-v<version>.zip`
-
-The files are laid out in the following structure: 
-
-<FileTree>
-  <FileTree.Folder name="aether_cli" defaultOpen>
-    <FileTree.Folder name="wheels" />
-    <FileTree.File name="requirements.txt" />
-    <FileTree.File name="install.py" />
-    <FileTree.File name="entrypoint.py" />
-    <FileTree.File name="README.md" />
-  </FileTree.Folder>
-</FileTree>
-
-Run the install script.
+4. Run the install script.
 
 ```bash
 python install.py
@@ -132,15 +110,15 @@ Then your config will look like:
 
 ```json
 {
-    "provider": {
-        "gateway_url": "http://localhost:8080/v1",
-        "api_key": null,
-        "models": {
-            "qwen-7b": "bartowski/Qwen2.5-7B-Instruct-GGUF:Q4_K_M"
-        },
-        "default_model": "qwen-7b",
-        "extra_body": null
-    },
+  "provider": {
+      "gateway_url": "http://localhost:8080/v1",
+      "api_key": null,
+      "models": {
+          "qwen-7b": "bartowski/Qwen2.5-7B-Instruct-GGUF:Q4_K_M"
+      },
+      "default_model": "qwen-7b",
+      "extra_body": null
+  },
   ...rest of your config
 }
 ```
@@ -161,15 +139,15 @@ You should set the API key in the config to match the one you created. Then your
 
 ```json
 {
-    "provider": {
-        "gateway_url": "http://localhost:4000/v1",
-        "api_key": "YOUR_API_KEY",
-        "models": {
-            "hf-qwen-7b": "huggingface/bartowski/Qwen2.5-7B-Instruct-GGUF:Q4_K_M"
-        },
-        "default_model": "hf-qwen-7b",
-        "extra_body": null
-    },
+  "provider": {
+      "gateway_url": "http://localhost:4000/v1",
+      "api_key": "YOUR_API_KEY",
+      "models": {
+          "hf-qwen-7b": "huggingface/bartowski/Qwen2.5-7B-Instruct-GGUF:Q4_K_M"
+      },
+      "default_model": "hf-qwen-7b",
+      "extra_body": null
+  },
   ...rest of your config
 }
 ```
