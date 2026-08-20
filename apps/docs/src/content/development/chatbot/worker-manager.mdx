@@ -1,68 +1,125 @@
+import { Callout } from 'nextra/components'
+
 # WorkerManager
 
-This is to run a unit of work on a separate thread.
+Runs a unit of work on a separate thread.
 
-A unit of work in our case would be a long running task that would hold up the
-IDA main thread if we did not use a separate thread. It does this by starting a
-separate thread and event loop, followed by waiting for tasks to be submitted to
-it.
+A unit of work is a long running task that would hold up the IDA main thread. It
+starts a thread and an event loop, then waits for tasks.
 
-## Main methods
+Use the singleton. Import `get_shared_worker_manager()` and use it from there.
 
-The main methods of the `WorkerManager` are `submit()`, `_drive()`, `consume()`
-and `cancel()`.
+## Threading rules
+
+<Callout type="warning">
+`consume()` callbacks fire on a **consumer thread**, not on IDA's GUI thread.
+
+Anything touching a widget must be marshalled yourself. That is why
+`ChatOrchestrator` wraps every render in `_run_on_ida_ui_thread()`.
+</Callout>
+
+## BaseTask
+
+Anything you submit has to subclass `BaseTask[T]`.
+
+- `id` — uuid, assigned per instance
+- `name` — the class name
+- `is_running`, `has_failed` — flags the manager maintains
+- `run(*args, **kwargs)` — abstract, must be an `AsyncIterator[T]`
+- `close()` — abstract, releases resources
+
+## TaskHandle
+
+What `submit()` gives back.
+
+- `task_id`
+- `results` — the `Queue` `_drive()` fills and `consume()` drains
+- `done` — a `threading.Event`
+- `error` — the exception, if the task blew up
+- `aio_task` — the asyncio task, so `cancel()` can reach it
+
+`SENTINEL` is an enum token, not a string. It marks end of stream.
+
+Internally the manager also keeps a `TaskRecord` per task: the task, its future
+and its handle.
+
+## Methods
+
+Five, not four: `submit()`, `_drive()`, `consume()`, `cancel()` and
+`shutdown()`.
 
 ### submit()
 
-`submit()` takes in a task and the keyword arguments needed to run the task. It
-will then run that task on the loop and return a task handle for the callee to
-track the task.
+Takes a task plus the args needed to run it. Positional args work too, despite
+the whiteboard.
+
+Runs it on the loop, returns a `TaskHandle` for the callee to track.
 
 ### _drive()
 
-`_drive()` is called by `submit()` to convert the output of the task into
-something `consume()` can read from.
+Called by `submit()`, converts the task output into something `consume()` can
+read.
 
-By default, the tasks all return `AsyncIterator`s, meaning that the callee has to
-iterate through the output in order to read it. `_drive()` therefore iterates
-through the task's output and puts it into the queue inside `TaskHandle` for
-`consume()` to read from.
+Tasks return `AsyncIterator`s, so the callee would otherwise have to iterate.
+`_drive()` iterates for you and puts each item into the handle's queue.
+
+On the way out it always: flips `is_running`, calls `task.close()`, pushes
+`SENTINEL`, sets `done`, and drops the task from the registry.
+
+Exceptions are caught and parked on `handle.error` rather than raised.
 
 ### consume()
 
-`consume()` allows the callee to get the result of the task from the
-`WorkerManager`.
+Lets the callee get results without blocking.
 
-It takes in three `Callable`s to handle outputs, errors and when the task is
-finished, alongside the task handle to know which task to take the result from.
+Spawns a daemon thread that reads the queue until `SENTINEL`.
 
-`consume()` will keep reading from the queue inside `TaskHandle` until a
-`SENTINEL` is hit, on a separate thread, giving the callee a synchronous,
-non-blocking method to read the results.
+```python
+def consume(handle, on_event, on_error=None, on_done=None) -> None: ...
+```
+
+<Callout>
+Only `on_event` is required. The whiteboard says three `Callable`s — `on_error`
+and `on_done` both default to `None`, and `ChatOrchestrator` passes
+`on_done=None` when fetching context.
+</Callout>
+
+`handle.error` is reported through `on_error` after the stream drains, so a
+failed task still reaches you.
 
 ### cancel()
 
-`cancel()` just stops the task from running and calls `close()` on the task for
-it to clean up what it needs.
+Stops the task and calls `close()` on it so it can clean up.
 
-## Usage
+Bails early if the task is unknown, not running, already failed, or its future
+is already done.
 
-The `WorkerManager` is able to handle running multiple tasks at once, and
-therefore we can use a singleton.
+<Callout type="warning">
+It blocks up to 5 seconds waiting on `task.close()`. `ChatbotPanel.shutdown()`
+calls this from the UI thread, once per handle.
+</Callout>
 
-In order to use the `WorkerManager`, you must import `get_shared_worker_manager()`
-and use it from there.
+### shutdown()
+
+Cancels everything, stops the loop, joins the thread with a 5 second timeout.
 
 ## Output cases
 
-There are two different cases of outputs from a task that I have encountered so
-far.
+Two cases so far.
 
-**A continuous stream.** The bits of output are returned one by one until
-finished. For this, `consume()` works just fine.
+**A continuous stream.** Output comes back one bit at a time until finished.
+`consume()` works just fine.
 
-**A one-off result** that the callee needs to use somewhere else immediately
-after submitting the task. While we can just wait for the task to be finished on
-the callee thread, it is much better to just use a `Future` and pass that
-`Future` into `consume()`. The callee can then use `add_done_callback` to process
-the output.
+**A one-off result** the callee needs immediately after submitting.
+
+Waiting on the callee thread works but is wasteful. Use a `Future` instead.
+
+The `Future` is not passed to `consume()` — it is captured in the `on_event`
+closure and resolved there:
+
+```python
+fut: Future[dict[str, Any]] = Future()
+worker_manager.consume(handle, on_event=lambda e: self._format_context(e, fut), ...)
+```
+
+The callee then uses `add_done_callback` to process the output.

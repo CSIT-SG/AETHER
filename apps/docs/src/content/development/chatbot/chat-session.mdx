@@ -1,42 +1,98 @@
+import { Callout } from 'nextra/components'
+
 # ChatSession & ChatbotHandler
 
 ## ChatSession
 
-- Should live outside of the UI components.
-- Holds both the UI messages and the backend chatbot's turn-by-turn session.
+- Should live outside of the UI components
+- Holds both the UI messages and the backend turn-by-turn session
+
+Two fields, nothing else:
+
+- `messages: list[Message]` — what the UI replays
+- `chat_session: CompactingSession` — what the LLM sees
+
+Two methods:
+
+- `add_message(msg)`
+- `append_to_last_message(msg)`
 
 ### UI messages
 
-It's just a list of `Message`s (the class).
+Just a list of `Message`s (the class).
 
-Whenever a new `MessageColumn` is created, a new `Message` is added to the list.
+A new `MessageColumn` adds a new `Message` to the list.
 
-This `Message` should only have paragraphs added to it, since it references the
-last `MessageParagraph`'s `Message`, so the `MessageColumn` manages the content.
+After that, only paragraphs get added to it. The `MessageColumn` manages the
+content.
 
-When the content is re-rendered after the window is closed, all the
-`MessageParagraph`s are merged into one `MessageParagraph` for easy rendering.
+Paragraph text is concatenated straight into that one `Message.content`, joined
+with `"\n\n"`.
+
+<Callout>
+The merge happens **while the response streams**, not when the window closes.
+By the time `load_message_history()` runs there is already one `Message` per
+column, so each column reloads as a single `MessageParagraph`.
+</Callout>
 
 ### Backend session
 
-We use a custom session that is built on top of the `SQLiteSession` from the
-Agents SDK.
+`CompactingSession` subclasses `SQLiteSession` from the Agents SDK.
 
-The basic idea is that we override the base class's `add_items()` method to help
-us check when the session size outgrows a certain threshold.
+`db_path` is `":memory:"`, so history lives in RAM and dies with the process.
 
-We store the session in memory, as in RAM. To maintain the session, we have to
-have a constant connection between the session object and OpenRouter. Therefore,
-by instantiating it on the `ChatbotHandler`, the connection persists even after
-the window is closed.
+It overrides `add_items()` to compact once the session outgrows a threshold.
+
+The compaction:
+
+1. `threshold = 10` items, `keep_last_n = 5`
+2. Everything before the last 5 is the head, the last 5 is the tail
+3. The head is summarised by a summarizer agent (`max_turns=1`)
+4. The session is cleared
+5. `[compacted_summary, *tail]` is written back
+
+The summary goes back in as a `system` message.
+
+The summarizer comes from `get_compacting_agent()`.
+
+### What actually persists
+
+<Callout type="warning">
+`CompactingSession` is a local in-memory store. A fresh provider client and
+`Agent` are built **per turn** inside `ChatBotTask.run()`.
+
+What survives closing the window is the *history*: `ChatSession.messages` for
+the UI and the SQLite rows for the LLM. Plus the `MCPClient` connection, which
+is owned elsewhere.
+
+Persistence of state, not of a socket.
+</Callout>
 
 ## ChatbotHandler
 
 This is where the `ChatSession` lives.
 
-It creates the `ChatbotPanel` and passes it the `ChatSession` object.
+It is an `ida_kernwin.action_handler_t`, registered as a context menu item. Only
+shows up on pseudocode views (`BWN_PSEUDOCODE`).
 
-This allows the `ChatSession` to remain even after the window closes.
+It does **not** create the `MCPClient`. `AetherUIHooks` creates one and passes it
+in, shared with the annotator.
 
-Not much to say about the handler, but if something needs to be persistent even
-after the window closes, instantiate it here.
+`activate()`:
+
+1. Builds a `ChatbotPanelForm` with the session and the MCP client
+2. `Show()`s it with `WOPN_RESTORE`
+3. Docks it `DP_RIGHT` of the widget that was focused
+
+If something needs to be persistent even after the window closes, instantiate it
+here.
+
+## ChatbotPanelForm
+
+The `ida_kernwin.PluginForm` between the handler and the panel.
+
+- `OnCreate` — wraps the IDA form as a `QWidget`, calls
+  `create_chatbot_panel(session, mcp_client, parent)`
+- `OnClose` — calls `chat_panel.shutdown()`, which cancels every in-flight task
+
+The session is not touched on close. That is the whole point.

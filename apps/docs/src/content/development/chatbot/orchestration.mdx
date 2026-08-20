@@ -1,65 +1,143 @@
+import { Callout } from 'nextra/components'
+
 # Orchestration
 
 ## ChatOrchestrator
 
-This is the `main.py` of our backend logic. It is spawned by the `ChatbotPanel`
-and is passed the `MessageArea`.
+The `main.py` of our backend logic.
 
-It is composed of a renderer and a `ChatbotTask`. The job of the `ChatbotTask` is
-to send user prompts to OpenRouter, and the renderer takes the outputs and
-reflects them in the UI.
+Constructed by the `ChatbotPanel` with the `MessageArea`, the MCP client and the
+session. It is typed against `ChatAreaProtocol`, not `MessageArea`.
 
-While it mostly serves as a bridge between the renderer and the `ChatbotTask`,
-there is another important job that it does: fetching the IDA context to send to
-the LLM. It uses the MCP client through the `CallToolTask` to call the
-`get_ida_context()` tool.
+It is composed of a renderer and a `ChatBotTask`:
 
-It also holds the state of `message_created` and `last_message_type`. This allows
-the renderer to remain stateless, since it's merely an interface for the backend
-to interact with the frontend.
+- `ChatBotTask` sends prompts to the provider
+- `ChatbotAreaRenderer` takes the outputs and reflects them in the UI
 
-The only function it exports is `submit_user_prompt()`, which just takes in a
-user prompt.
+### Fetching IDA context
 
-## Chatbot Agent
+The other job it does is fetching the IDA context for the LLM.
 
-In order to send prompts back and forth to OpenRouter, we need to maintain a
-constant connection. If we ran this on the main IDA thread, it would hang until
-the results were done. Therefore, the instantiation and connection of the Agents
-client is done on a task.
+- Reads the current address from `ida_kernwin.get_screen_ea()`
+- Needs `get_rpc_id()`. No RPC id means it renders an error and raises.
+- Submits a `CallToolTask` calling the **`get_function_context`** tool
+- Args are `rpc_id` and the address as hex
 
-The task takes in the IDA context, the MCP client, the user prompt and the
-`ChatSession`.
+<Callout>
+The whiteboard calls this `get_ida_context()`. That is the module directory. The
+registered tool is `get_function_context`.
+</Callout>
 
-The `ChatSession`, IDA context and user prompt are pretty self-explanatory.
+The result comes back as a `Future`, which is handed to `ChatBotTask`.
 
-The MCP client is for wrapping the MCP tools into Agents SDK tools. This is to
-enable the cancellation of running tools.
+### Exports
 
-The task generates the outputs in four different categories: Text, Reasoning,
-Tool Call and Tool Output. This allows the `ChatOrchestrator` to call different
-methods on the renderer for different types of rendering.
+Two public methods, not one:
 
-The scope of the `ChatbotTask` should just be to pass context and the user prompt
-to the agent, and nothing else.
+- `submit_user_prompt(prompt)` — called from the IDA main thread, returns
+  immediately
+- `shutdown()` — cancels every handle it has collected
 
-## ChatbotRenderer
+### Turn state
 
-It has three different methods:
+It tracks `message_created` and `last_message_type` so the renderer can stay
+stateless.
+
+<Callout type="warning">
+These are **not** instance attributes. They are closure locals inside
+`_handle_worker_result()`, rebuilt on every `submit_user_prompt()`.
+
+So the state resets each turn. Do not expect to read it from outside.
+</Callout>
+
+Everything that touches the UI is marshalled through `_run_on_ida_ui_thread()`,
+which wraps the call in `ida_kernwin.execute_sync(..., MFF_WRITE)`.
+
+## ChatBotTask
+
+In order to send prompts back and forth to the provider we need a live
+connection. On the IDA main thread that would hang until the results were done,
+so the agent is built and run on a task instead.
+
+Takes the IDA context, the MCP client, the user prompt and the `ChatSession`.
+
+### What it does
+
+1. Waits on the context `Future`, **30 second timeout**
+2. Renders `prompts/user_prompt.md.jinja` with the prompt and the context
+3. Renders `prompts/system_prompt.md.jinja` with the `rpc_id`
+4. Wraps every MCP tool as an Agents SDK `FunctionTool`
+5. Builds the `Agent` and runs it streamed with `max_turns=None`
+6. Yields typed outputs until the stream ends
+7. Cleans up in `finally`
+
+The model comes from `OpenAIGateway().get_model(feature="chatbot")`. That is an
+OpenAI-*compatible* client pointed at `config.provider.gateway_url` — the
+provider is configuration, not hardcoded.
+
+The MCP client is wrapped so tools become cancellable. `strict_json_schema` is
+off.
+
+<Callout>
+The whiteboard says the task should just pass context and prompt to the agent
+and nothing else. It currently also owns prompt templating, tool wrapping and
+stream cleanup. Treat that line as intent, not description.
+</Callout>
+
+### Output categories
+
+Four, all `LLMOutput` subclasses:
+
+| Type | Renders as |
+| --- | --- |
+| `TextDelta` | the raw delta |
+| `ReasoningDelta` | `[Reasoning]: ...` |
+| `ToolCall` | `Calling tool 'x' with args: ...` |
+| `ToolOutput` | `Result: ...` |
+
+The wording the user sees comes from each type's `__str__`.
+
+Four categories, but only two renderer methods. `TextDelta` and `ReasoningDelta`
+both go to `render_aether_message` as type `"text"`.
+
+## ChatbotAreaRenderer
+
+Three methods:
 
 - `render_aether_message()`
 - `render_tool_message()`
 - `render_error()`
 
-The names are pretty self-explanatory, but the way they work is that what they
-take is a bool to check if there was already a message created, to decide whether
-or not to create a new `MessageColumn` or `MessageParagraph`. This applies to all
-the methods except `render_error()` for now.
+All of them take `message_created` as a **keyword-only** bool, to decide whether
+to open a new `MessageColumn` or add to the existing one. Except `render_error()`
+for now, which always opens a new column.
 
-`render_aether_message()` takes in another bool that checks if the previous type
-created was also an aether message or not. This allows it to decide when to
-append to the last `MessageParagraph` or not.
+### render_aether_message
 
-It uses a `ChatAreaProtocol` for type checking, since importing `ChatArea`
-directly would create a circular import. Typically you should not use `Protocol`s
-for type checking.
+```python
+def render_aether_message(
+    self, message: str, last_message_type: MessageType, *, message_created: bool
+) -> None: ...
+```
+
+<Callout type="warning">
+The second argument is **not** a bool.
+
+`MessageType` is `Literal["tool", "text", "error"]`. The whiteboard describes it
+as "another bool that checks if the previous type was an aether message".
+</Callout>
+
+The three branches:
+
+- not `message_created` → new `MessageColumn`
+- `last_message_type == "text"` → append to the last paragraph
+- otherwise → new paragraph in the same column
+
+`"error"` is a declared `MessageType` that nothing ever produces. `render_error`
+does not set it.
+
+Everything renders with `MessageRole.AETHER`, tool messages included.
+
+It types against `ChatAreaProtocol` because importing `MessageArea` directly
+would be a circular import. Typically you should not use `Protocol`s for type
+checking.

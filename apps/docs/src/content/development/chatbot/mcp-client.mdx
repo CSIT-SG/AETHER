@@ -1,14 +1,56 @@
+import { Callout } from 'nextra/components'
+
 # MCP Client
 
-It's just a typical `fastmcp` `Client` object with `list_tools` and `call_tool`
-implemented.
+A wrapper around a `fastmcp` `Client`, with `list_tools` and `call_tool`
+exposed.
 
-The only difference is that a normal `fastmcp` `Client` needs to use an
-`async with` block. However, since creating a new MCP client for every call is
-inefficient — including for other features outside of the chatbot — we use
-`__aenter__()` and `__aexit__()`.
+The only real difference is lifetime. A normal `fastmcp` `Client` wants an
+`async with` block. Creating a new client per call is wasteful, and other
+features outside the chatbot need it too, so we drive `__aenter__()` and
+`__aexit__()` by hand.
 
-These just mean that instead of `async with`, we manually enter and exit the
-client.
+That is all `connect()` and `close()` are.
 
-Right now there is a `CallToolTask` to allow synchronous calls to MCP tools.
+## Ownership
+
+<Callout>
+The chatbot does not create the client.
+
+`AetherUIHooks` constructs one `MCPClient()` and passes it to both
+`ChatbotHandler` and `AnnotatorHandler`. One connection, shared.
+</Callout>
+
+## API
+
+- `connect()` — opens the connection, no-op if already connected
+- `close()` — exits the client, logs and swallows failures
+- `is_connected()`
+- `list_tools()` — auto-connects first
+- `call_tool(tool_name, args)` — auto-connects first, yields one
+  `CallToolResult`
+
+Transport is `StreamableHttpTransport` against `config.mcp_url`, with a 10
+second timeout.
+
+## Gotchas
+
+<Callout type="warning">
+`call_tool` swallows exceptions. It logs the failure and yields nothing.
+
+The iterator just completes empty, so a caller waiting on a `Future` never gets
+resolved. In the chatbot that surfaces as the 30 second timeout in
+`ChatBotTask`, not as the real error.
+</Callout>
+
+The `call_tool` docstring claims it closes the connection when done. It does
+not, and it should not — the whole point is that the connection persists.
+
+## CallToolTask
+
+A `BaseTask` wrapper so MCP tools can be called through the `WorkerManager`,
+which gives the caller a synchronous entry point.
+
+`run()` just forwards to `mcp_client.call_tool()` and yields what comes back.
+
+`close()` is a no-op. It owns nothing to release.

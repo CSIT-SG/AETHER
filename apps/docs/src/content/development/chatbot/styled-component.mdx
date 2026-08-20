@@ -4,49 +4,92 @@ import { Callout } from 'nextra/components'
 
 ## StyledComponent
 
-- Is just a `QWidget` with the ability to add on plugins.
-- Plugins allow `QWidget`s to implement composition and not just inheritance.
+- A `QWidget` with the ability to add on plugins
+- Plugins let `QWidget`s use composition and not just inheritance
 
-See [Component Plugins](/development/gui/component-plugins) for how to write one.
+Strictly it extends `AbstractComponentPluginManager`, which is the `QWidget`.
 
-### Important things to note
+See [Component Plugins](/development/gui/component-plugins) for writing one.
 
-#### self.state
+### Default plugins
 
-It is how the plugins manage state inside a `StyledComponent`.
+<Callout>
+`ThemePlugin` and `JinjaPlugin` are installed on **every** `StyledComponent`,
+before anything you pass in.
 
-`self.state` is just a dictionary, so the way the `FontPlugin` would change the
-font state in `self.state` would be by accessing `widget.state["fontstyles"]`,
-for example.
+`FontPlugin` is not. Pass it explicitly: `super().__init__(parent,
+plugins=[FontPlugin()])`.
+</Callout>
+
+### Lifecycle
+
+Five phases, in order:
+
+1. `setup()` — early init, before any widgets exist
+2. `init_ui()` — abstract, build the widget tree
+3. `_install_plugins()`
+4. `plugins_ready()`
+5. `teardown()` — on `closeEvent`, before plugins uninstall
+
+All the chatbot components use `setup()` to declare their attributes and
+`init_ui()` to build.
+
+### self.state
+
+How plugins manage state inside a `StyledComponent`.
+
+<Callout type="warning">
+It is a `defaultdict(lambda: None)`, not a plain dict.
+
+Missing keys come back as `None` instead of raising `KeyError`, so a typo in a
+template fails quietly.
+</Callout>
+
+Populated before your code runs:
+
+- `state["theme"]` — `"light"` or `"dark"`
+- `state["colors"]` — a namespace of `QPalette` roles
+
+`FontPlugin` adds `state["fontstyles"]`. So changing the font state means
+writing `widget.state["fontstyles"]`.
+
+### Jinja hooks
+
+Override any of these to style or template the widget:
+
+- `styles()` — inline QSS template string
+- `style_file()` — path to a `.qss.jinja`
+- `template()` / `template_file()` — same, for HTML
+- `render_html(**context)` — renders it. `colors` and `theme` are reserved.
+
+`_apply_styles()` re-renders the QSS and is called by `ThemePlugin` before
+`on_theme_change()`.
 
 <Callout type="warning">
 **DO NOT TOUCH:** the `StyledComponent` class is sacred (kinda).
 
-All of the AETHER GUI UI components are a child class of `StyledComponent`. While
-changes to `StyledComponent` may not break everything, we should not touch it
-unless absolutely necessary and with express permission.
+Every AETHER GUI component is a child of it. Changes may not break everything,
+but do not touch it unless absolutely necessary and with express permission.
 
-This is to prevent breaking someone else's code, since this is a very important
+This is to prevent breaking someone else's code, since it is a very important
 shared class.
 </Callout>
 
 ## Font Plugin
 
-- This is the plugin that all text-based components will instantiate.
-- It basically updates the `"fontstyles"` object in a component's state to the
-  updated `QFont`.
-- To use it in a stylesheet, just use `{{ fontstyles.something }}`.
-- You can read more in the [Font Plugin](/development/gui/plugins/font-plugin)
-  docs.
+- The plugin that all text-based components instantiate
+- Updates the `"fontstyles"` object in the component's state to the new `QFont`
+- In a stylesheet, use `{{ fontstyles.size }}` and `{{ fontstyles.family }}`
+- More in the [Font Plugin](/development/gui/plugins/font-plugin) docs
 
-### Things to note
+You must pass the parent component to the child widget. The plugin walks up
+`parentWidget()` looking for the window the component belongs to.
 
-In order to use the `FontPlugin`, you must pass the parent component to the child
-widget. This is to allow the font plugin to find the window that the component
-belongs to.
+Components react by overriding `on_font_change(font)`. In the chatbot that
+always means re-measuring height.
 
 ## Other plugins
 
-They are all pretty standard and **should not be touched**.
+Pretty standard and should not be touched.
 
 Just know that they work.

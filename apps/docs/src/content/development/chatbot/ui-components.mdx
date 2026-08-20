@@ -1,46 +1,152 @@
+import { Callout } from 'nextra/components'
+
 # UI Components
 
 ![Anatomy of the ChatbotPanel](/chatbot-panel-anatomy.png)
 
+Every component here is a `StyledComponent`, except `ButtonComponent`.
+
 ## ChatbotPanel
 
-- This is basically the window that is spawned by the `ChatbotHandler`.
-- Should contain no backend bridge logic other than connecting the input box to
-  the `MessageArea`, and spawning the `ChatOrchestrator` and passing the
-  `MessageArea` to it.
+- The window that is spawned by the `ChatbotHandler`
+- Should contain no backend bridge logic other than wiring the input box to the
+  `MessageArea` and constructing the `ChatOrchestrator`
 - Extremely susceptible to prop drilling, so be conscious of that when
-  implementing new features.
+  implementing new features
+
+It builds a `MessageArea` and a `ChatInput`, then constructs the orchestrator
+with **three** things: the `MessageArea`, the MCP client and the session.
+
+On `_on_message_submitted` it does two things:
+
+1. Renders the user's own `MessageColumn` directly
+2. Calls `chat_orchestrator.submit_user_prompt()`
+
+Then `load_message_history()` replays anything already in the session.
+
+`shutdown()` forwards to the orchestrator.
 
 ## MessageArea
 
-- Holds the main content of the chatbot, meaning all the messages from the user
-  and the LLM.
-- Exports three main functions: `add_new_message_column()`,
-  `add_paragraph_to_last_column()` and
-  `append_to_last_paragraph_of_last_column()`.
-- When calling any of the above functions from the backend, you must run on
-  IDA's main thread, because the widget belongs to IDA's GUI thread.
+Holds the main content of the chatbot, meaning every message from the user and
+the LLM.
+
+### The three backend functions
+
+These are the `ChatAreaProtocol` surface. Nothing else may be called from the
+backend.
+
+- `add_new_message_column()`
+- `add_paragraph_to_last_column()`
+- `append_to_last_paragraph_of_last_column()`
+
+<Callout type="warning">
+Call these on IDA's main thread. The widget belongs to IDA's GUI thread.
+
+`WorkerManager` callbacks do **not** arrive on that thread. See
+[Threading rules](/development/chatbot/worker-manager).
+</Callout>
+
+### Everything else it exports
+
+- `load_message_history()` — replays `session.messages` into columns
+- `open_search()` / `close_search()`
+- `goto_next_match()` / `goto_prev_match()`
+- `scroll_to_bottom()`
+
+### Behaviour worth knowing
+
+- A `QStackedWidget` swaps between an empty-state CTA and the scroll area. It
+  starts empty.
+- `scroll_to_bottom` is wired to the scrollbar's `rangeChanged`, so new content
+  auto-scrolls.
+- `add_new_message_column` skips writing to the session if the id is already
+  there. That is what makes `load_message_history()` idempotent.
+- `add_paragraph_to_last_column` mints a fresh uuid for the widget's `Message`,
+  but only the text reaches the session.
+
+### Search
+
+Ctrl+F opens the `SearchBar`.
+
+- `MessageArea` iterates every paragraph and collects matches
+- Matches are highlighted, the current one in a different colour
+- The bar shows `current / total` and drives next/prev/close
 
 ## MessageColumn
 
-- You can think of this as the actual message bubble.
-- Its purpose is to separate the user and LLM messages, basically.
-- Contains multiple `MessageParagraph`s that can be modified.
-- Made of a header, a body and a footer.
-- The rendered timestamp and role follow the metadata of the first
-  `MessageParagraph`.
+- The actual message bubble
+- Separates the user and LLM messages
+- Contains multiple `MessageParagraph`s
+- Made of a header, a body and a footer
+
+The rendered timestamp and role follow the metadata of the **first**
+`MessageParagraph`. Later paragraphs reassign `_last_message_data` but the
+header labels are already built, so they do not change.
+
+Layout differs by role:
+
+- `USER` — right aligned, card gets stretch 4
+- `AETHER` — centred, card gets stretch 1
+
+Footer holds the copy button. It copies every paragraph joined with `"\n\n"`,
+flips to "Copied!" for one second, and disables itself so it cannot be spammed.
+
+Installs `FontPlugin`. On font change it re-runs `_adjust_height`.
 
 ## MessageParagraph
 
-- Is just a `QTextBrowser`.
-- Implements the `FontPlugin` to reflect font changes onto the text.
-- Should be conscious of when you re-render the text, since if the text is too
-  large it can lag the IDA main thread.
-- Every `MessageParagraph` holds one `Message` (confusing) and uses that to hold
-  its content and metadata.
+<Callout>
+Not a `QTextBrowser`. It is a `StyledComponent` that **contains** one.
+</Callout>
+
+- Content is Markdown, rendered to HTML with the `markdown` package
+- Extensions: `fenced_code`, `tables`, `nl2br`
+- The result goes in via `setHtml`
+- Implements `FontPlugin` to reflect font changes onto the text
+
+Methods:
+
+- `refresh()` — re-renders the Markdown. This is what streaming calls on every
+  chunk.
+- `_adjust_height()` — measures the document and pins a fixed height
+- `find_matches()` / `set_highlights()` / `clear_highlights()` — search support
+- `on_theme_change()` — tags user paragraphs in dark mode
+
+<Callout type="warning">
+Be conscious of when you re-render. `refresh()` re-parses the whole Markdown
+body and re-measures the layout every time. If the text is large it will lag
+the IDA main thread.
+</Callout>
 
 ## Message
 
-- The naming is a bit confusing, but it's just the actual content plus metadata.
-- Metadata: a unique ID for every message, the role for who sent the message,
-  the content, and a timestamp for when the message was created.
+The naming is a bit confusing, but it is just the content plus metadata.
+
+- `id` — unique per message
+- `role` — `MessageRole.USER` or `MessageRole.AETHER`
+- `content`
+- `timestamp`
+- `formatted_timestamp` — a property, strftime differs on Windows
+
+There is no tool role. Tool output renders as `AETHER`.
+
+## ChatInput
+
+- A `QTextEdit`, not a line edit, so it grows with the text
+- Capped at 120px, then it scrolls
+- Ctrl+Enter submits, so does the button
+- Emits `submitted(str)`, which the panel connects to
+- Clears and refocuses after submit
+
+## SearchBar
+
+Hidden until Ctrl+F.
+
+Emits `search_changed`, `next_requested`, `prev_requested`, `closed`. Owns no
+search logic — `MessageArea` does the work.
+
+## ButtonComponent
+
+A plain `QPushButton` with an object name, a tooltip and a pointer cursor. The
+only thing here that is not a `StyledComponent`.

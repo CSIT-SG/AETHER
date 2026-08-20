@@ -2,45 +2,56 @@ import { Callout } from 'nextra/components'
 
 # Chatbot Overview
 
-This section documents the AETHER chatbot: the widgets that make up the panel,
-the session that outlives the window, and the backend pieces that talk to
-OpenRouter and to the MCP tools.
+The AETHER chatbot is three layers:
+
+- Widgets that draw the panel
+- A `ChatSession` that outlives the window
+- A backend that talks to the LLM provider and to the MCP tools
 
 ## Panel anatomy
 
 ![Anatomy of the ChatbotPanel](/chatbot-panel-anatomy.png)
 
-The diagram labels every widget the chatbot is built from:
-
 | Label | What it is |
 | --- | --- |
 | `ChatbotPanel` | The window itself, spawned by the `ChatbotHandler`. |
-| `MessageArea` | Holds the main content of the chatbot, i.e. every message. |
-| `MessageColumn` | One message bubble. One `MessageColumn` can hold multiple `MessageParagraph`s. |
-| `MessageParagraph` | A single block of text inside a bubble. |
-| Message header | The user role and the time. |
-| Footer | The copy button. |
-| Input box | Where the user types their prompt. |
-| Submit button | Sends the prompt. |
+| `MessageArea` | Holds every message, plus search and scrolling. |
+| `MessageColumn` | One message bubble. Holds multiple `MessageParagraph`s. |
+| `MessageParagraph` | One block of rendered Markdown. |
+| Message header | Role and timestamp. |
+| Footer | Copy button. |
+| Input box | `ChatInput`. Ctrl+Enter submits. |
+| Submit button | Lives inside `ChatInput`. |
 
-## How the pieces fit together
+## Who owns what
 
-- The [`ChatbotHandler`](/development/chatbot/chat-session) owns the
-  [`ChatSession`](/development/chatbot/chat-session) and creates the
-  `ChatbotPanel`, so the session survives the window being closed.
-- The [`ChatbotPanel`](/development/chatbot/ui-components) wires the input box to
-  the `MessageArea` and spawns the
-  [`ChatOrchestrator`](/development/chatbot/orchestration).
-- The [`ChatOrchestrator`](/development/chatbot/orchestration) bridges the
-  `ChatbotTask` (which talks to OpenRouter) and the `ChatbotRenderer` (which
-  reflects output in the UI).
-- Long running work is pushed off IDA's main thread by the
+- `AetherUIHooks` creates the one `MCPClient` and hands it to
+  `ChatbotHandler` (and to `AnnotatorHandler`).
+- [`ChatbotHandler`](/development/chatbot/chat-session) owns the `ChatSession`
+  and opens a `ChatbotPanelForm`.
+- [`ChatbotPanel`](/development/chatbot/ui-components) builds the UI and
+  constructs the [`ChatOrchestrator`](/development/chatbot/orchestration).
+- [`ChatOrchestrator`](/development/chatbot/orchestration) bridges `ChatBotTask`
+  (talks to the provider) and `ChatbotAreaRenderer` (writes to the UI).
+- Long work runs off the IDA main thread via the
   [`WorkerManager`](/development/chatbot/worker-manager).
 - IDA context and tool calls go through the
   [MCP client](/development/chatbot/mcp-client).
 
+## Names to get right
+
+The whiteboard and the code disagree in a few places. The code wins.
+
+| Whiteboard | Actual |
+| --- | --- |
+| `ChatbotOrchestrator` | `ChatOrchestrator` |
+| `ChatbotRenderer` | `ChatbotAreaRenderer` |
+| `ChatbotTask` | `ChatBotTask` |
+| `get_ida_context()` | `get_function_context` tool |
+
 <Callout>
-Every page in this section was transcribed from the chatbot design whiteboard.
-The unedited transcription is kept on the
-[Whiteboard Transcript](/development/chatbot/whiteboard-transcript) page.
+These pages were transcribed from the chatbot design whiteboard, then corrected
+against the code. The unedited transcription is kept on the
+[Whiteboard Transcript](/development/chatbot/whiteboard-transcript) page, so
+some of it is now out of date on purpose.
 </Callout>
