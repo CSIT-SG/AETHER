@@ -6,7 +6,9 @@ from typing import Any
 import rpyc
 
 from aether_benchmark.utils.task import Task
-
+from aether_rpc.capabilities import EXPORTS as caps_exports
+        from aether_rpc.executors.headless_executor import HeadlessExecutor
+        from aether_rpc.server import RPCServer
 
 class StartRPCServerTask(Task[[Path, str], Any]): 
     """Start a headless IDA RPC server for the given IDB.
@@ -24,11 +26,6 @@ class StartRPCServerTask(Task[[Path, str], Any]):
         self._pump_thread: threading.Thread | None = None
 
     async def start(self, ida_dir: Path, idb_path: str) -> Any: 
-
-        from aether_rpc.capabilities import EXPORTS as caps_exports
-        from aether_rpc.executors.headless_executor import HeadlessExecutor
-        from aether_rpc.server import RPCServer
-
         capabilities = [
             getattr(importlib.import_module(mod_path, "aether_rpc.capabilities"), name)()
             for name, mod_path in caps_exports.items()
