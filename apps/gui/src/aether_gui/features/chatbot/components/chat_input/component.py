@@ -98,7 +98,16 @@ class ChatInput(StyledComponent):  # type: ignore[misc]
         textbox.setFixedHeight(height)
         submit_btn.setFixedHeight(height)
 
+    def submit_enabled(self, enabled: bool) -> None:
+        """Open or close submission by button toggle"""
+
+        cast(QtWidgets.QPushButton, self._send_button).setEnabled(enabled)
+
     def _submit(self) -> None:
+        submit_btn = cast(QtWidgets.QPushButton, self._send_button)
+        if not submit_btn.isEnabled():
+            return
+
         textbox = cast(QtWidgets.QTextEdit, self._textbox)
         text = textbox.toPlainText().strip()
 

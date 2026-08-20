@@ -31,6 +31,10 @@ class ChatOrchestrator:
         self.handles: list[TaskHandle] = []
         self.prompt: str | None = None
         self.session = session
+        self._turn_active = False
+        self._closed = False
+        self.on_turn_started: Callable[[], None] = lambda: None
+        self.on_turn_finished: Callable[[], None] = lambda: None
 
     def _get_context(self) -> Future[dict[str, Any]]:
         current_ea = ida_kernwin.get_screen_ea()
@@ -75,11 +79,16 @@ class ChatOrchestrator:
 
     def submit_user_prompt(self, prompt: str) -> None:
         """Called from IDA main thread. Returns immediately."""
+        if self._turn_active:
+            return
+
         ida_context = self._get_context()
 
         self.prompt = prompt.strip()
-        if not prompt:
+        if not self.prompt:
             return
+
+        self._set_turn_active(True)
 
         worker_manager = get_shared_worker_manager()
 
@@ -100,8 +109,17 @@ class ChatOrchestrator:
             on_error=lambda err: self._run_on_ida_ui_thread(
                 lambda: self.chat_renderer.render_error(f"Stream failed: {err}")
             ),
-            on_done=None,
+            on_done=lambda: self._run_on_ida_ui_thread(lambda: self._set_turn_active(False)),
         )
+
+    def _set_turn_active(self, active: bool) -> None:
+        """Track whether a turn is streaming and fire the matching hook."""
+
+        self._turn_active = active
+        if active:
+            self.on_turn_started()
+        else:
+            self.on_turn_finished()
 
     def _handle_worker_result(self) -> Callable[[LLMResponse], None]:
         """Render UI and apply IDA actions here"""
@@ -133,13 +151,16 @@ class ChatOrchestrator:
 
         @wraps(fn)
         def wrapper() -> int:
-            fn()
+            if not self._closed:
+                fn()
             return 1
 
         ida_kernwin.execute_sync(wrapper, ida_kernwin.MFF_WRITE)
 
     def shutdown(self) -> None:
         worker_manager = get_shared_worker_manager()
+        self._closed = True
+        self._turn_active = False
         for handle in self.handles:
             worker_manager.cancel(handle.task_id)
         self.handles.clear()
