@@ -4,6 +4,7 @@ import asyncio
 from pathlib import Path
 from typing import Any
 
+import jinja2
 from pydantic import BaseModel
 
 from openai import AsyncOpenAI
@@ -31,6 +32,9 @@ class CriterionResult(BaseModel):
 
 _HERE = Path(__file__).resolve().parent.parent.parent
 _SYSTEM_PROMPT = get_content(_HERE, "evaluate_prompt.md")
+
+_TEMPLATE_SRC = get_content(_HERE, "evaluate_message.md.j2")
+_PROMPT_TEMPLATE = jinja2.Template(_TEMPLATE_SRC)
 
 
 class EvaluateTask(Task[[dict[str, Any], Any, dict[str, Any]], dict[str, Any]]):  # type: ignore[misc]
@@ -163,33 +167,4 @@ async def _evaluate_criterion(
 
 def _build_prompt(text: str, state: dict[str, Any], rubric_id: str) -> str:
     """Build the user prompt with full function state inline."""
-    vars_str = "\n".join(
-        f"  - {v.get('name', '?')}: {v.get('type', '?')}{' (arg)' if v.get('is_arg_var') else ''}"
-        for v in state["local_variables"]
-    ) if state["local_variables"] else "  (none)"
-
-    callees_str = ", ".join(state["callee_names"]) if state["callee_names"] else "(none)"
-
-    return f"""# Rubric: {rubric_id}
-## Criterion
-
-{text}
-
-## Function State
-
-**Name:** {state['function_name']}
-**Address:** {state['address']}
-
-**Local Variables:**
-{vars_str}
-
-**Called Functions:** {callees_str}
-
-**Pseudocode:**
-{state['pseudocode']}
-
----
-
-Evaluate the criterion against the function state above.
-Call `submit_output` with your structured verdict.
-"""
+    return _PROMPT_TEMPLATE.render(text=text, state=state, rubric_id=rubric_id)

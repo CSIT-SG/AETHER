@@ -1,0 +1,28 @@
+# Rubric: {{ rubric_id }}
+## Criterion
+
+{{ text }}
+
+## Function State
+
+**Name:** {{ state.function_name }}
+**Address:** {{ state.address }}
+
+**Local Variables:**
+{%- if state.local_variables %}
+{%- for v in state.local_variables %}
+  - {{ v.get('name', '?') }}: {{ v.get('type', '?') }}{% if v.get('is_arg_var') %} (arg){% endif %}
+{%- endfor %}
+{%- else %}
+  (none)
+{%- endif %}
+
+**Called Functions:** {% if state.callee_names %}{{ state.callee_names | join(', ') }}{% else %}(none){% endif %}
+
+**Pseudocode:**
+{{ state.pseudocode }}
+
+---
+
+Evaluate the criterion against the function state above.
+Call `submit_output` with your structured verdict.
