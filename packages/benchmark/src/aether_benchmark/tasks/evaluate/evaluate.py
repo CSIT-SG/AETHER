@@ -5,14 +5,6 @@ import re
 from pathlib import Path
 from typing import Any
 
-from agents import (
-    Agent,
-    OpenAIChatCompletionsModel,
-    Runner,
-)
-from openai import AsyncOpenAI
-from pydantic import BaseModel
-
 from aether_backend.forwarded_rpc import (
     get_data_at_address,
     get_function_pseudocode,
@@ -24,8 +16,16 @@ from aether_backend.utils.subagent import (
     SubagentToolDependencies,
     build_subagent_tool,
 )
-from aether_benchmark.utils.task import Task
 from aether_utils.get_content import get_content
+from agents import (
+    Agent,
+    OpenAIChatCompletionsModel,
+    Runner,
+)
+from openai import AsyncOpenAI
+from pydantic import BaseModel
+
+from aether_benchmark.utils.task import Task
 
 
 class CriterionResult(BaseModel):
@@ -66,8 +66,7 @@ class EvaluateTask(Task[[dict[str, Any], Any, dict[str, Any]], dict[str, Any]]):
 
         criteria = rubric.get("criteria", [])
         tasks = [
-            _evaluate_criterion(text, addresses, rubric_name, model, service)
-            for text in criteria
+            _evaluate_criterion(text, addresses, rubric_name, model, service) for text in criteria
         ]
         results = await asyncio.gather(*tasks)
         overall = all(r["passed"] for r in results)
@@ -113,7 +112,9 @@ async def _evaluate_criterion(
     )
 
     prompt = _build_prompt(text, addresses, rubric_name)
-    result = await Runner.run(agent, prompt, context=SubagentToolDependencies(service), max_turns=20)
+    result = await Runner.run(
+        agent, prompt, context=SubagentToolDependencies(service), max_turns=20
+    )
 
     try:
         cr = await force_structured_output(agent, CriterionResult, result)
