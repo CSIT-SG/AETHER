@@ -36,7 +36,7 @@ class CriterionResult(BaseModel):
 _HERE = Path(__file__).resolve().parent.parent.parent
 _SYSTEM_PROMPT = get_content(_HERE, "evaluate_prompt.md")
 
-_TEMPLATE_SRC = get_content(_HERE, "evaluate_message.md.j2")
+_TEMPLATE_SRC = get_content(_HERE, "evaluate_message.jinja")
 _PROMPT_TEMPLATE = jinja2.Template(_TEMPLATE_SRC)
 
 _ADDRESS_RE = re.compile(r"0x[0-9a-fA-F]+")
