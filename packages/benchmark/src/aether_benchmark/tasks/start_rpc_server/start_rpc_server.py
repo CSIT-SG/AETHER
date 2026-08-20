@@ -43,8 +43,9 @@ class StartRPCServerTask(Task[[Path, str], Any]):
         )
         self._pump_thread.start()
 
-        self._conn = rpyc.connect("127.0.0.1", self._server.port)
-        return self._conn.root
+        conn = rpyc.connect("127.0.0.1", self._server.port)
+        self._conn = conn
+        return conn.root
 
     async def cancel(self) -> None:
         if self._conn is not None:
