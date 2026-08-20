@@ -9,7 +9,6 @@ import argparse
 import asyncio
 import json
 import os
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -25,7 +24,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--idb", required=True, type=Path, help="Path to the IDB/i64/binary to evaluate")
     parser.add_argument("--rubric", required=True, type=Path, help="Path to the rubric YAML file")
-    parser.add_argument("--api-key", default=None, help="OpenRouter/OpenAI API key (default: OPENROUTER_API_KEY env)")
+    parser.add_argument("--api-key", default=os.environ["OPENROUTER_API_KEY"], help="OpenRouter/OpenAI API key (default: OPENROUTER_API_KEY env)")
     parser.add_argument("--model", default="qwen/qwen3.7-flash", help="Model slug (default: qwen/qwen3.7-flash)")
     parser.add_argument("--base-url", default="https://openrouter.ai/api/v1", help="API base URL")
     parser.add_argument("--ida-dir", default=os.environ["IDADIR"], type=Path, help="IDA Pro installation directory (default: IDADIR env)")
@@ -33,15 +32,6 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--json", action="store_true", help="Output raw JSON only")
     return parser
 
-
-def _resolve_key(api_key: str | None) -> str:
-    if api_key:
-        return api_key
-    env = "OPENROUTER_API_KEY"
-    key = getattr(sys, "environ", {}).get(env)
-    if key:
-        return key
-    raise SystemExit(f"Error: No API key provided. Pass --api-key or set {env}.")
 
 def _aggregate(
     results: list[dict[str, Any]],
@@ -78,11 +68,9 @@ def _aggregate(
 
 
 async def _run_benchmark(args: argparse.Namespace) -> None:
-    api_key = _resolve_key(args.api_key)
-    ida_dir = _resolve_ida_dir(args.ida_dir)
 
     config: dict[str, str] = {
-        "api_key": api_key,
+        "api_key": args.api_key,
         "base_url": args.base_url,
         "model": args.model,
     }
@@ -96,7 +84,7 @@ async def _run_benchmark(args: argparse.Namespace) -> None:
         print()
 
 
-    async with Run(StartRPCServerTask)(ida_dir, str(args.idb)) as rpc_handle:
+    async with Run(StartRPCServerTask)(args.ida_dir, str(args.idb)) as rpc_handle:
         service = await rpc_handle
 
         entry_results: list[dict[str, Any]] = []
