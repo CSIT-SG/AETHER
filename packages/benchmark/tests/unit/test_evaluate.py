@@ -116,8 +116,9 @@ class TestEvaluateCriterion:
 
         await _evaluate_criterion("test", ["0x4010A0"], "rubric", model, service)
 
-        # Runner.run should have been called once
-        mock_run.assert_awaited_once()
+        # Runner.run should have been called at least once (may be more
+        # if force_structured_output retries internally)
+        assert mock_run.await_count >= 1
 
 
 @pytest.mark.asyncio
