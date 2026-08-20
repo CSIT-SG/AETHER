@@ -53,7 +53,7 @@ def _aggregate(
 
     weighted_sum = 0.0
     passed_count = 0
-    for result, w in zip(results, weights):
+    for result, w in zip(results, weights, strict=True):
         if result["overall_passed"]:
             passed_count += 1
             weighted_sum += w
@@ -84,11 +84,11 @@ async def _run_benchmark(args: argparse.Namespace) -> None:
         print()
 
 
+    entry_results: list[dict[str, Any]] = []
+    weights: list[float] = []
+
     async with Run(StartRPCServerTask)(args.ida_dir, str(args.idb)) as rpc_handle:
         service = await rpc_handle
-
-        entry_results: list[dict[str, Any]] = []
-        weights: list[float] = []
 
         for entry in benchmark.rubrics:
             if args.verbose:
