@@ -1,0 +1,68 @@
+# WorkerManager
+
+This is to run a unit of work on a separate thread.
+
+A unit of work in our case would be a long running task that would hold up the
+IDA main thread if we did not use a separate thread. It does this by starting a
+separate thread and event loop, followed by waiting for tasks to be submitted to
+it.
+
+## Main methods
+
+The main methods of the `WorkerManager` are `submit()`, `_drive()`, `consume()`
+and `cancel()`.
+
+### submit()
+
+`submit()` takes in a task and the keyword arguments needed to run the task. It
+will then run that task on the loop and return a task handle for the callee to
+track the task.
+
+### _drive()
+
+`_drive()` is called by `submit()` to convert the output of the task into
+something `consume()` can read from.
+
+By default, the tasks all return `AsyncIterator`s, meaning that the callee has to
+iterate through the output in order to read it. `_drive()` therefore iterates
+through the task's output and puts it into the queue inside `TaskHandle` for
+`consume()` to read from.
+
+### consume()
+
+`consume()` allows the callee to get the result of the task from the
+`WorkerManager`.
+
+It takes in three `Callable`s to handle outputs, errors and when the task is
+finished, alongside the task handle to know which task to take the result from.
+
+`consume()` will keep reading from the queue inside `TaskHandle` until a
+`SENTINEL` is hit, on a separate thread, giving the callee a synchronous,
+non-blocking method to read the results.
+
+### cancel()
+
+`cancel()` just stops the task from running and calls `close()` on the task for
+it to clean up what it needs.
+
+## Usage
+
+The `WorkerManager` is able to handle running multiple tasks at once, and
+therefore we can use a singleton.
+
+In order to use the `WorkerManager`, you must import `get_shared_worker_manager()`
+and use it from there.
+
+## Output cases
+
+There are two different cases of outputs from a task that I have encountered so
+far.
+
+**A continuous stream.** The bits of output are returned one by one until
+finished. For this, `consume()` works just fine.
+
+**A one-off result** that the callee needs to use somewhere else immediately
+after submitting the task. While we can just wait for the task to be finished on
+the callee thread, it is much better to just use a `Future` and pass that
+`Future` into `consume()`. The callee can then use `add_done_callback` to process
+the output.

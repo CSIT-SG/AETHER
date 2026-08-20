@@ -1,0 +1,46 @@
+# UI Components
+
+![Anatomy of the ChatbotPanel](/chatbot-panel-anatomy.png)
+
+## ChatbotPanel
+
+- This is basically the window that is spawned by the `ChatbotHandler`.
+- Should contain no backend bridge logic other than connecting the input box to
+  the `MessageArea`, and spawning the `ChatOrchestrator` and passing the
+  `MessageArea` to it.
+- Extremely susceptible to prop drilling, so be conscious of that when
+  implementing new features.
+
+## MessageArea
+
+- Holds the main content of the chatbot, meaning all the messages from the user
+  and the LLM.
+- Exports three main functions: `add_new_message_column()`,
+  `add_paragraph_to_last_column()` and
+  `append_to_last_paragraph_of_last_column()`.
+- When calling any of the above functions from the backend, you must run on
+  IDA's main thread, because the widget belongs to IDA's GUI thread.
+
+## MessageColumn
+
+- You can think of this as the actual message bubble.
+- Its purpose is to separate the user and LLM messages, basically.
+- Contains multiple `MessageParagraph`s that can be modified.
+- Made of a header, a body and a footer.
+- The rendered timestamp and role follow the metadata of the first
+  `MessageParagraph`.
+
+## MessageParagraph
+
+- Is just a `QTextBrowser`.
+- Implements the `FontPlugin` to reflect font changes onto the text.
+- Should be conscious of when you re-render the text, since if the text is too
+  large it can lag the IDA main thread.
+- Every `MessageParagraph` holds one `Message` (confusing) and uses that to hold
+  its content and metadata.
+
+## Message
+
+- The naming is a bit confusing, but it's just the actual content plus metadata.
+- Metadata: a unique ID for every message, the role for who sent the message,
+  the content, and a timestamp for when the message was created.

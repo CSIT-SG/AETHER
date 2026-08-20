@@ -1,0 +1,346 @@
+import { Callout } from 'nextra/components'
+
+# Whiteboard Transcript
+
+<Callout>
+This page is the raw, word-for-word transcription of the chatbot design
+whiteboard, kept for reference. Spelling, grammar and line breaks are unedited.
+The polished versions live on the other pages in this section.
+</Callout>
+
+## ChatSession
+
+```text
+ChatSession:
+- Should live outside of UI components
+
+- Holds both UI messages and backend
+chatbot turn-by-turn session
+
+UI messages:
+Its just a list of Messages (The class)
+
+Whenever a new MessageColumn is created, a
+new Message is added to the list
+
+This Message should only have paragraphs
+added to it since it references the last
+MessageParagraph's Message, so the
+MessageColumn manages the content
+
+When the content is rerendered after the
+window is closed, all the MessageParagraphs
+are merged into one MessageParagraph for
+easy rendering
+
+Backend session:
+We use a custom session that is built on top
+of the SQLiteSession from Agents SDK
+
+The basic idea is that we override the base
+class add_items() method to help us check
+when the session size outgrows a certain
+threshold
+
+We store the session in memory, as in ram
+To maintain the session, we have have a
+constant connection between the session
+object and OpenRouter.
+Therefore by instantiating it on the
+ChatbotHandler, the connection persists even
+after the window is closed
+```
+
+## ChatbotHandler
+
+```text
+ChatbotHandler:
+This is where the ChatSession lives
+
+It creates the ChatbotPanel and passes it the
+ChatSession object
+
+This allows the ChatSession to remain even
+after the window closes
+
+Not much to say about the handler but just if
+something needs to be persistent even after the
+window closes, instantiate it here
+```
+
+## StyledComponent
+
+```text
+StyledComponent:
+- Is just a QWidget with the ability to
+add on plugins
+
+- Plugins allows QWidgets to implement
+composition and not just inheritance
+
+Important things to note about
+StyledComponent:
+
+self.state:
+It is how the plugins manage state inside
+a StyledComponent
+
+self.state is just a dictionary, so the way
+the FontPlugin would change the font
+state in self.state would be by accessing
+widget.state["fontstyles"] for example
+
+DO NOT TOUCH:
+The StyledComponent class is sacred
+(kinda)
+All of the AETHER GUI UI components
+are a child class of StyledComponent
+While changes to StyledComponent may
+not break everything, we should not
+touching it unless absolutely neccessary
+and with express permission
+
+This is to prevent breaking someone else's
+code since this is a very important shared
+class
+
+Font Plugin:
+- This is the plugin that all text based
+components will instantiate
+
+- It basically updates the "fontstyles" object
+in a components state to the updated QFont
+
+- To use it in a stylesheet, just use
+{{ fontstyles.something }}
+
+- You can read more in the docs
+
+Things to note:
+In order to use the FontPlugin, you must
+pass the parent component to the child
+widget.
+This is to allow the font plugin to find the
+window that the component belongs to.
+
+Other plugins:
+They are all pretty standard and SHOULD
+NOT be TOUCHED.
+
+Just know that they work
+```
+
+## Panel diagram labels
+
+```text
+ChatbotPanel
+MessageArea
+MessageColumn
+One MessageColumn can hold multiple MessageParagraphs
+Input box
+AETHER Chatbot
+Message Header: User role, time
+MessageParagraph
+Footer: Copy button
+Submit button
+```
+
+## ChatbotPanel, MessageArea, MessageColumn, MessageParagraph, Message
+
+```text
+ChatbotPanel:
+- This is basically the window that is spawned by the ChatbotHandler
+
+- Should contain no backend bridge logic other than connecting the input box to the
+MessageArea, and spawning the ChatbotOrchestrator and passing the MessageArea
+to it
+
+- Extremely subsceptible to prop drilling, so be conscious of that when implement new
+features
+
+MessageArea:
+- Holds the main content of the chatbot (Meaning all the messages from user and LLm)
+
+- Exports three main functions: add_new_message_column,
+add_paragraph_to_last_column, append_to_last_paragraph_of_last_column
+
+- When calling any of the above functions from the backend, you must run on IDA's
+main thread because the widget belongs to IDA's GUI thread
+
+MessageColumn:
+- You can think of this as the actual message bubble
+
+- It's purpose is to seperate the user and llm messages basically
+
+- Contains multiple MessageParagraphs that can be modified
+
+- Made of header, body and footer
+
+- Rendered timestamp and role follows the metadata of the first MessageParagraph
+
+MessageParagraph:
+- Is just a QTextBrowser
+
+- Implements the FontPlugin to reflect font changes onto the text
+
+- Should be conscious of when you re-render the text since if the text is too large,
+it can lag the IDA main thread
+
+- Every MessageParagraph holds one Message (Confusing) and uses that to hold its
+content and metadata
+
+Message:
+- Naming is abit confusing but its just the actual content plus metadata
+
+- Metadata: Unique ID for every message, Role for who sent the message,
+Content, Timestamp for when the message was created
+```
+
+## MCP Client
+
+```text
+MCP Client:
+It's just a typical fastmcp Client object with list_tools and
+call_tool implemented.
+
+The only difference is that a normal fastmcp Client needs to
+use an async with block
+However, since creating a new MCP client for every call is
+inefficient, including for other features outside of the
+chatbot, we use __aenter__() and __aexit__()
+
+These just mean that instead of async with, we manually
+enter and exit the Client.
+
+Right now there is a CallToolTask to allow synchronous calls
+to MCP tools
+```
+
+## WorkerManager
+
+```text
+WorkerManager:
+This is to run a unit of work on a seperate thread
+A unit of work in our case would be a long running task that would hold up the
+IDA main thread if we did not use a seperate thread.
+It does this by starting a seperate thread and event loop, followed by waiting
+for tasks to be submitted to it
+
+The main methods of the WorkerManager are submit(), _drive(), consume() and
+cancel()
+
+submit() takes in a task and the keyword arguments needed to run the task
+It will then run that task on the loop and return a task handle for the callee
+to track the task
+
+_drive() is called by submit to convert the output of the task into something
+consume can read from
+By default, the tasks all return AsyncIterators, meaning that the callee has to
+iterate through the output in order to read it
+_drive() therefore iterates through the tasks output and puts it into the
+queue inside TaskHandle for consume() to read from
+
+consume() allows the callee to get the result of the task from the
+WorkerManager
+It takes in three Callables to handle outputs, errors and when the task is
+finished, alongside the task handle to know which task to take the result from
+consume() will keep reading from the queue inside TaskHandle until a SENTINEL
+is hit on a seperate thread, giving the callee a synchronous non-blocking method
+to read the results
+
+cancel() just stops the task from running and calls the close() on the task for
+it to clean up what it needs
+
+The WorkerManager is able to handle running multiple tasks at once so
+therefore we can use a singleton
+
+In order to use the WorkerManager, you must import the
+get_shared_worker_manager() and use it from there
+
+There are 2 different cases of outputs from a task that I have encountered
+so far.
+One is where the result is a continuous stream, where the bits of output are
+returned one by one until finished.
+For this, consume() works just fine
+
+One is where the result is one off and immediately after the callee submits the
+task, the callee needs to use it somewhere else
+While we can just wait for the task to be finished on the callee thread, it is
+much better to just use a Future and pass that Future into consume()
+Then the callee can then use add_done_callback to process the output
+```
+
+## ChatOrchestrator
+
+```text
+ChatOrchestrator:
+This is the main.py of our backend logic.
+It is spawned by the ChatbotPanel and is passed the MessageArea
+
+It is composed of a renderer and a ChatbotTask
+The job of the ChatbotTask is to send user prompts to OpenRouter and
+the renderer takes the outputs and reflects it in the UI
+
+While it mostly serves as a bridge between the renderer and the
+ChatbotTask, there is another important job which is does.
+That being fetching the IDA context to send to the LLM.
+It uses the MCP client through the CallToolTask to call the
+get_ida_context() tool.
+
+It also holds the state of message_created and last_message_type.
+This allows the renderer to remain stateless since its merely an interface
+for the backend to interact with the frontend
+
+The only function it exports is submit_user_prompt() which just takes in a
+user prompt (No shit)
+```
+
+## Chatbot Agent
+
+```text
+Chatbot Agent:
+In order to send prompts back and forth to OpenRouter, we need a maintain
+a constant connection.
+If we ran this on the main IDA thread, it would hang until the results were
+done.
+Therefore, the instantiation and connection of the Agents client is done on
+a task
+
+The task takes in the IDA context, MCP client, user prompt and the
+ChatSession
+
+The ChatSession, IDA context and user prompt are pretty self explanatory
+
+But the MCP client is for wrapping the MCP tools into Agents SDK Tool
+This is to enable the cancellation of running tools
+
+The tasks generates the outputs in 4 different categories, Text,
+Reasoning, Tool Call and Tool Output.
+This allows the ChatOrchestrator to call different methods on the renderer
+for different types of rendering
+
+The scope of the ChatbotTask should just be to pass context and user
+prompt to the Agent and nothing else
+```
+
+## ChatbotRenderer
+
+```text
+ChatbotRenderer:
+It has 3 different methods
+
+render_aether_message(), render_tool_message(), render_error()
+
+The names are pretty self-explanatory but the way they work is that they
+take is a bool to check if there was already a message created, to decide
+on whether or not to create a new MessageColumn or MessageParagraph
+This applies to all the methods except render_error() for now
+
+render_aether_message takes in another bool that checks if the previous
+type created was also an aether message or not. This allows it to decide
+when to append to the last MessageParagraph or not
+
+It uses a ChatAreaProtocol for type checking since importing ChatArea
+directly would create a circular import.
+Typically you should not use Protocols for type checking
+```

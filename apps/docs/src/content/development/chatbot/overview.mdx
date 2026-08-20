@@ -1,0 +1,46 @@
+import { Callout } from 'nextra/components'
+
+# Chatbot Overview
+
+This section documents the AETHER chatbot: the widgets that make up the panel,
+the session that outlives the window, and the backend pieces that talk to
+OpenRouter and to the MCP tools.
+
+## Panel anatomy
+
+![Anatomy of the ChatbotPanel](/chatbot-panel-anatomy.png)
+
+The diagram labels every widget the chatbot is built from:
+
+| Label | What it is |
+| --- | --- |
+| `ChatbotPanel` | The window itself, spawned by the `ChatbotHandler`. |
+| `MessageArea` | Holds the main content of the chatbot, i.e. every message. |
+| `MessageColumn` | One message bubble. One `MessageColumn` can hold multiple `MessageParagraph`s. |
+| `MessageParagraph` | A single block of text inside a bubble. |
+| Message header | The user role and the time. |
+| Footer | The copy button. |
+| Input box | Where the user types their prompt. |
+| Submit button | Sends the prompt. |
+
+## How the pieces fit together
+
+- The [`ChatbotHandler`](/development/chatbot/chat-session) owns the
+  [`ChatSession`](/development/chatbot/chat-session) and creates the
+  `ChatbotPanel`, so the session survives the window being closed.
+- The [`ChatbotPanel`](/development/chatbot/ui-components) wires the input box to
+  the `MessageArea` and spawns the
+  [`ChatOrchestrator`](/development/chatbot/orchestration).
+- The [`ChatOrchestrator`](/development/chatbot/orchestration) bridges the
+  `ChatbotTask` (which talks to OpenRouter) and the `ChatbotRenderer` (which
+  reflects output in the UI).
+- Long running work is pushed off IDA's main thread by the
+  [`WorkerManager`](/development/chatbot/worker-manager).
+- IDA context and tool calls go through the
+  [MCP client](/development/chatbot/mcp-client).
+
+<Callout>
+Every page in this section was transcribed from the chatbot design whiteboard.
+The unedited transcription is kept on the
+[Whiteboard Transcript](/development/chatbot/whiteboard-transcript) page.
+</Callout>

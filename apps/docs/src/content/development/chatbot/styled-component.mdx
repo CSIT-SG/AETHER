@@ -1,0 +1,52 @@
+import { Callout } from 'nextra/components'
+
+# StyledComponent & Plugins
+
+## StyledComponent
+
+- Is just a `QWidget` with the ability to add on plugins.
+- Plugins allow `QWidget`s to implement composition and not just inheritance.
+
+See [Component Plugins](/development/gui/component-plugins) for how to write one.
+
+### Important things to note
+
+#### self.state
+
+It is how the plugins manage state inside a `StyledComponent`.
+
+`self.state` is just a dictionary, so the way the `FontPlugin` would change the
+font state in `self.state` would be by accessing `widget.state["fontstyles"]`,
+for example.
+
+<Callout type="warning">
+**DO NOT TOUCH:** the `StyledComponent` class is sacred (kinda).
+
+All of the AETHER GUI UI components are a child class of `StyledComponent`. While
+changes to `StyledComponent` may not break everything, we should not touch it
+unless absolutely necessary and with express permission.
+
+This is to prevent breaking someone else's code, since this is a very important
+shared class.
+</Callout>
+
+## Font Plugin
+
+- This is the plugin that all text-based components will instantiate.
+- It basically updates the `"fontstyles"` object in a component's state to the
+  updated `QFont`.
+- To use it in a stylesheet, just use `{{ fontstyles.something }}`.
+- You can read more in the [Font Plugin](/development/gui/plugins/font-plugin)
+  docs.
+
+### Things to note
+
+In order to use the `FontPlugin`, you must pass the parent component to the child
+widget. This is to allow the font plugin to find the window that the component
+belongs to.
+
+## Other plugins
+
+They are all pretty standard and **should not be touched**.
+
+Just know that they work.

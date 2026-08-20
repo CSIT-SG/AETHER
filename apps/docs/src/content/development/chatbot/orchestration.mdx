@@ -1,0 +1,65 @@
+# Orchestration
+
+## ChatOrchestrator
+
+This is the `main.py` of our backend logic. It is spawned by the `ChatbotPanel`
+and is passed the `MessageArea`.
+
+It is composed of a renderer and a `ChatbotTask`. The job of the `ChatbotTask` is
+to send user prompts to OpenRouter, and the renderer takes the outputs and
+reflects them in the UI.
+
+While it mostly serves as a bridge between the renderer and the `ChatbotTask`,
+there is another important job that it does: fetching the IDA context to send to
+the LLM. It uses the MCP client through the `CallToolTask` to call the
+`get_ida_context()` tool.
+
+It also holds the state of `message_created` and `last_message_type`. This allows
+the renderer to remain stateless, since it's merely an interface for the backend
+to interact with the frontend.
+
+The only function it exports is `submit_user_prompt()`, which just takes in a
+user prompt.
+
+## Chatbot Agent
+
+In order to send prompts back and forth to OpenRouter, we need to maintain a
+constant connection. If we ran this on the main IDA thread, it would hang until
+the results were done. Therefore, the instantiation and connection of the Agents
+client is done on a task.
+
+The task takes in the IDA context, the MCP client, the user prompt and the
+`ChatSession`.
+
+The `ChatSession`, IDA context and user prompt are pretty self-explanatory.
+
+The MCP client is for wrapping the MCP tools into Agents SDK tools. This is to
+enable the cancellation of running tools.
+
+The task generates the outputs in four different categories: Text, Reasoning,
+Tool Call and Tool Output. This allows the `ChatOrchestrator` to call different
+methods on the renderer for different types of rendering.
+
+The scope of the `ChatbotTask` should just be to pass context and the user prompt
+to the agent, and nothing else.
+
+## ChatbotRenderer
+
+It has three different methods:
+
+- `render_aether_message()`
+- `render_tool_message()`
+- `render_error()`
+
+The names are pretty self-explanatory, but the way they work is that what they
+take is a bool to check if there was already a message created, to decide whether
+or not to create a new `MessageColumn` or `MessageParagraph`. This applies to all
+the methods except `render_error()` for now.
+
+`render_aether_message()` takes in another bool that checks if the previous type
+created was also an aether message or not. This allows it to decide when to
+append to the last `MessageParagraph` or not.
+
+It uses a `ChatAreaProtocol` for type checking, since importing `ChatArea`
+directly would create a circular import. Typically you should not use `Protocol`s
+for type checking.

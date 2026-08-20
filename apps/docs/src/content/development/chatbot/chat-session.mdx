@@ -1,0 +1,42 @@
+# ChatSession & ChatbotHandler
+
+## ChatSession
+
+- Should live outside of the UI components.
+- Holds both the UI messages and the backend chatbot's turn-by-turn session.
+
+### UI messages
+
+It's just a list of `Message`s (the class).
+
+Whenever a new `MessageColumn` is created, a new `Message` is added to the list.
+
+This `Message` should only have paragraphs added to it, since it references the
+last `MessageParagraph`'s `Message`, so the `MessageColumn` manages the content.
+
+When the content is re-rendered after the window is closed, all the
+`MessageParagraph`s are merged into one `MessageParagraph` for easy rendering.
+
+### Backend session
+
+We use a custom session that is built on top of the `SQLiteSession` from the
+Agents SDK.
+
+The basic idea is that we override the base class's `add_items()` method to help
+us check when the session size outgrows a certain threshold.
+
+We store the session in memory, as in RAM. To maintain the session, we have to
+have a constant connection between the session object and OpenRouter. Therefore,
+by instantiating it on the `ChatbotHandler`, the connection persists even after
+the window is closed.
+
+## ChatbotHandler
+
+This is where the `ChatSession` lives.
+
+It creates the `ChatbotPanel` and passes it the `ChatSession` object.
+
+This allows the `ChatSession` to remain even after the window closes.
+
+Not much to say about the handler, but if something needs to be persistent even
+after the window closes, instantiate it here.
