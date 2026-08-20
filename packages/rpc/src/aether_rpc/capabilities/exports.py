@@ -18,6 +18,7 @@ EXPORTS: dict[str, str] = {
     "DeleteStruct": ".delete_struct",
     "CreateStruct": ".create_struct",
     "ChangeStructFieldSize": ".change_struct_field_size",
+    "ChangeStructFieldType": ".change_struct_field_type",
     "GetStructInfo": ".get_struct_info",
     "RenameStruct": ".rename_struct",
     "AddStructField": ".add_struct_field",
