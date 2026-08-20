@@ -23,18 +23,9 @@ from agents import (
     Runner,
 )
 from openai import AsyncOpenAI
-from pydantic import BaseModel
 
+from aether_benchmark.tasks.evaluate.models import CriterionResult
 from aether_benchmark.utils.task import Task
-
-
-class CriterionResult(BaseModel):
-    """Result of evaluating a single criterion."""
-
-    description: str
-    passed: bool
-    reasoning: str
-
 
 _HERE = Path(__file__).resolve().parent.parent.parent
 _SYSTEM_PROMPT = get_content(_HERE, "evaluate_prompt.md")
@@ -66,7 +57,8 @@ class EvaluateTask(Task[[dict[str, Any], Any, dict[str, Any]], dict[str, Any]]):
 
         criteria = rubric.get("criteria", [])
         tasks = [
-            _evaluate_criterion(text, addresses, rubric_name, model, service) for text in criteria
+            _evaluate_criterion(text, addresses, rubric_name, model, service)
+            for text in criteria
         ]
         results = await asyncio.gather(*tasks)
         overall = all(r["passed"] for r in results)
@@ -93,7 +85,7 @@ async def _evaluate_criterion(
     rubric_name: str,
     model: OpenAIChatCompletionsModel,
     service: Any,
-) -> dict[str, Any]:
+) -> CriterionResult:
     agent = Agent(
         name="CriterionEvaluator",
         instructions=_SYSTEM_PROMPT,
@@ -112,15 +104,13 @@ async def _evaluate_criterion(
     )
 
     prompt = _build_prompt(text, addresses, rubric_name)
-    result = await Runner.run(
-        agent, prompt, context=SubagentToolDependencies(service), max_turns=20
-    )
+    result = await Runner.run(agent, prompt, context=SubagentToolDependencies(service), max_turns=20)
 
     try:
         cr = await force_structured_output(agent, CriterionResult, result)
-        return {"description": cr.description, "passed": cr.passed, "reasoning": cr.reasoning}
+        return cr
     except Exception as e:
-        return {"description": text, "passed": False, "reasoning": f"Evaluation failed: {e}"}
+        return {"passed": False, "reasoning": f"Evaluation failed: {e}"}
 
 
 def _build_prompt(text: str, addresses: list[str], rubric_name: str) -> str:

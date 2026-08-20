@@ -69,7 +69,6 @@ class TestEvaluateCriterion:
     ) -> None:
         mock_run.return_value = MagicMock()
         mock_force.return_value = CriterionResult(
-            description="Constants are replaced",
             passed=True,
             reasoning="The decompiled code shows enums.",
         )
@@ -83,7 +82,6 @@ class TestEvaluateCriterion:
         )
 
         assert result["passed"] is True
-        assert result["description"] == "Constants are replaced"
         assert result["reasoning"] == "The decompiled code shows enums."
 
     @patch("aether_benchmark.tasks.evaluate.evaluate.force_structured_output", new_callable=AsyncMock)
@@ -103,7 +101,6 @@ class TestEvaluateCriterion:
         )
 
         assert result["passed"] is False
-        assert result["description"] == "Constants are replaced"
         assert "Evaluation failed" in result["reasoning"]
 
     @patch("aether_benchmark.tasks.evaluate.evaluate.Runner.run", new_callable=AsyncMock)
@@ -116,9 +113,8 @@ class TestEvaluateCriterion:
 
         await _evaluate_criterion("test", ["0x4010A0"], "rubric", model, service)
 
-        # Runner.run should have been called at least once (may be more
-        # if force_structured_output retries internally)
-        assert mock_run.await_count >= 1
+        # Runner.run should have been called once
+        mock_run.assert_awaited_once()
 
 
 @pytest.mark.asyncio
