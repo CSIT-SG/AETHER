@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -27,7 +28,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--api-key", default=None, help="OpenRouter/OpenAI API key (default: OPENROUTER_API_KEY env)")
     parser.add_argument("--model", default="qwen/qwen3.7-flash", help="Model slug (default: qwen/qwen3.7-flash)")
     parser.add_argument("--base-url", default="https://openrouter.ai/api/v1", help="API base URL")
-    parser.add_argument("--ida-dir", default=None, type=Path, help="IDA Pro installation directory (default: IDADIR env)")
+    parser.add_argument("--ida-dir", default=os.environ["IDADIR"], type=Path, help="IDA Pro installation directory (default: IDADIR env)")
     parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed per-entry results")
     parser.add_argument("--json", action="store_true", help="Output raw JSON only")
     return parser
@@ -41,16 +42,6 @@ def _resolve_key(api_key: str | None) -> str:
     if key:
         return key
     raise SystemExit(f"Error: No API key provided. Pass --api-key or set {env}.")
-
-
-def _resolve_ida_dir(ida_dir: Path | None) -> Path:
-    if ida_dir:
-        return ida_dir
-    env = getattr(sys, "environ", {}).get("IDADIR")
-    if env:
-        return Path(env)
-    raise SystemExit("Error: No IDA directory. Pass --ida-dir or set IDADIR.")
-
 
 def _aggregate(
     results: list[dict[str, Any]],
