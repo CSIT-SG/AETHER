@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 from typing import Any
 
@@ -17,7 +18,6 @@ from aether_backend.utils.force_structured_output import force_structured_output
 from aether_utils.get_content import get_content
 
 from aether_benchmark.utils.task import Task
-import asyncio
 
 
 
@@ -33,18 +33,18 @@ _HERE = Path(__file__).resolve().parent.parent.parent
 _SYSTEM_PROMPT = get_content(_HERE, "evaluate_prompt.md")
 
 
-class EvaluateTask(Task[[dict[str, Any], Any, dict], dict[str, Any]]):  # type: ignore[misc]
+class EvaluateTask(Task[[dict[str, Any], Any, dict[str, Any]], dict[str, Any]]):  # type: ignore[misc]
     """Evaluate a single rubric entry against IDB state.
 
     Pre-fetches function state via RPC, then evaluates each criterion
     with one LLM call per criterion — no agent tool calls.
     """
 
-    async def start(  
+    async def start(
         self,
         rubric: dict[str, Any],
         service: Any,
-        config: dict,
+        config: dict[str, Any],
     ) -> dict[str, Any]:
         api_key = config["api_key"]
         base_url = config.get("base_url", "https://openrouter.ai/api/v1")
@@ -123,13 +123,13 @@ async def _fetch_state(service: Any, address: str) -> dict[str, Any]:
     return state
 
 
-def _collect_names(children: list[dict]) -> list[str]:
+def _collect_names(children: list[dict[str, Any]]) -> list[str]:
     out: list[str] = []
     _walk_children(children, out)
     return out
 
 
-def _walk_children(children: list[dict], out: list[str]) -> None:
+def _walk_children(children: list[dict[str, Any]], out: list[str]) -> None:
     for child in children:
         name = child.get("function_name", "(unknown)")
         if name not in out:
@@ -142,7 +142,7 @@ async def _evaluate_criterion(
     state: dict[str, Any],
     rubric_id: str,
     model: OpenAIChatCompletionsModel,
-) -> dict:
+) -> dict[str, Any]:
     """Evaluate one criterion against pre-fetched state."""
     prompt = _build_prompt(text, state, rubric_id)
 
