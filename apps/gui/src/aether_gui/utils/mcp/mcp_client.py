@@ -72,12 +72,13 @@ class MCPClient:
         args: dict[str, Any] | None = None,
     ) -> AsyncIterator[CallToolResult]:
         """Connects, runs the tool, and automatically closes the connection when done."""
-        if not self.is_connected():
-            await self.connect()
-
-        assert self._client is not None
         try:
+            if not self.is_connected():
+                await self.connect()
+
+            assert self._client is not None
             arguments = {**(args or {})}
-            yield await self._client.call_tool(tool_name, arguments=arguments)
+            yield await self._client.call_tool(tool_name, arguments=arguments, raise_on_error=False)
         except Exception as e:
             self.logger.error(f"Tool call '{tool_name}' failed: {e}")
+            raise

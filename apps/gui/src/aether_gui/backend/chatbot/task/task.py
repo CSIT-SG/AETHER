@@ -93,7 +93,7 @@ class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
                 self._result.cancel()
                 async for _ in self._result.stream_events():
                     pass
-            except Exception:
+            except (Exception, asyncio.CancelledError):
                 pass
             self._result = None
 
@@ -107,9 +107,12 @@ class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
 
         async def on_invoke(_ctx: RunContextWrapper[Any], args_json: str) -> str:
             args = json.loads(args_json) if args_json else {}
-            async for result in client.call_tool(tool_name=tool.name, args=args):
-                return str(result)
-            return ""
+            try:
+                async for result in client.call_tool(tool_name=tool.name, args=args):
+                    return str(result)
+            except Exception as e:
+                return f"Tool {tool.name!r} is unavailable: {e}"
+            return f"Tool {tool.name!r} returned no result."
 
         return FunctionTool(
             name=tool.name,

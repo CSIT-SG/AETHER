@@ -65,7 +65,7 @@ class ChatOrchestrator:
             handle,
             on_event=lambda e: self._format_context(e, fut),
             on_error=lambda err: self._run_on_ida_ui_thread(
-                lambda: self.chat_renderer.render_error(f"Failed to get IDA context {err}")
+                lambda: self.chat_renderer.render_error(f"Failed to get IDA context: {err}")
             ),
             on_done=None,
         )
