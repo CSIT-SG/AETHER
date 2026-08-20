@@ -5,16 +5,14 @@ import re
 from pathlib import Path
 from typing import Any
 
-import jinja2
-from pydantic import BaseModel
-
-from openai import AsyncOpenAI
-
 from agents import (
     Agent,
     OpenAIChatCompletionsModel,
     Runner,
 )
+import jinja2
+from openai import AsyncOpenAI
+from pydantic import BaseModel
 
 from aether_backend.forwarded_rpc import (
     get_data_at_address,
@@ -23,9 +21,8 @@ from aether_backend.forwarded_rpc import (
     get_local_variables,
 )
 from aether_backend.utils.force_structured_output import force_structured_output
-from aether_utils.get_content import get_content
-
 from aether_benchmark.utils.task import Task
+from aether_utils.get_content import get_content
 
 
 class CriterionResult(BaseModel):
@@ -114,7 +111,8 @@ async def _fetch_state(service: Any, address: str) -> dict[str, Any]:
     try:
         r = await get_data_at_address(service, location=address)
         if r.success:
-            state["function_name"] = r.result.get("name", "(unknown)")
+            data: Any = r.result
+            state["function_name"] = data.get("name", "(unknown)")
     except Exception:
         pass
 
@@ -123,7 +121,8 @@ async def _fetch_state(service: Any, address: str) -> dict[str, Any]:
         try:
             r = await get_function_pseudocode(service, function_name=fn_name)
             if r.success:
-                ps = r.result.get("pseudocode", "")
+                data: Any = r.result
+                ps = data.get("pseudocode", "")
                 state["pseudocode"] = ps[:6000] if ps else "(empty)"
         except Exception:
             pass
@@ -138,7 +137,8 @@ async def _fetch_state(service: Any, address: str) -> dict[str, Any]:
         try:
             r = await get_functions_called_recursively(service, address=address)
             if r.success:
-                state["call_tree"] = r.result.get("root")
+                data: Any = r.result
+                state["call_tree"] = data.get("root")
         except Exception:
             pass
 
