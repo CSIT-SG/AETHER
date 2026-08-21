@@ -3,7 +3,7 @@ import ida_typeinf
 from ..base import Capability
 from ..result import Err, Ok, Result
 from ..types import StructFieldResult
-from ..utils import get_struct_id_by_name
+from ..utils import get_struct
 from .constants import TYPE_MAP
 
 
@@ -36,29 +36,11 @@ class AddStructField(Capability):
             whose ``result`` carries struct id, struct name, field name, field
             type, and array length if applicable.
         """
-        if isinstance(struct, int):
-            struct_id = struct
+        status, output = get_struct(struct)
+        if status:
+            struct_name, struct_id, _, udt = output
         else:
-            struct_id = get_struct_id_by_name(str(struct))
-
-        if struct_id is None:
-            return Err(result=f"Struct with the specified name {struct} does not exist.")
-
-        tif = ida_typeinf.tinfo_t()
-
-        if not tif.get_type_by_tid(struct_id):
-            return Err(result=f"Struct with the specified id {struct_id} does not exist.")
-
-        if not tif.is_struct():
-            return Err(result=f"{struct} is not a struct.")
-
-        struct_name = str(tif.get_type_name())
-
-        # Get UDT members
-        udt = ida_typeinf.udt_type_data_t()
-
-        if not tif.get_udt_details(udt):
-            return Err(result=f"{struct_name} is not a structure.")
+            return Err(result=output)
 
         # Check for duplicate field name
         if any(member.name == field_name for member in udt):
