@@ -128,6 +128,51 @@ conditional, so a bare address sends far less than a full function.
 That is the whole of what the model knows about the binary, aside from whatever
 it fetches through tools.
 
+### Tool calling
+
+Two different things call MCP tools, and they do not share a route.
+
+| | Context fetch | Model tool call |
+| --- | --- | --- |
+| Triggered by | `ChatOrchestrator`, before the agent runs | the model, mid-stream |
+| Which tool | only `get_function_context` | anything the server exposes |
+| Route | `CallToolTask` → `WorkerManager` → `Future` | `FunctionTool.on_invoke` → `MCPClient.call_tool()` |
+
+The second path never touches the `WorkerManager`. It runs inside the agent's own
+async context, on the worker thread the task is already on.
+
+`list_mcp_tools_as_agent_tools()` calls `list_tools()` **every turn**, so the tool
+set is whatever the server exposes right then. Each one is wrapped with its MCP
+name, description and `inputSchema` handed straight to `FunctionTool`.
+
+`strict_json_schema` is off because MCP schemas are not guaranteed to satisfy
+OpenAI's strict mode.
+
+<Callout type="warning">
+The model supplies `rpc_id` itself. Nothing in the wrapper injects it — the
+system prompt tells the model which id to use, and `on_invoke` passes the parsed
+arguments through untouched.
+
+If the model omits or invents the id, the tool call fails.
+</Callout>
+
+<Callout type="warning">
+**A failed tool call looks like an empty success.**
+
+`MCPClient.call_tool` swallows exceptions and yields nothing, so `on_invoke`
+falls through its loop and returns `""`. The model receives an empty string, not
+an error, and will usually carry on as though the tool returned nothing.
+
+Check the log when a tool appears to do nothing.
+</Callout>
+
+`on_invoke` returns the first yielded result and stops. `call_tool` yields exactly
+one, so that is a one-shot contract rather than a stream.
+
+Cancellation works because the whole agent run is one streamed task: `_cleanup()`
+cancels it and drains the remaining events, and `ChatOrchestrator.shutdown()`
+reaches it through the handle.
+
 ### Output categories
 
 Four, all `LLMOutput` subclasses. The wording the user sees comes from each

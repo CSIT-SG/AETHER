@@ -86,8 +86,12 @@ in-process logic, inside the gui app. **backend** is the separate MCP server.
    `ToolCall` or `ToolOutput`.
 9. **gui/features** — `ChatbotAreaRenderer` decides new column, new paragraph, or append.
 
-Steps 8 and 9 repeat per delta until the stream ends. Any tool the model calls
-mid-stream takes the same **backend** → **rpc** path as steps 4 and 5.
+Steps 8 and 9 repeat per delta until the stream ends.
+
+Any tool the model calls mid-stream reaches the same **backend** and **rpc**
+hops, but by a different route — it goes straight out through the MCP client
+rather than through the `WorkerManager`. See
+[Tool calling](/development/chatbot/orchestration#tool-calling).
 
 Closing the window runs `ChatbotPanel.shutdown()` → `ChatOrchestrator.shutdown()`,
 cancelling every handle. The `ChatSession` survives.
