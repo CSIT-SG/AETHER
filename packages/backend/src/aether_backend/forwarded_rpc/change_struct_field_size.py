@@ -9,9 +9,9 @@ async def change_struct_field_size(
     """Change size of a struct field.
 
     Args:
-        struct_id: The id of the type containing field to be changed.
-        old_field_name: Original name of field to be renamed.
-        new_field_name: New name of field to be renamed.
+        struct: The name of the sturct containing field to be changed.
+        field_name: Name of field to be resized.
+        new_size: New size of field.
 
     Returns:
         A Result object whose ``result`` attribute contains the outcome.
