@@ -4,7 +4,7 @@ from aether_rpc.capabilities.types import StructField, StructResult
 
 
 async def create_struct(
-    service: AnyService, struct_name: str, fields: list[StructField] | None = None
+    service: AnyService, *, struct_name: str, fields: list[StructField] | None = None
 ) -> Result[StructResult]:
     """Creates a new struct.
 

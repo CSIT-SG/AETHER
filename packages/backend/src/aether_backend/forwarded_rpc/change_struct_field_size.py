@@ -4,7 +4,7 @@ from aether_rpc.capabilities.types import ChangeStructFieldSizeResult
 
 
 async def change_struct_field_size(
-    service: AnyService, struct: str | int, field_name: str, new_size: str
+    service: AnyService, *, struct: str | int, field_name: str, new_size: str
 ) -> Result[ChangeStructFieldSizeResult]:
     """Change size of a struct field.
 

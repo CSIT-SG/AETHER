@@ -3,7 +3,7 @@ from aether_rpc.capabilities.result import Result
 from aether_rpc.capabilities.types import StructResult
 
 
-async def delete_struct(service: AnyService, struct: str | int) -> Result[StructResult]:
+async def delete_struct(service: AnyService, *, struct: str | int) -> Result[StructResult]:
     """Deletes the struct.
 
     Args:
