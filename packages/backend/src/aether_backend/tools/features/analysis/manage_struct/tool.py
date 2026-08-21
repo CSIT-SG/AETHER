@@ -57,7 +57,7 @@ async def mange_struct(
         case StructOperation.CREATE:
             if fields is None:
                 raise ValueError("Field is required for stuct creation.")
-            ...
+            "test lol"
         case StructOperation.UPDATE_NAME:
             if new_name is None:
                 raise ValueError("new_name is required for rename operation.")
