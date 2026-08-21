@@ -7,63 +7,53 @@ import { Callout } from 'nextra/components'
 - Should live outside of the UI components
 - Holds both the UI messages and the backend turn-by-turn session
 
-Two fields, nothing else:
+Two fields and two methods, nothing else:
 
-- `messages: list[Message]` — what the UI replays
-- `chat_session: CompactingSession` — what the LLM sees
-
-Two methods:
-
-- `add_message(msg)`
-- `append_to_last_message(msg)`
+| Member | Purpose |
+| --- | --- |
+| `messages: list[Message]` | what the UI replays |
+| `chat_session: CompactingSession` | what the LLM sees |
+| `add_message(msg)` | append a message |
+| `append_to_last_message(msg)` | grow the last one |
 
 ### UI messages
 
 Just a list of `Message`s (the class).
 
-A new `MessageColumn` adds a new `Message` to the list.
-
-After that, only paragraphs get added to it. The `MessageColumn` manages the
-content.
-
-Paragraph text is concatenated straight into that one `Message.content`, joined
-with `"\n\n"`.
+A new [`MessageColumn`](/development/chatbot/ui-components#messagecolumn) adds a
+new `Message` to the list. After that only
+paragraphs get added, and the `MessageColumn` manages the content. Paragraph text
+is concatenated into that one `Message.content`, joined with `"\n\n"`.
 
 <Callout>
-The merge happens **while the response streams**, not when the window closes.
-By the time `load_message_history()` runs there is already one `Message` per
-column, so each column reloads as a single `MessageParagraph`.
+The merge happens **while the response streams**, not when the window closes. By
+the time `load_message_history()` runs there is already one `Message` per column,
+so each column reloads as a single `MessageParagraph`.
 </Callout>
 
 ### Backend session
 
-`CompactingSession` subclasses `SQLiteSession` from the Agents SDK.
+`CompactingSession` subclasses `SQLiteSession` from the Agents SDK. `db_path` is
+`":memory:"`, so history lives in RAM and dies with the process.
 
-`db_path` is `":memory:"`, so history lives in RAM and dies with the process.
-
-It overrides `add_items()` to compact once the session outgrows a threshold.
-
-The compaction:
+It overrides `add_items()` to compact once the session outgrows a threshold:
 
 1. `threshold = 10` items, `keep_last_n = 5`
 2. Everything before the last 5 is the head, the last 5 is the tail
-3. The head is summarised by a summarizer agent (`max_turns=1`)
+3. The head is summarised by `get_compacting_agent()` (`max_turns=1`)
 4. The session is cleared
-5. `[compacted_summary, *tail]` is written back
-
-The summary goes back in as a `system` message.
-
-The summarizer comes from `get_compacting_agent()`.
+5. `[compacted_summary, *tail]` is written back, the summary as a `system` message
 
 ### What actually persists
 
 <Callout type="warning">
 `CompactingSession` is a local in-memory store. A fresh provider client and
-`Agent` are built **per turn** inside `ChatBotTask.run()`.
+`Agent` are built **per turn** inside
+[`ChatBotTask.run()`](/development/chatbot/orchestration#chatbottask).
 
-What survives closing the window is the *history*: `ChatSession.messages` for
-the UI and the SQLite rows for the LLM. Plus the `MCPClient` connection, which
-is owned elsewhere.
+What survives closing the window is the *history*: `ChatSession.messages` for the
+UI and the SQLite rows for the LLM. Plus the
+[`MCPClient`](/development/gui/mcp-client) connection, which is owned elsewhere.
 
 Persistence of state, not of a socket.
 </Callout>
@@ -72,11 +62,8 @@ Persistence of state, not of a socket.
 
 This is where the `ChatSession` lives.
 
-It is an `ida_kernwin.action_handler_t`, registered as a context menu item. Only
-shows up on pseudocode views (`BWN_PSEUDOCODE`).
-
-It does **not** create the `MCPClient`. `AetherUIHooks` creates one and passes it
-in, shared with the annotator.
+An `ida_kernwin.action_handler_t`, registered as a context menu item. Only shows
+up on pseudocode views (`BWN_PSEUDOCODE`).
 
 `activate()`:
 
@@ -91,8 +78,8 @@ here.
 
 The `ida_kernwin.PluginForm` between the handler and the panel.
 
-- `OnCreate` — wraps the IDA form as a `QWidget`, calls
+- `OnCreate` — wraps the IDA form as a `QWidget`, then calls
   `create_chatbot_panel(session, mcp_client, parent)`
-- `OnClose` — calls `chat_panel.shutdown()`, which cancels every in-flight task
+- `OnClose` — calls `chat_panel.shutdown()`
 
 The session is not touched on close. That is the whole point.

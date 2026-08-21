@@ -37,7 +37,29 @@ The main use of the singleton is to allow components to reuse the same manager, 
 ## Installation
 In order for the plugin to be installed onto a component, the component must implement the methods and attributes demanded by the `FontPluginProtocol`
 
+Unlike `ThemePlugin` and `JinjaPlugin`, this plugin is not installed by default. Pass it in explicitly:
+
+```python
+super().__init__(parent, plugins=[FontPlugin()])
+```
+
+You must also pass the parent component down to the child widget. The plugin walks up `parentWidget()` to find the window that the component belongs to, and fonts are applied per window in `IDA`.
+
 We also register our custom font action handlers onto `IDA` but more on that [later](#font-handlers).
+
+## Reading fontstyles
+On install and on every font change, the plugin writes the current font into the component's state as `state["fontstyles"]`.
+
+That is what makes it available to Jinja templates, so a `.qss.jinja` can interpolate it directly:
+
+```css
+#ChatBox {
+    font-size: {{ fontstyles.size }}pt;
+    font-family: "{{ fontstyles.family }}";
+}
+```
+
+Components that need to react imperatively override `on_font_change(font)`.
 
 ## Font Hook
 Instead of listening to `QEvents`, our font plugin uses font hooks to directly set fonts.

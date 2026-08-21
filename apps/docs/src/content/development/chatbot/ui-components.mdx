@@ -4,84 +4,64 @@ import { Callout } from 'nextra/components'
 
 ![Anatomy of the ChatbotPanel](/chatbot-panel-anatomy.png)
 
-Every component here is a `StyledComponent`, except `ButtonComponent`.
+Every component here is a
+[`StyledComponent`](/development/gui/writing-gui-components), except
+`ButtonComponent`.
+
+Containment runs `ChatbotPanel` → `MessageArea` → `MessageColumn` →
+`MessageParagraph`.
 
 ## ChatbotPanel
 
-- The window that is spawned by the `ChatbotHandler`
-- Should contain no backend bridge logic other than wiring the input box to the
+- The window spawned by the `ChatbotHandler`
+- Should hold no backend bridge logic beyond wiring `ChatInput` to the
   `MessageArea` and constructing the `ChatOrchestrator`
-- Extremely susceptible to prop drilling, so be conscious of that when
-  implementing new features
+- Extremely susceptible to prop drilling, so be conscious of that when adding
+  features
 
-It builds a `MessageArea` and a `ChatInput`, then constructs the orchestrator
-with **three** things: the `MessageArea`, the MCP client and the session.
-
-On `_on_message_submitted` it does two things:
-
-1. Renders the user's own `MessageColumn` directly
-2. Calls `chat_orchestrator.submit_user_prompt()`
-
-Then `load_message_history()` replays anything already in the session.
-
-`shutdown()` forwards to the orchestrator.
+On submit it renders the user's own `MessageColumn`, then calls
+`submit_user_prompt()`. At build time it calls `load_message_history()` to replay
+the session. `shutdown()` forwards to the orchestrator.
 
 ## MessageArea
 
-Holds the main content of the chatbot, meaning every message from the user and
-the LLM.
+Holds every message from the user and the LLM.
 
 ### The three backend functions
 
-These are the `ChatAreaProtocol` surface. Nothing else may be called from the
-backend.
+The `ChatAreaProtocol` surface. Nothing else may be called from the backend.
 
 - `add_new_message_column()`
 - `add_paragraph_to_last_column()`
 - `append_to_last_paragraph_of_last_column()`
 
 <Callout type="warning">
-Call these on IDA's main thread. The widget belongs to IDA's GUI thread.
-
-`WorkerManager` callbacks do **not** arrive on that thread. See
-[Threading rules](/development/chatbot/worker-manager).
+Call these on IDA's main thread — the widget belongs to IDA's GUI thread, and
+`WorkerManager` callbacks do not arrive on it. See
+[Threading rules](/development/gui/worker-manager).
 </Callout>
 
-### Everything else it exports
-
-- `load_message_history()` — replays `session.messages` into columns
-- `open_search()` / `close_search()`
-- `goto_next_match()` / `goto_prev_match()`
-- `scroll_to_bottom()`
+It also exports `load_message_history()`, `scroll_to_bottom()`, and the four
+search methods covered [below](#search).
 
 ### Behaviour worth knowing
 
-- A `QStackedWidget` swaps between an empty-state CTA and the scroll area. It
-  starts empty.
+- A `QStackedWidget` swaps between an empty-state CTA and the scroll area,
+  starting empty.
 - `scroll_to_bottom` is wired to the scrollbar's `rangeChanged`, so new content
   auto-scrolls.
-- `add_new_message_column` skips writing to the session if the id is already
-  there. That is what makes `load_message_history()` idempotent.
+- `add_new_message_column` skips the session write if the id is already there.
+  That is what makes `load_message_history()` idempotent.
 - `add_paragraph_to_last_column` mints a fresh uuid for the widget's `Message`,
   but only the text reaches the session.
 
-### Search
-
-Ctrl+F opens the `SearchBar`.
-
-- `MessageArea` iterates every paragraph and collects matches
-- Matches are highlighted, the current one in a different colour
-- The bar shows `current / total` and drives next/prev/close
-
 ## MessageColumn
 
-- The actual message bubble
-- Separates the user and LLM messages
-- Contains multiple `MessageParagraph`s
-- Made of a header, a body and a footer
+The actual message bubble. Separates user from LLM messages, holds multiple
+`MessageParagraph`s, and is built as header, body, footer.
 
 The rendered timestamp and role follow the metadata of the **first**
-`MessageParagraph`. Later paragraphs reassign `_last_message_data` but the
+`MessageParagraph`. Later paragraphs reassign `_last_message_data`, but the
 header labels are already built, so they do not change.
 
 Layout differs by role:
@@ -89,10 +69,11 @@ Layout differs by role:
 - `USER` — right aligned, card gets stretch 4
 - `AETHER` — centred, card gets stretch 1
 
-Footer holds the copy button. It copies every paragraph joined with `"\n\n"`,
-flips to "Copied!" for one second, and disables itself so it cannot be spammed.
+The footer holds the copy button, which copies every paragraph joined with
+`"\n\n"`, flips to "Copied!" for one second, and disables itself against spam.
 
-Installs `FontPlugin`. On font change it re-runs `_adjust_height`.
+Installs [`FontPlugin`](/development/gui/plugins/font-plugin); on font change it
+re-runs `_adjust_height`.
 
 ## MessageParagraph
 
@@ -100,36 +81,35 @@ Installs `FontPlugin`. On font change it re-runs `_adjust_height`.
 Not a `QTextBrowser`. It is a `StyledComponent` that **contains** one.
 </Callout>
 
-- Content is Markdown, rendered to HTML with the `markdown` package
-- Extensions: `fenced_code`, `tables`, `nl2br`
-- The result goes in via `setHtml`
-- Implements `FontPlugin` to reflect font changes onto the text
+Content is Markdown, rendered to HTML with the `markdown` package (`fenced_code`,
+`tables`, `nl2br`) and set via `setHtml`. Installs `FontPlugin`.
 
-Methods:
-
-- `refresh()` — re-renders the Markdown. This is what streaming calls on every
-  chunk.
+- `refresh()` — re-renders the Markdown, once per streamed chunk
 - `_adjust_height()` — measures the document and pins a fixed height
-- `find_matches()` / `set_highlights()` / `clear_highlights()` — search support
 - `on_theme_change()` — tags user paragraphs in dark mode
 
 <Callout type="warning">
-Be conscious of when you re-render. `refresh()` re-parses the whole Markdown
-body and re-measures the layout every time. If the text is large it will lag
-the IDA main thread.
+Be conscious of when you re-render. The cost is not the one paragraph.
+
+`refresh()` only touches the last paragraph. But `_adjust_height()` calls
+`setFixedHeight` and `updateGeometry()`, which invalidates the parent layout, so
+Qt re-lays out **every** `MessageColumn` in the conversation.
+
+Each resized paragraph re-measures its own document in `resizeEvent`, and the
+changed scroll range fires `scroll_to_bottom` again.
+
+So it scales with how many messages are on screen, not with the size of the one
+being written. Streaming hits this once per delta, on the IDA main thread.
 </Callout>
 
 ## Message
 
-The naming is a bit confusing, but it is just the content plus metadata.
+The naming is a bit confusing, but it is just content plus metadata: `id`, `role`,
+`content`, `timestamp`, and a `formatted_timestamp` property whose strftime
+differs on Windows.
 
-- `id` — unique per message
-- `role` — `MessageRole.USER` or `MessageRole.AETHER`
-- `content`
-- `timestamp`
-- `formatted_timestamp` — a property, strftime differs on Windows
-
-There is no tool role. Tool output renders as `AETHER`.
+`MessageRole` is only `USER` or `AETHER`. There is no tool role — tool output
+renders as `AETHER`.
 
 ## ChatInput
 
@@ -139,12 +119,52 @@ There is no tool role. Tool output renders as `AETHER`.
 - Emits `submitted(str)`, which the panel connects to
 - Clears and refocuses after submit
 
-## SearchBar
+## Search
 
-Hidden until Ctrl+F.
+Ctrl+F. The work is split across three components.
 
-Emits `search_changed`, `next_requested`, `prev_requested`, `closed`. Owns no
-search logic — `MessageArea` does the work.
+| Component | Role |
+| --- | --- |
+| `SearchBar` | Input, `0/0` count, prev/next/close buttons. No search logic. |
+| `MessageArea` | Iterates paragraphs, collects matches, tracks the current one |
+| `MessageParagraph` | `find_matches()`, `set_highlights()`, `clear_highlights()` |
+
+`SearchBar` emits `search_changed`, `next_requested`, `prev_requested` and
+`closed`. `MessageArea` answers with `open_search()`, `close_search()`,
+`goto_next_match()` and `goto_prev_match()`. Matches are highlighted, the current
+one in a different colour.
+
+Keys are handled by an `eventFilter` on the input and all three are swallowed:
+
+| Key | Does |
+| --- | --- |
+| Enter | next match |
+| Shift+Enter | previous match |
+| Esc | close |
+
+`focus_input()` focuses and **selects all**, so reopening replaces the last query
+rather than appending to it. `clear_input()` and `update_count(current, total)`
+round out the bar's API.
+
+Unlike the other components, `SearchBar.on_font_change` sets the font on all five
+children by hand rather than only re-measuring.
+
+## ScrollBar
+
+<Callout type="warning">
+Unfinished migration. Nothing constructs it.
+
+`ScrollBar` is a themed wrapper exported from `components/__init__.py`, but
+`MessageArea` does not use it — it styles the raw `QScrollBar` through the
+`ChatScrollBar` object name instead.
+
+Two scrollbar styling paths exist and only the raw one is live. Use
+`ChatScrollBar` until the migration is finished.
+</Callout>
+
+If you do finish it, `bind_to()` takes either a `QAbstractScrollArea` or a
+`QScrollBar`, mirrors range, page step and single step, and guards against
+feedback loops with a `_syncing` flag.
 
 ## ButtonComponent
 

@@ -8,6 +8,13 @@ The AETHER chatbot is three layers:
 - A `ChatSession` that outlives the window
 - A backend that talks to the LLM provider and to the MCP tools
 
+<Callout>
+These pages were transcribed from the chatbot design whiteboard, then corrected
+against the code. The unedited transcription is kept on the
+[Whiteboard Transcript](/development/chatbot/whiteboard-transcript) page, so some
+of it is now out of date on purpose.
+</Callout>
+
 ## Panel anatomy
 
 ![Anatomy of the ChatbotPanel](/chatbot-panel-anatomy.png)
@@ -20,38 +27,95 @@ The AETHER chatbot is three layers:
 | `MessageParagraph` | One block of rendered Markdown. |
 | Message header | Role and timestamp. |
 | Footer | Copy button. |
-| Input box | `ChatInput`. Ctrl+Enter submits. |
-| Submit button | Lives inside `ChatInput`. |
+| Input box, submit button | Both are `ChatInput`. |
+
+Each is covered on [UI Components](/development/chatbot/ui-components).
 
 ## Who owns what
 
-- `AetherUIHooks` creates the one `MCPClient` and hands it to
-  `ChatbotHandler` (and to `AnnotatorHandler`).
-- [`ChatbotHandler`](/development/chatbot/chat-session) owns the `ChatSession`
-  and opens a `ChatbotPanelForm`.
+- `AetherUIHooks` creates the one
+  [`MCPClient`](/development/gui/mcp-client) and hands it to
+  [`ChatbotHandler`](/development/chatbot/chat-session) and `AnnotatorHandler`.
+- `ChatbotHandler` owns the `ChatSession` and opens a `ChatbotPanelForm`.
 - [`ChatbotPanel`](/development/chatbot/ui-components) builds the UI and
   constructs the [`ChatOrchestrator`](/development/chatbot/orchestration).
-- [`ChatOrchestrator`](/development/chatbot/orchestration) bridges `ChatBotTask`
-  (talks to the provider) and `ChatbotAreaRenderer` (writes to the UI).
+- `ChatOrchestrator` bridges `ChatBotTask` (talks to the provider) and
+  `ChatbotAreaRenderer` (writes to the UI).
 - Long work runs off the IDA main thread via the
-  [`WorkerManager`](/development/chatbot/worker-manager).
-- IDA context and tool calls go through the
-  [MCP client](/development/chatbot/mcp-client).
-
-## Names to get right
-
-The whiteboard and the code disagree in a few places. The code wins.
-
-| Whiteboard | Actual |
-| --- | --- |
-| `ChatbotOrchestrator` | `ChatOrchestrator` |
-| `ChatbotRenderer` | `ChatbotAreaRenderer` |
-| `ChatbotTask` | `ChatBotTask` |
-| `get_ida_context()` | `get_function_context` tool |
+  [`WorkerManager`](/development/gui/worker-manager).
 
 <Callout>
-These pages were transcribed from the chatbot design whiteboard, then corrected
-against the code. The unedited transcription is kept on the
-[Whiteboard Transcript](/development/chatbot/whiteboard-transcript) page, so
-some of it is now out of date on purpose.
+[`WorkerManager`](/development/gui/worker-manager) and
+[`MCPClient`](/development/gui/mcp-client) are not chatbot code. They live under
+GUI and are shared with the annotator, so changing them affects more than this
+feature.
 </Callout>
+
+## A turn, end to end
+
+A turn crosses every layer in [System
+Architecture](/development/system-architecture), plus the provider.
+
+| Label | Folder |
+| --- | --- |
+| **gui/features** | `aether_gui/features/chatbot` — the widgets |
+| **gui/backend** | `aether_gui/backend/chatbot` — orchestrator, task, renderer |
+| **backend** | `packages/backend` → `aether_backend` — the MCP server and tools |
+| **rpc** | `packages/rpc` → `aether_rpc` — capabilities running inside IDA |
+
+<Callout>
+Two different things are called "backend". **gui/backend** is the chatbot's own
+in-process logic, inside the gui app. **backend** is the separate MCP server.
+</Callout>
+
+1. **gui/features** — the user submits. `ChatInput` emits `submitted`.
+2. **gui/features** — `ChatbotPanel` renders the user's own `MessageColumn` straight away,
+   then calls `submit_user_prompt()`.
+3. **gui/backend** — `ChatOrchestrator` reads `get_screen_ea()` and
+   `get_rpc_id()`, submits a
+   [`CallToolTask`](/development/gui/mcp-client#calltooltask) for
+   `get_function_context`, and returns immediately holding a `Future`.
+4. **backend** — the MCP server runs the tool, resolving an RPC service from the
+   `rpc_id`.
+5. **rpc** — `get_data_at_address` and `get_function_pseudocode` execute against
+   IDA and come back as an `IDAContext`.
+6. **gui/backend** — the result travels back over MCP and resolves the `Future`.
+7. **gui/backend** — `ChatBotTask` waits on it (30s cap), renders both prompts,
+   wraps the MCP tools, and streams the agent against the provider.
+8. **gui/backend** — each event becomes a `TextDelta`, `ReasoningDelta`,
+   `ToolCall` or `ToolOutput`.
+9. **gui/features** — `ChatbotAreaRenderer` decides new column, new paragraph, or append.
+
+Steps 8 and 9 repeat per delta until the stream ends. Any tool the model calls
+mid-stream takes the same **backend** → **rpc** path as steps 4 and 5.
+
+Closing the window runs `ChatbotPanel.shutdown()` → `ChatOrchestrator.shutdown()`,
+cancelling every handle. The `ChatSession` survives.
+
+### Threads
+
+Steps 1 to 3 and step 9 run on IDA's main thread. Everything between runs on a
+[`WorkerManager`](/development/gui/worker-manager) thread, and `consume()` drains
+the results on a third one — which is why step 9 goes through
+`_run_on_ida_ui_thread`.
+
+<Callout type="warning">
+There is no cancel and no loading indicator. Once step 2 fires the turn runs to
+completion or error, and nothing on screen moves until the first delta reaches
+step 9.
+</Callout>
+
+## Configuration
+
+The chatbot will not start without a provider API key — `OpenAIGateway` raises
+`ValueError`. See [Configuration](/configuration) for the file itself.
+
+| Key | Read by | Notes |
+| --- | --- | --- |
+| `provider.api_key` | `OpenAIGateway` | Required. |
+| `provider.gateway_url` | `OpenAIGateway` | The OpenAI-compatible endpoint. |
+| `provider.models` | `OpenAIGateway` | Name to model-id map. |
+| `provider.default_model` | `OpenAIGateway` | Always what the chatbot resolves to. |
+| `tls.client_cert_path`, `tls.client_key_path` | `OpenAIGateway` | Optional client certs. |
+| `mcp_url` | `MCPClient` | Where the MCP server lives. |
+

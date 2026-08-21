@@ -13,6 +13,16 @@ following functionality:
 - [Reacting to IDA theme changes](#theme-changes)
 - [Rendering html](#html-rendering)
 
+<Callout type="warning">
+	**DO NOT TOUCH:** the `StyledComponent` class is sacred (kinda).
+
+	Every AETHER GUI component is a child of it. Changes may not break everything, but do not touch it 
+	unless absolutely necessary and with express permission. This is to prevent breaking someone else's 
+	code, since it is a very important shared class.
+
+	Adding a plugin is almost always the right move instead.
+</Callout>
+
 We will describe how to use these features later on. For now, here is a general structure of a component.
 
 
@@ -115,6 +125,35 @@ class StatusPanel(StyledComponent):
 ```
 
 Behavior: the label starts as "Loading", becomes "Ready" after plugins install, and updates its text on every theme change.
+
+
+## Component State
+
+Plugins share state with their host component through `self.state`.
+
+<Callout type="warning">
+	`self.state` is a `defaultdict(lambda: None)`, not a plain dict.
+
+	A missing or misspelled key returns `None` instead of raising `KeyError`, so a typo in a template 
+	fails silently rather than loudly.
+</Callout>
+
+`StyledComponent` populates two keys before your code runs:
+
+- `state["theme"]`: `"light"` or `"dark"`.
+- `state["colors"]`: the color namespace described in [Styling with QSS](#styling-with-qss).
+
+Plugins add their own on install. For example, `FontPlugin` writes `state["fontstyles"]`, so a component 
+that reads or changes font state goes through `widget.state["fontstyles"]`.
+
+<Callout type="info">
+	`ThemePlugin` and `JinjaPlugin` are installed on every `StyledComponent`. Every other plugin, 
+	including `FontPlugin`, is opt-in and must be passed explicitly:
+
+	```python
+	super().__init__(parent, plugins=[FontPlugin()])
+	```
+</Callout>
 
 
 ## Template Loading
