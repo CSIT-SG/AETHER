@@ -74,7 +74,9 @@ class ChangeStructFieldType(Capability):
             type_code = TYPE_MAP.get(new_type)
 
             if type_code is None or not field_tif.create_simple_type(type_code):
-                return Err(result=f"Unable to resolve field type '{new_type}'.")
+                return Err(
+                    result=f"Unable to resolve field type '{new_type}'. Please provide a user-defined type or use one of the following supported types: uint8_t, uint16_t, word, uint32_t, dword, uint64_t, int8_t, int16_t, short, int32_t, long, int64_t, char, bool, byte, float, double, or void."
+                )
 
         new_size = field_tif.get_size()
 

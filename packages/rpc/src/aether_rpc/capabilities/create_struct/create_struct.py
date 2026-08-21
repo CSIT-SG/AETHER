@@ -72,9 +72,11 @@ class CreateStruct(Capability):
                 for field in fields:
                     member = self._make_member(field, offset)
                     if member is None:
-                        return Err(result="Invalid type for field.")
+                        return Err(
+                            result="Invalid type for field. Please provide a user-defined type or use one of the following supported types: uint8_t, uint16_t, word, uint32_t, dword, uint64_t, int8_t, int16_t, short, int32_t, long, int64_t, char, bool, byte, float, double, or void."
+                        )
                     offset += member.type.get_size() * 8
-                    udt.push_back(member)                
+                    udt.push_back(member)
             except (ValueError, TypeError, SystemError):
                 return Err(
                     result="Invalid fields. Each field must be a tuple containing a field "

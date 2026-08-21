@@ -71,7 +71,9 @@ class AddStructField(Capability):
             type_code = TYPE_MAP.get(field_type)
 
             if type_code is None or not new_type.create_simple_type(field_type):
-                return Err(result=f"Unable to resolve field type '{field_type}'.")
+                return Err(
+                    result=f"Unable to resolve field type '{field_type}'. Please provide a user-defined type or use one of the following supported types: uint8_t, uint16_t, word, uint32_t, dword, uint64_t, int8_t, int16_t, short, int32_t, long, int64_t, char, bool, byte, float, double, or void."
+                )
 
         try:
             # Check if offset provided is an integer
@@ -87,7 +89,9 @@ class AddStructField(Capability):
 
                 array_type = ida_typeinf.tinfo_t()
                 if not array_type.create_array(new_type, int(array_length)):
-                    return Err(result=f"Unable to create array type '{field_type}[{array_length}]'.")
+                    return Err(
+                        result=f"Unable to create array type '{field_type}[{array_length}]'."
+                    )
             except ValueError:
                 return Err(result=f"Invalid array length provided: '{array_length}'.")
 
