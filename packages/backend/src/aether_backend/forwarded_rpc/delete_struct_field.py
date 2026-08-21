@@ -5,7 +5,8 @@ from aether_rpc.capabilities.types import StructFieldResult
 
 async def delete_struct_field(
     service: AnyService,
-    *struct: str | int,
+    *,
+    struct: str | int,
     field_name: str,
 ) -> Result[StructFieldResult]:
     """Delete a field from a structure and compact the remaining fields.
