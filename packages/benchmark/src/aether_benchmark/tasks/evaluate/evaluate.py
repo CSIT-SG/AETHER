@@ -15,6 +15,7 @@ from aether_backend.utils.subagent import (
     SubagentToolDependencies,
     build_subagent_tool,
 )
+from aether_utils.get_content import get_content
 from agents import (
     Agent,
     OpenAIChatCompletionsModel,
@@ -24,7 +25,6 @@ from openai import AsyncOpenAI
 
 from aether_benchmark.tasks.evaluate.models import CriterionResult
 from aether_benchmark.utils.task import Task
-from aether_utils.get_content import get_content
 
 class EvaluateTask(Task[[dict[str, Any], Any, dict[str, Any]], dict[str, Any]]):  # type: ignore[misc]
     """Evaluate a single rubric entry against IDB state.

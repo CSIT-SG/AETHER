@@ -56,3 +56,6 @@ class StartRPCServerTask(Task[[Path, str], Any]):
         if self._server is not None:
             with contextlib.suppress(Exception):
                 self._server.stop()
+        if self._pump_thread is not None:
+            with contextlib.suppress(Exception):
+                self._pump_thread.join(timeout=5)
