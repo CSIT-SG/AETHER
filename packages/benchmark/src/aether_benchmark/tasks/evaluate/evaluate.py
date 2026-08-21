@@ -24,7 +24,7 @@ from openai import AsyncOpenAI
 
 from aether_benchmark.tasks.evaluate.models import CriterionResult
 from aether_benchmark.utils.task import Task
-
+from aether_utils.get_content import get_content
 
 class EvaluateTask(Task[[dict[str, Any], Any, dict[str, Any]], dict[str, Any]]):  # type: ignore[misc]
     """Evaluate a single rubric entry against IDB state.
@@ -33,7 +33,7 @@ class EvaluateTask(Task[[dict[str, Any], Any, dict[str, Any]], dict[str, Any]]):
     inspect function state on demand rather than relying on pre-parsed data.
     """
 
-    _SYSTEM_PROMPT = (Path(__file__).parent / "evaluate_prompt.md").read_text(encoding="utf-8")
+    _SYSTEM_PROMPT = get_content(Path(__file__).parent, "evaluate_prompt.md")
 
     async def start(
         self,
