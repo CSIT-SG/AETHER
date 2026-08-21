@@ -68,7 +68,7 @@ def resource_dir() -> Path:
     raise SystemExit("Production wheel bundle was not found")
 
 
-def install_requirements(*, bundle_dir: Path, force_reinstall: bool) -> None:
+def install_requirements(*, bundle_dir: Path, force_reinstall: bool = False) -> None:
     cmd = [
         sys.executable,
         "-m",

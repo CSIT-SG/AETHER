@@ -132,7 +132,7 @@ class TestInstallRequirements:
         )
 
         bundle_dir = tmp_path / "bundle"
-        prod.install_requirements(bundle_dir)
+        prod.install_requirements(bundle_dir=bundle_dir)
 
         assert captured["command"] == [
             sys.executable,
