@@ -5,8 +5,9 @@
 module load. Since test environments don't have IDA installed, we mock
 the entire module so it never reaches the real ``idapro`` import.
 """
-from unittest.mock import MagicMock
+
 import sys
+from unittest.mock import MagicMock
 
 _MODULE = "aether_rpc.executors.headless_executor"
 if _MODULE not in sys.modules:
