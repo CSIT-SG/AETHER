@@ -23,7 +23,13 @@ config = get_config()
 
 class ChatOrchestrator:
     def __init__(
-        self, chatbot_panel: ChatAreaProtocol, mcp_client: MCPClient, session: ChatSession
+        self,
+        chatbot_panel: ChatAreaProtocol,
+        mcp_client: MCPClient,
+        session: ChatSession,
+        *,
+        on_turn_started: Callable[[], None] = lambda: None,
+        on_turn_finished: Callable[[], None] = lambda: None,
     ) -> None:
         self.chat_renderer = ChatbotAreaRenderer(chatbot_panel)
         self.function_context = None
@@ -33,8 +39,8 @@ class ChatOrchestrator:
         self.session = session
         self._turn_active = False
         self._closed = False
-        self.on_turn_started: Callable[[], None] = lambda: None
-        self.on_turn_finished: Callable[[], None] = lambda: None
+        self.on_turn_started = on_turn_started
+        self.on_turn_finished = on_turn_finished
 
     def _get_context(self) -> Future[dict[str, Any]]:
         current_ea = ida_kernwin.get_screen_ea()

@@ -51,10 +51,12 @@ class ChatbotPanel(StyledComponent):  # type: ignore[misc]
         self._message_area = message_area
         self._chat_input = chat_input
         self.chat_orchestrator = ChatOrchestrator(
-            self._message_area, self.mcp_client, self._session
+            self._message_area,
+            self.mcp_client,
+            self._session,
+            on_turn_started=lambda: chat_input.submit_enabled(False),
+            on_turn_finished=lambda: chat_input.submit_enabled(True),
         )
-        self.chat_orchestrator.on_turn_started = lambda: chat_input.submit_enabled(False)
-        self.chat_orchestrator.on_turn_finished = lambda: chat_input.submit_enabled(True)
 
         self._message_area.load_message_history()
 
