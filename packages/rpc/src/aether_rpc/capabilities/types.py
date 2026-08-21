@@ -166,7 +166,7 @@ class StructFieldWithOffset(NamedTuple):
     offset: int
 
 
-class StructInfo(NamedTuple):
+class StructInfo(TypedDict):
     struct_id: str
     struct_name: str
     struct_fields: int

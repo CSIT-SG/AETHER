@@ -110,7 +110,7 @@ class ChangeStructFieldType(Capability):
                 ):
                     return Err(result="Failed to create padding type.")
 
-                padding_name = f"padding_{padding_index}"
+                padding_name = f"__padding_{padding_index}"
 
                 if not new_udt.add_member(
                     padding_name,
@@ -144,15 +144,28 @@ class ChangeStructFieldType(Capability):
             struct_name,
             ida_typeinf.NTF_REPLACE,
         )
-
-        if result != ida_typeinf.TERR_OK:
-            return Err(
-                result=(
-                    f"Failed to replace structure '{struct_name}': "
-                    f"{ida_typeinf.tinfo_errstr(result)} "
-                    f"(code={result})"
-                )
-            )
+        final_tif = ida_typeinf.tinfo_t()
+        if not final_tif.get_named_type(til, struct_name):
+            return Err(result=f"Failed to retrieve structure '{struct_name}'.")
+        final_udt = ida_typeinf.udt_type_data_t()
+        if not final_tif.get_udt_details(final_udt):
+            return Err(result=f"Failed to get details for '{struct_name}'.")
+        for i in range(len(final_udt) - 1, -1, -1):
+            member = final_udt[i]
+            if member.name.startswith("__padding_") or (
+                member.name.startswith("gap")
+                and member.type.is_array()
+                and member.type.get_size() > 0
+            ):
+                result = final_tif.del_udm(i)
+                if result != ida_typeinf.TERR_OK:
+                    return Err(
+                        result=(
+                            f"Failed to delete '{member.name}': "
+                            f"{ida_typeinf.tinfo_errstr(result)} "
+                            f"(code={result})"
+                        )
+                    )
 
         return Ok(
             result=ChangeStructFieldTypeResult(
