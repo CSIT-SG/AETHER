@@ -1,6 +1,6 @@
 # Rubric Schema
 
-AETHER benchmark schematic uses a declarative YAML format to define quality standards. Rubrics are grouped by **functional domain** (e.g., networking, cryptography, memory management) rather than hardcoded memory addresses.
+AETHER benchmark schematic uses a declarative YAML format to define quality standards. Rubrics are grouped by functional domain (e.g., networking, cryptography, memory management, obfuscation).
 
 ## Schema Specification
 
@@ -20,7 +20,7 @@ AETHER benchmark schematic uses a declarative YAML format to define quality stan
 When creating a new rubric, follow these best practices to ensure your evaluation is both flexible and descriptive:
 
 ### 1. Weighting
-Weights are optional. Use them to signal which functional domains are critical to the system's security or stability.
+Weights are optional. Use them to signal which functional domains are critical to the system's security, stability, or function.
 *   **Default:** If omitted, the system assumes a weight of `1.0`.
 *   **Critical paths:** Use weights `> 1.0` for core logic (e.g., packet parsing, crypto).
 
