@@ -19,8 +19,13 @@ class CreateStruct(Capability):
         member.offset = offset
         member.type = ida_typeinf.tinfo_t()
 
+        til = ida_typeinf.get_idati()
         base = ida_typeinf.tinfo_t()
-        base.create_simple_type(TYPE_MAP[field.type])
+        if not base.get_named_type(til, field.type):
+            type_code = TYPE_MAP.get(field.type)
+
+            if type_code is None or not base.create_simple_type(type_code):
+                return None
 
         if field.array_length is not None:
             member.type.create_array(base, field.array_length)
@@ -66,10 +71,10 @@ class CreateStruct(Capability):
                 offset = 0
                 for field in fields:
                     member = self._make_member(field, offset)
+                    if member is None:
+                        return Err(result="Invalid type for field.")
                     offset += member.type.get_size() * 8
-                    udt.push_back(member)
-            except KeyError:
-                return Err(result="Invalid type for field.")
+                    udt.push_back(member)                
             except (ValueError, TypeError, SystemError):
                 return Err(
                     result="Invalid fields. Each field must be a tuple containing a field "

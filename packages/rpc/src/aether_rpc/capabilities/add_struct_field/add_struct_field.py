@@ -67,15 +67,10 @@ class AddStructField(Capability):
         til = ida_typeinf.get_idati()
         new_type = ida_typeinf.tinfo_t()
 
-        type_code = TYPE_MAP.get(field_type)
+        if not new_type.get_named_type(til, field_type):
+            type_code = TYPE_MAP.get(field_type)
 
-        if type_code is not None:
-            # Primitive type from TYPE_MAP.
-            if not new_type.create_simple_type(type_code):
-                return Err(result=f"Unable to create field type '{field_type}'.")
-        else:
-            # Fall back to an IDA named type, e.g. a user-defined struct.
-            if not new_type.get_named_type(til, field_type):
+            if type_code is None or not new_type.create_simple_type(field_type):
                 return Err(result=f"Unable to resolve field type '{field_type}'.")
 
         try:

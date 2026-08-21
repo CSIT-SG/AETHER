@@ -27,12 +27,12 @@ class TestGetStructInfo:
         assert len(result.result["struct_fields"]) == 2
 
         assert result.result["struct_fields"][0][0] == "field1"
-        assert result.result["struct_fields"][0][1] == "unsigned __int32"
+        assert result.result["struct_fields"][0][1] == "uint32_t"
         assert result.result["struct_fields"][0][2] == 4
         assert result.result["struct_fields"][0][3] == 0
 
         assert result.result["struct_fields"][1][0] == "field2"
-        assert result.result["struct_fields"][1][1] == "unsigned __int16"
+        assert result.result["struct_fields"][1][1] == "uint16_t"
         assert result.result["struct_fields"][1][2] == 2
         assert result.result["struct_fields"][1][3] == 4
 
@@ -56,12 +56,12 @@ class TestGetStructInfo:
         assert len(result.result["struct_fields"]) == 2
 
         assert result.result["struct_fields"][0][0] == "field1"
-        assert result.result["struct_fields"][0][1] == "unsigned __int32"
+        assert result.result["struct_fields"][0][1] == "uint32_t"
         assert result.result["struct_fields"][0][2] == 4
         assert result.result["struct_fields"][0][3] == 0
 
         assert result.result["struct_fields"][1][0] == "field2"
-        assert result.result["struct_fields"][1][1] == "unsigned __int16"
+        assert result.result["struct_fields"][1][1] == "uint16_t"
         assert result.result["struct_fields"][1][2] == 2
         assert result.result["struct_fields"][1][3] == 4
 
