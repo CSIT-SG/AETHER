@@ -22,8 +22,8 @@ class CreateStruct(Capability):
         base = ida_typeinf.tinfo_t()
         base.create_simple_type(TYPE_MAP[field.type])
 
-        if field.array_size is not None:
-            member.type.create_array(base, field.array_size)
+        if field.array_length is not None:
+            member.type.create_array(base, field.array_length)
         else:
             member.type = base
 
@@ -41,12 +41,12 @@ class CreateStruct(Capability):
 
                 Each field must be specified as either:
                 - ["field_name", "field_type"]
-                - ["field_name", "field_type", array_size]
+                - ["field_name", "field_type", array_length]
 
                 Where:
                 - ``field_name`` is the member name.
                 - ``field_type`` is the member type (for example, ``uint32_t`` or ``char``).
-                - ``array_size`` is an optional positive integer specifying the number
+                - ``array_length`` is an optional positive integer specifying the number
                 of elements if the member is an array.
 
         Returns:
@@ -73,7 +73,7 @@ class CreateStruct(Capability):
             except (ValueError, TypeError, SystemError):
                 return Err(
                     result="Invalid fields. Each field must be a tuple containing a field "
-                    "name and type, with an optional array size, for example: "
+                    "name and type, with an optional array length, for example: "
                     '[("id", "uint32_t"), ("name", "char", 32)].'
                 )
 

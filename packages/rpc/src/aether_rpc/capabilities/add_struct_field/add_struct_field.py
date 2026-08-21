@@ -20,7 +20,7 @@ class AddStructField(Capability):
         field_name: str,
         field_type: str,
         offset: int,
-        array_size: int | None,
+        array_length: int | None,
     ) -> Result[StructFieldResult]:
         """Add a field to a structure.
 
@@ -29,12 +29,12 @@ class AddStructField(Capability):
             field_name: Name of the new field.
             field_type: Type of the new field.
             offset: Byte offset at which to add the field.
-            array_size: Number of elements if the field is an array.
+            array_length: Number of elements if the field is an array.
 
         Returns:
             A Result whose ``success`` reports whether the add succeeded and
             whose ``result`` carries struct id, struct name, field name, field
-            type, and array size if applicable.
+            type, and array length if applicable.
         """
         if isinstance(struct, int):
             struct_id = struct
@@ -84,17 +84,17 @@ class AddStructField(Capability):
         except ValueError:
             return Err(result=f"Invalid offset provided: '{offset}'.")
 
-        if array_size is not None:
-            # Create as array if array size given
+        if array_length is not None:
+            # Create as array if array length given
             try:
-                if int(array_size) <= 0:
-                    return Err(result="Array size must be greater than zero.")
+                if int(array_length) <= 0:
+                    return Err(result="Array length must be greater than zero.")
 
                 array_type = ida_typeinf.tinfo_t()
-                if not array_type.create_array(new_type, int(array_size)):
-                    return Err(result=f"Unable to create array type '{field_type}[{array_size}]'.")
+                if not array_type.create_array(new_type, int(array_length)):
+                    return Err(result=f"Unable to create array type '{field_type}[{array_length}]'.")
             except ValueError:
-                return Err(result=f"Invalid array size provided: '{array_size}'.")
+                return Err(result=f"Invalid array length provided: '{array_length}'.")
 
             new_type = array_type
 

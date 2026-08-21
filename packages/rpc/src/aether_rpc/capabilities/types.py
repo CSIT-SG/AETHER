@@ -156,7 +156,7 @@ class StructResult(TypedDict):
 class StructField(NamedTuple):
     name: str
     type: str
-    array_size: int | None = None
+    array_length: int | None = None
 
 
 class StructFieldWithOffset(NamedTuple):

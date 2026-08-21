@@ -21,7 +21,7 @@ class TestAddStructField:
             field_name="field2",
             field_type="uint16_t",
             offset=4,
-            array_size=None,
+            array_length=None,
         )
 
         assert result.success is True
@@ -43,7 +43,7 @@ class TestAddStructField:
             field_name="field2",
             field_type="uint16_t",
             offset=4,
-            array_size=None,
+            array_length=None,
         )
 
         assert result.success is True
@@ -65,7 +65,7 @@ class TestAddStructField:
             field_name="array_field",
             field_type="uint8_t",
             offset=4,
-            array_size=8,
+            array_length=8,
         )
 
         assert result.success is True
@@ -87,7 +87,7 @@ class TestAddStructField:
             field_name="new_field",
             field_type="uint16_t",
             offset=0,
-            array_size=None,
+            array_length=None,
         )
 
         assert result.success is True
@@ -107,7 +107,7 @@ class TestAddStructField:
             field_name="new_field",
             field_type="uint8_t",
             offset=2,
-            array_size=None,
+            array_length=None,
         )
 
         assert result.success is True
@@ -118,7 +118,7 @@ class TestAddStructField:
             field_name="field",
             field_type="uint32_t",
             offset=0,
-            array_size=None,
+            array_length=None,
         )
 
         assert result.success is False
@@ -129,7 +129,7 @@ class TestAddStructField:
             field_name="field",
             field_type="uint32_t",
             offset=0,
-            array_size=None,
+            array_length=None,
         )
 
         assert result.success is False
@@ -148,7 +148,7 @@ class TestAddStructField:
             field_name="field1",
             field_type="uint16_t",
             offset=4,
-            array_size=None,
+            array_length=None,
         )
 
         assert result.success is False
@@ -167,14 +167,14 @@ class TestAddStructField:
             field_name="field2",
             field_type="invalid_type",
             offset=4,
-            array_size=None,
+            array_length=None,
         )
 
         assert result.success is False
 
-    def test_add_zero_array_size(self, ida_client: rpyc.Connection) -> None:
+    def test_add_zero_array_length(self, ida_client: rpyc.Connection) -> None:
         created = ida_client.root.create_struct(
-            struct_name="test_add_zero_array_size",
+            struct_name="test_add_zero_array_length",
             fields=[
                 ("field1", "uint32_t"),
             ],
@@ -182,18 +182,18 @@ class TestAddStructField:
         assert created.success is True
 
         result = ida_client.root.add_struct_field(
-            struct="test_add_zero_array_size",
+            struct="test_add_zero_array_length",
             field_name="array_field",
             field_type="uint8_t",
             offset=4,
-            array_size=0,
+            array_length=0,
         )
 
         assert result.success is False
 
-    def test_add_negative_array_size(self, ida_client: rpyc.Connection) -> None:
+    def test_add_negative_array_length(self, ida_client: rpyc.Connection) -> None:
         created = ida_client.root.create_struct(
-            struct_name="test_add_negative_array_size",
+            struct_name="test_add_negative_array_length",
             fields=[
                 ("field1", "uint32_t"),
             ],
@@ -201,18 +201,18 @@ class TestAddStructField:
         assert created.success is True
 
         result = ida_client.root.add_struct_field(
-            struct="test_add_negative_array_size",
+            struct="test_add_negative_array_length",
             field_name="array_field",
             field_type="uint8_t",
             offset=4,
-            array_size=-1,
+            array_length=-1,
         )
 
         assert result.success is False
 
-    def test_add_invalid_array_size(self, ida_client: rpyc.Connection) -> None:
+    def test_add_invalid_array_length(self, ida_client: rpyc.Connection) -> None:
         created = ida_client.root.create_struct(
-            struct_name="test_add_invalid_array_size",
+            struct_name="test_add_invalid_array_length",
             fields=[
                 ("field1", "uint32_t"),
             ],
@@ -220,11 +220,11 @@ class TestAddStructField:
         assert created.success is True
 
         result = ida_client.root.add_struct_field(
-            struct="test_add_invalid_array_size",
+            struct="test_add_invalid_array_length",
             field_name="array_field",
             field_type="uint8_t",
             offset=4,
-            array_size="invalid",
+            array_length="invalid",
         )
 
         assert result.success is False

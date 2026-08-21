@@ -74,13 +74,13 @@ class TestCreateStruct:
 
         assert struct.success is False
 
-    def test_reject_invalid_array_size(self, ida_client: rpyc.Connection) -> None:
+    def test_reject_invalid_array_length(self, ida_client: rpyc.Connection) -> None:
         fields = [
             ("name", "char", "32"),
         ]
 
         struct = ida_client.root.create_struct(
-            struct_name="test_invalid_array_size",
+            struct_name="test_invalid_array_length",
             fields=fields,
         )
 
