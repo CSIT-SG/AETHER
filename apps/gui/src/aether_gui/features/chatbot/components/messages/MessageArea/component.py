@@ -6,7 +6,7 @@ from typing import Any, cast
 from uuid import uuid4
 
 from aether_gui.features.chatbot.components.searchbar import SearchBar
-from aether_gui.utils.chat_session import ChatSession
+from aether_gui.utils.chat_session import ChatSession, Message, MessageRole
 from aether_gui.utils.ui import StyledComponent
 from PySide6 import QtCore
 from PySide6.QtGui import QKeySequence, QShortcut
@@ -15,7 +15,6 @@ from shiboken6 import isValid
 
 from ..MessageColumn import MessageColumn
 from ..MessageParagraph import MessageParagraph
-from ..Messages import Message, MessageRole
 
 
 class MessageArea(StyledComponent):  # type: ignore[misc]

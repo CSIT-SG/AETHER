@@ -4,14 +4,13 @@ from typing import Any, cast
 from uuid import uuid4
 
 from aether_gui.backend.chatbot import ChatOrchestrator
-from aether_gui.utils.chat_session import ChatSession
+from aether_gui.utils.chat_session import ChatSession, MessageRole
 from aether_gui.utils.mcp import MCPClient
 from aether_gui.utils.ui import StyledComponent
 from PySide6 import QtCore, QtWidgets
 
 from ..chat_input import ChatInput
 from ..messages.MessageArea import MessageArea
-from ..messages.Messages import MessageRole
 
 
 class ChatbotPanel(StyledComponent):  # type: ignore[misc]

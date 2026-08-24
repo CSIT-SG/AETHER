@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Any, cast
 
+from aether_gui.utils.chat_session import Message, MessageRole
 from aether_gui.utils.ui import FontPlugin, StyledComponent
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFont
@@ -15,7 +16,6 @@ from PySide6.QtWidgets import (
 )
 
 from ..MessageParagraph import MessageParagraph
-from ..Messages import Message, MessageRole
 from .ButtonComponent import ButtonComponent
 
 COPY_ICON = "\u29c9"  # ⧉

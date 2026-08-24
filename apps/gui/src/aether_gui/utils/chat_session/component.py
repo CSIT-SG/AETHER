@@ -1,4 +1,4 @@
-from aether_gui.features.chatbot.components.messages.Messages import Message
+from aether_gui.utils.chat_session.models import Message
 from aether_utils.compacting_session import CompactingSession, get_compacting_agent
 
 

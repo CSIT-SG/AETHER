@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import uuid4
 
-from aether_gui.features.chatbot.components.messages.Messages import MessageRole
+from aether_gui.utils.chat_session import MessageRole
 from aether_utils.logger import get_logger
 
 from .types import ChatAreaProtocol, MessageType

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal, Protocol
 
-from aether_gui.features.chatbot.components.messages.Messages import MessageRole
+from aether_gui.utils.chat_session import MessageRole
 
 type MessageType = Literal["tool", "text", "error"]
 
