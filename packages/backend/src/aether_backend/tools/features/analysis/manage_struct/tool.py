@@ -1,15 +1,18 @@
 from pathlib import Path
 from typing import Annotated
 
-from aether_backend.utils.effect import Program, Return, effectful
+from aether_backend.utils.effect import Log, Program, effectful
 from aether_backend.utils.get_rpc_service import get_rpc_service
+from aether_backend.utils.validation import HexAddress
 from aether_utils.config import get_config
 from aether_utils.get_content import get_content
 from fastmcp.tools import tool
 from mcp.types import ToolAnnotations
 
-from ..types import StructField, StructOperation
 from .constants import TIMEOUT_SECONDS
+from .operations import perform_create_struct, perform_delete_struct, perform_update_struct
+from .types import StructOperation
+from .utils import resolve_xrefs
 
 INSTRUCTIONS = get_content(Path(__file__).parent, "instructions.md")
 
@@ -23,22 +26,15 @@ config = get_config()
     timeout=TIMEOUT_SECONDS,
 )  # tool is untyped in fastmcp
 @effectful  # type: ignore
-async def mange_struct(
+async def manage_struct(
     rpc_id: Annotated[
         str, "The ID of the RPC service/IDB to use. Formatted as `<file_name>_<date>-<time>`."
     ],
-    operation: Annotated[
-        StructOperation,
-        "Operation to be performed on a struct.",
+    operation: Annotated[StructOperation, "Operation to perform on the struct"],
+    function_address: Annotated[
+        HexAddress, "The hexadecimal effective address of the function to annotate."
     ],
-    name: Annotated[str, "name of the struct to create."],
-    new_name: Annotated[
-        str | None,
-        "name to rename the struct to. Only required for rename operation.",
-    ] = None,
-    fields: Annotated[
-        list[StructField] | None, "list of struct fields to add to struct when creating."
-    ] = None,
+    var_name: Annotated[str, "name of target variable for which to create the struct"],
     custom_prompt: Annotated[
         str | None,
         "A hint regarding behavior for the subagent to guide analysis. Keep it less than 3 sentences.",
@@ -55,22 +51,26 @@ async def mange_struct(
 
     match operation:
         case StructOperation.CREATE:
-            if fields is None:
-                raise ValueError("Field is required for stuct creation.")
-            "test lol"
-        case StructOperation.UPDATE_NAME:
-            if new_name is None:
-                raise ValueError("new_name is required for rename operation.")
-            ...
-        case StructOperation.GET:
-            ...
+            refs = await resolve_xrefs(svc, var_name)
+            perform_create_struct(
+                svc,
+                function_address=function_address,
+                var_name=var_name,
+                xrefs=refs,
+                custom_prompt=custom_prompt,
+            )
+        case StructOperation.UPDATE:
+            refs = await resolve_xrefs(svc, var_name)
+            perform_update_struct(
+                svc,
+                function_address=function_address,
+                var_name=var_name,
+                xrefs=refs,
+                custom_prompt=custom_prompt,
+            )
         case StructOperation.DELETE:
-            ...
-        case StructOperation.ADD_FIELDS:
-            if fields is None:
-                raise ValueError("Field is required to add fields.")
-            ...
-        case _:
-            raise ValueError(f"invalid operation: {operation}")
-
-    yield Return("hush hush mypy")  # change this
+            deleted = await perform_delete_struct(
+                svc, function_address=function_address, var_name=var_name
+            )
+            yield Log(f"Deleted struct {deleted}")
+            return

@@ -4,12 +4,12 @@ from enum import StrEnum
 # REMOVE IF NEEDED. THIS IS IMPLEMENTED BEFORE MERGING TIMS BRANCH
 
 
-class StructOperation(StrEnum):
-    CREATE = "create"
-    UPDATE_NAME = "rename"
-    GET = "get"
-    DELETE = "delete"
-    ADD_FIELDS = "add_fields"
+# class StructOperation(StrEnum):
+#     CREATE = "create"
+#     UPDATE_NAME = "rename"
+#     GET = "get"
+#     DELETE = "delete"
+#     ADD_FIELDS = "add_fields"
 
 
 class StructFieldOperation(StrEnum):
@@ -24,3 +24,9 @@ class StructField:
     name: str
     type: str
     size_bits: int  # or bytes?
+
+
+class StructOperation(StrEnum):
+    CREATE = "create"
+    UPDATE = "update"
+    DELETE = "delete"
