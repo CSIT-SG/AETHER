@@ -10,6 +10,6 @@ class RubricEntry(BaseModel):
 
 class RubricsSchema(BaseModel):
     name: str
-    version: str
+    version: str | None = None
     description: str | None = None
     rubrics: list[RubricEntry]
