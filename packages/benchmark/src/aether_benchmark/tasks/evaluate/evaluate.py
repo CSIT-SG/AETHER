@@ -23,10 +23,15 @@ from agents import (
 )
 from openai import AsyncOpenAI
 
-from aether_benchmark.tasks.evaluate.models import CriterionResult
+from aether_benchmark.tasks.evaluate.models import (
+    CriterionResult,
+    EvaluateConfig,
+    EvaluateRubric,
+)
 from aether_benchmark.utils.task import Task
 
-class EvaluateTask(Task[[dict[str, Any], Any, dict[str, Any]], dict[str, Any]]):  # type: ignore[misc]
+
+class EvaluateTask[TConfig: EvaluateConfig](Task[[EvaluateRubric, Any, TConfig], dict[str, Any]]):
     """Evaluate a single rubric entry against IDB state.
 
     Gives the LLM direct access to the forwarded RPC functions, so it can
@@ -37,9 +42,9 @@ class EvaluateTask(Task[[dict[str, Any], Any, dict[str, Any]], dict[str, Any]]):
 
     async def start(
         self,
-        rubric: dict[str, Any],
+        rubric: EvaluateRubric,
         service: Any,
-        config: dict[str, Any],
+        config: TConfig,
     ) -> dict[str, Any]:
         api_key = config["api_key"]
         base_url = config.get("base_url", "https://openrouter.ai/api/v1")
@@ -51,7 +56,7 @@ class EvaluateTask(Task[[dict[str, Any], Any, dict[str, Any]], dict[str, Any]]):
         rubric_name = rubric.get("name", "")
         description = rubric.get("description", "")
 
-        criteria = rubric.get("criteria", [])
+        criteria = rubric.get("criteria") or []
         tasks = [
             self._evaluate_criterion(text, description, rubric_name, model, service)
             for text in criteria
@@ -94,7 +99,9 @@ class EvaluateTask(Task[[dict[str, Any], Any, dict[str, Any]], dict[str, Any]]):
         )
 
         prompt = self._build_prompt(text, description, rubric_name)
-        result = await Runner.run(agent, prompt, context=SubagentToolDependencies(service), max_turns=20)
+        result = await Runner.run(
+            agent, prompt, context=SubagentToolDependencies(service), max_turns=20
+        )
 
         try:
             cr = await force_structured_output(agent, CriterionResult, result)
