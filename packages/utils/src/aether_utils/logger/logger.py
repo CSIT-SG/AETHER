@@ -68,7 +68,7 @@ class NamespacedLogger(logging.Logger):
 def get_logger(
     namespace: str | None = None,
     level: int = logging.DEBUG,
-    use_color: bool = True,
+    use_color: bool = False,
 ) -> NamespacedLogger:
     """Convenience factory — mirrors logging.getLogger() but returns a NamespacedLogger."""
     internal_name = f"aether.{namespace}" if namespace else "aether"
