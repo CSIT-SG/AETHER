@@ -1,10 +1,47 @@
+import { Callout } from 'nextra/components'
+import { Tabs } from 'nextra/components' 
+
 # Rubric Schema
 
-AETHER benchmark schematic uses a declarative YAML format to define quality standards. Rubrics are grouped by functional domain (e.g., networking, cryptography, memory management, obfuscation).
+<Callout type="important">
+  This benchmark is meant to assess the **qualitative** component of AETHER's features (e.g. annotator, struct creator, etc). 
+</Callout>
+
+AETHER Benchmark is an internal tool built for **evaluating the quality of annotations** on AETHER releases.    
+
+This functions by parsing a YAML file which contains the specification on how each function, variable and comments should look once properly annotated.
+
 
 ## Schema Specification
 
+The `rubrics.yaml` file must contain the frontmatter followed by rubric structure.
+
+### Frontmatter
+| Field | Required | Description |
+| :--- | :--- | :--- |
+| `name` | Yes | Report title / Malware nickname |
+| `description` | No | Brief summary of the malware report and background information. |
+| `version` | No | Purely semantic |
+
+#### Example
+<Tabs items={['Minimal example', 'All optional fields']}>
+  <Tabs.Tab>
+  ```yaml copy
+  name: "Report Name"
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```yaml copy
+  name: "Reference Handler Analysis"
+  version: "1.0.0"
+  description: "Evaluates the quality of reverse-engineered packet processing functions."
+  ```
+  </Tabs.Tab>
+</Tabs>
+
 ### Rubric Structure
+
+Each rubric group can be grouped into their **functional modules** (i.e, encryption, obfuscation, packet encapsulation).
 
 | Field | Type | Required | Description |
 | :--- | :--- | :--- | :--- |
@@ -13,30 +50,60 @@ AETHER benchmark schematic uses a declarative YAML format to define quality stan
 | `weight` | Float | No | Importance of this group. Defaults to `1.0`. |
 | `criteria` | List | Yes | A list of specific requirements to fulfill. |
 
+#### Example
+<Tabs items={['Minimal example', 'All optional fields']}>
+  <Tabs.Tab>
+  ```yaml copy
+  rubrics:
+    - name: "functional-group-1"
+      criteria:
+        - "criteria uno"
+        - "criteria dos"
+        - "criteria des"
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```yaml copy
+  rubrics:
+    - name: "packet_parsing_logic"
+      description: "Evaluates packet headers at 0x4010A0 (Main Parser) and 0x4010B0 (Sub-Parser)."
+      weight: 2.0
+      criteria:
+        - "Constants (magic numbers) are replaced with meaningful Enums or Defines"
+        - "Struct pointer usage is correctly applied for packet headers"
+        - "Error handling paths (e.g., length checks) are explicitly named"
+  ```
+  </Tabs.Tab>
+</Tabs>
 ---
 
-## Drafting Guidelines
+## Criteria Guidelines
 
-When creating a new rubric, follow these best practices to ensure your evaluation is both flexible and descriptive:
+When creating a rubric for a new sample, follow these guideline to ensure descriptiveness and sufficient contextual information:
 
-### 1. Weighting
-Weights are optional. Use them to signal which functional domains are critical to the system's security, stability, or function.
-*   **Default:** If omitted, the system assumes a weight of `1.0`.
-*   **Critical paths:** Use weights `> 1.0` for core logic (e.g., packet parsing, crypto).
+### Weighting
+Weights are optional. Use them to signal which functional domain are critical to the understanding the program's mechanism.
+*   By default: if **the weight is omitted**, the system assumes a weight of `1.0`.
+*   **Critical components**: Use weights `> 1.0` for core logic (e.g., packet parsing, encryption).
 
-### 2. Contextual Mapping
-The `description` field is used to provide additional context for any given rubric criteria. You can include:
-*   **Addresses:** List specific function offsets for the evaluator (e.g., `Targets: 0x4010A0, 0x4010B0`).
-*   **Scope:** Describe the functional scope (e.g., `Covers all AES-related transformation functions`).
-*   **Context:** Explain why this rubric matters for the specific binary.
+### Contextual Mapping
+The `description` field is used to provide additional context for any given rubric criteria. You should ideally include:
+*   Addresses: List specific function offsets for the evaluator (e.g., `Targets: 0x4010A0, 0x4010B0`).
+*   Scope: Describe the functional scope (e.g., `Covers all AES-related transformation functions`).
+*   Context: Explain what functionality this rubric criteria is referencing in the binary.
 
+Ensure your `description` provides sufficient context as it'll be used to dictate the scope and quality.
+
+<Callout type="info">
+  Overly comprehensive description of criteria can do more harm than good. Keep your rubrics concise and informative -- aim for **moderate level** of detail of functional components.
+</Callout>
 ---
 
 ## Example Configuration
 
-Below is the standard format. Note how the `description` field is used to map specific functions to the criteria.
+> Note how the `description` field is used to map specific function addresses to the criteria.
 
-```yaml
+```yaml filename="packet-handler.yaml"
 name: "Reference Handler Analysis"
 version: "1.0.0"
 description: "Evaluates the quality of reverse-engineered packet processing functions."
