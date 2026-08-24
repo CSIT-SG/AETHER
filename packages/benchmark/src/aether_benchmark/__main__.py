@@ -22,13 +22,28 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="AETHER Benchmark — evaluate annotation quality against a rubric."
     )
-    parser.add_argument("--idb", required=True, type=Path, help="Path to the IDB/i64/binary to evaluate")
+    parser.add_argument(
+        "--idb", required=True, type=Path, help="Path to the IDB/i64/binary to evaluate"
+    )
     parser.add_argument("--rubric", required=True, type=Path, help="Path to the rubric YAML file")
-    parser.add_argument("--api-key", default=os.environ["OPENROUTER_API_KEY"], help="OpenRouter/OpenAI API key (default: OPENROUTER_API_KEY env)")
-    parser.add_argument("--model", default="qwen/qwen3.7-flash", help="Model slug (default: qwen/qwen3.7-flash)")
+    parser.add_argument(
+        "--api-key",
+        default=os.environ["OPENROUTER_API_KEY"],
+        help="OpenRouter/OpenAI API key (default: OPENROUTER_API_KEY env)",
+    )
+    parser.add_argument(
+        "--model", default="openai/gpt-5-mini", help="Model slug (default: openai/gpt-5-mini)"
+    )
     parser.add_argument("--base-url", default="https://openrouter.ai/api/v1", help="API base URL")
-    parser.add_argument("--ida-dir", default=os.environ["IDADIR"], type=Path, help="IDA Pro installation directory (default: IDADIR env)")
-    parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed per-entry results")
+    parser.add_argument(
+        "--ida-dir",
+        default=os.environ["IDADIR"],
+        type=Path,
+        help="IDA Pro installation directory (default: IDADIR env)",
+    )
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Show detailed per-entry results"
+    )
     parser.add_argument("--json", action="store_true", help="Output raw JSON only")
     return parser
 
@@ -83,7 +98,6 @@ async def _run_benchmark(args: argparse.Namespace) -> None:
         print(f"Rubrics: {len(benchmark.rubrics)} entries")
         print()
 
-
     entry_results: list[dict[str, Any]] = []
     weights: list[float] = []
 
@@ -106,7 +120,6 @@ async def _run_benchmark(args: argparse.Namespace) -> None:
         if args.verbose:
             print()
 
-
     aggregate = _aggregate(entry_results, weights)
 
     if args.json:
@@ -120,7 +133,9 @@ async def _run_benchmark(args: argparse.Namespace) -> None:
         return
 
     print(f"=== {benchmark.name} v{benchmark.version} ===")
-    print(f"Overall score: {aggregate['score']:.1%} ({aggregate['passed']}/{aggregate['total']} passed)")
+    print(
+        f"Overall score: {aggregate['score']:.1%} ({aggregate['passed']}/{aggregate['total']} passed)"
+    )
     print(f"Weighted score: {aggregate['weighted_score']:.1%}")
     print()
     for r in entry_results:

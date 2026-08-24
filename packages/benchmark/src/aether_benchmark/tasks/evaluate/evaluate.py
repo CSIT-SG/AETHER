@@ -19,6 +19,7 @@ from aether_utils.get_content import get_content
 from agents import (
     Agent,
     OpenAIChatCompletionsModel,
+    RunConfig,
     Runner,
 )
 from openai import AsyncOpenAI
@@ -48,7 +49,7 @@ class EvaluateTask[TConfig: EvaluateConfig](Task[[EvaluateRubric, Any, TConfig],
     ) -> dict[str, Any]:
         api_key = config["api_key"]
         base_url = config.get("base_url", "https://openrouter.ai/api/v1")
-        model_name = config.get("model", "qwen/qwen3.7-flash")
+        model_name = config.get("model", "openai/gpt-5-mini")
 
         client = AsyncOpenAI(api_key=api_key, base_url=base_url)
         model = OpenAIChatCompletionsModel(model=model_name, openai_client=client)
@@ -66,7 +67,9 @@ class EvaluateTask[TConfig: EvaluateConfig](Task[[EvaluateRubric, Any, TConfig],
 
         return {
             "rubric_name": rubric_name,
-            "results": list(results),
+            "results": [
+                {**r, "description": text} for r, text in zip(results, criteria, strict=True)
+            ],
             "overall_passed": overall,
         }
 
@@ -100,7 +103,11 @@ class EvaluateTask[TConfig: EvaluateConfig](Task[[EvaluateRubric, Any, TConfig],
 
         prompt = self._build_prompt(text, description, rubric_name)
         result = await Runner.run(
-            agent, prompt, context=SubagentToolDependencies(service), max_turns=20
+            agent,
+            prompt,
+            context=SubagentToolDependencies(service),
+            max_turns=20,
+            run_config=RunConfig(tracing_disabled=True),
         )
 
         try:
