@@ -183,6 +183,10 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
         if self._current_match_index < 0 or not self._scroll_area:
             return
         paragraph, _ = self._matches[self._current_match_index]
+
+        if not isValid(self._scroll_area) or not isValid(paragraph):
+            return
+
         self._scroll_area.ensureWidgetVisible(paragraph, 0, 40)
 
     def add_new_message_column(

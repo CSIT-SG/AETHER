@@ -130,8 +130,15 @@ class FontPlugin(AbstractComponentPlugin):
             return
 
         widget.state["fontstyles"] = self._font_to_namespace(font)
-        widget.on_font_change(font=font)
-        widget._apply_styles()
+        try:
+            widget.on_font_change(font=font)
+        except Exception as e:
+            logger.exception("Error in widget.on_font_change: %s", e)
+
+        try:
+            widget._apply_styles()
+        except Exception as e:
+            logger.exception("Error applying styles to widget: %s", e)
 
     def _disconnect_font_handler(self) -> None:
         """Disconnect font change handlers if connected."""

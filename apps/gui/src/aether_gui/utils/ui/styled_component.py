@@ -6,6 +6,7 @@ from types import SimpleNamespace
 from typing import Any
 
 from aether_utils.logger import get_logger
+from shiboken6 import isValid
 
 from .plugins import (
     AbstractComponentPluginManager,
@@ -150,7 +151,16 @@ class StyledComponent(AbstractComponentPluginManager):
             **self.state,
         )
         if qss.strip():
-            self.setStyleSheet(qss)
+            # guard against calling into a destroyed/invalid underlying C++ object
+
+            if not isValid(self):
+                self.logger.debug("Widget invalid, skipping setStyleSheet")
+                return
+
+            try:
+                self.setStyleSheet(qss)
+            except Exception as e:
+                self.logger.exception("Failed to apply stylesheet: %s", e)
 
     def _current_theme(self) -> tuple[Theme, ThemeColors]:
         """Return the current theme and colors.

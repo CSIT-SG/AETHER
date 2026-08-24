@@ -5,6 +5,7 @@ from aether_gui.utils.ui import FontPlugin, StyledComponent
 from PySide6 import QtCore, QtWidgets
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QKeySequence, QShortcut, QTextOption
+from shiboken6 import isValid
 
 UPARROW_ICON = "\u2191"  # ↑
 
@@ -56,7 +57,7 @@ class ChatInput(StyledComponent):  # type: ignore[misc]
         self._textbox = textbox
 
         # Submit Button
-        submit_btn = QtWidgets.QPushButton(UPARROW_ICON, self._textbox)
+        submit_btn = QtWidgets.QPushButton(UPARROW_ICON, self)
         submit_btn.clicked.connect(self._submit)
         submit_btn.setObjectName("SendButton")
         submit_btn.setSizePolicy(
@@ -72,7 +73,9 @@ class ChatInput(StyledComponent):  # type: ignore[misc]
         layout.setSpacing(8)
         # Map "Ctrl+Enter" to submit_btn
         shortcut = QShortcut(QKeySequence("Ctrl+Return"), self)
-        shortcut.activated.connect(submit_btn.animateClick)
+        # Call _submit directly to avoid generating a synthetic click
+        # which can touch the button C++ object while events are processing.
+        shortcut.activated.connect(self._submit)
 
         self._send_button = submit_btn
 
@@ -80,12 +83,13 @@ class ChatInput(StyledComponent):  # type: ignore[misc]
         QtCore.QTimer.singleShot(0, self._adjust_height)
 
     def _adjust_height(self) -> None:
+        if self._textbox is None or not isValid(self._textbox):
+            return
+
         textbox = cast(QtWidgets.QTextEdit, self._textbox)
-        submit_btn = cast(QtWidgets.QPushButton, self._send_button)
 
         # Set the text width to the width of the viewport to ensure proper wrapping
         textbox.document().setTextWidth(textbox.viewport().width())
-
         doc_height = textbox.document().documentLayout().documentSize().height()
 
         margins = textbox.contentsMargins()
@@ -96,7 +100,10 @@ class ChatInput(StyledComponent):  # type: ignore[misc]
 
         height = min(max(min_height, int(doc_height + vpadding + 4)), 120)
         textbox.setFixedHeight(height)
-        submit_btn.setFixedHeight(height)
+
+        if self._send_button is not None and isValid(self._send_button):
+            submit_btn = cast(QtWidgets.QPushButton, self._send_button)
+            submit_btn.setFixedHeight(height)
 
     def submit_enabled(self, enabled: bool) -> None:
         """Open or close submission by button toggle"""

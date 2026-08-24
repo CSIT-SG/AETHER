@@ -1,10 +1,10 @@
-# plugins/theme_plugin.py
 from __future__ import annotations
 
 import weakref
 from collections.abc import Callable
 from types import SimpleNamespace
 
+from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QWidget
 from shiboken6 import isValid
 
@@ -122,8 +122,17 @@ class ThemePlugin(AbstractComponentPlugin):
             return
 
         widget.state["theme"], widget.state["colors"] = theme, SimpleNamespace(**colors)
-        widget.on_theme_change(theme=theme, colors=colors)
-        widget._apply_styles()
+        try:
+            widget.on_theme_change(theme=theme, colors=colors)
+        except Exception as e:
+            # protect against buggy widget handlers raising during theme change
+            self.logger.exception("Error in widget.on_theme_change: %s", e)
+
+        try:
+            QTimer.singleShot(0, widget._apply_styles)
+        except Exception as e:
+            # log and disconnect the handler if widget misbehaves
+            self.logger.exception("Error applying styles to widget: %s", e)
 
     def _disconnect_theme_handler(self) -> None:
         """Disconnect theme change handlers if connected."""
