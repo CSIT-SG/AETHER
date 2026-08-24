@@ -172,6 +172,17 @@ class StructInfo(TypedDict):
     struct_fields: int
 
 
+class AllStructs(TypedDict):
+    number_of_structs: int
+    structs: list[StructInfo]
+
+
+class AppliedStruct(TypedDict):
+    address: int
+    struct_id: int
+    struct_name: str
+
+
 class RenameStructResult(TypedDict):
     struct_id: int
     old_struct_name: str

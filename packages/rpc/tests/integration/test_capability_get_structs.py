@@ -12,7 +12,7 @@ class TestGetStructs:
 
         assert result.success is True
 
-        before = result.result["number_of_structs"] 
+        before = result.result["number_of_structs"]
 
         created = ida_client.root.create_struct(
             struct_name="test_get_structs",
