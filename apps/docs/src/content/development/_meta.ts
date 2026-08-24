@@ -11,6 +11,5 @@ export default {
 	cli: "CLI",
 	rpc: "RPC",
 	backend: "Backend",
-	chatbot: "Chatbot",
 	benchmark: "Benchmark",
 } satisfies MetaRecord;

@@ -10,9 +10,8 @@ The AETHER chatbot is three layers:
 
 <Callout>
 These pages were transcribed from the chatbot design whiteboard, then corrected
-against the code. The unedited transcription is kept on the
-[Whiteboard Transcript](/development/chatbot/whiteboard-transcript) page, so some
-of it is now out of date on purpose.
+against the code. The unedited transcription is kept on the Whiteboard
+Transcript page, so some of it is now out of date on purpose.
 </Callout>
 
 ## Panel anatomy
@@ -29,32 +28,26 @@ of it is now out of date on purpose.
 | Footer | Copy button. |
 | Input box, submit button | Both are `ChatInput`. |
 
-Each is covered on [UI Components](/development/chatbot/ui-components).
+Each is covered on UI Components.
 
 ## Who owns what
 
-- `AetherUIHooks` creates the one
-  [`MCPClient`](/development/gui/mcp-client) and hands it to
-  [`ChatbotHandler`](/development/chatbot/chat-session) and `AnnotatorHandler`.
+- `AetherUIHooks` creates the one `MCPClient` and hands it to `ChatbotHandler`
+  and `AnnotatorHandler`.
 - `ChatbotHandler` owns the `ChatSession` and opens a `ChatbotPanelForm`.
-- [`ChatbotPanel`](/development/chatbot/ui-components) builds the UI and
-  constructs the [`ChatOrchestrator`](/development/chatbot/orchestration).
+- `ChatbotPanel` builds the UI and constructs the `ChatOrchestrator`.
 - `ChatOrchestrator` bridges `ChatBotTask` (talks to the provider) and
   `ChatbotAreaRenderer` (writes to the UI).
-- Long work runs off the IDA main thread via the
-  [`WorkerManager`](/development/gui/worker-manager).
+- Long work runs off the IDA main thread via the `WorkerManager`.
 
 <Callout>
-[`WorkerManager`](/development/gui/worker-manager) and
-[`MCPClient`](/development/gui/mcp-client) are not chatbot code. They live under
-GUI and are shared with the annotator, so changing them affects more than this
-feature.
+`WorkerManager` and `MCPClient` are not chatbot code. They live under GUI and
+are shared with the annotator, so changing them affects more than this feature.
 </Callout>
 
 ## A turn, end to end
 
-A turn crosses every layer in [System
-Architecture](/development/system-architecture), plus the provider.
+A turn crosses every layer in System Architecture, plus the provider.
 
 | Label | Folder |
 | --- | --- |
@@ -69,12 +62,11 @@ in-process logic, inside the gui app. **backend** is the separate MCP server.
 </Callout>
 
 1. **gui/features** — the user submits. `ChatInput` emits `submitted`.
-2. **gui/features** — `ChatbotPanel` renders the user's own `MessageColumn` straight away,
-   then calls `submit_user_prompt()`.
+2. **gui/features** — `ChatbotPanel` renders the user's own `MessageColumn`
+   straight away, then calls `submit_user_prompt()`.
 3. **gui/backend** — `ChatOrchestrator` reads `get_screen_ea()` and
-   `get_rpc_id()`, submits a
-   [`CallToolTask`](/development/gui/mcp-client#calltooltask) for
-   `get_function_context`, and returns immediately holding a `Future`.
+   `get_rpc_id()`, submits a `CallToolTask` for `get_function_context`, and
+   returns immediately holding a `Future`.
 4. **backend** — the MCP server runs the tool, resolving an RPC service from the
    `rpc_id`.
 5. **rpc** — `get_data_at_address` and `get_function_pseudocode` execute against
@@ -84,14 +76,15 @@ in-process logic, inside the gui app. **backend** is the separate MCP server.
    wraps the MCP tools, and streams the agent against the provider.
 8. **gui/backend** — each event becomes a `TextDelta`, `ReasoningDelta`,
    `ToolCall` or `ToolOutput`.
-9. **gui/features** — `ChatbotAreaRenderer` decides new column, new paragraph, or append.
+9. **gui/features** — `ChatbotAreaRenderer` decides new column, new paragraph,
+   or append.
 
 Steps 8 and 9 repeat per delta until the stream ends.
 
 Any tool the model calls mid-stream reaches the same **backend** and **rpc**
 hops, but by a different route — it goes straight out through the MCP client
-rather than through the `WorkerManager`. See
-[Tool calling](/development/chatbot/orchestration#tool-calling).
+rather than through the `WorkerManager`. See Tool calling on the Orchestration
+page.
 
 Closing the window runs `ChatbotPanel.shutdown()` → `ChatOrchestrator.shutdown()`,
 cancelling every handle. The `ChatSession` survives.
@@ -99,9 +92,8 @@ cancelling every handle. The `ChatSession` survives.
 ### Threads
 
 Steps 1 to 3 and step 9 run on IDA's main thread. Everything between runs on a
-[`WorkerManager`](/development/gui/worker-manager) thread, and `consume()` drains
-the results on a third one — which is why step 9 goes through
-`_run_on_ida_ui_thread`.
+`WorkerManager` thread, and `consume()` drains the results on a third one —
+which is why step 9 goes through `_run_on_ida_ui_thread`.
 
 <Callout type="warning">
 There is no cancel and no loading indicator. Once step 2 fires the turn runs to
@@ -112,7 +104,7 @@ step 9.
 ## Configuration
 
 The chatbot will not start without a provider API key — `OpenAIGateway` raises
-`ValueError`. See [Configuration](/configuration) for the file itself.
+`ValueError`. See the Configuration page for the file itself.
 
 | Key | Read by | Notes |
 | --- | --- | --- |

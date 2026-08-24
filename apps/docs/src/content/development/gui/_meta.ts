@@ -5,4 +5,5 @@ export default {
 	"component-plugins": "Component Plugins",
 	"worker-manager": "WorkerManager",
 	"mcp-client": "MCP Client",
+	chatbot: "Chatbot",
 } satisfies MetaRecord;

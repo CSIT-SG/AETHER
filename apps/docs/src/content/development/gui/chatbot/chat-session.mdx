@@ -20,8 +20,7 @@ Two fields and two methods, nothing else:
 
 Just a list of `Message`s (the class).
 
-A new [`MessageColumn`](/development/chatbot/ui-components#messagecolumn) adds a
-new `Message` to the list. After that only
+A new `MessageColumn` adds a new `Message` to the list. After that only
 paragraphs get added, and the `MessageColumn` manages the content. Paragraph text
 is concatenated into that one `Message.content`, joined with `"\n\n"`.
 
@@ -48,12 +47,11 @@ It overrides `add_items()` to compact once the session outgrows a threshold:
 
 <Callout type="warning">
 `CompactingSession` is a local in-memory store. A fresh provider client and
-`Agent` are built **per turn** inside
-[`ChatBotTask.run()`](/development/chatbot/orchestration#chatbottask).
+`Agent` are built **per turn** inside `ChatBotTask.run()`.
 
 What survives closing the window is the *history*: `ChatSession.messages` for the
-UI and the SQLite rows for the LLM. Plus the
-[`MCPClient`](/development/gui/mcp-client) connection, which is owned elsewhere.
+UI and the SQLite rows for the LLM. Plus the `MCPClient` connection, which is
+owned elsewhere.
 
 Persistence of state, not of a socket.
 </Callout>

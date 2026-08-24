@@ -4,9 +4,7 @@ import { Callout } from 'nextra/components'
 
 ![Anatomy of the ChatbotPanel](/chatbot-panel-anatomy.png)
 
-Every component here is a
-[`StyledComponent`](/development/gui/writing-gui-components), except
-`ButtonComponent`.
+Every component here is a `StyledComponent`, except `ButtonComponent`.
 
 Containment runs `ChatbotPanel` → `MessageArea` → `MessageColumn` →
 `MessageParagraph`.
@@ -37,8 +35,8 @@ The `ChatAreaProtocol` surface. Nothing else may be called from the backend.
 
 <Callout type="warning">
 Call these on IDA's main thread — the widget belongs to IDA's GUI thread, and
-`WorkerManager` callbacks do not arrive on it. See
-[Threading rules](/development/gui/worker-manager).
+`WorkerManager` callbacks do not arrive on it. See Threading rules on the
+WorkerManager page.
 </Callout>
 
 It also exports `load_message_history()`, `scroll_to_bottom()`, and the four
@@ -72,8 +70,7 @@ Layout differs by role:
 The footer holds the copy button, which copies every paragraph joined with
 `"\n\n"`, flips to "Copied!" for one second, and disables itself against spam.
 
-Installs [`FontPlugin`](/development/gui/plugins/font-plugin); on font change it
-re-runs `_adjust_height`.
+Installs `FontPlugin`; on font change it re-runs `_adjust_height`.
 
 ## MessageParagraph
 

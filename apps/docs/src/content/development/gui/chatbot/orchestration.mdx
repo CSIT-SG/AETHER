@@ -8,10 +8,8 @@ context and dispatches, `ChatBotTask` talks to the provider, and
 
 ## ChatOrchestrator
 
-The `main.py` of our backend logic. Constructed by the
-[`ChatbotPanel`](/development/chatbot/ui-components) with the
-[`MessageArea`](/development/chatbot/ui-components#messagearea), the MCP client
-and the session.
+The `main.py` of our backend logic. Constructed by the `ChatbotPanel` with the
+`MessageArea`, the MCP client and the session.
 
 It is typed against `ChatAreaProtocol` rather than `MessageArea`, because
 importing `MessageArea` directly would be a circular import. Typically you should
@@ -29,8 +27,7 @@ The other job it does is fetching the IDA context for the LLM.
 
 - Reads the current address from `ida_kernwin.get_screen_ea()`
 - Needs `get_rpc_id()`. No RPC id means it renders an error and raises.
-- Submits a [`CallToolTask`](/development/gui/mcp-client#calltooltask) calling
-  the `get_function_context` tool
+- Submits a `CallToolTask` calling the `get_function_context` tool
 - Args are `rpc_id` and the address as hex
 
 The result comes back as a `Future`, which is handed to `ChatBotTask`.
@@ -54,8 +51,7 @@ which wraps the call in `ida_kernwin.execute_sync(..., MFF_WRITE)`.
 Talking to the provider needs a live connection. On the IDA main thread that
 would hang until the results were done, so the agent is built and run on a task.
 
-Takes the IDA context, the [MCP client](/development/gui/mcp-client), the user
-prompt and the [`ChatSession`](/development/chatbot/chat-session).
+Takes the IDA context, the MCP client, the user prompt and the `ChatSession`.
 
 1. Waits on the context `Future`, **30 second timeout**
 2. Renders the user and system prompts
