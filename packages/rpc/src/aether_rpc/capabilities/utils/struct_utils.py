@@ -1,6 +1,8 @@
 import ida_idaapi
 import ida_typeinf
 
+from ..types import StructFieldWithOffset
+
 
 def get_struct_id_by_name(struct_name: str) -> int | None:
     """Retrieves the struct ID associated with the specified struct name.
@@ -52,3 +54,34 @@ def get_struct(struct: str | int):
         return False, f"{struct_name} is not a structure."
 
     return True, [struct_name, struct_id, tif, udt]
+
+
+def get_struct_info_util(struct: str | int):
+    """Retrieves the struct object either with either struct name or id.
+
+    Args:
+        struct: The name or id of the struct to retrieve.
+
+    Returns:
+        Whether get_struct succeeded, along with a list containing struct name, id, tif and udt.
+    """
+    error = False
+    status, output = get_struct(struct)
+    struct_id = struct_name = fields = None
+    if status:
+        struct_name, struct_id, _, udt = output
+        fields = []
+
+        for member in udt:
+            fields.append(
+                StructFieldWithOffset(
+                    name=member.name,
+                    type=member.type.dstr(),
+                    size=member.type.get_size(),
+                    offset=member.offset // 8,
+                )
+            )
+    else:
+        error = output
+
+    return error, struct_id, struct_name, fields

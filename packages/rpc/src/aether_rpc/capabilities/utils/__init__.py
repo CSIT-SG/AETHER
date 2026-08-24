@@ -1,6 +1,6 @@
 from .address_utils import resolve_effective_address, resolve_function_name
 from .function_utils import function_info, get_function
-from .struct_utils import get_struct_id_by_name, get_struct
+from .struct_utils import get_struct, get_struct_id_by_name, get_struct_info_util
 from .xref_utils import collect_xrefs
 
 __all__ = [
@@ -11,4 +11,5 @@ __all__ = [
     "collect_xrefs",
     "get_struct_id_by_name",
     "get_struct",
+    "get_struct_info_util",
 ]
