@@ -6,7 +6,7 @@ interface ButtonProps extends BaseProps {
 	type?: "button" | "submit" | "reset";
 }
 
-export default function Button({
+export function Button({
 	children,
 	variant = "primary",
 	type = "button",
