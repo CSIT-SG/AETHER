@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "tailwind-merge": "^3.6.0"
+  }
+}
