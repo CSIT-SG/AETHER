@@ -63,7 +63,7 @@ def render_module(mod: Module) -> str:
     members = [m for m in mod.members.values() if not isinstance(m, Alias)]
     classes = [m for m in members if isinstance(m, Class)]
     funcs = [m for m in members if isinstance(m, Function)]
-    parts = [H(1, mod.path), doc(mod)]
+    parts = [H(1, mod.name), doc(mod)]
     if classes:
         parts += [H(2, "Classes"), *[render_class(c) for c in classes]]
     if funcs:
