@@ -2,15 +2,20 @@ from collections.abc import Awaitable, Callable, Iterable
 from pathlib import Path
 from typing import Any
 
+from aether_backend.utils.effect import Program
 from aether_backend.utils.subagent import (
+    SubagentToolDependencies,
     build_subagent_tool,
 )
+from aether_rpc.capabilities.types import XrefsResult
 from aether_utils.api_client import (
     OpenAIGateway,
 )
 from aether_utils.config import get_config
 from aether_utils.get_content import get_content
-from agents import Agent, ModelSettings
+from agents import Agent, ModelSettings, Runner
+
+from .types import StructOperation
 
 
 def create_agent(tool_list: Iterable[Callable[..., Awaitable[Any]]]) -> Agent:
@@ -32,3 +37,25 @@ def create_agent(tool_list: Iterable[Callable[..., Awaitable[Any]]]) -> Agent:
         model_settings=ModelSettings(parallel_tool_calls=False),
     )
     return agent
+
+
+async def run_agent(
+    agent: Agent,
+    svc: Any,
+    operation: StructOperation,
+    var_name: str,
+    xrefs: XrefsResult,
+    custom_prompt: str | None = None,
+) -> Program:
+    result = Runner.run_streamed(
+        agent,
+        context=SubagentToolDependencies(svc),
+        input=(
+            f"{operation} the struct representative of {var_name}"
+            f"For added context you are to take a look at {xrefs}. These are the cross references to {var_name}"
+            f"{custom_prompt}"
+        ),
+        max_turns=100000,
+    )
+
+    return result.final_output

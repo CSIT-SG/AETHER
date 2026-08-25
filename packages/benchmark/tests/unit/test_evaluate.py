@@ -36,10 +36,16 @@ class TestBuildPrompt:
 class TestEvaluateCriterion:
     @pytest.mark.asyncio
     @patch("aether_benchmark.tasks.evaluate.evaluate.EvaluateTask._SYSTEM_PROMPT", "system prompt")
-    @patch("aether_benchmark.tasks.evaluate.evaluate.force_structured_output", new_callable=AsyncMock)
+    @patch(
+        "aether_benchmark.tasks.evaluate.evaluate.force_structured_output", new_callable=AsyncMock
+    )
     @patch("aether_benchmark.tasks.evaluate.evaluate.Runner.run", new_callable=AsyncMock)
     async def test_success(
-        self, mock_run: AsyncMock, mock_force: AsyncMock, model: OpenAIChatCompletionsModel, task: EvaluateTask
+        self,
+        mock_run: AsyncMock,
+        mock_force: AsyncMock,
+        model: OpenAIChatCompletionsModel,
+        task: EvaluateTask,
     ) -> None:
         mock_run.return_value = MagicMock()
         mock_force.return_value = CriterionResult(
@@ -60,10 +66,16 @@ class TestEvaluateCriterion:
 
     @pytest.mark.asyncio
     @patch("aether_benchmark.tasks.evaluate.evaluate.EvaluateTask._SYSTEM_PROMPT", "system prompt")
-    @patch("aether_benchmark.tasks.evaluate.evaluate.force_structured_output", new_callable=AsyncMock)
+    @patch(
+        "aether_benchmark.tasks.evaluate.evaluate.force_structured_output", new_callable=AsyncMock
+    )
     @patch("aether_benchmark.tasks.evaluate.evaluate.Runner.run", new_callable=AsyncMock)
     async def test_structured_output_failure_returns_failed_result(
-        self, mock_run: AsyncMock, mock_force: AsyncMock, model: OpenAIChatCompletionsModel, task: EvaluateTask
+        self,
+        mock_run: AsyncMock,
+        mock_force: AsyncMock,
+        model: OpenAIChatCompletionsModel,
+        task: EvaluateTask,
     ) -> None:
         mock_run.return_value = MagicMock()
         mock_force.side_effect = RuntimeError("model did not call submit_output")
@@ -133,9 +145,7 @@ async def test_evaluate_task_no_description() -> None:
     with (
         patch.object(EvaluateTask, "_evaluate_criterion", new_callable=AsyncMock) as mock_criterion,
     ):
-        mock_criterion.side_effect = [
-            {"passed": True, "reasoning": "ok"}
-        ]
+        mock_criterion.side_effect = [{"passed": True, "reasoning": "ok"}]
 
         result = await EvaluateTask().start(
             {

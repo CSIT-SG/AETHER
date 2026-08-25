@@ -1,33 +1,17 @@
-from collections.abc import Awaitable, Callable, Iterable
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated
 
-from aether_backend.forwarded_rpc import (
-    add_struct_field,
-    change_struct_field_size,
-    change_struct_field_type,
-    create_struct,
-    delete_struct_field,
-    get_data_at_address,
-    get_function_pseudocode,
-    get_struct_id_by_name,
-    get_struct_info,
-    get_xrefs_to,
-    rename_struct,
-    rename_struct_field,
-)
+from aether_backend.forwarded_rpc import get_xrefs_to
 from aether_backend.utils.effect import Log, Program, effectful
 from aether_backend.utils.get_rpc_service import get_rpc_service
-from aether_backend.utils.subagent import SubagentToolDependencies
 from aether_utils.config import get_config
 from aether_utils.get_content import get_content
-from agents import Runner
 from fastmcp.tools import tool
 from mcp.types import ToolAnnotations
 
-from ..types import StructOperation
 from .constants import TIMEOUT_SECONDS
-from .utils import create_agent
+from .struct_CUD import build_and_run_creator, build_and_run_updater
+from .types import StructOperation
 
 INSTRUCTIONS = get_content(Path(__file__).parent, "instructions.md")
 
@@ -53,14 +37,17 @@ async def manage_struct(
     ] = None,
 ) -> Program:
 
-    tool_list: Iterable[Callable[..., Awaitable[Any]]]
-
     svc = await get_rpc_service(rpc_id)
 
-    xrefs = get_xrefs_to(
+    xrefs = await get_xrefs_to(
         svc,
         location=var_name,
     )
+
+    if xrefs.success is False:
+        raise RuntimeError(f"Failed to get xrefs {xrefs.result}")
+
+    refs = xrefs.result
 
     if config.backup:
         svc.take_snapshot()
@@ -70,40 +57,10 @@ async def manage_struct(
 
     match operation:
         case StructOperation.CREATE:
-            tool_list = [
-                get_function_pseudocode,
-                get_data_at_address,
-                add_struct_field,
-                create_struct,
-            ]
+            build_and_run_creator(svc, operation, var_name, refs, custom_prompt)
         case StructOperation.UPDATE:
-            tool_list = [
-                get_function_pseudocode,
-                get_data_at_address,
-                change_struct_field_size,
-                change_struct_field_type,
-                delete_struct_field,
-                get_struct_info,
-                rename_struct,
-                rename_struct_field,
-                get_struct_id_by_name,
-            ]
+            build_and_run_updater(svc, operation, var_name, refs, custom_prompt)
         case StructOperation.DELETE:
             ...
-            yield Log("Deleted hehe")
+            yield Log(f"Deleted struct at {var_name}")
             return
-
-    agent = create_agent(tool_list)
-
-    result = Runner.run_streamed(
-        agent,
-        context=SubagentToolDependencies(svc),
-        input=(
-            f"{operation} the struct representative of {var_name}"
-            f"For added context you are to take a look at {xrefs}. These are the cross references to {var_name}"
-            f"{custom_prompt}"
-        ),
-        max_turns=100000,
-    )
-
-    yield result.final_output
