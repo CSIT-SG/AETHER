@@ -1,21 +1,9 @@
 from __future__ import annotations
 
 import asyncio
-from pathlib import Path
 from typing import Any
 
-from aether_backend.forwarded_rpc import (
-    get_data_at_address,
-    get_function_pseudocode,
-    get_functions_called_recursively,
-    get_local_variables,
-)
 from aether_backend.utils.force_structured_output import force_structured_output
-from aether_backend.utils.subagent import (
-    SubagentToolDependencies,
-    build_subagent_tool,
-)
-from aether_utils.get_content import get_content
 from agents import (
     Agent,
     OpenAIChatCompletionsModel,
@@ -24,6 +12,7 @@ from agents import (
 )
 from openai import AsyncOpenAI
 
+from aether_benchmark.tasks.evaluate.adapter import EvidenceAdapter
 from aether_benchmark.tasks.evaluate.models import (
     CriterionResult,
     EvaluateConfig,
@@ -32,20 +21,18 @@ from aether_benchmark.tasks.evaluate.models import (
 from aether_benchmark.utils.task import Task
 
 
-class EvaluateTask[TConfig: EvaluateConfig](Task[[EvaluateRubric, Any, TConfig], dict[str, Any]]):
-    """Evaluate a single rubric entry against IDB state.
-
-    Gives the LLM direct access to the forwarded RPC functions, so it can
-    inspect function state on demand rather than relying on pre-parsed data.
+class EvaluateTask[TConfig: EvaluateConfig](
+    Task[[EvaluateRubric, Any, TConfig, EvidenceAdapter], dict[str, Any]]
+):
+    """Evaluate a single rubric entry against supplied information/evidence.
     """
-
-    _SYSTEM_PROMPT = get_content(Path(__file__).parent, "evaluate_prompt.md")
 
     async def start(
         self,
         rubric: EvaluateRubric,
-        service: Any,
+        evidence: Any,
         config: TConfig,
+        adapter: EvidenceAdapter,
     ) -> dict[str, Any]:
         api_key = config["api_key"]
         base_url = config.get("base_url", "https://openrouter.ai/api/v1")
@@ -59,7 +46,7 @@ class EvaluateTask[TConfig: EvaluateConfig](Task[[EvaluateRubric, Any, TConfig],
 
         criteria = rubric.get("criteria") or []
         tasks = [
-            self._evaluate_criterion(text, description, rubric_name, model, service)
+            self._evaluate_criterion(text, description, rubric_name, model, evidence, adapter)
             for text in criteria
         ]
         results = await asyncio.gather(*tasks)
@@ -82,30 +69,21 @@ class EvaluateTask[TConfig: EvaluateConfig](Task[[EvaluateRubric, Any, TConfig],
         description: str,
         rubric_name: str,
         model: OpenAIChatCompletionsModel,
-        service: Any,
+        evidence: Any,
+        adapter: EvidenceAdapter,
     ) -> CriterionResult:
         agent = Agent(
             name="CriterionEvaluator",
-            instructions=self._SYSTEM_PROMPT,
+            instructions=adapter.system_prompt,
             model=model,
-            tools=list(
-                map(
-                    build_subagent_tool,
-                    [
-                        get_data_at_address,
-                        get_function_pseudocode,
-                        get_local_variables,
-                        get_functions_called_recursively,
-                    ],
-                )
-            ),
+            tools=adapter.build_tools(),
         )
 
-        prompt = self._build_prompt(text, description, rubric_name)
+        prompt = adapter.build_prompt(evidence, text, description, rubric_name)
         result = await Runner.run(
             agent,
             prompt,
-            context=SubagentToolDependencies(service),
+            context=adapter.run_context(evidence),
             max_turns=20,
             run_config=RunConfig(tracing_disabled=True),
         )
@@ -115,19 +93,3 @@ class EvaluateTask[TConfig: EvaluateConfig](Task[[EvaluateRubric, Any, TConfig],
             return cr
         except Exception as e:
             return {"passed": False, "reasoning": f"Evaluation failed: {e}"}
-
-    @staticmethod
-    def _build_prompt(text: str, description: str, rubric_name: str) -> str:
-        """Prompt with the criterion and rubric description."""
-        return f"""# Rubric: {rubric_name}
-## Description
-
-{description}
-
-## Criterion
-
-{text}
-
-Use the available tools to inspect the target function(s) and gather
-the evidence you need to evaluate this criterion.
-"""
