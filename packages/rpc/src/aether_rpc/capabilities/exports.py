@@ -25,6 +25,7 @@ EXPORTS: dict[str, str] = {
     "DeleteStructField": ".delete_struct_field",
     "GetStructs": ".get_structs",
     "ApplyStruct": ".apply_struct",
+    "GetStructAtAddress": ".get_struct_at_address",
     "ValidateYaraRule": ".validate_yara_rule",
     "GetBinaryMetadata": ".get_binary_metadata",
     "ListFunctions": ".list_functions",
