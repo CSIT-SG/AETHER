@@ -15,19 +15,19 @@ RETRY_NOTE = (
 class CompactingSession(SQLiteSession):
     def __init__(
         self,
-        session_id: str = str(uuid4()),
+        session_id: str | None = None,
         db_path: str = ":memory:",
         *,
         summarizer: Agent,
         threshold: int = 10,
         keep_last_n: int = 5,
     ) -> None:
-        super().__init__(session_id, db_path)
+        super().__init__(session_id or str(uuid4()), db_path)
 
         self._summarizer = summarizer
         self._threshold = threshold
         self._keep_last_n = keep_last_n
-        self.logger = get_logger(f"compacting_session-{session_id}")
+        self.logger = get_logger(f"compacting_session-{self.session_id}")
 
     async def add_items(self, items: list[TResponseInputItem]) -> None:
         await super().add_items(items)

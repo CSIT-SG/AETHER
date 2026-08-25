@@ -67,3 +67,10 @@ async def test_compaction_that_produces_nothing_leaves_the_history_alone() -> No
             await _fill(session)
 
         assert len(await session.get_items()) == 11
+
+
+def test_each_session_gets_its_own_id() -> None:
+    first, second = _session(), _session()
+
+    assert first.session_id != second.session_id
+    assert first.session_id in first.logger.name
