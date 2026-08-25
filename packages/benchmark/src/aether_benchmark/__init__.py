@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from .tasks import EvaluateTask, ParseBenchmarkTask, StartRPCServerTask
 
 __all__ = [

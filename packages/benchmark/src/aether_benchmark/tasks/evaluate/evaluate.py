@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import asyncio
 from typing import Any
 
@@ -24,8 +22,7 @@ from aether_benchmark.utils.task import Task
 class EvaluateTask[TConfig: EvaluateConfig](
     Task[[EvaluateRubric, Any, TConfig, EvidenceAdapter], dict[str, Any]]
 ):
-    """Evaluate a single rubric entry against supplied information/evidence.
-    """
+    """Evaluate a single rubric entry against supplied information/evidence."""
 
     async def start(
         self,

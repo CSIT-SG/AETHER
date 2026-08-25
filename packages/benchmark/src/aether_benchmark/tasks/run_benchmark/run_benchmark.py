@@ -51,7 +51,6 @@ def _aggregate(
 class RunBenchmarkTask(
     Task[[RubricsSchema, BenchmarkInput, dict[str, str], bool], BenchmarkResult]
 ):
-
     async def start(
         self,
         benchmark: RubricsSchema,
@@ -60,19 +59,21 @@ class RunBenchmarkTask(
         verbose: bool,
     ) -> BenchmarkResult:
         if invocation["kind"] == "ida":
+            idb = invocation.get("idb")
+            if idb is None:
+                raise ValueError("--kind ida requires --idb <path>")
             ida_dir = invocation.get("ida_dir") or Path(os.environ["IDADIR"])
-            async with Run(StartRPCServerTask)(
-                ida_dir, str(invocation["idb"])
-            ) as rpc_handle:
+            async with Run(StartRPCServerTask)(ida_dir, str(idb)) as rpc_handle:
                 service = await rpc_handle
                 return await self._evaluate(
                     benchmark, service, IDAEvidenceAdapter(), config, verbose
                 )
-        #for chatbot
-        evidence = invocation["doc"].read_text(encoding="utf-8")
-        return await self._evaluate(
-            benchmark, evidence, ChatbotEvidenceAdapter(), config, verbose
-        )
+        # chatbot
+        doc = invocation.get("doc")
+        if doc is None:
+            raise ValueError("--kind chatbot requires --doc <transcript.md>")
+        evidence = doc.read_text(encoding="utf-8")
+        return await self._evaluate(benchmark, evidence, ChatbotEvidenceAdapter(), config, verbose)
 
     async def _evaluate(
         self,
@@ -104,12 +105,16 @@ class RunBenchmarkTask(
 
         aggregate = _aggregate(entry_results, weights)
 
-        return {
-            "benchmark_name": benchmark.name,
-            "benchmark_version": benchmark.version,
-            "entries": entry_results,
-            **aggregate,
-        }
+        return BenchmarkResult(
+            benchmark_name=benchmark.name,
+            benchmark_version=benchmark.version or "",
+            entries=entry_results,
+            score=aggregate["score"],
+            passed=aggregate["passed"],
+            total=aggregate["total"],
+            weighted_score=aggregate["weighted_score"],
+            total_weight=aggregate.get("total_weight"),
+        )
 
     async def cancel(self) -> None:
         return None

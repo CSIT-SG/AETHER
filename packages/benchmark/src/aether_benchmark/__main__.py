@@ -104,9 +104,7 @@ async def _run_benchmark(args: argparse.Namespace) -> None:
         return
 
     print(f"=== {benchmark.name} v{benchmark.version} ===")
-    print(
-        f"Overall score: {output['score']:.1%} ({output['passed']}/{output['total']} passed)"
-    )
+    print(f"Overall score: {output['score']:.1%} ({output['passed']}/{output['total']} passed)")
     print(f"Weighted score: {output['weighted_score']:.1%}")
     print()
     for r in output["entries"]:
