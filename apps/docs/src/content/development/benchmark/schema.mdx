@@ -1,6 +1,7 @@
 import { Callout } from 'nextra/components'
 import { Tabs } from 'nextra/components' 
 
+
 # Rubric Schema
 
 <Callout type="important">
@@ -132,3 +133,17 @@ rubrics:
       - "Function documentation follows project docstring convention"
       - "Key bitwise operations have comments explaining the bitmask intent"
 ```
+
+## Markdown Report Convertor
+
+For convenience, a `SKILL.md` file is provided to allow for the ingress of publicly available malware reports that can be converted into digestable rubrics.  
+It is <u>recommended to use frontier models</u>, wherever possible, to produce the optimal result.   
+
+However, be sure to validate and cross-reference the rubrics with the original report to ensure adherence to best practices.
+
+<a href="/md-report-converter/SKILL.md" download="SKILL.md" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold my-4 py-2 px-4 rounded inline-flex items-center">
+  <svg class="fill-current w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+    <path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z"/>
+  </svg>
+  <span>Download SKILL.md</span>
+</a>
