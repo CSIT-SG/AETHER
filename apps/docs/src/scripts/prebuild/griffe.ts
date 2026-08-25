@@ -10,9 +10,11 @@ const contentDir = path.join(repoRoot, "apps", "docs", "src", "content", "_autog
 
 const workspaces = [
 	["apps", "gui"],
+	["apps", "cli"],
 	["packages", "utils"],
 	["packages", "rpc"],
 	["packages", "backend"],
+	["packages", "benchmark"],
 ];
 
 function run(cmd: string, args: string[]): Promise<void> {
@@ -36,7 +38,10 @@ export async function generateGriffe(): Promise<void> {
 		`${scope}.${name}`,
 		path.join(repoRoot, scope, name, "src"),
 	]);
-	for (const [targetName, targetPath] of targets) {
-		await run("python", [scriptPath, targetPath, "--output", path.join(contentDir, targetName)]);
-	}
+
+	const tasks = targets.map(([targetName, targetPath]) =>
+		run("python", [scriptPath, targetPath, "--output", path.join(contentDir, targetName)]),
+	);
+
+	await Promise.all(tasks);
 }
