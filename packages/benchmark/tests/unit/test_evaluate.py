@@ -15,22 +15,19 @@ def model() -> OpenAIChatCompletionsModel:
 
 
 @pytest.fixture
+def adapter() -> MagicMock:
+    """A mock EvidenceAdapter whose methods return benign values."""
+    mock = MagicMock()
+    mock.system_prompt = "system prompt"
+    mock.build_tools.return_value = []
+    mock.build_prompt.return_value = "grading prompt"
+    mock.run_context.return_value = None
+    return mock
+
+
+@pytest.fixture
 def task() -> EvaluateTask:
     return EvaluateTask()
-
-
-class TestBuildPrompt:
-    def test_includes_description_and_criterion(self) -> None:
-        prompt = EvaluateTask._build_prompt(
-            "Constants are replaced with named enums",
-            "Evaluates packet headers at 0x4010A0 (Main Parser).",
-            "packet_parsing_logic",
-        )
-
-        assert "packet_parsing_logic" in prompt
-        assert "Constants are replaced" in prompt
-        assert "0x4010A0" in prompt
-        assert "available tools" in prompt
 
 
 class TestEvaluateCriterion:
@@ -50,7 +47,7 @@ class TestEvaluateCriterion:
         mock_run.return_value = MagicMock()
         mock_force.return_value = CriterionResult(
             passed=True,
-            reasoning="The decompiled code shows enums.",
+            reasoning="The answer is correct.",
         )
 
         result = await task._evaluate_criterion(
@@ -59,10 +56,11 @@ class TestEvaluateCriterion:
             "packet_parsing_logic",
             model,
             MagicMock(),
+            adapter,
         )
 
         assert result["passed"] is True
-        assert result["reasoning"] == "The decompiled code shows enums."
+        assert result["reasoning"] == "The answer is correct."
 
     @pytest.mark.asyncio
     @patch("aether_benchmark.tasks.evaluate.evaluate.EvaluateTask._SYSTEM_PROMPT", "system prompt")
@@ -86,38 +84,42 @@ class TestEvaluateCriterion:
             "packet_parsing_logic",
             model,
             MagicMock(),
+            adapter,
         )
 
         assert result["passed"] is False
         assert "Evaluation failed" in result["reasoning"]
 
     @pytest.mark.asyncio
-    @patch("aether_benchmark.tasks.evaluate.evaluate.EvaluateTask._SYSTEM_PROMPT", "system prompt")
     @patch("aether_benchmark.tasks.evaluate.evaluate.Runner.run", new_callable=AsyncMock)
-    async def test_agent_creates_subagent_tools(
+    async def test_drives_through_adapter(
         self,
         mock_run: AsyncMock,
         model: OpenAIChatCompletionsModel,
         task: EvaluateTask,
+        adapter: MagicMock,
     ) -> None:
-        """Agent should be created with read-only forwarded_rpc tools."""
+        """Agent should be built from the adapter's tools/system prompt and run
+        with the adapter's context + prompt."""
         mock_run.return_value = MagicMock()
-        service = MagicMock()
+        evidence = MagicMock()
 
-        await task._evaluate_criterion("test", "desc", "rubric", model, service)
+        await task._evaluate_criterion("test", "desc", "rubric", model, evidence, adapter)
 
-        # Runner.run should have been called at least once (may be more
-        # if force_structured_output retries internally)
+        adapter.build_tools.assert_called_once()
+        adapter.build_prompt.assert_called_once()
+        adapter.run_context.assert_called_once_with(evidence)
         assert mock_run.await_count >= 1
 
 
 @pytest.mark.asyncio
 async def test_evaluate_task_start_aggregates_results() -> None:
     """End-to-end test of EvaluateTask.start orchestrating criteria."""
+    adapter = MagicMock()
 
-    with (
-        patch.object(EvaluateTask, "_evaluate_criterion", new_callable=AsyncMock) as mock_criterion,
-    ):
+    with patch.object(
+        EvaluateTask, "_evaluate_criterion", new_callable=AsyncMock
+    ) as mock_criterion:
         mock_criterion.side_effect = [
             {"passed": True, "reasoning": "ok"},
             {"passed": False, "reasoning": "missing"},
@@ -131,6 +133,7 @@ async def test_evaluate_task_start_aggregates_results() -> None:
             },
             MagicMock(),
             {"api_key": "sk-test"},
+            adapter,
         )
 
         assert result["rubric_name"] == "packet_parsing_logic"
@@ -141,6 +144,7 @@ async def test_evaluate_task_start_aggregates_results() -> None:
 @pytest.mark.asyncio
 async def test_evaluate_task_no_description() -> None:
     """Rubric without description should still evaluate criteria."""
+    adapter = MagicMock()
 
     with (
         patch.object(EvaluateTask, "_evaluate_criterion", new_callable=AsyncMock) as mock_criterion,
@@ -154,6 +158,7 @@ async def test_evaluate_task_no_description() -> None:
             },
             MagicMock(),
             {"api_key": "sk-test"},
+            adapter,
         )
 
         assert result["overall_passed"] is True
@@ -164,3 +169,24 @@ async def test_evaluate_task_cancel() -> None:
     """cancel() should not raise."""
     task = EvaluateTask()
     await task.cancel()  # just must not raise
+
+
+@pytest.mark.asyncio
+async def test_evaluate_task_start_passes_adapter_to_criterion() -> None:
+    """The adapter given to start must be forwarded to each criterion task."""
+    adapter = MagicMock()
+
+    with patch.object(
+        EvaluateTask, "_evaluate_criterion", new_callable=AsyncMock
+    ) as mock_criterion:
+        mock_criterion.return_value = {"passed": True, "reasoning": "ok"}
+
+        await EvaluateTask().start(
+            {"name": "n", "criteria": ["c1", "c2"]},
+            MagicMock(),
+            {"api_key": "sk-test"},
+            adapter,
+        )
+
+        for call in mock_criterion.call_args_list:
+            assert call.args[-1] is adapter
