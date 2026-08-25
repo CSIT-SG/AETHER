@@ -12,13 +12,13 @@ from aether_backend.forwarded_rpc import (
     get_function_pseudocode,
     get_struct_id_by_name,
     get_struct_info,
+    get_xrefs_to,
     rename_struct,
     rename_struct_field,
 )
 from aether_backend.utils.effect import Log, Program, effectful
 from aether_backend.utils.get_rpc_service import get_rpc_service
 from aether_backend.utils.subagent import SubagentToolDependencies
-from aether_rpc.capabilities.types import XrefsResult
 from aether_utils.config import get_config
 from aether_utils.get_content import get_content
 from agents import Runner
@@ -45,7 +45,6 @@ async def manage_struct(
     rpc_id: Annotated[
         str, "The ID of the RPC service/IDB to use. Formatted as `<file_name>_<date>-<time>`."
     ],
-    xrefs: Annotated[list[XrefsResult], "list of Xrefs to the target variable"],
     operation: Annotated[StructOperation, "Operation to perform on the struct"],
     var_name: Annotated[str, "name of target variable for which to create the struct"],
     custom_prompt: Annotated[
@@ -57,6 +56,11 @@ async def manage_struct(
     tool_list: Iterable[Callable[..., Awaitable[Any]]]
 
     svc = await get_rpc_service(rpc_id)
+
+    xrefs = get_xrefs_to(
+        svc,
+        location=var_name,
+    )
 
     if config.backup:
         svc.take_snapshot()
@@ -71,7 +75,6 @@ async def manage_struct(
                 get_data_at_address,
                 add_struct_field,
                 create_struct,
-                get_function_pseudocode,
             ]
         case StructOperation.UPDATE:
             tool_list = [

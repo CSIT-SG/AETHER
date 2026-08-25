@@ -15,7 +15,7 @@ from agents import Agent, ModelSettings
 
 def create_agent(tool_list: Iterable[Callable[..., Awaitable[Any]]]) -> Agent:
     config = get_config()
-    prompt = get_content(Path(__file__).parent, "struct_creator_instructions.md")
+    prompt = get_content(Path(__file__).parent, "struct_manager_prompt.md")
     agent = Agent(
         name="struct manager",
         model=OpenAIGateway().get_model(
