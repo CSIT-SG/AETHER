@@ -56,7 +56,12 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--verbose", "-v", action="store_true", help="Show detailed per-entry results"
     )
-    parser.add_argument("--json", action="store_true", help="Output raw JSON only")
+    parser.add_argument("--json", action="store_true", help="Print the benchmark result as JSON")
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help="Write the benchmark result as JSON to this file",
+    )
     return parser
 
 
@@ -164,13 +169,18 @@ async def _run_benchmark(args: argparse.Namespace) -> None:
 
     aggregate = _aggregate(entry_results, weights)
 
+    output: dict[str, Any] = {
+        "benchmark_name": benchmark.name,
+        "benchmark_version": benchmark.version,
+        "entries": entry_results,
+        **aggregate,
+    }
+
+    if args.output is not None:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(output, indent=2), encoding="utf-8")
+
     if args.json:
-        output: dict[str, Any] = {
-            "benchmark_name": benchmark.name,
-            "benchmark_version": benchmark.version,
-            "entries": entry_results,
-            **aggregate,
-        }
         print(json.dumps(output, indent=2))
         return
 
