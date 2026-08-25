@@ -21,11 +21,14 @@ const nextConfig: NextConfig = {
 				destination: "/development/gui/writing-gui-components",
 				permanent: true,
 			},
-			// The chatbot section then moved under gui. Keep this last so the
-			// three entries above still win.
 			{
 				source: "/development/chatbot/:path*",
 				destination: "/development/gui/chatbot/:path*",
+				permanent: true,
+			},
+			{
+				source: "/development/gui/chatbot/chat-session",
+				destination: "/development/gui/chatbot/overview",
 				permanent: true,
 			},
 		];

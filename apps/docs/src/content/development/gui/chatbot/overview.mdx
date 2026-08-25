@@ -2,17 +2,18 @@ import { Callout } from 'nextra/components'
 
 # Chatbot Overview
 
-The AETHER chatbot is three layers:
-
-- Widgets that draw the panel
-- A `ChatSession` that outlives the window
-- A backend that talks to the LLM provider and to the MCP tools
-
 <Callout>
 These pages were transcribed from the chatbot design whiteboard, then corrected
 against the code. The unedited transcription is kept on the Whiteboard
 Transcript page, so some of it is now out of date on purpose.
 </Callout>
+
+The AETHER chatbot is built using the following parts:
+
+1. **GUI and Rendering**: widgets created under `features/chatbot/components`, and `ChatbotAreaRenderer` writes into the widgets.
+2. **Orchestrator**: constructed by the chatbot panel, runs on IDA main thread. At the start of each turn submits agent task to WorkerManager, and routes streamed output back to renderer.
+3. **Agent**: built in `backend/chatbot/task`. Streams the provider, renders prompts from `task/content`, and wraps each MCP tool so the model can call it.
+4. **Session**: `ChatSession` in `utils/chat_session` holds UI messages and a `CompactingSession`. Agent SDK provides SQLite storage and we provide compaction.
 
 ## Panel anatomy
 
@@ -30,76 +31,32 @@ Transcript page, so some of it is now out of date on purpose.
 
 Each is covered on UI Components.
 
-## Who owns what
+## Session and lifecycle
 
-- `AetherUIHooks` creates the one `MCPClient` and hands it to `ChatbotHandler`
-  and `AnnotatorHandler`.
-- `ChatbotHandler` owns the `ChatSession` and opens a `ChatbotPanelForm`.
-- `ChatbotPanel` builds the UI and constructs the `ChatOrchestrator`.
-- `ChatOrchestrator` bridges `ChatBotTask` (talks to the provider) and
-  `ChatbotAreaRenderer` (writes to the UI).
-- Long work runs off the IDA main thread via the `WorkerManager`.
+`ChatbotHandler` is the entry point — a context-menu action on pseudocode views. 
+It owns the `ChatSession` and opens the panel. 
+Because the session lives on the handler and not the window, it survives the chatbot being closed and reopened, and dies only with the IDA process.
 
-<Callout>
-`WorkerManager` and `MCPClient` are not chatbot code. They live under GUI and
-are shared with the annotator, so changing them affects more than this feature.
-</Callout>
+`ChatSession` holds two things:
+
+- **UI messages** — replayed to redraw the conversation when the window reopens.
+- **A `CompactingSession`** — the turn-by-turn history the LLM sees.
+
+`CompactingSession` subclasses the Agent SDK's `SQLiteSession`. 
+Once history grows past a threshold it summarises the oldest turns and keeps the rest. 
+That compaction is our code, not the SDK's.
 
 ## A turn, end to end
 
-A turn crosses every layer in System Architecture, plus the provider.
+1. **Submit**: User sends their prompt. The panel draws their own message first, before other tasks proceed.
+2. **Offload**: `ChatOrchestrator` gathers current IDA context, package with prompt to become task for `WorkerManager`. Main thread is freed.
+3. **Running**: On worker thread, agent is built with provided prompt and context and provide MCP tooling. 
+Streams provider output and calls MCP tools as needed. MCP is a separate layer designed to give convinient tooling, and chatbot is one of the consumers. 
+A tool may call RPC to read/write into IDA idb, and returns its output to the agent. No UI involved.
+4. **Render**: Agent streaming, tool input, and tool output are processed at worker. 
+Each piece is pushed to main thread and renderer draws what is new: a new bubble (`MessageColumn`), a new paragraph (`MessageParagraph`), or text appended within the paragraph during streaming.
 
-| Label | Folder |
-| --- | --- |
-| **gui/features** | `aether_gui/features/chatbot` — the widgets |
-| **gui/backend** | `aether_gui/backend/chatbot` — orchestrator, task, renderer |
-| **backend** | `packages/backend` → `aether_backend` — the MCP server and tools |
-| **rpc** | `packages/rpc` → `aether_rpc` — capabilities running inside IDA |
-
-<Callout>
-Two different things are called "backend". **gui/backend** is the chatbot's own
-in-process logic, inside the gui app. **backend** is the separate MCP server.
-</Callout>
-
-1. **gui/features** — the user submits. `ChatInput` emits `submitted`.
-2. **gui/features** — `ChatbotPanel` renders the user's own `MessageColumn`
-   straight away, then calls `submit_user_prompt()`.
-3. **gui/backend** — `ChatOrchestrator` reads `get_screen_ea()` and
-   `get_rpc_id()`, submits a `CallToolTask` for `get_function_context`, and
-   returns immediately holding a `Future`.
-4. **backend** — the MCP server runs the tool, resolving an RPC service from the
-   `rpc_id`.
-5. **rpc** — `get_data_at_address` and `get_function_pseudocode` execute against
-   IDA and come back as an `IDAContext`.
-6. **gui/backend** — the result travels back over MCP and resolves the `Future`.
-7. **gui/backend** — `ChatBotTask` waits on it (30s cap), renders both prompts,
-   wraps the MCP tools, and streams the agent against the provider.
-8. **gui/backend** — each event becomes a `TextDelta`, `ReasoningDelta`,
-   `ToolCall` or `ToolOutput`.
-9. **gui/features** — `ChatbotAreaRenderer` decides new column, new paragraph,
-   or append.
-
-Steps 8 and 9 repeat per delta until the stream ends.
-
-Any tool the model calls mid-stream reaches the same **backend** and **rpc**
-hops, but by a different route — it goes straight out through the MCP client
-rather than through the `WorkerManager`. See Tool calling on the Orchestration
-page.
-
-Closing the window runs `ChatbotPanel.shutdown()` → `ChatOrchestrator.shutdown()`,
-cancelling every handle. The `ChatSession` survives.
-
-### Threads
-
-Steps 1 to 3 and step 9 run on IDA's main thread. Everything between runs on a
-`WorkerManager` thread, and `consume()` drains the results on a third one —
-which is why step 9 goes through `_run_on_ida_ui_thread`.
-
-<Callout type="warning">
-There is no cancel and no loading indicator. Once step 2 fires the turn runs to
-completion or error, and nothing on screen moves until the first delta reaches
-step 9.
-</Callout>
+Only way to cancel during a turn, for now, is to close the window during a task. The `ChatSession` containing history survives.
 
 ## Configuration
 

@@ -2,215 +2,96 @@ import { Callout } from 'nextra/components'
 
 # Orchestration
 
-The backend, in the order a turn moves through it: `ChatOrchestrator` gathers
-context and dispatches, `ChatBotTask` talks to the provider, and
-`ChatbotAreaRenderer` writes the results back to the UI.
+How a turn works inside the backend: how the orchestrator hands off work, what
+the agent sends and streams back, and how that output becomes UI.
 
-## ChatOrchestrator
+## Orchestrator
 
-The `main.py` of our backend logic. Constructed by the `ChatbotPanel` with the
-`MessageArea`, the MCP client and the session.
+The bridge between UI and the agent. It runs on IDA main thread, so its
+job is to start the work and get out of the way, never to block.
 
-It is typed against `ChatAreaProtocol` rather than `MessageArea`, because
-importing `MessageArea` directly would be a circular import. Typically you should
-not use `Protocol`s for type checking.
+Each prompt, it:
 
-Two public methods, not one:
+1. Gathers the current IDA context (function, disassembly, pseudocode, xrefs at
+   the cursor).
+2. Hands the prompt and context to the agent as a background task.
+3. Routes the agent's streamed output back to the renderer as it arrives.
 
-- `submit_user_prompt(prompt)` — called from the IDA main thread, returns
-  immediately
-- `shutdown()` — cancels every handle it has collected
+It also holds the small amount of per-turn state the renderer needs, so the
+renderer itself can stay stateless.
 
-### Fetching IDA context
+## Agent
 
-The other job it does is fetching the IDA context for the LLM.
+The agent talks to the llm provider. Runs on the worker thread.
 
-- Reads the current address from `ida_kernwin.get_screen_ea()`
-- Needs `get_rpc_id()`. No RPC id means it renders an error and raises.
-- Submits a `CallToolTask` calling the `get_function_context` tool
-- Args are `rpc_id` and the address as hex
-
-The result comes back as a `Future`, which is handed to `ChatBotTask`.
-
-### Turn state
-
-It tracks `message_created` and `last_message_type` so the renderer can stay
-stateless.
-
-<Callout type="warning">
-These are **not** instance attributes. They are closure locals inside
-`_handle_worker_result()`, rebuilt on every `submit_user_prompt()`, so the state
-resets each turn. Do not expect to read it from outside.
-</Callout>
-
-Everything that touches the UI is marshalled through `_run_on_ida_ui_thread()`,
-which wraps the call in `ida_kernwin.execute_sync(..., MFF_WRITE)`.
-
-## ChatBotTask
-
-Talking to the provider needs a live connection. On the IDA main thread that
-would hang until the results were done, so the agent is built and run on a task.
-
-Takes the IDA context, the MCP client, the user prompt and the `ChatSession`.
-
-1. Waits on the context `Future`, **30 second timeout**
-2. Renders the user and system prompts
-3. Wraps every MCP tool as an Agents SDK `FunctionTool`, so tools stay
-   cancellable. `strict_json_schema` is off.
-4. Builds the `Agent` and runs it streamed with `max_turns=None`
-5. Yields typed outputs until the stream ends
-6. Cleans up in `finally`
-
-<Callout>
-The whiteboard says the task should just pass context and prompt to the agent and
-nothing else. It also owns prompt templating, tool wrapping and stream cleanup.
-Treat that line as intent, not description.
-</Callout>
-
-### The model
-
-`OpenAIGateway().get_model(feature="chatbot")` returns an OpenAI-*compatible*
-client pointed at `config.provider.gateway_url`. The provider is configuration,
-not hardcoded.
-
-<Callout type="warning">
-`feature="chatbot"` does **not** select a chatbot-specific model — it only tags
-the User-Agent header.
-
-`ChatBotTask` passes no `model_name`, so the model always resolves to
-`provider.models[provider.default_model]`.
-</Callout>
+It is given four things: the user prompt, the IDA context, the available tools,
+and the session history. From those it builds and streams the model, yielding
+output piece by piece until the response ends.
 
 ### Prompts
 
-Both templates live in `backend/chatbot/task/content/`:
+Two prompts shape every turn, and they land in different places:
 
-| File | Rendered with |
-| --- | --- |
-| `system_prompt.md.jinja` | `rpc_id` |
-| `user_prompt.md.jinja` | the user's prompt and the IDA context |
+- **System prompt** — the agent's standing instructions, applied to every turn:
+  its role inside IDA, when to call a tool versus answer directly, and rules
+  against inventing addresses or names. It defines who the agent is, and is not
+  part of the conversation history.
+- **User prompt** — this turn's input message: the user's text plus the IDA
+  context. This is what gets added to the session history.
 
 <Callout>
-The module constants in `task.py` say `prompts/`. That directory does not exist.
-Only the filename is used, and `get_content()` always resolves against a
-`content/` subdirectory.
+The system prompt is a living file, not a spec. It is expected to grow and
+change. Read `backend/chatbot/task/content/system_prompt.md.jinja` for what it
+says today.
 </Callout>
 
-The system prompt defines the assistant's behaviour: its role inside IDA, when to
-call a tool versus answer directly, how to talk about proposed IDA modifications,
-and rules against inventing addresses or names. Behaviour changes usually belong
-there, not in `ChatBotTask`.
+### Tools
 
-<Callout type="warning">
-Treat the system prompt as a living file, not a spec. It is expected to grow and
-change — read `content/system_prompt.md.jinja` for what it says today rather than
-relying on anything restated here.
-</Callout>
+Each turn, the agent is handed the tools the MCP server currently exposes. When
+the model decides to call one, the call is forwarded to MCP, which may reach
+through RPC into the open IDA database, and the result is returned to the model.
 
-### What the model sees
+So a tool call is really a chain: **model → MCP → RPC → IDA**, and back.
 
-The user prompt lays out the IDA context. Every block below the header is
-conditional, so a bare address sends far less than a full function.
+## What a turn looks like
 
-| Field | Always sent |
-| --- | --- |
-| `ctx.name` | yes |
-| `ctx.is_code` / `ctx.is_data` | yes |
-| `ctx.function.name` | only if there is a function |
-| `ctx.disassembly` | only if present, fenced as `asm` |
-| `ctx.pseudocode` | only if present, fenced as `c` |
-| `ctx.xrefs_to` / `ctx.xrefs_from` | only if non-empty, as bullet lists |
+The agent streams a sequence of typed pieces. A turn where the model calls a
+tool, then answers, looks like this:
 
-That is the whole of what the model knows about the binary, aside from whatever
-it fetches through tools.
-
-### Tool calling
-
-Two different things call MCP tools, and they do not share a route.
-
-| | Context fetch | Model tool call |
-| --- | --- | --- |
-| Triggered by | `ChatOrchestrator`, before the agent runs | the model, mid-stream |
-| Which tool | only `get_function_context` | anything the server exposes |
-| Route | `CallToolTask` → `WorkerManager` → `Future` | `FunctionTool.on_invoke` → `MCPClient.call_tool()` |
-
-The second path never touches the `WorkerManager`. It runs inside the agent's own
-async context, on the worker thread the task is already on.
-
-`list_mcp_tools_as_agent_tools()` calls `list_tools()` **every turn**, so the tool
-set is whatever the server exposes right then. Each one is wrapped with its MCP
-name, description and `inputSchema` handed straight to `FunctionTool`.
-
-`strict_json_schema` is off because MCP schemas are not guaranteed to satisfy
-OpenAI's strict mode.
-
-<Callout type="warning">
-The model supplies `rpc_id` itself. Nothing in the wrapper injects it — the
-system prompt tells the model which id to use, and `on_invoke` passes the parsed
-arguments through untouched.
-
-If the model omits or invents the id, the tool call fails.
-</Callout>
-
-<Callout type="warning">
-**A failed tool call looks like an empty success.**
-
-`MCPClient.call_tool` swallows exceptions and yields nothing, so `on_invoke`
-falls through its loop and returns `""`. The model receives an empty string, not
-an error, and will usually carry on as though the tool returned nothing.
-
-Check the log when a tool appears to do nothing.
-</Callout>
-
-`on_invoke` returns the first yielded result and stops. `call_tool` yields exactly
-one, so that is a one-shot contract rather than a stream.
-
-Cancellation works because the whole agent run is one streamed task: `_cleanup()`
-cancels it and drains the remaining events, and `ChatOrchestrator.shutdown()`
-reaches it through the handle.
-
-### Output categories
-
-Four, all `LLMOutput` subclasses. The wording the user sees comes from each
-type's `__str__`:
-
-| Type | Renders as |
-| --- | --- |
-| `TextDelta` | the raw delta |
-| `ReasoningDelta` | `[Reasoning]: ...` |
-| `ToolCall` | `Calling tool 'x' with args: ...` |
-| `ToolOutput` | `Result: ...` |
-
-Four categories, but only two renderer methods — `TextDelta` and `ReasoningDelta`
-both go to `render_aether_message` as type `"text"`.
-
-## ChatbotAreaRenderer
-
-Three methods: `render_aether_message()`, `render_tool_message()` and
-`render_error()`.
-
-All take `message_created` as a **keyword-only** bool, to decide whether to open a
-new `MessageColumn` or add to the existing one — except `render_error()` for now,
-which always opens a new column.
-
-```python
-def render_aether_message(
-    self, message: str, last_message_type: MessageType, *, message_created: bool
-) -> None: ...
+```text
+Calling tool 'get_function_pseudocode' with args: {"function_name": "sub_401000"}
+Result: int __cdecl sub_401000(int a1) { ... }
+This function validates the license key: it hashes the input and compares...
 ```
 
-<Callout type="warning">
-The second argument is **not** a bool.
+Each line is one typed output:
 
-`MessageType` is `Literal["tool", "text", "error"]`. The whiteboard describes it
-as "another bool that checks if the previous type was an aether message".
+| Piece | Meaning | Renders as |
+| --- | --- | --- |
+| `Calling tool '...' with args: ...` | the model invoking a tool | a tool message |
+| `Result: ...` | what the tool returned | a tool message |
+| plain text | the model's answer | assistant text |
+
+The two tool lines are the visible ends of that **model → MCP → RPC** chain: the
+`Calling tool` line is the model's request, and `Result` is what came back after
+MCP ran it against IDA.
+
+<Callout>
+Some models also stream a reasoning summary. When they do it renders as plain
+assistant text prefixed `[Reasoning]:`.
 </Callout>
 
-The three branches:
+<Callout type="warning">
+The system prompt needs to tells llm which id to use. 
+The model then supplies the RPC id in its tool arguments itself . If it omits or invents the id, the tool call should fail.
+</Callout>
 
-- not `message_created` → new `MessageColumn`
-- `last_message_type == "text"` → append to the last paragraph
-- otherwise → new paragraph in the same column
+## Renderer
 
-`"error"` is a declared `MessageType` that nothing ever produces. `render_error`
-does not set it.
+The renderer is the only part that writes to widgets. For each streamed piece it
+decides what the UI needs: a new bubble (column), a new paragraph, or text appended to the
+current paragraph.
+
+Text and reasoning become assistant messages; tool calls and their results become
+tool messages; errors become their own message. Because the orchestrator carries
+the per-turn state, the renderer only has to draw.
