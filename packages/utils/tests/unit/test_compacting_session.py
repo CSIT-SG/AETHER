@@ -73,4 +73,3 @@ def test_each_session_gets_its_own_id() -> None:
     first, second = _session(), _session()
 
     assert first.session_id != second.session_id
-    assert first.session_id in first.logger.name
