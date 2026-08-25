@@ -13,7 +13,7 @@ class CreateStruct(Capability):
     def name(self) -> str:
         return "create_struct"
 
-    def _make_member(self, field: StructField, offset: int) -> ida_typeinf.udm_t:
+    def _make_member(self, field: StructField, offset: int) -> ida_typeinf.udm_t | None:
         member = ida_typeinf.udm_t()
         member.name = field.name
         member.offset = offset
