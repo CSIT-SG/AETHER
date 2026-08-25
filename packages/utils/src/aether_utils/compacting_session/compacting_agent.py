@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from agents import Agent
+from agents import Agent, ModelSettings
 
 from aether_utils.api_client import OpenAIGateway
 from aether_utils.get_content import get_content
@@ -16,4 +16,5 @@ def get_compacting_agent(model: str | None = None) -> Agent:
             model_name=model,
         ),
         instructions=SYSTEM_PROMPT,
+        model_settings=ModelSettings(tool_choice="none"),
     )
