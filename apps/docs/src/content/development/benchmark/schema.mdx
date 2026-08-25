@@ -1,6 +1,6 @@
 import { Callout } from 'nextra/components'
 import { Tabs } from 'nextra/components' 
-
+import { LinkButton } from '@/components/LinkButton'
 
 # Rubric Schema
 
@@ -46,7 +46,7 @@ Each rubric group can be grouped into their **functional modules** (i.e, encrypt
 
 | Field | Type | Required | Description |
 | :--- | :--- | :--- | :--- |
-| `name` | String | Yes | A unique identifier for the rubric group. |
+| `name` | String | Yes | A unique identifier for the rubric group. Can be used for questions. |
 | `description` | String | No | Context for the evaluator. **Supports address mapping** and notes. |
 | `weight` | Float | No | Importance of this group. Defaults to `1.0`. |
 | `criteria` | List | Yes | A list of specific requirements to fulfill. |
@@ -98,6 +98,11 @@ Ensure your `description` provides sufficient context as it'll be used to dictat
 <Callout type="info">
   Overly comprehensive description of criteria can do more harm than good. Keep your rubrics concise and informative -- aim for **moderate level** of detail of functional components.
 </Callout>
+
+### Chatbot Q&A Rubrics
+The `name` field serves two primary purposes, **Semantic Identifier** (for annotator & struct creator) & **QnA Prompting** (for chatbot).    
+For Q&A, provide objective based question rather than task-based (i.e. writing yara rules for the sample). Questions are meant to **assess varies technical details** and thinking logic within the interpreted chatbot output. 
+
 ---
 
 ## Example Configuration
@@ -141,9 +146,10 @@ It is <u>recommended to use frontier models</u>, wherever possible, to produce t
 
 However, be sure to validate and cross-reference the rubrics with the original report to ensure adherence to best practices.
 
-<a href="/md-report-converter/SKILL.md" download="SKILL.md" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold my-4 py-2 px-4 rounded inline-flex items-center">
-  <svg class="fill-current w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+
+<LinkButton variant="download" href="/md-report-converter/SKILL.md" download="SKILL.md">
+  <svg className="fill-current w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
     <path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z"/>
   </svg>
   <span>Download SKILL.md</span>
-</a>
+</LinkButton>
