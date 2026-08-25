@@ -4,18 +4,18 @@ import rpyc
 
 
 @pytest.mark.dependency(scope="package")
-class TestGetStructs:
-    """Tests for valid get structs requests."""
+class TestListStructs:
+    """Tests for valid list structs requests."""
 
-    def test_get_structs(self, ida_client: rpyc.Connection) -> None:
-        result = ida_client.root.get_structs()
+    def test_list_structs(self, ida_client: rpyc.Connection) -> None:
+        result = ida_client.root.list_structs()
 
         assert result.success is True
 
         before = result.result["number_of_structs"]
 
         created = ida_client.root.create_struct(
-            struct_name="test_get_structs",
+            struct_name="test_list_structs",
             fields=[
                 ("field1", "uint32_t"),
                 ("field2", "uint16_t"),
@@ -23,7 +23,7 @@ class TestGetStructs:
         )
         assert created.success is True
 
-        result = ida_client.root.get_structs()
+        result = ida_client.root.list_structs()
 
         assert result.success is True
         assert result.result["number_of_structs"] == before + 1
@@ -31,7 +31,7 @@ class TestGetStructs:
         struct = result.result["structs"][-1]
 
         assert struct["struct_id"] == created.result["struct_id"]
-        assert struct["struct_name"] == "test_get_structs"
+        assert struct["struct_name"] == "test_list_structs"
         assert len(struct["struct_fields"]) == 2
 
         assert struct["struct_fields"][0][0] == "field1"
