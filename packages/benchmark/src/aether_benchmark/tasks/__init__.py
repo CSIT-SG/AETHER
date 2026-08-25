@@ -1,7 +1,6 @@
-from __future__ import annotations
-
 from .evaluate import EvaluateTask
 from .parse_benchmark import ParseBenchmarkTask
+from .run_benchmark import RunBenchmarkTask
 from .start_rpc_server import StartRPCServerTask
 
-__all__ = ["EvaluateTask", "ParseBenchmarkTask", "StartRPCServerTask"]
+__all__ = ["EvaluateTask", "ParseBenchmarkTask", "RunBenchmarkTask", "StartRPCServerTask"]

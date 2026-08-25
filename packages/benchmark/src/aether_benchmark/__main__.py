@@ -4,20 +4,18 @@ Usage:
     python -m aether_benchmark --kind chatbot --doc <transcript.md> --rubric <path> --api-key <key>
 """
 
-from __future__ import annotations
-
 import argparse
 import asyncio
 import json
 import os
 from pathlib import Path
-from typing import Any
 
-from aether_benchmark.tasks.evaluate import ChatbotEvidenceAdapter, IDAEvidenceAdapter
 from aether_benchmark.tasks.parse_benchmark.models import RubricsSchema
+from aether_benchmark.tasks.run_benchmark import RunBenchmarkTask
+from aether_benchmark.tasks.run_benchmark.models import BenchmarkInput
 from aether_benchmark.utils.task import Run
 
-from .tasks import EvaluateTask, ParseBenchmarkTask, StartRPCServerTask
+from .tasks import ParseBenchmarkTask
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -73,70 +71,6 @@ def _validate_args(args: argparse.Namespace) -> None:
         raise SystemExit("--kind chatbot requires --doc <transcript.md>")
 
 
-def _aggregate(
-    results: list[dict[str, Any]],
-    weights: list[float],
-) -> dict[str, Any]:
-    """Compute overall weighted score."""
-    if not results:
-        return {"score": 0.0, "passed": 0, "total": 0, "weighted_score": 0.0}
-
-    total_weight = sum(weights)
-    if total_weight <= 0:
-        return {
-            "score": 0.0,
-            "passed": 0,
-            "total": len(results),
-            "weighted_score": 0.0,
-            "message": "No positive weights",
-        }
-
-    weighted_sum = 0.0
-    passed_count = 0
-    for result, w in zip(results, weights, strict=True):
-        if result["overall_passed"]:
-            passed_count += 1
-            weighted_sum += w
-
-    return {
-        "score": weighted_sum / total_weight,
-        "passed": passed_count,
-        "total": len(results),
-        "weighted_score": weighted_sum / total_weight,
-        "total_weight": total_weight,
-    }
-
-
-async def _evaluate_entries(
-    benchmark: RubricsSchema,
-    evidence: Any,
-    adapter: Any,
-    config: dict[str, str],
-    verbose: bool,
-) -> tuple[list[dict[str, Any]], list[float]]:
-    """Run the grading agent over every rubric entry, collecting results + weights."""
-    entry_results: list[dict[str, Any]] = []
-    weights: list[float] = []
-
-    for entry in benchmark.rubrics:
-        if verbose:
-            print(f"  Evaluating {entry.name}...", end="", flush=True)
-
-        result = await Run(EvaluateTask)(entry.model_dump(), evidence, config, adapter)
-
-        entry_results.append(result)
-        weights.append(entry.weight)
-
-        if verbose:
-            status = "PASS" if result["overall_passed"] else "FAIL"
-            print(f" {status}")
-
-    if verbose:
-        print()
-
-    return entry_results, weights
-
-
 async def _run_benchmark(args: argparse.Namespace) -> None:
 
     config: dict[str, str] = {
@@ -152,29 +86,14 @@ async def _run_benchmark(args: argparse.Namespace) -> None:
         print(f"Rubric: {benchmark.name} v{benchmark.version}")
         print(f"Rubrics: {len(benchmark.rubrics)} entries")
         print()
-    # start rpc server if idb file is taken if not just use the transcript as evidence
-    if args.kind == "ida":
-        ida_dir = args.ida_dir or Path(os.environ["IDADIR"])
-        async with Run(StartRPCServerTask)(ida_dir, str(args.idb)) as rpc_handle:
-            service = await rpc_handle
-            entry_results, weights = await _evaluate_entries(
-                benchmark, service, IDAEvidenceAdapter(), config, args.verbose
-            )
-    else:
-        # chatbot evaluation, read the transcript and pass it to the adapter
-        evidence = args.doc.read_text(encoding="utf-8")
-        entry_results, weights = await _evaluate_entries(
-            benchmark, evidence, ChatbotEvidenceAdapter(), config, args.verbose
-        )
 
-    aggregate = _aggregate(entry_results, weights)
-
-    output: dict[str, Any] = {
-        "benchmark_name": benchmark.name,
-        "benchmark_version": benchmark.version,
-        "entries": entry_results,
-        **aggregate,
+    invocation: BenchmarkInput = {
+        "kind": args.kind,
+        "idb": args.idb,
+        "doc": args.doc,
+        "ida_dir": args.ida_dir,
     }
+    output = await Run(RunBenchmarkTask)(benchmark, invocation, config, args.verbose)
 
     if args.output is not None:
         args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -186,11 +105,11 @@ async def _run_benchmark(args: argparse.Namespace) -> None:
 
     print(f"=== {benchmark.name} v{benchmark.version} ===")
     print(
-        f"Overall score: {aggregate['score']:.1%} ({aggregate['passed']}/{aggregate['total']} passed)"
+        f"Overall score: {output['score']:.1%} ({output['passed']}/{output['total']} passed)"
     )
-    print(f"Weighted score: {aggregate['weighted_score']:.1%}")
+    print(f"Weighted score: {output['weighted_score']:.1%}")
     print()
-    for r in entry_results:
+    for r in output["entries"]:
         status = "✓" if r["overall_passed"] else "✗"
         print(f"  [{status}] {r['rubric_name']}")
 
