@@ -1,6 +1,9 @@
+from typing import cast
 from uuid import uuid4
 
 from agents import Agent, Runner, SQLiteSession, TResponseInputItem
+from openai.types.responses import ResponseFunctionToolCallParam
+from openai.types.responses.response_input_item_param import FunctionCallOutput
 
 from aether_utils.logger import get_logger
 
@@ -13,9 +16,15 @@ RETRY_NOTE = (
 
 
 def _has_orphan_tool_result(items: list[TResponseInputItem]) -> bool:
-    calls = {i.get("call_id") for i in items if i.get("type") == "function_call"}
+    calls = {
+        cast(ResponseFunctionToolCallParam, item)["call_id"]
+        for item in items
+        if item.get("type") == "function_call"
+    }
     return any(
-        i.get("type") == "function_call_output" and i.get("call_id") not in calls for i in items
+        cast(FunctionCallOutput, item)["call_id"] not in calls
+        for item in items
+        if item.get("type") == "function_call_output"
     )
 
 
