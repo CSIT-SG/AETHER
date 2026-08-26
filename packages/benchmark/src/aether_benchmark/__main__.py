@@ -96,13 +96,13 @@ async def _run_benchmark(
             service = await rpc_handle
             return schema, await Run(RunBenchmarkTask)(
                 schema, service, IDAEvidenceAdapter(), config, verbose=args.verbose
-            )  # type: ignore
+            )
 
     assert args.doc is not None
     evidence = args.doc.read_text(encoding="utf-8")
     return schema, await Run(RunBenchmarkTask)(
         schema, evidence, ChatbotEvidenceAdapter(), config, verbose=args.verbose
-    )  # type: ignore
+    )
 
 
 def main() -> None:
