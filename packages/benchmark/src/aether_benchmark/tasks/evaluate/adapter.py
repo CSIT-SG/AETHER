@@ -45,7 +45,9 @@ class EvidenceAdapter[T](ABC):
 class IDAEvidenceAdapter(EvidenceAdapter[AnyService]):
     """Grades the IDB file using the forwarded-RPC tools."""
 
-    system_prompt = get_content(Path(__file__).parent, "evaluate_prompt.md")
+    @property
+    def system_prompt(self) -> str:
+        return get_content(Path(__file__).parent, "evaluate_prompt.md")
 
     def build_tools(self) -> list[Tool]:
         return list(
@@ -86,7 +88,9 @@ Use the available evidence to determine whether this criterion is satisfied.
 class ChatbotEvidenceAdapter(EvidenceAdapter[str]):
     """Grades a chatbot conversation transcript presented inline."""
 
-    system_prompt = get_content(Path(__file__).parent, "chatbot_evaluate_prompt.md")
+    @property
+    def system_prompt(self) -> str:
+        return get_content(Path(__file__).parent, "chatbot_evaluate_prompt.md")
 
     def build_tools(self) -> list[Tool]:
         return []

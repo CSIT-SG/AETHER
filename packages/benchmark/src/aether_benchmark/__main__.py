@@ -88,7 +88,7 @@ async def _run_benchmark(args: argparse.Namespace) -> None:
         print(f"Rubrics: {len(schema.rubrics)} entries")
         print()
 
-    output = await Run(RunBenchmarkTask)(schema, inputs, config, verbose=args.verbose)
+    output = await Run(RunBenchmarkTask)(schema, inputs, config, verbose=args.verbose)  # type: ignore
 
     if args.output is not None:
         args.output.parent.mkdir(parents=True, exist_ok=True)

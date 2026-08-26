@@ -1,12 +1,13 @@
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from aether_benchmark.tasks.evaluate import (
     ChatbotEvidenceAdapter,
     EvaluateTask,
     IDAEvidenceAdapter,
 )
+from aether_benchmark.tasks.evaluate.models import EvaluateRubric
 from aether_benchmark.tasks.parse_benchmark.models import RubricsSchema
 from aether_benchmark.tasks.start_rpc_server import StartRPCServerTask
 from aether_benchmark.utils.task import Run, Task
@@ -48,9 +49,7 @@ def _aggregate(
     }
 
 
-class RunBenchmarkTask(
-    Task[[RubricsSchema, BenchmarkInput, dict[str, str], bool], BenchmarkResult]
-):
+class RunBenchmarkTask(Task[[RubricsSchema, BenchmarkInput, dict[str, str]], BenchmarkResult]):
     async def start(
         self,
         schema: RubricsSchema,
@@ -95,7 +94,9 @@ class RunBenchmarkTask(
             if verbose:
                 print(f"  Evaluating {entry.name}...", end="", flush=True)
 
-            result = await Run(EvaluateTask)(entry.model_dump(), evidence, config, adapter)
+            result = await Run(EvaluateTask)(
+                cast(EvaluateRubric, entry.model_dump()), evidence, config, adapter
+            )
 
             entry_results.append(result)
             weights.append(entry.weight)
@@ -109,7 +110,7 @@ class RunBenchmarkTask(
 
         aggregate = _aggregate(entry_results, weights)
 
-        return BenchmarkResult(
+        output = BenchmarkResult(
             benchmark_name=schema.name,
             benchmark_version=schema.version or "",
             entries=entry_results,
@@ -117,8 +118,10 @@ class RunBenchmarkTask(
             passed=aggregate["passed"],
             total=aggregate["total"],
             weighted_score=aggregate["weighted_score"],
-            total_weight=aggregate.get("total_weight"),
         )
+        if "total_weight" in aggregate:
+            output["total_weight"] = aggregate["total_weight"]
+        return output
 
     async def cancel(self) -> None:
         return None
