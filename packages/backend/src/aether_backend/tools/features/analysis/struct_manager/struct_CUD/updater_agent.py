@@ -20,6 +20,7 @@ from ..utils import create_agent, run_agent
 
 async def build_and_run_updater(
     service: Any,
+    *,
     operation: StructOperation,
     var_name: str,
     xrefs: XrefsResult,

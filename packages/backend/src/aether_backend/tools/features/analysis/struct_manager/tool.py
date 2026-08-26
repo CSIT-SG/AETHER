@@ -57,9 +57,13 @@ async def struct_manager(
 
     match operation:
         case StructOperation.CREATE:
-            build_and_run_creator(svc, operation, var_name, refs, custom_prompt)
+            build_and_run_creator(
+                svc, operation=operation, var_name=var_name, xrefs=refs, custom_prompt=custom_prompt
+            )
         case StructOperation.UPDATE:
-            build_and_run_updater(svc, operation, var_name, refs, custom_prompt)
+            build_and_run_updater(
+                svc, operation=operation, var_name=var_name, xrefs=refs, custom_prompt=custom_prompt
+            )
         case StructOperation.DELETE:
             ...
             yield Log(f"Deleted struct at {var_name}")
