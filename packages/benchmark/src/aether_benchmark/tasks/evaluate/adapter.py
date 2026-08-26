@@ -1,29 +1,18 @@
 from abc import ABC, abstractmethod
-from typing import Any
 
-from agents import Tool
+from aether_backend.utils.get_rpc_service import AnyService
+from agents import Agent
 
 
-class EvidenceAdapter[T](ABC):
-    @property
+class AgentAdapter[P](ABC):
     @abstractmethod
-    def system_prompt(self) -> str:
-        """Return the system prompt."""
-
-    @abstractmethod
-    def build_tools(self) -> list[Tool]:
-        """Return the tools the grading agent may call."""
+    @staticmethod
+    def build_agent(*, model: str) -> Agent:
+        """Build the grading agent for this evidence type."""
+        ...
 
     @abstractmethod
-    def run_context(self, evidence: T) -> Any | None:
-        """Return the ``Runner.run`` context, or ``None`` when no context is used."""
-
-    @abstractmethod
-    def build_prompt(
-        self,
-        evidence: T,
-        criterion: str,
-        description: str,
-        rubric_name: str,
-    ) -> str:
-        """Compose the per-criterion grading prompt from the evidence."""
+    @staticmethod
+    async def run_agent(*, agent: Agent, service: AnyService, prompt_dependencies: P) -> str:
+        """Run the grading agent for this evidence type."""
+        ...
