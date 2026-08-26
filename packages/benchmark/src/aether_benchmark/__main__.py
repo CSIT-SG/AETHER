@@ -10,9 +10,14 @@ import json
 import os
 from pathlib import Path
 
+from aether_benchmark.tasks.evaluate import (
+    ChatbotEvidenceAdapter,
+    IDAEvidenceAdapter,
+)
 from aether_benchmark.tasks.parse_benchmark.models import RubricsSchema
 from aether_benchmark.tasks.run_benchmark import RunBenchmarkTask
-from aether_benchmark.tasks.run_benchmark.models import BenchmarkInput
+from aether_benchmark.tasks.run_benchmark.models import BenchmarkResult
+from aether_benchmark.tasks.start_rpc_server import StartRPCServerTask
 from aether_benchmark.utils.task import Run
 
 from .tasks import ParseBenchmarkTask
@@ -65,20 +70,16 @@ def _resolve(idb: Path | None, doc: Path | None) -> str:
     raise SystemExit("Provide either --idb <path> or --doc <transcript.md>")
 
 
-async def _run_benchmark(args: argparse.Namespace) -> None:
-
+async def _run_benchmark(
+    args: argparse.Namespace,
+) -> tuple[RubricsSchema, BenchmarkResult]:
+    """Acquire evidence for the selected harness and run the grading loop."""
     config: dict[str, str] = {
         "api_key": args.api_key,
         "base_url": args.base_url,
         "model": args.model,
     }
     kind = _resolve(args.idb, args.doc)
-    inputs: BenchmarkInput = {
-        "kind": kind,
-        "idb": args.idb,
-        "doc": args.doc,
-        "ida_dir": args.ida_dir,
-    }
 
     # parse rubric
     schema = await Run(ParseBenchmarkTask)(RubricsSchema, args.rubric)
@@ -88,7 +89,26 @@ async def _run_benchmark(args: argparse.Namespace) -> None:
         print(f"Rubrics: {len(schema.rubrics)} entries")
         print()
 
-    output = await Run(RunBenchmarkTask)(schema, inputs, config, verbose=args.verbose)  # type: ignore
+    if kind == "ida":
+        assert args.idb is not None
+        ida_dir = args.ida_dir or Path(os.environ["IDADIR"])
+        async with Run(StartRPCServerTask)(ida_dir, str(args.idb)) as rpc_handle:
+            service = await rpc_handle
+            return schema, await Run(RunBenchmarkTask)(
+                schema, service, IDAEvidenceAdapter(), config, verbose=args.verbose
+            )  # type: ignore
+
+    assert args.doc is not None
+    evidence = args.doc.read_text(encoding="utf-8")
+    return schema, await Run(RunBenchmarkTask)(
+        schema, evidence, ChatbotEvidenceAdapter(), config, verbose=args.verbose
+    )  # type: ignore
+
+
+def main() -> None:
+    parser = _build_parser()
+    args = parser.parse_args()
+    schema, output = asyncio.run(_run_benchmark(args))
 
     if args.output is not None:
         args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -112,12 +132,6 @@ async def _run_benchmark(args: argparse.Namespace) -> None:
                 print(f"      [{c_status}] {criterion['description']}")
                 print(f"             {criterion['reasoning']}")
             print()
-
-
-def main() -> None:
-    parser = _build_parser()
-    args = parser.parse_args()
-    asyncio.run(_run_benchmark(args))
 
 
 if __name__ == "__main__":

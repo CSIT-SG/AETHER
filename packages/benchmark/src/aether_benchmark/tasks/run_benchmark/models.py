@@ -1,12 +1,4 @@
-from pathlib import Path
 from typing import NotRequired, TypedDict
-
-
-class BenchmarkInput(TypedDict):
-    kind: str
-    idb: NotRequired[Path | None]
-    doc: NotRequired[Path | None]
-    ida_dir: NotRequired[Path | None]
 
 
 class BenchmarkResult(TypedDict):

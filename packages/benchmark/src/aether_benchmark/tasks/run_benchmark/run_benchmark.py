@@ -1,18 +1,11 @@
-import os
-from pathlib import Path
 from typing import Any, cast
 
-from aether_benchmark.tasks.evaluate import (
-    ChatbotEvidenceAdapter,
-    EvaluateTask,
-    IDAEvidenceAdapter,
-)
+from aether_benchmark.tasks.evaluate import EvaluateTask, EvidenceAdapter
 from aether_benchmark.tasks.evaluate.models import EvaluateRubric
 from aether_benchmark.tasks.parse_benchmark.models import RubricsSchema
-from aether_benchmark.tasks.start_rpc_server import StartRPCServerTask
 from aether_benchmark.utils.task import Run, Task
 
-from .models import BenchmarkInput, BenchmarkResult
+from .models import BenchmarkResult
 
 
 def _aggregate(
@@ -49,44 +42,21 @@ def _aggregate(
     }
 
 
-class RunBenchmarkTask(Task[[RubricsSchema, BenchmarkInput, dict[str, str]], BenchmarkResult]):
+class RunBenchmarkTask[TEvidence](
+    Task[[RubricsSchema, TEvidence, EvidenceAdapter[TEvidence], dict[str, str]], BenchmarkResult]
+):
+    """Grade a rubric schema against supplied evidence."""
+
     async def start(
         self,
         schema: RubricsSchema,
-        inputs: BenchmarkInput,
+        evidence: TEvidence,
+        adapter: EvidenceAdapter[TEvidence],
         config: dict[str, str],
         *,
         verbose: bool = False,
     ) -> BenchmarkResult:
-        if inputs["kind"] == "ida":
-            idb = inputs.get("idb")
-            if idb is None:
-                raise ValueError("ida harness requires --idb <path>")
-            ida_dir = inputs.get("ida_dir") or Path(os.environ["IDADIR"])
-            async with Run(StartRPCServerTask)(ida_dir, str(idb)) as rpc_handle:
-                service = await rpc_handle
-                return await self._evaluate(
-                    schema, service, IDAEvidenceAdapter(), config, verbose=verbose
-                )
-        # chatbot
-        doc = inputs.get("doc")
-        if doc is None:
-            raise ValueError("chatbot harness requires --doc <transcript.md>")
-        evidence = doc.read_text(encoding="utf-8")
-        return await self._evaluate(
-            schema, evidence, ChatbotEvidenceAdapter(), config, verbose=verbose
-        )
-
-    async def _evaluate(
-        self,
-        schema: RubricsSchema,
-        evidence: Any,
-        adapter: Any,
-        config: dict[str, str],
-        *,
-        verbose: bool = False,
-    ) -> BenchmarkResult:
-        """Run the grading agent over every rubric entry, collecting results  + weights."""
+        """Run the grading agent over each rubric entry, collecting results and weights."""
         entry_results: list[dict[str, Any]] = []
         weights: list[float] = []
 
