@@ -37,8 +37,9 @@ def create_agent(tool_list: Iterable[Callable[..., Awaitable[Any]]], system_prom
 
 
 async def run_agent(
-    agent: Agent,
     svc: Any,
+    *,
+    agent: Agent,
     operation: StructOperation,
     var_name: str,
     xrefs: XrefsResult,

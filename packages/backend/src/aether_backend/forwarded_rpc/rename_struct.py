@@ -16,4 +16,6 @@ async def rename_struct(
         A Result whose ``success`` reports whether the rename succeeded and
         whose ``result`` carries struct id, old and new name
     """
+    if not new_name.startswith("AETHER_"):
+        new_name = "AETHER_" + new_name
     return service.rename_struct(struct=struct, new_name=new_name)
