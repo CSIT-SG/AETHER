@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import Annotated
 
-from aether_backend.forwarded_rpc import get_xrefs_to
 from aether_backend.utils.effect import Log, Program, effectful
 from aether_backend.utils.get_rpc_service import get_rpc_service
 from aether_backend.utils.validation import HexAddress
@@ -13,6 +12,7 @@ from mcp.types import ToolAnnotations
 from .constants import TIMEOUT_SECONDS
 from .struct_CUD import perform_create_struct, perform_delete_struct, perform_update_struct
 from .types import StructOperation
+from .utils import resolve_xrefs
 
 INSTRUCTIONS = get_content(Path(__file__).parent, "instructions.md")
 
@@ -22,11 +22,11 @@ config = get_config()
 
 @tool(
     description=INSTRUCTIONS,
-    annotations=ToolAnnotations(title="manage struct", destructiveHint=True),
+    annotations=ToolAnnotations(title="Manage Struct", destructiveHint=True),
     timeout=TIMEOUT_SECONDS,
 )  # tool is untyped in fastmcp
 @effectful  # type: ignore
-async def struct_manager(
+async def manage_struct(
     rpc_id: Annotated[
         str, "The ID of the RPC service/IDB to use. Formatted as `<file_name>_<date>-<time>`."
     ],
@@ -43,16 +43,6 @@ async def struct_manager(
 
     svc = await get_rpc_service(rpc_id)
 
-    xrefs = await get_xrefs_to(
-        svc,
-        location=var_name,
-    )
-
-    if xrefs.success is False:
-        raise RuntimeError(f"Failed to get xrefs {xrefs.result}")
-
-    refs = xrefs.result
-
     if config.backup:
         svc.take_snapshot()
 
@@ -61,6 +51,7 @@ async def struct_manager(
 
     match operation:
         case StructOperation.CREATE:
+            refs = await resolve_xrefs(svc, var_name)
             perform_create_struct(
                 svc,
                 function_address=function_address,
@@ -69,6 +60,7 @@ async def struct_manager(
                 custom_prompt=custom_prompt,
             )
         case StructOperation.UPDATE:
+            refs = await resolve_xrefs(svc, var_name)
             perform_update_struct(
                 svc,
                 function_address=function_address,
