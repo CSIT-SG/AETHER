@@ -19,17 +19,17 @@ from aether_benchmark.tasks.evaluate.models import (
 from aether_benchmark.utils.task import Task
 
 
-class EvaluateTask[TConfig: EvaluateConfig](
-    Task[[EvaluateRubric, Any, TConfig, EvidenceAdapter], dict[str, Any]]
+class EvaluateTask[TConfig: EvaluateConfig, TEvidence](
+    Task[[EvaluateRubric, TEvidence, TConfig, EvidenceAdapter[TEvidence]], dict[str, Any]]
 ):
     """Evaluate a single rubric entry against supplied information/evidence."""
 
     async def start(
         self,
         rubric: EvaluateRubric,
-        evidence: Any,
+        evidence: TEvidence,
         config: TConfig,
-        adapter: EvidenceAdapter,
+        adapter: EvidenceAdapter[TEvidence],
     ) -> dict[str, Any]:
         api_key = config["api_key"]
         base_url = config.get("base_url", "https://openrouter.ai/api/v1")
@@ -66,8 +66,8 @@ class EvaluateTask[TConfig: EvaluateConfig](
         description: str,
         rubric_name: str,
         model: OpenAIChatCompletionsModel,
-        evidence: Any,
-        adapter: EvidenceAdapter,
+        evidence: TEvidence,
+        adapter: EvidenceAdapter[TEvidence],
     ) -> CriterionResult:
         agent = Agent(
             name="CriterionEvaluator",

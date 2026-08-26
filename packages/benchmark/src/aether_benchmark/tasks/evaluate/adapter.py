@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any
@@ -10,6 +8,7 @@ from aether_backend.forwarded_rpc import (
     get_functions_called_recursively,
     get_local_variables,
 )
+from aether_backend.utils.get_rpc_service import AnyService
 from aether_backend.utils.subagent import (
     SubagentToolDependencies,
     build_subagent_tool,
@@ -18,42 +17,24 @@ from aether_utils.get_content import get_content
 from agents import Tool
 
 
-def _build_prompt(
-    criterion: str,
-    description: str,
-    rubric_name: str,
-) -> str:
-    """Shared user prompt."""
-    return f"""# Rubric: {rubric_name}
-## Description
-
-{description}
-
-## Criterion
-
-{criterion}
-
-Use the available evidence to determine whether this criterion is satisfied.
-"""
-
-
-class EvidenceAdapter(ABC):
-    """Adapts how a criterion-grading agent obtains evidence for one harness."""
-
-    system_prompt: str
+class EvidenceAdapter[T](ABC):
+    @property
+    @abstractmethod
+    def system_prompt(self) -> str:
+        """Return the system prompt."""
 
     @abstractmethod
     def build_tools(self) -> list[Tool]:
-        """Return the tools the grading agent may call only for IDB harness."""
+        """Return the tools the grading agent may call."""
 
     @abstractmethod
-    def run_context(self, evidence: Any) -> Any:
+    def run_context(self, evidence: T) -> Any | None:
         """Return the ``Runner.run`` context, or ``None`` when no context is used."""
 
     @abstractmethod
     def build_prompt(
         self,
-        evidence: Any,
+        evidence: T,
         criterion: str,
         description: str,
         rubric_name: str,
@@ -61,7 +42,7 @@ class EvidenceAdapter(ABC):
         """Compose the per-criterion grading prompt from the evidence."""
 
 
-class IDAEvidenceAdapter(EvidenceAdapter):
+class IDAEvidenceAdapter(EvidenceAdapter[AnyService]):
     """Grades the IDB file using the forwarded-RPC tools."""
 
     system_prompt = get_content(Path(__file__).parent, "evaluate_prompt.md")
@@ -79,20 +60,30 @@ class IDAEvidenceAdapter(EvidenceAdapter):
             )
         )
 
-    def run_context(self, evidence: Any) -> Any:
+    def run_context(self, evidence: AnyService) -> SubagentToolDependencies:
         return SubagentToolDependencies(evidence)
 
     def build_prompt(
         self,
-        evidence: Any,
+        evidence: AnyService,
         criterion: str,
         description: str,
         rubric_name: str,
     ) -> str:
-        return _build_prompt(criterion, description, rubric_name)
+        return f"""# Rubric: {rubric_name}
+## Description
+
+{description}
+
+## Criterion
+
+{criterion}
+
+Use the available evidence to determine whether this criterion is satisfied.
+"""
 
 
-class ChatbotEvidenceAdapter(EvidenceAdapter):
+class ChatbotEvidenceAdapter(EvidenceAdapter[str]):
     """Grades a chatbot conversation transcript presented inline."""
 
     system_prompt = get_content(Path(__file__).parent, "chatbot_evaluate_prompt.md")
@@ -100,12 +91,12 @@ class ChatbotEvidenceAdapter(EvidenceAdapter):
     def build_tools(self) -> list[Tool]:
         return []
 
-    def run_context(self, evidence: Any) -> Any:
+    def run_context(self, evidence: str) -> None:
         return None
 
     def build_prompt(
         self,
-        evidence: Any,
+        evidence: str,
         criterion: str,
         description: str,
         rubric_name: str,
