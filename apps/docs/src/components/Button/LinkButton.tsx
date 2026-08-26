@@ -1,4 +1,4 @@
-import { BaseProps, buttonVariants } from "@/components/constants";
+import { BaseProps, buttonVariants } from "@/components/Button/constants";
 import { twMerge } from "tailwind-merge";
 
 interface LinkButton extends BaseProps {
