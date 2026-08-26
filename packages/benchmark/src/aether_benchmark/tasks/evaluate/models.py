@@ -12,9 +12,3 @@ class EvaluateRubric(TypedDict):
     name: NotRequired[str]
     description: NotRequired[str]
     criteria: NotRequired[list[str]]
-
-
-class EvaluateConfig(TypedDict):
-    api_key: str
-    base_url: NotRequired[str]
-    model: NotRequired[str]

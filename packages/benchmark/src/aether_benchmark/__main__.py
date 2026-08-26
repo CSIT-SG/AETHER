@@ -4,11 +4,11 @@ Usage:
     python -m aether_benchmark --doc <transcript.md> --rubric <path> --api-key <key>
 """
 
-import argparse
 import asyncio
 import json
 import os
 from pathlib import Path
+from typing import cast
 
 from aether_benchmark.tasks.evaluate import (
     ChatbotEvidenceAdapter,
@@ -20,74 +20,43 @@ from aether_benchmark.tasks.run_benchmark.models import BenchmarkResult
 from aether_benchmark.tasks.start_rpc_server import StartRPCServerTask
 from aether_benchmark.utils.task import Run
 
+from .cli import BenchmarkArgs, DocTarget, IdbTarget, get_args
 from .tasks import ParseBenchmarkTask
 
 
-def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description="AETHER Benchmark — evaluate annotation quality against rubric."
-    )
-    parser.add_argument("--idb", type=Path, help="Path to the IDB/i64 file")
-    parser.add_argument(
-        "--doc",
-        type=Path,
-        help="Path to the chatbot transcript markdown file",
-    )
-    parser.add_argument("--rubric", required=True, type=Path, help="Path to the rubric YAML file")
-    parser.add_argument(
-        "--api-key",
-        default=os.environ["OPENROUTER_API_KEY"],
-        help="OpenRouter/OpenAI API key (default: OPENROUTER_API_KEY env)",
-    )
-    parser.add_argument(
-        "--model", default="openai/gpt-5-mini", help="Model slug (default: openai/gpt-5-mini)"
-    )
-    parser.add_argument("--base-url", default="https://openrouter.ai/api/v1", help="API base URL")
-    parser.add_argument(
-        "--ida-dir",
-        type=Path,
-        help="IDA Pro installation directory (default: IDADIR env; only used for ida harness)",
-    )
-    parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Show detailed per-entry results"
-    )
-    parser.add_argument("--json", action="store_true", help="Print the benchmark result as JSON")
-    parser.add_argument(
-        "--output",
-        type=Path,
-        help="Write the benchmark result as JSON to this file",
-    )
-    return parser
-
-
-def _resolve(idb: Path | None, doc: Path | None) -> str:
-    if idb is not None and doc is not None:
-        raise SystemExit("Both --idb and --doc passed, pass only one")
-    if idb is not None:
-        return "ida"
-    if doc is not None:
-        return "chatbot"
-    raise SystemExit("Provide either --idb <path> or --doc <transcript.md>")
-
-
 async def _run_benchmark(
-    args: argparse.Namespace,
+    args: BenchmarkArgs,
 ) -> tuple[RubricsSchema, BenchmarkResult]:
     """Acquire evidence for the selected harness and run the grading loop."""
-    config: dict[str, str] = {
-        "api_key": args.api_key,
-        "base_url": args.base_url,
-        "model": args.model,
-    }
-    kind = _resolve(args.idb, args.doc)
 
     # parse rubric
-    schema = await Run(ParseBenchmarkTask)(RubricsSchema, args.rubric)
+    schema = cast(RubricsSchema, await Run(ParseBenchmarkTask)(RubricsSchema, args.rubric))
 
     if args.verbose:
         print(f"Rubric: {schema.name} v{schema.version}")
         print(f"Rubrics: {len(schema.rubrics)} entries")
         print()
+
+    match args.target.name:
+        case "idb":
+            assert isinstance(args.target, IdbTarget)
+            async with Run(StartRPCServerTask)(
+                args.target.ida_dir, str(args.target.idb)
+            ) as rpc_handle:
+                service = await rpc_handle
+                await Run(RunBenchmarkTask)(
+                    schema, service, IDAEvidenceAdapter(), config, verbose=args.verbose
+                )
+        case "doc":
+            assert isinstance(args.target, DocTarget)
+            await Run(RunBenchmarkTask)(
+                schema, evidence, ChatbotEvidenceAdapter(), config, verbose=args.verbose
+            )
+
+        case _:
+            raise RuntimeError(
+                f"Invariant: unknown kind {args.target.name!r} (should be 'idb' or 'doc')"
+            )
 
     if kind == "ida":
         assert args.idb is not None
@@ -106,8 +75,7 @@ async def _run_benchmark(
 
 
 def main() -> None:
-    parser = _build_parser()
-    args = parser.parse_args()
+    args = get_args()
     schema, output = asyncio.run(_run_benchmark(args))
 
     if args.output is not None:

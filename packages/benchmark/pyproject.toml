@@ -12,6 +12,7 @@ dependencies = [
     "aether_utils",
     "aether_rpc",
     "aether_backend",
+    "pydantic-settings>=2.15.0",
 ]
 
 # [project.scripts]

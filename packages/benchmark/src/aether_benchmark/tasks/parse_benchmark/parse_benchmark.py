@@ -7,7 +7,7 @@ from pydantic import BaseModel, ValidationError
 from aether_benchmark.utils.task import Task
 
 
-class ParseBenchmarkTask[T: BaseModel](Task[[T, Path], T]):  # type: ignore[misc]
+class ParseBenchmarkTask[T: BaseModel](Task[[T, Path], T]):
     def __init__(self) -> None:
         self._cancelled = False
 
