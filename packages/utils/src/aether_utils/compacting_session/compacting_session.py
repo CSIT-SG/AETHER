@@ -12,6 +12,13 @@ RETRY_NOTE = (
 )
 
 
+def _has_orphan_tool_result(items: list[TResponseInputItem]) -> bool:
+    calls = {i.get("call_id") for i in items if i.get("type") == "function_call"}
+    return any(
+        i.get("type") == "function_call_output" and i.get("call_id") not in calls for i in items
+    )
+
+
 class CompactingSession(SQLiteSession):
     def __init__(
         self,
@@ -36,11 +43,11 @@ class CompactingSession(SQLiteSession):
         if len(history) <= self._threshold:
             return
 
-        # Keep the last N items and compact the rest
-        head = history[: -self._keep_last_n]
+        split = len(history) - self._keep_last_n
+        while split > 0 and _has_orphan_tool_result(history[split:]):
+            split -= 1
 
-        # leave the remainder of the history intact
-        tail = history[-self._keep_last_n :]
+        head, tail = history[:split], history[split:]
 
         compacted_item = await self._compact_history(head)
         if compacted_item is None:
