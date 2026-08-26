@@ -18,7 +18,6 @@ async def perform_create_struct(
     service: Any,
     *,
     function_address: HexAddress,
-    function_name: str,
     var_name: str,
     xrefs: XrefsResult,
     custom_prompt: str | None = None,

@@ -34,7 +34,6 @@ async def struct_manager(
     function_address: Annotated[
         HexAddress, "The hexadecimal effective address of the function to annotate."
     ],
-    function_name: Annotated[str, "name of the function at function_address"],
     var_name: Annotated[str, "name of target variable for which to create the struct"],
     custom_prompt: Annotated[
         str | None,
@@ -65,7 +64,6 @@ async def struct_manager(
             perform_create_struct(
                 svc,
                 function_address=function_address,
-                function_name=function_name,
                 var_name=var_name,
                 xrefs=refs,
                 custom_prompt=custom_prompt,
