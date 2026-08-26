@@ -36,7 +36,7 @@ async def annotate_function(
     custom_prompt: Annotated[
         str | None,
         "A hint regarding behavior for the subagent to guide analysis. Keep it less than 3 sentences.",
-    ] = None,
+    ] = "",
 ) -> Program:
 
     svc = await get_rpc_service(rpc_id)
@@ -44,10 +44,10 @@ async def annotate_function(
     if config.backup:
         svc.take_snapshot()
 
-    if custom_prompt is None:
-        custom_prompt = ""
-
     res = await get_functions_called_recursively(svc, address=address)
+    if not res.success:
+        raise RuntimeError(f"Failed to get functions called recursively: {res.result}")
+
     funcs = cast(FunctionTreeResult, res.result)
     yield Log(f"Found {funcs['count']} interesting child functions for {address}.")
     async for effect in annotate(svc, funcs, custom_prompt):

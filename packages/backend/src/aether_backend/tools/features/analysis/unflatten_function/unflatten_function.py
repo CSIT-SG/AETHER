@@ -45,8 +45,6 @@ async def unflatten(
         ),
     )
 
-    if custom_prompt is None:
-        custom_prompt = ""
     result = Runner.run_streamed(
         agent,
         context=SubagentToolDependencies(service),

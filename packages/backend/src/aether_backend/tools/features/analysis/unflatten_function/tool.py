@@ -25,7 +25,7 @@ async def unflatten_function(
     custom_prompt: Annotated[
         str | None,
         "A hint regarding behavior for the subagent to guide analysis. Keep it less than 3 sentences.",
-    ] = None,
+    ] = "",
 ) -> Program:
     async for effect in unflatten(await get_rpc_service(rpc_id), address, custom_prompt):
         yield effect
