@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any
 
 from aether_backend.forwarded_rpc import (
@@ -10,6 +11,7 @@ from aether_backend.forwarded_rpc import (
 from aether_backend.utils.effect import Program, Return
 from aether_backend.utils.validation import HexAddress
 from aether_rpc.capabilities.types import XrefsResult
+from aether_utils.get_content import get_content
 
 from ..utils import create_agent, run_agent
 
