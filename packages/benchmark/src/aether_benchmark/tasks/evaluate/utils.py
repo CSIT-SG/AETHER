@@ -40,7 +40,7 @@ class ParallelRunner:
         self._sem = asyncio.Semaphore(limit)
         self._tasks: list[asyncio.Task[AgentRunResult]] = []
 
-    async def _run_one[**P](
+    async def _run_one(
         self,
         prompt: str,
         *,

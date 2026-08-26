@@ -46,48 +46,68 @@ async def _run_eval(args: BenchmarkConfig, schema: BenchmarkSchema) -> Benchmark
 
 async def _run_benchmark(
     args: BenchmarkConfig,
-) -> None:
+) -> BenchmarkSchemaWithResults:
     """Acquire evidence for the selected harness and run the grading loop."""
-
-    # parse rubric
     schema = cast(BenchmarkSchema, await Run(ParseBenchmarkTask)(BenchmarkSchema, args.rubric))
-
     if args.verbose:
         print(f"Rubric: {schema.name} v{schema.version}")
         print(f"Rubrics: {len(schema.rubrics)} entries")
         print()
-
-    # run evaluation
     results = await _run_eval(args, schema)
+    return results
+
+
+def _aggregate(
+    rubric_results: list[bool],
+    weights: list[float],
+) -> dict[str, float | int]:
+    """Compute overall weighted score."""
+    total = len(rubric_results)
+    passed = sum(rubric_results)
+    total_weight = sum(weights)
+    weighted_score = (
+        sum(w for r, w in zip(rubric_results, weights, strict=True) if r) / total_weight
+        if total_weight > 0
+        else 0.0
+    )
+    score = passed / total if total else 0.0
+    return {"score": score, "passed": passed, "total": total, "weighted_score": weighted_score}
 
 
 def main() -> None:
     args = get_config()
-    schema, output = asyncio.run(_run_benchmark(args))
+    results = asyncio.run(_run_benchmark(args))
 
+    output = results.model_dump()
     if args.output is not None:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(output, indent=2), encoding="utf-8")
-
-    if args.json:
+    if args.json_output:
         print(json.dumps(output, indent=2))
         return
 
-    print(f"=== {schema.name} v{schema.version} ===")
-    print(f"Overall score: {output['score']:.1%} ({output['passed']}/{output['total']} passed)")
-    print(f"Weighted score: {output['weighted_score']:.1%}")
-    print()
-    for r in output["entries"]:
-        status = "✓" if r["overall_passed"] else "✗"
-        print(f"  [{status}] {r['rubric_name']}")
+    rubric_passed_flags = [
+        all(c.result["success"] and c.result["data"]["passed"] for c in rubric.criteria)
+        for rubric in results.rubrics
+    ]
+    weights = [rubric.weight for rubric in results.rubrics]
+    agg = _aggregate(rubric_passed_flags, weights)
 
+    print(f"=== {results.name} v{results.version} ===")
+    for rubric, rubric_passed in zip(results.rubrics, rubric_passed_flags, strict=True):
+        status = "✓" if rubric_passed else "✗"
+        print(f"  [{status}] {rubric.name}")
         if args.verbose:
-            for criterion in r["results"]:
-                c_status = "✓" if criterion["passed"] else "✗"
-                print(f"      [{c_status}] {criterion['description']}")
-                print(f"             {criterion['reasoning']}")
+            for c in rubric.criteria:
+                if c.result["success"]:
+                    c_status = "✓" if c.result["data"]["passed"] else "✗"
+                    reasoning = c.result["data"]["reasoning"]
+                else:
+                    c_status = "!"
+                    reasoning = f"Agent run failed: {c.result['error']}"
+                print(f"      [{c_status}] {c.criterion}")
+                print(f"             {reasoning}")
             print()
 
-
-if __name__ == "__main__":
-    main()
+    print(f"Overall score: {agg['score']:.1%} ({agg['passed']}/{agg['total']} passed)")
+    print(f"Weighted score: {agg['weighted_score']:.1%}")

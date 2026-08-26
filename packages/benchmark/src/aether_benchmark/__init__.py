@@ -1,7 +1,13 @@
-from .tasks import EvaluateTask, ParseBenchmarkTask, StartRPCServerTask
+from .tasks import (
+    EvaluateIDBTask,
+    EvaluateMDTask,
+    ParseBenchmarkTask,
+    StartRPCServerTask,
+)
 
 __all__ = [
-    "EvaluateTask",
+    "EvaluateIDBTask",
+    "EvaluateMDTask",
     "ParseBenchmarkTask",
     "StartRPCServerTask",
 ]
