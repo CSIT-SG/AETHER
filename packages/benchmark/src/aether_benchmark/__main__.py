@@ -1,7 +1,7 @@
 """
 Usage:
-    python -m aether_benchmark --kind ida --idb <path> --rubric <path> --api-key <key> --ida-dir <dir>
-    python -m aether_benchmark --kind chatbot --doc <transcript.md> --rubric <path> --api-key <key>
+    python -m aether_benchmark --idb <path> --rubric <path> --api-key <key> --ida-dir <dir>
+    python -m aether_benchmark --doc <transcript.md> --rubric <path> --api-key <key>
 """
 
 import argparse
@@ -22,19 +22,11 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="AETHER Benchmark — evaluate annotation quality against rubric."
     )
-    parser.add_argument(
-        "--kind",
-        choices=["ida", "chatbot"],
-        default="ida",
-        help="'ida' grades a pre-annotated IDB, 'chatbot' grades a transcript of chatbot conversation",
-    )
-    parser.add_argument(
-        "--idb", type=Path, help="Path to the IDB/i64/binary to evaluate (kind=ida)"
-    )
+    parser.add_argument("--idb", type=Path, help="Path to the IDB/i64 file")
     parser.add_argument(
         "--doc",
         type=Path,
-        help="Path to the chatbot conversation transcript markdown (kind=chatbot)",
+        help="Path to the chatbot transcript markdown file",
     )
     parser.add_argument("--rubric", required=True, type=Path, help="Path to the rubric YAML file")
     parser.add_argument(
@@ -49,7 +41,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--ida-dir",
         type=Path,
-        help="IDA Pro installation directory (default: IDADIR env; only used for kind=ida)",
+        help="IDA Pro installation directory (default: IDADIR env; only used for ida harness)",
     )
     parser.add_argument(
         "--verbose", "-v", action="store_true", help="Show detailed per-entry results"
@@ -63,12 +55,14 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _validate_args(args: argparse.Namespace) -> None:
-    """Ensure the arguments match the selected harness (``--kind``)."""
-    if args.kind == "ida" and args.idb is None:
-        raise SystemExit("--kind ida requires --idb <path>")
-    if args.kind == "chatbot" and args.doc is None:
-        raise SystemExit("--kind chatbot requires --doc <transcript.md>")
+def _resolve(idb: Path | None, doc: Path | None) -> str:
+    if idb is not None and doc is not None:
+        raise SystemExit("Both --idb and --doc passed, pass only one")
+    if idb is not None:
+        return "ida"
+    if doc is not None:
+        return "chatbot"
+    raise SystemExit("Provide either --idb <path> or --doc <transcript.md>")
 
 
 async def _run_benchmark(args: argparse.Namespace) -> None:
@@ -77,6 +71,13 @@ async def _run_benchmark(args: argparse.Namespace) -> None:
         "api_key": args.api_key,
         "base_url": args.base_url,
         "model": args.model,
+    }
+    kind = _resolve(args.idb, args.doc)
+    invocation: BenchmarkInput = {
+        "kind": kind,
+        "idb": args.idb,
+        "doc": args.doc,
+        "ida_dir": args.ida_dir,
     }
 
     # parse rubric
@@ -87,12 +88,6 @@ async def _run_benchmark(args: argparse.Namespace) -> None:
         print(f"Rubrics: {len(benchmark.rubrics)} entries")
         print()
 
-    invocation: BenchmarkInput = {
-        "kind": args.kind,
-        "idb": args.idb,
-        "doc": args.doc,
-        "ida_dir": args.ida_dir,
-    }
     output = await Run(RunBenchmarkTask)(benchmark, invocation, config, args.verbose)
 
     if args.output is not None:
@@ -122,7 +117,6 @@ async def _run_benchmark(args: argparse.Namespace) -> None:
 def main() -> None:
     parser = _build_parser()
     args = parser.parse_args()
-    _validate_args(args)
     asyncio.run(_run_benchmark(args))
 
 
