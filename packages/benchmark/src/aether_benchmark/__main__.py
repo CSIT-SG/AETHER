@@ -14,23 +14,23 @@ from aether_benchmark.tasks.evaluate import (
     ChatbotEvidenceAdapter,
     IDAEvidenceAdapter,
 )
-from aether_benchmark.tasks.parse_benchmark.models import RubricsSchema
+from aether_benchmark.tasks.parse_benchmark.models import BenchmarkSchema
 from aether_benchmark.tasks.run_benchmark import RunBenchmarkTask
 from aether_benchmark.tasks.run_benchmark.models import BenchmarkResult
 from aether_benchmark.tasks.start_rpc_server import StartRPCServerTask
 from aether_benchmark.utils.task import Run
 
-from .cli import BenchmarkArgs, DocTarget, IdbTarget, get_args
+from .cli import BenchmarkConfig, DocTarget, IdbTarget, get_config
 from .tasks import ParseBenchmarkTask
 
 
 async def _run_benchmark(
-    args: BenchmarkArgs,
-) -> tuple[RubricsSchema, BenchmarkResult]:
+    args: BenchmarkConfig,
+) -> tuple[BenchmarkSchema, BenchmarkResult]:
     """Acquire evidence for the selected harness and run the grading loop."""
 
     # parse rubric
-    schema = cast(RubricsSchema, await Run(ParseBenchmarkTask)(RubricsSchema, args.rubric))
+    schema = cast(BenchmarkSchema, await Run(ParseBenchmarkTask)(BenchmarkSchema, args.rubric))
 
     if args.verbose:
         print(f"Rubric: {schema.name} v{schema.version}")
@@ -75,7 +75,7 @@ async def _run_benchmark(
 
 
 def main() -> None:
-    args = get_args()
+    args = get_config()
     schema, output = asyncio.run(_run_benchmark(args))
 
     if args.output is not None:

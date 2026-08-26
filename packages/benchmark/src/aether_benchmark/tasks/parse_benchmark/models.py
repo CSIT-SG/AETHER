@@ -8,7 +8,7 @@ class RubricEntry(BaseModel):
     criteria: list[str]
 
 
-class RubricsSchema(BaseModel):
+class BenchmarkSchema(BaseModel):
     name: str
     version: str | None = None
     description: str | None = None

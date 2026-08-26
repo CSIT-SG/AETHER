@@ -66,7 +66,7 @@ class DocTarget(BaseModel):
     doc: Path
 
 
-class BenchmarkArgs(BaseModel):
+class BenchmarkConfig(BaseModel):
     target: IdbTarget | DocTarget
     rubric: Path
     api_key: str
@@ -77,7 +77,7 @@ class BenchmarkArgs(BaseModel):
     output: Path | None
 
 
-def get_args() -> BenchmarkArgs:
+def get_config() -> BenchmarkConfig:
     """Run the CLI, validate, and return an arg set."""
     raw = CliApp.run(BenchmarkSettings)
 
@@ -90,7 +90,7 @@ def get_args() -> BenchmarkArgs:
         target = DocTarget(doc=raw.doc)
 
     assert raw.api_key is not None
-    return BenchmarkArgs(
+    return BenchmarkConfig(
         target=target,
         rubric=raw.rubric,
         api_key=raw.api_key,

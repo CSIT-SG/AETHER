@@ -2,7 +2,7 @@ from typing import Any, cast
 
 from aether_benchmark.tasks.evaluate import EvaluateTask, EvidenceAdapter
 from aether_benchmark.tasks.evaluate.models import EvaluateRubric
-from aether_benchmark.tasks.parse_benchmark.models import RubricsSchema
+from aether_benchmark.tasks.parse_benchmark.models import BenchmarkSchema
 from aether_benchmark.utils.task import Run, Task
 
 from .models import BenchmarkResult
@@ -43,13 +43,13 @@ def _aggregate(
 
 
 class RunBenchmarkTask[TEvidence](
-    Task[[RubricsSchema, TEvidence, EvidenceAdapter[TEvidence], dict[str, str]], BenchmarkResult]
+    Task[[BenchmarkSchema, TEvidence, EvidenceAdapter[TEvidence], dict[str, str]], BenchmarkResult]
 ):
     """Grade a rubric schema against supplied evidence."""
 
     async def start(
         self,
-        schema: RubricsSchema,
+        schema: BenchmarkSchema,
         evidence: TEvidence,
         adapter: EvidenceAdapter[TEvidence],
         config: dict[str, str],

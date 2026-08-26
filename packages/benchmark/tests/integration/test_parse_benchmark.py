@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 from aether_benchmark.tasks.parse_benchmark import ParseBenchmarkTask
-from aether_benchmark.tasks.parse_benchmark.models import RubricsSchema
+from aether_benchmark.tasks.parse_benchmark.models import BenchmarkSchema
 
 
 @pytest.mark.asyncio
@@ -25,7 +25,7 @@ rubrics:
         encoding="utf-8",
     )
 
-    parsed = await ParseBenchmarkTask().start(RubricsSchema, rubric_path)
+    parsed = await ParseBenchmarkTask().start(BenchmarkSchema, rubric_path)
 
     assert parsed.name == "Reference Handler Analysis"
     assert parsed.rubrics[0].name == "packet_parsing_logic"
@@ -49,7 +49,7 @@ rubrics:
     )
 
     with pytest.raises(ValueError):
-        await ParseBenchmarkTask().start(RubricsSchema, rubric_path)
+        await ParseBenchmarkTask().start(BenchmarkSchema, rubric_path)
 
 
 @pytest.mark.asyncio
@@ -69,7 +69,7 @@ rubrics:
     )
 
     with pytest.raises(ValueError):
-        await ParseBenchmarkTask().start(RubricsSchema, rubric_path)
+        await ParseBenchmarkTask().start(BenchmarkSchema, rubric_path)
 
 
 @pytest.mark.asyncio
@@ -87,7 +87,7 @@ rubrics:
         encoding="utf-8",
     )
 
-    parsed = await ParseBenchmarkTask().start(RubricsSchema, rubric_path)
+    parsed = await ParseBenchmarkTask().start(BenchmarkSchema, rubric_path)
     assert parsed.rubrics[0].weight == 1.0
 
 
@@ -107,7 +107,7 @@ rubrics:
         encoding="utf-8",
     )
 
-    parsed = await ParseBenchmarkTask().start(RubricsSchema, rubric_path)
+    parsed = await ParseBenchmarkTask().start(BenchmarkSchema, rubric_path)
     assert parsed.rubrics[0].criteria[0] == "Checksum values are validated before use"
 
 
@@ -123,7 +123,7 @@ version: "1.0.0"
     )
 
     with pytest.raises(ValueError):
-        await ParseBenchmarkTask().start(RubricsSchema, rubric_path)
+        await ParseBenchmarkTask().start(BenchmarkSchema, rubric_path)
 
 
 @pytest.mark.asyncio
@@ -141,4 +141,4 @@ rubrics:
     )
 
     with pytest.raises(ValueError):
-        await ParseBenchmarkTask().start(RubricsSchema, rubric_path)
+        await ParseBenchmarkTask().start(BenchmarkSchema, rubric_path)
