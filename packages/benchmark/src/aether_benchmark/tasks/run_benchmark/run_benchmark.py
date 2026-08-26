@@ -53,41 +53,45 @@ class RunBenchmarkTask(
 ):
     async def start(
         self,
-        benchmark: RubricsSchema,
-        invocation: BenchmarkInput,
+        schema: RubricsSchema,
+        inputs: BenchmarkInput,
         config: dict[str, str],
-        verbose: bool,
+        *,
+        verbose: bool = False,
     ) -> BenchmarkResult:
-        if invocation["kind"] == "ida":
-            idb = invocation.get("idb")
+        if inputs["kind"] == "ida":
+            idb = inputs.get("idb")
             if idb is None:
-                raise ValueError("--kind ida requires --idb <path>")
-            ida_dir = invocation.get("ida_dir") or Path(os.environ["IDADIR"])
+                raise ValueError("ida harness requires --idb <path>")
+            ida_dir = inputs.get("ida_dir") or Path(os.environ["IDADIR"])
             async with Run(StartRPCServerTask)(ida_dir, str(idb)) as rpc_handle:
                 service = await rpc_handle
                 return await self._evaluate(
-                    benchmark, service, IDAEvidenceAdapter(), config, verbose
+                    schema, service, IDAEvidenceAdapter(), config, verbose=verbose
                 )
         # chatbot
-        doc = invocation.get("doc")
+        doc = inputs.get("doc")
         if doc is None:
-            raise ValueError("--kind chatbot requires --doc <transcript.md>")
+            raise ValueError("chatbot harness requires --doc <transcript.md>")
         evidence = doc.read_text(encoding="utf-8")
-        return await self._evaluate(benchmark, evidence, ChatbotEvidenceAdapter(), config, verbose)
+        return await self._evaluate(
+            schema, evidence, ChatbotEvidenceAdapter(), config, verbose=verbose
+        )
 
     async def _evaluate(
         self,
-        benchmark: RubricsSchema,
+        schema: RubricsSchema,
         evidence: Any,
         adapter: Any,
         config: dict[str, str],
-        verbose: bool,
+        *,
+        verbose: bool = False,
     ) -> BenchmarkResult:
         """Run the grading agent over every rubric entry, collecting results  + weights."""
         entry_results: list[dict[str, Any]] = []
         weights: list[float] = []
 
-        for entry in benchmark.rubrics:
+        for entry in schema.rubrics:
             if verbose:
                 print(f"  Evaluating {entry.name}...", end="", flush=True)
 
@@ -106,8 +110,8 @@ class RunBenchmarkTask(
         aggregate = _aggregate(entry_results, weights)
 
         return BenchmarkResult(
-            benchmark_name=benchmark.name,
-            benchmark_version=benchmark.version or "",
+            benchmark_name=schema.name,
+            benchmark_version=schema.version or "",
             entries=entry_results,
             score=aggregate["score"],
             passed=aggregate["passed"],

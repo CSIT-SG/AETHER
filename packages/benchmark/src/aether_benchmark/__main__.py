@@ -73,7 +73,7 @@ async def _run_benchmark(args: argparse.Namespace) -> None:
         "model": args.model,
     }
     kind = _resolve(args.idb, args.doc)
-    invocation: BenchmarkInput = {
+    inputs: BenchmarkInput = {
         "kind": kind,
         "idb": args.idb,
         "doc": args.doc,
@@ -81,14 +81,14 @@ async def _run_benchmark(args: argparse.Namespace) -> None:
     }
 
     # parse rubric
-    benchmark = await Run(ParseBenchmarkTask)(RubricsSchema, args.rubric)
+    schema = await Run(ParseBenchmarkTask)(RubricsSchema, args.rubric)
 
     if args.verbose:
-        print(f"Rubric: {benchmark.name} v{benchmark.version}")
-        print(f"Rubrics: {len(benchmark.rubrics)} entries")
+        print(f"Rubric: {schema.name} v{schema.version}")
+        print(f"Rubrics: {len(schema.rubrics)} entries")
         print()
 
-    output = await Run(RunBenchmarkTask)(benchmark, invocation, config, args.verbose)
+    output = await Run(RunBenchmarkTask)(schema, inputs, config, verbose=args.verbose)
 
     if args.output is not None:
         args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -98,7 +98,7 @@ async def _run_benchmark(args: argparse.Namespace) -> None:
         print(json.dumps(output, indent=2))
         return
 
-    print(f"=== {benchmark.name} v{benchmark.version} ===")
+    print(f"=== {schema.name} v{schema.version} ===")
     print(f"Overall score: {output['score']:.1%} ({output['passed']}/{output['total']} passed)")
     print(f"Weighted score: {output['weighted_score']:.1%}")
     print()
