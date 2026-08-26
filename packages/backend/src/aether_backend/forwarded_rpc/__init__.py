@@ -6,6 +6,7 @@ from .delete_struct import delete_struct
 from .delete_struct_field import delete_struct_field
 from .get_binary_metadata import get_binary_metadata
 from .get_data_at_address import get_data_at_address
+from .get_function_by_address import get_function_by_address
 from .get_function_pseudocode import get_function_pseudocode
 from .get_functions_called_recursively import get_functions_called_recursively
 from .get_local_variables import get_local_variables
@@ -42,4 +43,5 @@ __all__ = [
     "get_struct_info",
     "rename_struct",
     "rename_struct_field",
+    "get_function_by_address",
 ]

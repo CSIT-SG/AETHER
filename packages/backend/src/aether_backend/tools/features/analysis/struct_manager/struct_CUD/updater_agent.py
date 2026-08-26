@@ -12,6 +12,7 @@ from aether_backend.forwarded_rpc import (
     rename_struct_field,
 )
 from aether_backend.utils.effect import Program, Return
+from aether_backend.utils.validation import HexAddress
 from aether_rpc.capabilities.types import XrefsResult
 
 from ..types import StructOperation
@@ -22,10 +23,13 @@ async def build_and_run_updater(
     service: Any,
     *,
     operation: StructOperation,
+    function_address: HexAddress,
+    function_name: str,
     var_name: str,
     xrefs: XrefsResult,
     custom_prompt: str | None = None,
 ) -> Program:
+    name = "struct updater"
     system_prompt = get_content(Path(__file__).parent, "struct_updater_prompt.md")
     tool_list = [
         get_function_pseudocode,
@@ -38,11 +42,13 @@ async def build_and_run_updater(
         rename_struct_field,
         get_struct_id_by_name,
     ]
-    agent = create_agent(tool_list, system_prompt)
+    agent = create_agent(tool_list, system_prompt, name)
     result = run_agent(
         service,
         agent=agent,
         operation=operation,
+        function_address=function_address,
+        function_name=function_name,
         var_name=var_name,
         xrefs=xrefs,
         custom_prompt=custom_prompt,

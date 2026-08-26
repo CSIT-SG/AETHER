@@ -7,6 +7,7 @@ from aether_backend.forwarded_rpc import (
     get_function_pseudocode,
 )
 from aether_backend.utils.effect import Program, Return
+from aether_backend.utils.validation import HexAddress
 from aether_rpc.capabilities.types import XrefsResult
 
 from ..types import StructOperation
@@ -17,10 +18,13 @@ async def build_and_run_creator(
     service: Any,
     *,
     operation: StructOperation,
+    function_address: HexAddress,
+    function_name: str,
     var_name: str,
     xrefs: XrefsResult,
     custom_prompt: str | None = None,
 ) -> Program:
+    name = "struct creator"
     system_prompt = get_content(Path(__file__).parent, "struct_creator_prompt.md")
     tool_list = [
         get_function_pseudocode,
@@ -28,11 +32,13 @@ async def build_and_run_creator(
         add_struct_field,
         create_struct,
     ]
-    agent = create_agent(tool_list, system_prompt)
+    agent = create_agent(tool_list, system_prompt, name)
     result = run_agent(
         service,
         agent=agent,
         operation=operation,
+        function_address=function_address,
+        function_name=function_name,
         var_name=var_name,
         xrefs=xrefs,
         custom_prompt=custom_prompt,

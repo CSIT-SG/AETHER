@@ -4,13 +4,14 @@ from typing import Annotated
 from aether_backend.forwarded_rpc import get_xrefs_to
 from aether_backend.utils.effect import Log, Program, effectful
 from aether_backend.utils.get_rpc_service import get_rpc_service
+from aether_backend.utils.validation import HexAddress
 from aether_utils.config import get_config
 from aether_utils.get_content import get_content
 from fastmcp.tools import tool
 from mcp.types import ToolAnnotations
 
 from .constants import TIMEOUT_SECONDS
-from .struct_CUD import build_and_run_creator, build_and_run_updater
+from .struct_CUD import build_and_run_creator, build_and_run_updater, struct_deleter
 from .types import StructOperation
 
 INSTRUCTIONS = get_content(Path(__file__).parent, "instructions.md")
@@ -30,6 +31,10 @@ async def struct_manager(
         str, "The ID of the RPC service/IDB to use. Formatted as `<file_name>_<date>-<time>`."
     ],
     operation: Annotated[StructOperation, "Operation to perform on the struct"],
+    function_address: Annotated[
+        HexAddress, "The hexadecimal effective address of the function to annotate."
+    ],
+    function_name: Annotated[str, "name of the function at function_address"],
     var_name: Annotated[str, "name of target variable for which to create the struct"],
     custom_prompt: Annotated[
         str | None,
@@ -58,13 +63,27 @@ async def struct_manager(
     match operation:
         case StructOperation.CREATE:
             build_and_run_creator(
-                svc, operation=operation, var_name=var_name, xrefs=refs, custom_prompt=custom_prompt
+                svc,
+                operation=operation,
+                function_address=function_address,
+                function_name=function_name,
+                var_name=var_name,
+                xrefs=refs,
+                custom_prompt=custom_prompt,
             )
         case StructOperation.UPDATE:
             build_and_run_updater(
-                svc, operation=operation, var_name=var_name, xrefs=refs, custom_prompt=custom_prompt
+                svc,
+                operation=operation,
+                function_address=function_address,
+                function_name=function_name,
+                var_name=var_name,
+                xrefs=refs,
+                custom_prompt=custom_prompt,
             )
         case StructOperation.DELETE:
-            ...
-            yield Log(f"Deleted struct at {var_name}")
+            deleted = await struct_deleter(
+                svc, function_address=function_address, var_name=var_name
+            )
+            yield Log(f"Deleted struct {deleted}")
             return
