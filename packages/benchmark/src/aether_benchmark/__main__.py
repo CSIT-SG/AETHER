@@ -6,17 +6,14 @@ Usage:
 
 import asyncio
 import json
-import os
-from pathlib import Path
 from typing import cast
 
 from aether_benchmark.tasks.evaluate import (
-    ChatbotEvidenceAdapter,
-    IDAEvidenceAdapter,
+    EvaluateIDBTask,
+    EvaluateMDTask,
 )
+from aether_benchmark.tasks.evaluate.models import BenchmarkSchemaWithResults
 from aether_benchmark.tasks.parse_benchmark.models import BenchmarkSchema
-from aether_benchmark.tasks.run_benchmark import RunBenchmarkTask
-from aether_benchmark.tasks.run_benchmark.models import BenchmarkResult
 from aether_benchmark.tasks.start_rpc_server import StartRPCServerTask
 from aether_benchmark.utils.task import Run
 
@@ -24,9 +21,32 @@ from .cli import BenchmarkConfig, DocTarget, IdbTarget, get_config
 from .tasks import ParseBenchmarkTask
 
 
+async def _run_eval(args: BenchmarkConfig, schema: BenchmarkSchema) -> BenchmarkSchemaWithResults:
+    """Run evaluation for the given benchmark config and schema."""
+
+    match args.target.name:
+        case "idb":
+            assert isinstance(args.target, IdbTarget)
+            async with Run(StartRPCServerTask)(
+                args.target.ida_dir, str(args.target.idb)
+            ) as rpc_handle:
+                service = await rpc_handle
+                return await Run(EvaluateIDBTask)(service, args, schema)
+        case "doc":
+            assert isinstance(args.target, DocTarget)
+            transcript = args.target.doc.read_text(encoding="utf-8")  # io error will propagate
+
+            return await Run(EvaluateMDTask)(args, schema, transcript)
+        case _:
+            raise RuntimeError(
+                f"Invariant: unknown kind {args.target.name!r} (should be 'idb' or 'doc')"
+            )
+    raise RuntimeError("Unreachable code reached in _run_eval")
+
+
 async def _run_benchmark(
     args: BenchmarkConfig,
-) -> tuple[BenchmarkSchema, BenchmarkResult]:
+) -> None:
     """Acquire evidence for the selected harness and run the grading loop."""
 
     # parse rubric
@@ -37,41 +57,8 @@ async def _run_benchmark(
         print(f"Rubrics: {len(schema.rubrics)} entries")
         print()
 
-    match args.target.name:
-        case "idb":
-            assert isinstance(args.target, IdbTarget)
-            async with Run(StartRPCServerTask)(
-                args.target.ida_dir, str(args.target.idb)
-            ) as rpc_handle:
-                service = await rpc_handle
-                await Run(RunBenchmarkTask)(
-                    schema, service, IDAEvidenceAdapter(), config, verbose=args.verbose
-                )
-        case "doc":
-            assert isinstance(args.target, DocTarget)
-            await Run(RunBenchmarkTask)(
-                schema, evidence, ChatbotEvidenceAdapter(), config, verbose=args.verbose
-            )
-
-        case _:
-            raise RuntimeError(
-                f"Invariant: unknown kind {args.target.name!r} (should be 'idb' or 'doc')"
-            )
-
-    if kind == "ida":
-        assert args.idb is not None
-        ida_dir = args.ida_dir or Path(os.environ["IDADIR"])
-        async with Run(StartRPCServerTask)(ida_dir, str(args.idb)) as rpc_handle:
-            service = await rpc_handle
-            return schema, await Run(RunBenchmarkTask)(
-                schema, service, IDAEvidenceAdapter(), config, verbose=args.verbose
-            )
-
-    assert args.doc is not None
-    evidence = args.doc.read_text(encoding="utf-8")
-    return schema, await Run(RunBenchmarkTask)(
-        schema, evidence, ChatbotEvidenceAdapter(), config, verbose=args.verbose
-    )
+    # run evaluation
+    results = await _run_eval(args, schema)
 
 
 def main() -> None:

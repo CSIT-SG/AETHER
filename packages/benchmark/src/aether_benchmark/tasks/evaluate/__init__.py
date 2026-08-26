@@ -1,11 +1,7 @@
-from .adapter import EvidenceAdapter
-from .chatbot_adapter import ChatbotEvidenceAdapter
-from .evaluate import EvaluateTask
-from .ida_adapter import IDAEvidenceAdapter
+from .evaluate_idb import EvaluateIDBTask
+from .evaluate_md import EvaluateMDTask
 
 __all__ = [
-    "ChatbotEvidenceAdapter",
-    "EvaluateTask",
-    "EvidenceAdapter",
-    "IDAEvidenceAdapter",
+    "EvaluateIDBTask",
+    "EvaluateMDTask",
 ]
