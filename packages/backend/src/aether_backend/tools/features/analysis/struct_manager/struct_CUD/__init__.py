@@ -1,5 +1,5 @@
-from .creator_agent import build_and_run_creator
-from .deleter import struct_deleter
-from .updater_agent import build_and_run_updater
+from .creator_agent import perform_create_struct
+from .deleter import perform_delete_struct
+from .updater_agent import perform_update_struct
 
-__all__ = ["build_and_run_creator", "build_and_run_updater", "struct_deleter"]
+__all__ = ["perform_create_struct", "perform_update_struct", "perform_delete_struct"]

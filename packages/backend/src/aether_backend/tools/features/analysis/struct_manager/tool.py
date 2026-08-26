@@ -11,7 +11,7 @@ from fastmcp.tools import tool
 from mcp.types import ToolAnnotations
 
 from .constants import TIMEOUT_SECONDS
-from .struct_CUD import build_and_run_creator, build_and_run_updater, struct_deleter
+from .struct_CUD import perform_create_struct, perform_delete_struct, perform_update_struct
 from .types import StructOperation
 
 INSTRUCTIONS = get_content(Path(__file__).parent, "instructions.md")
@@ -62,9 +62,8 @@ async def struct_manager(
 
     match operation:
         case StructOperation.CREATE:
-            build_and_run_creator(
+            perform_create_struct(
                 svc,
-                operation=operation,
                 function_address=function_address,
                 function_name=function_name,
                 var_name=var_name,
@@ -72,17 +71,15 @@ async def struct_manager(
                 custom_prompt=custom_prompt,
             )
         case StructOperation.UPDATE:
-            build_and_run_updater(
+            perform_update_struct(
                 svc,
-                operation=operation,
                 function_address=function_address,
-                function_name=function_name,
                 var_name=var_name,
                 xrefs=refs,
                 custom_prompt=custom_prompt,
             )
         case StructOperation.DELETE:
-            deleted = await struct_deleter(
+            deleted = await perform_delete_struct(
                 svc, function_address=function_address, var_name=var_name
             )
             yield Log(f"Deleted struct {deleted}")

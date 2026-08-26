@@ -49,5 +49,3 @@ Remember: reason carefully, be deliberate, and back your improvements with evide
 Do not hallucinate - that refers to struct definition which do not reflect reality and the actual code state and path.
 
 You must not assume the analysis is "completed in the background" and you must not truncate it, that is BANNED.
-
-Thank you!

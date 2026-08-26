@@ -8,14 +8,11 @@ from aether_backend.utils.subagent import (
     build_subagent_tool,
 )
 from aether_backend.utils.validation import HexAddress
-from aether_rpc.capabilities.types import XrefsResult
 from aether_utils.api_client import (
     OpenAIGateway,
 )
 from aether_utils.config import get_config
 from agents import Agent, ModelSettings, Runner
-
-from .types import StructOperation
 
 
 def create_agent(
@@ -44,21 +41,15 @@ async def run_agent(
     svc: Any,
     *,
     agent: Agent,
-    operation: StructOperation,
-    function_address: HexAddress,
-    function_name: str,
-    var_name: str,
-    xrefs: XrefsResult,
+    user_prompt: str,
     custom_prompt: str | None = None,
 ) -> Program:
+    if custom_prompt is None:
+        custom_prompt = ""
     result = Runner.run_streamed(
         agent,
         context=SubagentToolDependencies(svc),
-        input=(
-            f"{operation} the struct representative of {var_name} which is found in the function {function_name} at {function_address}"
-            f"For added context you are to take a look at {xrefs}. These are the cross references to {var_name}"
-            f"{custom_prompt}"
-        ),
+        input=user_prompt + custom_prompt,
         max_turns=100000,
     )
 
