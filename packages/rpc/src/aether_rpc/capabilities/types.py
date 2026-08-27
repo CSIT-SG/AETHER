@@ -40,6 +40,7 @@ class AddressData(TypedDict):
 
     address: str
     name: str | None
+    type: str
     function: FunctionInfo | None
     item_size: int
     raw_bytes: str
@@ -182,6 +183,13 @@ class AppliedStruct(TypedDict):
     address: int
     struct_id: int
     struct_name: str
+
+
+class AppliedStructInStack(TypedDict):
+    function_name: str
+    struct_id: int
+    struct_name: str
+    variable: str
 
 
 class RenameStructResult(TypedDict):

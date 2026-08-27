@@ -45,6 +45,18 @@ typedef struct {
     size_t n;
 } pool;
 
+struct Person {
+    char name[50];
+    int age;
+    float height;
+};
+
+static const struct Person juliet = {
+    "Jane",
+    20,
+    1.88
+};
+
 node* foo_make(int x);
 node* bar_link(node *p, node *q);
 pool* baz_pool(size_t n);
@@ -52,6 +64,7 @@ void qux_fill(pool *p);
 void zap_free(pool *p);
 void max_depth();
 void self_call();
+void struct_test();
 
 node* foo_make(int x) {
     node *p = (node*)malloc(sizeof(node));
@@ -121,7 +134,6 @@ int main() {
     pool *p = baz_pool(4);
     qux_fill(p);
     zap_free(p);
-    run_test_shellcode();
     return 0;
 }
 
@@ -155,4 +167,23 @@ void max_depth_6() {
 
 void self_call() {
     self_call();
+}
+
+void print_person(struct Person *person)
+{
+    printf("Name: %s\n", person->name);
+    printf("Age: %d\n", person->age);
+    printf("Height: %.2f\n", person->height);
+}
+
+void struct_test()
+{
+    struct Person alice = {
+        .name = "Alice",
+        .age = 25,
+        .height = 1.68f
+    };
+    print_person(&alice);
+    print_person(&juliet);
+
 }
