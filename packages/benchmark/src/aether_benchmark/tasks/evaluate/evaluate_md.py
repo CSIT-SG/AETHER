@@ -33,8 +33,8 @@ class EvaluateMDTask(Task[[BenchmarkConfig, BenchmarkSchema, str], BenchmarkSche
             model=model,
         )
 
-        constructed_prompts = map(
-            lambda rubric: [
+        constructed_prompts = (
+            [
                 f"""# Rubric: {rubric.name}
         ## Description
 
@@ -51,8 +51,8 @@ class EvaluateMDTask(Task[[BenchmarkConfig, BenchmarkSchema, str], BenchmarkSche
         Determine whether the chatbot's final answer satisfies the criterion.
         """
                 for criterion in rubric.criteria
-            ],
-            benchmark.rubrics,
+            ]
+            for rubric in benchmark.rubrics
         )
 
         prompts = list(chain.from_iterable(constructed_prompts))

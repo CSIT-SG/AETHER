@@ -111,3 +111,7 @@ def main() -> None:
 
     print(f"Overall score: {agg['score']:.1%} ({agg['passed']}/{agg['total']} passed)")
     print(f"Weighted score: {agg['weighted_score']:.1%}")
+
+
+if __name__ == "__main__":
+    main()

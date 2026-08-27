@@ -52,8 +52,8 @@ class EvaluateIDBTask(
             ],
         )
 
-        constructed_prompts = map(
-            lambda rubric: [
+        constructed_prompts = (
+            [
                 f"""# Rubric: {rubric.name}
         ## Description
         {rubric.description or "No description provided."}
@@ -64,8 +64,8 @@ class EvaluateIDBTask(
         Use the available evidence to determine whether this criterion is satisfied.
         """
                 for criterion in rubric.criteria
-            ],
-            benchmark.rubrics,
+            ]
+            for rubric in benchmark.rubrics
         )
 
         prompts = list(chain.from_iterable(constructed_prompts))
