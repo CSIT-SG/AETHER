@@ -1,0 +1,46 @@
+import { Callout, Tabs } from 'nextra/components'
+
+# Benchmark CLI
+
+The benchmark CLI evaluates either an IDA database or a markdown transcript.
+
+## Usage
+
+<Tabs items={['IDB target', 'Document target']}>
+  <Tabs.Tab>
+    ```bash copy
+    aether_benchmark --rubric path/to/rubric.yaml --idb path/to/sample.idb --ida-dir "C:\Program Files\IDA Professional 9.2" --api-key <API_KEY>
+    ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+    ```bash copy
+    aether_benchmark --rubric path/to/rubric.yaml --doc path/to/transcript.md --api-key <API_KEY>
+    ```
+  </Tabs.Tab>
+</Tabs>
+
+## Required options
+
+| Option | Required | Description |
+| :--- | :--- | :--- |
+| `--rubric` | Yes | Path to the rubric YAML file. |
+| `--idb` or `--doc` | Yes | Choose exactly one input target. |
+| `--api-key` or `OPENROUTER_API_KEY` | Yes | API key for the model provider. |
+| `--ida-dir` | Only with `--idb` | IDA installation directory. |
+
+## Optional flags
+
+| Option | Alias | Description |
+| :--- | :--- | :--- |
+| `--model` | - | Model slug to use. Default: `openai/gpt-5-mini`. |
+| `--base-url` | - | API base URL. Default: `https://openrouter.ai/api/v1`. |
+| `-v` | `--verbose` | Print detailed per-entry results. |
+| `--json` | - | Emit JSON output. |
+| `-o` | `--output` | Write the JSON result to a file. |
+
+## Notes
+
+- Use exactly one of `--idb` or `--doc`.
+- If you run against an IDB, set `--ida-dir` or export `IDADIR`.
+- If you do not pass `--api-key`, the CLI reads `OPENROUTER_API_KEY` from the environment.
+
