@@ -58,7 +58,7 @@ async def run_agent(
 
 
 async def get_var_type(svc: Any, function_address: HexAddress, variable: str) -> str:
-    func = await get_function_by_address(svc, address=function_address)
+    func = await get_function_by_address(service=svc, address=function_address)
     if func.success is False:
         raise RuntimeError(f"Unable to get function {function_address}")
     func_name = func.result["name"]

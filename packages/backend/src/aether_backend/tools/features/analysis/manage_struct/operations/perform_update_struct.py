@@ -29,7 +29,7 @@ async def perform_update_struct(
     xrefs: XrefsResult,
     custom_prompt: str | None = None,
 ) -> Program:
-    func = await get_function_by_address(service, address=function_address)
+    func = await get_function_by_address(service=service, address=function_address)
     if func.success is False:
         raise RuntimeError(f"Unable to get function {function_address}")
     function_name = func.result["name"]

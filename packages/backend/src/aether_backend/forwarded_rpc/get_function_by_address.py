@@ -16,4 +16,4 @@ async def get_function_by_address(
         address, size, flags) on success, or an error message if the address
         is invalid or no function bounds it.
     """
-    return service.get_function_by_address(service, address=address)
+    return service.get_function_by_address(service=service, address=address)

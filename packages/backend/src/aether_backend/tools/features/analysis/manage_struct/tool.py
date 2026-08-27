@@ -52,22 +52,24 @@ async def manage_struct(
     match operation:
         case StructOperation.CREATE:
             refs = await resolve_xrefs(svc, var_name)
-            perform_create_struct(
+            async for effect in perform_create_struct(
                 svc,
                 function_address=function_address,
                 var_name=var_name,
                 xrefs=refs,
                 custom_prompt=custom_prompt,
-            )
+            ):
+                yield effect
         case StructOperation.UPDATE:
             refs = await resolve_xrefs(svc, var_name)
-            perform_update_struct(
+            async for effect in perform_update_struct(
                 svc,
                 function_address=function_address,
                 var_name=var_name,
                 xrefs=refs,
                 custom_prompt=custom_prompt,
-            )
+            ):
+                yield effect
         case StructOperation.DELETE:
             deleted = await perform_delete_struct(
                 svc, function_address=function_address, var_name=var_name
