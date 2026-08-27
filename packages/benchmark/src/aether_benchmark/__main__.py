@@ -10,6 +10,9 @@ import logging
 from typing import cast
 
 from aether_utils.logger import get_logger
+from rich.console import Console
+from rich.highlighter import ReprHighlighter
+from rich.tree import Tree
 
 from aether_benchmark.tasks.evaluate import (
     EvaluateIDBTask,
@@ -101,24 +104,32 @@ def main() -> None:
     weights = [rubric.weight for rubric in results.rubrics]
     agg = _aggregate(rubric_passed_flags, weights)
 
-    print(f"=== {results.name} v{results.version} ===")
+    console = Console()
+    highlighter = ReprHighlighter()
+
+    tree = Tree(f"[bold]{results.name} v{results.version}[/bold]")
     for rubric, rubric_passed in zip(results.rubrics, rubric_passed_flags, strict=True):
-        status = "✓" if rubric_passed else "✗"
-        print(f"  [{status}] {rubric.name}")
+        status = "[green]✓[/green]" if rubric_passed else "[red]✗[/red]"
+        rubric_node = tree.add(f"[{status}] [bold cyan]{rubric.name}[/bold cyan]")
         if args.verbose:
             for c in rubric.criteria:
                 if c.result["success"]:
-                    c_status = "✓" if c.result["data"]["passed"] else "✗"
+                    c_status = "[green]✓[/green]" if c.result["data"]["passed"] else "[red]✗[/red]"
                     reasoning = c.result["data"]["reasoning"]
                 else:
-                    c_status = "!"
+                    c_status = "[yellow]![/yellow]"
                     reasoning = f"Agent run failed: {c.result['error']}"
-                print(f"      [{c_status}] {c.criterion}")
-                print(f"             {reasoning}")
-            print()
+                c_node = rubric_node.add(f"[{c_status}] [bold]{c.criterion}[/bold]")
+                reasoning_text = highlighter(reasoning)
+                reasoning_text.stylize("dim")
+                c_node.add(reasoning_text)
 
-    print(f"Overall score: {agg['score']:.1%} ({agg['passed']}/{agg['total']} passed)")
-    print(f"Weighted score: {agg['weighted_score']:.1%}")
+    console.print(tree)
+    console.print()
+    console.print(
+        f"Overall score: [bold]{agg['score']:.1%}[/bold] ({agg['passed']}/{agg['total']} passed)"
+    )
+    console.print(f"Weighted score: [bold]{agg['weighted_score']:.1%}[/bold]")
 
 
 if __name__ == "__main__":
