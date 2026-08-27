@@ -46,6 +46,16 @@ class TestApplyStruct:
         assert info.success is True
         assert info.result["applied_to"][0] == address
 
+    def test_apply_struct_on_pointer(self, ida_client: rpyc.Connection) -> None:
+        result = ida_client.root.apply_struct(
+            struct="person", function_name="struct_test", variable="var_8"
+        )
+
+        assert result.success is True
+        assert result.result["function_name"] == "struct_test"
+        assert result.result["struct_name"] == "person"
+        assert result.result["variable"] == "var_8"
+
     def test_apply_non_existent_struct(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.apply_struct(
             struct="idontexist_struct", function_name="struct_test", variable="juliet"

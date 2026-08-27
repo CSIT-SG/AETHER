@@ -54,7 +54,7 @@ struct Person {
 static const struct Person juliet = {
     "Jane",
     20,
-    1.88
+    1.88f
 };
 
 node* foo_make(int x);
@@ -134,6 +134,7 @@ int main() {
     pool *p = baz_pool(4);
     qux_fill(p);
     zap_free(p);
+    struct_test();
     return 0;
 }
 
@@ -183,7 +184,12 @@ void struct_test()
         .age = 25,
         .height = 1.68f
     };
+    
+    struct Person *john = malloc(sizeof(struct Person));
+    strcpy(john->name, "John");
+    john->age = 30;
+    john->height = 1.75f;
     print_person(&alice);
     print_person(&juliet);
-
+    print_person(john);
 }

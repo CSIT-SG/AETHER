@@ -60,23 +60,73 @@ class ApplyStruct(Capability):
         if not func_tif.get_udt_details(udt):
             return Err(result=f"Unable to get member info for Function {function_name}.")
 
+        ida_hexrays.mark_cfunc_dirty(ea)
         cfunc = ida_hexrays.decompile(ea)
-
+        address = None
         frame_offset = None
+        lvars = {}
         for lvar in cfunc.get_lvars():
             # Attempt to get pseudocode var first
-            if variable == lvar.name:
+            lvars[lvar.get_stkoff()] = lvar
+            if variable != lvar.name:
+                continue
+            if not lvar.type().is_ptr():
                 frame_offset = lvar.get_stkoff()
+                break
+            new_tif = ida_typeinf.tinfo_t()
+            new_tif.create_ptr(tif)
+
+            info = ida_hexrays.lvar_saved_info_t()
+            info.ll = lvar
+            info.type = new_tif
+
+            if ida_hexrays.modify_user_lvar_info(ea, ida_hexrays.MLI_TYPE, info):
+                return Ok(
+                    result=AppliedStructInStack(
+                        function_name=function_name,
+                        struct_id=struct_id,
+                        struct_name=struct_name,
+                        variable=variable,
+                    )
+                )
+            else:
+                return Err(result=f"Failed to apply Struct {struct_name} on Variable {variable}.")
 
         if frame_offset is None:
-            # Attempt to get stack var second
             for member in udt:
-                if variable == member.name:
-                    frame_offset = member.offset // 8
+                if not variable == member.name:
+                    continue
+                frame_offset = member.offset // 8
+                if frame_offset in lvars:
+                    if not lvars[frame_offset].type().is_ptr():
+                        continue
+                    new_tif = ida_typeinf.tinfo_t()
+                    new_tif.create_ptr(tif)
 
+                    if ida_frame.set_frame_member_type(pfn, frame_offset, new_tif):
+                        return Ok(
+                            result=AppliedStructInStack(
+                                function_name=function_name,
+                                struct_id=struct_id,
+                                struct_name=struct_name,
+                                variable=variable,
+                            )
+                        )
+                    else:
+                        return Err(
+                            result=f"Failed to apply Struct {struct_name} on Variable {variable}."
+                        )
+                break
+
+        if address is None:
+            ea = ida_name.get_name_ea(idaapi.BADADDR, variable)
+        elif address == "Not Running":
+            return Err(result="To apply structs to ptr, please run binary first.")
+        else:
+            ea = address
         if frame_offset is None:
             # Attempt to get static global var last
-            ea = ida_name.get_name_ea(idaapi.BADADDR, variable)
+
             if ida_typeinf.apply_tinfo(ea, tif, ida_typeinf.TINFO_DEFINITE):
                 return Ok(
                     result=AppliedStruct(
