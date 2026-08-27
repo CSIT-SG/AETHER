@@ -9,9 +9,14 @@ from pydantic_settings import BaseSettings, CliApp
 
 
 class BenchmarkSettings(
-    BaseSettings, cli_parse_args=True, cli_prog_name="aether_benchmark", populate_by_name=True
+    BaseSettings,
+    cli_parse_args=True,
+    cli_prog_name="aether_benchmark",
+    cli_kebab_case=True,
+    cli_implicit_flags=True,
+    populate_by_name=True,
 ):
-    """AETHER Benchmark — evaluate annotation quality against rubric."""
+    """AETHER Benchmark - evaluate annotation quality against rubric."""
 
     idb: Path | None = Field(default=None, description="Path to the IDB/i64 file")
     doc: Path | None = Field(
@@ -28,12 +33,12 @@ class BenchmarkSettings(
         default_factory=lambda: Path(v) if (v := os.environ.get("IDADIR")) else None,
         description="IDA Pro installation directory (default: IDADIR env; only used for ida harness)",
     )
-    verbose: bool = Field(default=False, description="Show detailed per-entry results")
+    verbose: bool = Field(default=False, description="Show detailed per-entry results", alias="v")
     json_output: bool = Field(
         default=False, alias="json", description="Print the benchmark result as JSON"
     )
     output: Path | None = Field(
-        default=None, description="Write the benchmark result as JSON to this file"
+        default=None, description="Write the benchmark result as JSON to this file", alias="o"
     )
 
     @model_validator(mode="after")

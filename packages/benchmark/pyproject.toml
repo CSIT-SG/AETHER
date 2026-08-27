@@ -15,8 +15,8 @@ dependencies = [
     "pydantic-settings>=2.15.0",
 ]
 
-# [project.scripts]
-# aether-benchmark = "aether_benchmark.cli:main"
+[project.scripts]
+aether-benchmark = "aether_benchmark.__main__:main"
 
 [tool.mypy]
 plugins = ["pydantic.mypy"]
@@ -27,6 +27,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/aether_benchmark"]
-
-# [tool.hatch.build.targets.wheel.force-include]
-# "content" = "aether_benchmark/content"
+include = [
+  "src/aether_benchmark/**/*.md",
+]
