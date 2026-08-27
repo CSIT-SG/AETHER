@@ -8,6 +8,8 @@ import asyncio
 import json
 from typing import cast
 
+from aether_utils.logger import get_logger
+
 from aether_benchmark.tasks.evaluate import (
     EvaluateIDBTask,
     EvaluateMDTask,
@@ -20,6 +22,8 @@ from aether_benchmark.utils.task import Run
 from .cli import BenchmarkConfig, DocTarget, IdbTarget, get_config
 from .tasks import ParseBenchmarkTask
 
+logger = get_logger("AETHER_BENCHMARK.RPC")
+
 
 async def _run_eval(args: BenchmarkConfig, schema: BenchmarkSchema) -> BenchmarkSchemaWithResults:
     """Run evaluation for the given benchmark config and schema."""
@@ -30,7 +34,10 @@ async def _run_eval(args: BenchmarkConfig, schema: BenchmarkSchema) -> Benchmark
             async with Run(StartRPCServerTask)(
                 args.target.ida_dir, str(args.target.idb)
             ) as rpc_handle:
+                logger.debug("Starting RPC handle")
                 service = await rpc_handle
+                logger.debug(service)
+                logger.debug("Completed RPC handle")
                 return await Run(EvaluateIDBTask)(service, args, schema)
         case "doc":
             assert isinstance(args.target, DocTarget)
