@@ -21,11 +21,7 @@ class GetXrefsTo(Capability):
     def name(self) -> str:
         return "get_xrefs_to"
 
-    def stack_var(
-        self,
-        location: str | int,
-        variable: str,
-    ) -> Result[XrefsResult]:
+    def stack_var(self, location: str | int, variable: str, func_ea: int) -> Result[XrefsResult]:
         """Find all locations that reference the given local/stack variable.
 
         Args:
@@ -36,6 +32,8 @@ class GetXrefsTo(Capability):
                 "var_10" or a renamed local) inside the function identified
                 by `location`. `location` and `variable` act as a compound
                 key identifying one stack variable.
+            func_ea (int): The resolved effective address of the function
+                identified by `location`.
 
         Returns:
             Ok[XrefsResult]: A structured object containing:
@@ -56,7 +54,7 @@ class GetXrefsTo(Capability):
             execute("assign_buffer", variable="var_10")
             execute("0x140001000", variable="buf_ptr")
         """
-        stack_var: StackVariableInfo | None = resolve_stack_variable(location, variable)
+        stack_var: StackVariableInfo | None = resolve_stack_variable(variable, func_ea)
         if stack_var is None:
             return Err(result=f"Invalid stack variable '{variable}' in function {location}")
         try:
@@ -81,15 +79,13 @@ class GetXrefsTo(Capability):
 
     def not_stack_var(
         self,
-        location: str | int,
+        func_ea: int,
     ) -> Result[XrefsResult]:
         """Find all locations that reference the given address or symbol name.
 
         Args:
-            location (str | int): The target to look up cross-references for.
-                Accepts a hex address string (e.g. "0x140001000"), a plain
-                symbol name (e.g. "assign_buffer"), an IDA auto-generated
-                name (e.g. "sub_DEADBEEF"), or an integer effective address.
+            func_ea (int): The resolved effective address of the target
+                variable or function.
 
         Returns:
             Ok[XrefsResult]: A structured object containing:
@@ -108,20 +104,15 @@ class GetXrefsTo(Capability):
             execute("0x140001000")
             execute("sub_DEADBEEF")
         """
-        ea: int | None = resolve_effective_address(location)
-        if ea is None:
-            self.logger.error(f"Invalid location: {location}")
-            return Err(result=f"Invalid location: {location}")
-
         try:
-            xrefs = [collect_xrefs(x) for x in idautils.XrefsTo(ea)]
+            xrefs = [collect_xrefs(x) for x in idautils.XrefsTo(func_ea)]
         except Exception as e:
-            self.logger.exception("Failed to collect xrefs at %s: %s", hex(ea), e)
-            return Err(result=f"Failed to collect xrefs at {hex(ea)}: {e}")
+            self.logger.exception("Failed to collect xrefs at %s: %s", hex(func_ea), e)
+            return Err(result=f"Failed to collect xrefs at {hex(func_ea)}: {e}")
 
         data = XrefsResult(
-            target_address=hex(ea),
-            target_name=ida_name.get_name(ea) or None,
+            target_address=hex(func_ea),
+            target_name=ida_name.get_name(func_ea) or None,
             count=len(xrefs),
             xrefs=xrefs,
         )
@@ -173,9 +164,14 @@ class GetXrefsTo(Capability):
             execute("assign_buffer", variable="var_10")
             execute("0x140001000", variable="buf_ptr")
         """
+        func_ea: int | None = resolve_effective_address(location)
+        if func_ea is None:
+            self.logger.error(f"Invalid location: {location}")
+            return Err(result=f"Invalid location: {location}")
+
         if variable is None:
-            result = self.not_stack_var(location=location)
+            result = self.not_stack_var(func_ea)
         else:
-            result = self.stack_var(location=location, variable=variable)
+            result = self.stack_var(location, variable, func_ea)
 
         return result

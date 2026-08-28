@@ -7,30 +7,23 @@ import ida_typeinf
 from ida_funcs import func_t
 
 from ..types import StackVariableInfo, XrefEntry
-from .address_utils import resolve_effective_address
 from .function_utils import function_info
 
 
-def resolve_stack_variable(
-    func_location: str | int,
-    var_name: str,
-) -> StackVariableInfo | None:
+def resolve_stack_variable(var_name: str, func_ea: int) -> StackVariableInfo | None:
     """Resolve a local/stack variable name within a given function to its
     (start_offset, end_offset) in the function's frame UDT.
 
     Args:
-        func_location: Function name, hex address string, or effective
-            address identifying the function that owns the stack variable.
         var_name: The name of the local/stack variable (e.g. "var_10",
             or a user-renamed local).
+        func_ea: The resolved effective address of the function that owns
+            the stack variable.
 
     Returns:
-        A tuple (func, start_off, end_off) in bytes if found, else None.
+        A StackVariableInfo containing the function, start_off, and end_off
+        (in bytes) if found, else None.
     """
-    func_ea: int | None = resolve_effective_address(func_location)
-    if func_ea is None:
-        return None
-
     func: func_t | None = ida_funcs.get_func(func_ea)
     if func is None:
         return None
