@@ -177,4 +177,5 @@ class GetXrefsTo(Capability):
             result = self.not_stack_var(location=location)
         else:
             result = self.stack_var(location=location, variable=variable)
+
         return result
