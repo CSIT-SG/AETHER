@@ -2,61 +2,43 @@ import { Callout } from 'nextra/components'
 
 # Orchestration
 
-How a turn works inside the backend: how the orchestrator hands off work, what
-the agent sends and streams back, and how that output becomes UI.
+How a turn runs inside the backend: orchestrator hands off work, the agent runs the model, and the output becomes UI.
 
 ## Orchestrator
 
-The bridge between UI and the agent. It runs on IDA main thread, so its
-job is to start the work and get out of the way, never to block.
+The orchestrator bridges the UI and the agent. It runs on the IDA main thread, so it starts the work on worker thread and returns without blocking.
 
 Each prompt, it:
 
-1. Gathers the current IDA context (function, disassembly, pseudocode, xrefs at
-   the cursor).
+1. Gathers the IDA context at the cursor (function, disassembly, pseudocode, xrefs).
 2. Hands the prompt and context to the agent as a background task.
-3. Routes the agent's streamed output back to the renderer as it arrives.
+3. Routes the agent's streamed output to the renderer as it arrives.
 
-It also holds the small amount of per-turn state the renderer needs, so the
-renderer itself can stay stateless.
+The orchestrator trackes if new message has been created and what the last type of message was. Both are handed
+to the Renderer. The renderer will create the UI selements and decide to append messages or create paragraphs etc.
 
 ## Agent
 
-The agent talks to the llm provider. Runs on the worker thread.
+The agent talks to the LLM provider on the worker thread.
 
-It is given four things: the user prompt, the IDA context, the available tools,
-and the session history. From those it builds and streams the model, yielding
-output piece by piece until the response ends.
+It is given four things: the user prompt, the IDA context, the available tools, and the session history. From these it builds the model call and streams the response.
 
 ### Prompts
 
 Two prompts shape every turn, and they land in different places:
 
-- **System prompt** — the agent's standing instructions, applied to every turn:
-  its role inside IDA, when to call a tool versus answer directly, and rules
-  against inventing addresses or names. It defines who the agent is, and is not
-  part of the conversation history.
-- **User prompt** — this turn's input message: the user's text plus the IDA
-  context. This is what gets added to the session history.
-
-<Callout>
-The system prompt is a living file, not a spec. It is expected to grow and
-change. Read `backend/chatbot/task/content/system_prompt.md.jinja` for what it
-says today.
-</Callout>
+- **System prompt**: the agent's standing instructions, applied every turn: its role inside IDA, when to call a tool versus answer, and rules against inventing addresses or names. It is not part of the conversation history.
+- **User prompt**: this turn's input: the user's text plus the IDA context. This is what gets added to the session history.
 
 ### Tools
 
-Each turn, the agent is handed the tools the MCP server currently exposes. When
-the model decides to call one, the call is forwarded to MCP, which may reach
-through RPC into the open IDA database, and the result is returned to the model.
+Each turn, the agent is handed the tools the MCP server currently exposes. When the model calls one, the call is forwarded to MCP, which may reach through RPC into the open disassembler e.g. IDA, and the result returns to the model.
 
-So a tool call is really a chain: **model → MCP → RPC → IDA**, and back.
+So a tool call is a chain: **model → MCP → RPC → IDA**, and back.
 
 ## What a turn looks like
 
-The agent streams a sequence of typed pieces. A turn where the model calls a
-tool, then answers, looks like this:
+The agent streams a sequence of typed pieces. A turn where the model calls a tool, then answers, looks like this:
 
 ```text
 Calling tool 'get_function_pseudocode' with args: {"function_name": "sub_401000"}
@@ -72,26 +54,20 @@ Each line is one typed output:
 | `Result: ...` | what the tool returned | a tool message |
 | plain text | the model's answer | assistant text |
 
-The two tool lines are the visible ends of that **model → MCP → RPC** chain: the
-`Calling tool` line is the model's request, and `Result` is what came back after
-MCP ran it against IDA.
+The `Calling tool` line is the model's request; `Result` is what MCP returned.
 
 <Callout>
-Some models also stream a reasoning summary. When they do it renders as plain
-assistant text prefixed `[Reasoning]:`.
+Some models also stream a reasoning summary. When they do, it renders as plain assistant text prefixed `[Reasoning]:`.
 </Callout>
 
 <Callout type="warning">
-The system prompt needs to tells llm which id to use. 
-The model then supplies the RPC id in its tool arguments itself . If it omits or invents the id, the tool call should fail.
+The system prompt tells the model which RPC id to use, and the model supplies that id in its tool arguments. If it omits or invents the id, the tool call fails.
 </Callout>
 
 ## Renderer
 
-The renderer is the only part that writes to widgets. For each streamed piece it
-decides what the UI needs: a new bubble (column), a new paragraph, or text appended to the
-current paragraph.
+The renderer is the only part that writes to widgets. For each streamed piece it decides what the UI needs: a new bubble (column), a new paragraph, or text appended to the current paragraph.
 
-Text and reasoning become assistant messages; tool calls and their results become
-tool messages; errors become their own message. Because the orchestrator carries
-the per-turn state, the renderer only has to draw.
+E.g. If previous message was text type and current message is text type, append onto the last paragraph
+
+Text and reasoning become assistant messages; tool calls and results become tool messages; errors become their own message. The orchestrator carries the per-turn state, so the renderer only draws (no need to retrieve info itself).
