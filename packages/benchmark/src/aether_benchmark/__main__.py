@@ -10,6 +10,7 @@ import logging
 from typing import cast
 
 from aether_utils.logger import get_logger
+from agents import set_tracing_disabled
 from rich.console import Console
 from rich.highlighter import ReprHighlighter
 from rich.tree import Tree
@@ -86,6 +87,7 @@ def _aggregate(
 
 
 def main() -> None:
+    set_tracing_disabled(True)
     args = get_config()
 
     console = Console()
