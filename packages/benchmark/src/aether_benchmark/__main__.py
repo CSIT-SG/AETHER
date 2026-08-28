@@ -6,6 +6,7 @@ Usage:
 
 import asyncio
 import json
+import logging
 from typing import cast
 
 from aether_utils.logger import get_logger
@@ -22,7 +23,7 @@ from aether_benchmark.utils.task import Run
 from .cli import BenchmarkConfig, DocTarget, IdbTarget, get_config
 from .tasks import ParseBenchmarkTask
 
-logger = get_logger("AETHER_BENCHMARK.RPC")
+logger = get_logger("AETHER_BENCHMARK.RPC", logging.INFO)
 
 
 async def _run_eval(args: BenchmarkConfig, schema: BenchmarkSchema) -> BenchmarkSchemaWithResults:
