@@ -55,7 +55,7 @@ class BenchmarkSettings(
 
     @model_validator(mode="after")
     def _ida_dir_requires_idb(self) -> Self:
-        if self.ida_dir is not None and self.idb is None:
+        if (self.ida_dir is not None and self.idb is None) and self.doc is None:
             raise ValueError("--ida-dir may only be set when --idb is set")
         return self
 
