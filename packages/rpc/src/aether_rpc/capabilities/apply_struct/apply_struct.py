@@ -65,7 +65,7 @@ class ApplyStruct(Capability):
                     struct_id=struct["id"],
                     struct_name=struct["name"],
                     variable=variable,
-                    address=func["ea"],
+                    address=hex(func["ea"]),
                 )
             )
         else:
@@ -133,7 +133,7 @@ class ApplyStruct(Capability):
                         struct_id=struct["id"],
                         struct_name=struct["name"],
                         variable=variable,
-                        address=func["ea"],
+                        address=hex(func["ea"]),
                     )
                 )
             else:
@@ -163,7 +163,7 @@ class ApplyStruct(Capability):
                             struct_id=struct["id"],
                             struct_name=struct["name"],
                             variable=variable,
-                            address=func["ea"],
+                            address=hex(func["ea"]),
                         )
                     )
                 else:
