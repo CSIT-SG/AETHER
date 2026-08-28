@@ -87,7 +87,10 @@ def _aggregate(
 
 def main() -> None:
     args = get_config()
-    results = asyncio.run(_run_benchmark(args))
+
+    console = Console()
+    with console.status("[bold cyan]Evaluating rubric...[/bold cyan]"):
+        results = asyncio.run(_run_benchmark(args))
 
     output = results.model_dump()
     if args.output is not None:
@@ -104,7 +107,6 @@ def main() -> None:
     weights = [rubric.weight for rubric in results.rubrics]
     agg = _aggregate(rubric_passed_flags, weights)
 
-    console = Console()
     highlighter = ReprHighlighter()
 
     tree = Tree(f"[bold]{results.name} v{results.version}[/bold]")
