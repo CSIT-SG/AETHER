@@ -1,3 +1,5 @@
+from typing import Any
+
 import ida_frame
 import ida_funcs
 import ida_hexrays
@@ -18,24 +20,14 @@ class ApplyStruct(Capability):
     def name(self) -> str:
         return "apply_struct"
 
-    def get_function(self, function_name):
-        ea = resolve_function_name(function_name)
-        if ea is None:
-            return Err(result=f"Symbol '{function_name}' not found")
+    def handle_frame_offset(
+        self,
+        frame_offset: int,
+        variable: str,
+        func: dict[str, Any],
+        struct: dict[str, Any],
+    ) -> Result[AppliedStruct]:
 
-        pfn = ida_funcs.get_func(ea)
-
-        tif = ida_typeinf.tinfo_t()
-        if not ida_frame.get_func_frame(tif, pfn):
-            return Err(result=f"Unable to get info for Function {function_name}.")
-
-        udt = ida_typeinf.udt_type_data_t()
-        if not tif.get_udt_details(udt):
-            return Err(result=f"Unable to get member info for Function {function_name}.")
-
-        return function_name, ea, pfn, tif, udt
-
-    def handle_frame_offset(self, frame_offset, variable, func, struct):
         diff = 0x0 - ida_frame.calc_frame_offset(func["pfn"], 0x0)
         lvars_start = ida_frame.frame_off_lvars(func["pfn"])
         savregs_start = ida_frame.frame_off_savregs(func["pfn"])
@@ -86,13 +78,10 @@ class ApplyStruct(Capability):
 
         Returns:
             A Result whose ``success`` reports whether the applying succeeded and
-            If variable in stack:
             ``result`` carries the function name, the id and name of the struct
-            applied and the variable the struct was applied to.
-            If variable has address (statically allocated or heap):
-            ``result`` carries the address, and the id and name of the struct
-            applied,
+            applied, the variable the struct was applied to and its address.
         """
+        # Obtain struct info and populate struct dict
         status, output = get_struct(struct)
         struct = dict()
         if status:
@@ -100,31 +89,49 @@ class ApplyStruct(Capability):
         else:
             return Err(result=output)
 
-        output = self.get_function(function_name)
+        # Obtain function info and populate func dict
         func = dict()
-        if isinstance(output, Err):
-            return output
-        func["name"], func["ea"], func["pfn"], func["tif"], func["udt"] = output
 
+        ea = resolve_function_name(function_name)
+        if ea is None:
+            return Err(result=f"Symbol '{function_name}' not found")
+
+        pfn = ida_funcs.get_func(ea)
+
+        tif = ida_typeinf.tinfo_t()
+        if not ida_frame.get_func_frame(tif, pfn):
+            return Err(result=f"Unable to get info for Function {function_name}.")
+
+        udt = ida_typeinf.udt_type_data_t()
+        if not tif.get_udt_details(udt):
+            return Err(result=f"Unable to get member info for Function {function_name}.")
+
+        func["name"], func["ea"], func["pfn"], func["tif"], func["udt"] = (
+            function_name,
+            ea,
+            pfn,
+            tif,
+            udt,
+        )
+
+        # Check if variable is pseudocode variable first
         cfunc = ida_hexrays.decompile(func["ea"])
         frame_offset = None
         lvars = dict()
         for lvar in cfunc.get_lvars():
-            # Attempt to get pseudocode var first
             lvars[lvar.get_stkoff()] = lvar
             if variable != lvar.name:
                 continue
             if not lvar.type().is_ptr():
                 frame_offset = lvar.get_stkoff()
                 break
-            # Handle ptr
+
+            # Handle variable being a ptr
             new_tif = ida_typeinf.tinfo_t()
             new_tif.create_ptr(struct["tif"])
-
             info = ida_hexrays.lvar_saved_info_t()
             info.ll = lvar
             info.type = new_tif
-
             if ida_hexrays.modify_user_lvar_info(func["ea"], ida_hexrays.MLI_TYPE, info):
                 ida_hexrays.mark_cfunc_dirty(func["ea"])
                 return Ok(
@@ -144,6 +151,7 @@ class ApplyStruct(Capability):
         if frame_offset:
             return self.handle_frame_offset(frame_offset, variable, func, struct)
 
+        # Check if variable is stack variable second
         for member in func["udt"]:
             if not variable == member.name:
                 continue
@@ -151,7 +159,7 @@ class ApplyStruct(Capability):
             if frame_offset in lvars:
                 if not lvars[frame_offset].type().is_ptr():
                     continue
-                # Handle ptr
+                # Handle variable being a ptr
                 new_tif = ida_typeinf.tinfo_t()
                 new_tif.create_ptr(struct["tif"])
 
@@ -175,7 +183,7 @@ class ApplyStruct(Capability):
         if frame_offset:
             return self.handle_frame_offset(frame_offset, variable, func, struct)
 
-        # Attempt to get static global var last
+        # Check if variable is global variable last
         address = ida_name.get_name_ea(idaapi.BADADDR, variable)
         if ida_typeinf.apply_tinfo(address, struct["tif"], ida_typeinf.TINFO_DEFINITE):
             ida_hexrays.mark_cfunc_dirty(func["ea"])
