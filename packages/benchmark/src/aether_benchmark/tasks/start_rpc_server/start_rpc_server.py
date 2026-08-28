@@ -7,6 +7,7 @@ import os
 import signal
 import subprocess
 import sys
+import textwrap
 import threading
 from pathlib import Path
 from threading import Event
@@ -68,10 +69,26 @@ class StartRPCServerTask(Task[[Path, str], AnyService]):
         host = "127.0.0.1"
         port = get_port(host)
 
+        # Subprocessing is required as RPC and headless must be
+        # In the same running thread AND that thread must be the main thread.
+        # Hence, subprocess would spawn them in a new python process.
         command = [
             sys.executable,
             "-c",
-            "from aether_benchmark.tasks.start_rpc_server.start_rpc_server import headless_main; import sys; headless_main(sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4]))",
+            textwrap.dedent(
+                """
+                import sys
+
+                from aether_benchmark.tasks.start_rpc_server.start_rpc_server import headless_main
+
+                headless_main(
+                    sys.argv[1],
+                    sys.argv[2],
+                    sys.argv[3],
+                    int(sys.argv[4]),
+                )
+                """
+            ),
             str(idb_path),
             str(ida_dir),
             host,
@@ -110,21 +127,20 @@ class StartRPCServerTask(Task[[Path, str], AnyService]):
             self._conn = None
 
         if self._proc is not None:
-            self._terminate(self._proc)
-            self._proc = None
+            proc = self._proc
+            if proc.poll() is not None:
+                return
 
-    @staticmethod
-    def _terminate(proc: subprocess.Popen[bytes]) -> None:
-        """Stop the subprocess, escalating to kill if it does not exit."""
-        if proc.poll() is not None:
-            return
-        with contextlib.suppress(Exception):
-            if sys.platform == "win32":
-                proc.send_signal(signal.CTRL_BREAK_EVENT)
-            else:
-                proc.send_signal(signal.SIGTERM)
-        try:
-            proc.wait(timeout=10)
-        except subprocess.TimeoutExpired:
-            proc.kill()
-            proc.wait()
+            with contextlib.suppress(Exception):
+                if sys.platform == "win32":
+                    proc.send_signal(signal.CTRL_BREAK_EVENT)
+                else:
+                    proc.send_signal(signal.SIGTERM)
+            try:
+                proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                proc.wait()
+
+            proc.terminate()
+            self._proc = None
