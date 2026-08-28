@@ -180,16 +180,11 @@ class AllStructs(TypedDict):
 
 
 class AppliedStruct(TypedDict):
-    address: int
-    struct_id: int
-    struct_name: str
-
-
-class AppliedStructInStack(TypedDict):
     function_name: str
     struct_id: int
     struct_name: str
     variable: str
+    address: int
 
 
 class RenameStructResult(TypedDict):

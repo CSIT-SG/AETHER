@@ -51,7 +51,7 @@ struct Person {
     float height;
 };
 
-static const struct Person juliet = {
+static volatile const struct Person juliet = {
     "Jane",
     20,
     1.88f
@@ -189,7 +189,16 @@ void struct_test()
     strcpy(john->name, "John");
     john->age = 30;
     john->height = 1.75f;
-    print_person(&alice);
-    print_person(&juliet);
-    print_person(john);
+
+    printf("alice.name = %s\n", alice.name);
+    printf("alice.age = %d\n", alice.age);
+    printf("alice.height = %.2f\n", alice.height);
+
+    printf("juliet.name = %s\n", juliet.name);
+    printf("juliet.age = %d\n", juliet.age);
+    printf("juliet.height = %.2f\n", juliet.height);
+
+    printf("john->name = %s\n", john->name);
+    printf("john->age = %d\n", john->age);
+    printf("john->height = %.2f\n", john->height);
 }

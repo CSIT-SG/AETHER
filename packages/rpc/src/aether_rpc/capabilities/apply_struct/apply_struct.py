@@ -7,7 +7,7 @@ import idaapi
 
 from ..base import Capability
 from ..result import Err, Ok, Result
-from ..types import AppliedStruct, AppliedStructInStack
+from ..types import AppliedStruct
 from ..utils import get_struct, resolve_function_name
 
 
@@ -18,12 +18,65 @@ class ApplyStruct(Capability):
     def name(self) -> str:
         return "apply_struct"
 
+    def get_function(self, function_name):
+        ea = resolve_function_name(function_name)
+        if ea is None:
+            return Err(result=f"Symbol '{function_name}' not found")
+
+        pfn = ida_funcs.get_func(ea)
+
+        tif = ida_typeinf.tinfo_t()
+        if not ida_frame.get_func_frame(tif, pfn):
+            return Err(result=f"Unable to get info for Function {function_name}.")
+
+        udt = ida_typeinf.udt_type_data_t()
+        if not tif.get_udt_details(udt):
+            return Err(result=f"Unable to get member info for Function {function_name}.")
+
+        return function_name, ea, pfn, tif, udt
+
+    def handle_frame_offset(self, frame_offset, variable, func, struct):
+        diff = 0x0 - ida_frame.calc_frame_offset(func["pfn"], 0x0)
+        lvars_start = ida_frame.frame_off_lvars(func["pfn"])
+        savregs_start = ida_frame.frame_off_savregs(func["pfn"])
+
+        stack_offset = frame_offset + diff
+
+        if not (
+            lvars_start <= frame_offset and frame_offset <= savregs_start - struct["tif"].get_size()
+        ):
+            return Err(
+                result=f"Struct {struct['name']} is too big to replace Variable {variable} in stack."
+            )
+
+        for member in func["udt"]:
+            var_start = member.offset // 8
+            var_end = member.offset // 8 + member.type.get_size()
+            if not (
+                var_end <= frame_offset or var_start >= frame_offset + struct["tif"].get_size()
+            ):
+                ida_frame.delete_frame_members(func["pfn"], var_start, var_end)
+
+        if ida_frame.define_stkvar(func["pfn"], variable, stack_offset, struct["tif"]):
+            ida_hexrays.mark_cfunc_dirty(func["ea"])
+            return Ok(
+                result=AppliedStruct(
+                    function_name=func["name"],
+                    struct_id=struct["id"],
+                    struct_name=struct["name"],
+                    variable=variable,
+                    address=func["ea"],
+                )
+            )
+        else:
+            return Err(result=f"Failed to apply Struct {struct['name']} on Variable {variable}.")
+
     def execute(
         self,
         struct: str | int,
         function_name: str,
         variable: str,
-    ) -> Result[AppliedStructInStack | AppliedStruct]:
+    ) -> Result[AppliedStruct]:
         """Apply structure to a variable in a function.
 
         Args:
@@ -41,30 +94,21 @@ class ApplyStruct(Capability):
             applied,
         """
         status, output = get_struct(struct)
+        struct = dict()
         if status:
-            struct_name, struct_id, tif, _ = output
+            struct["name"], struct["id"], struct["tif"], _ = output
         else:
             return Err(result=output)
 
-        ea = resolve_function_name(function_name)
-        if ea is None:
-            return Err(result=f"Symbol '{function_name}' not found")
+        output = self.get_function(function_name)
+        func = dict()
+        if isinstance(output, Err):
+            return output
+        func["name"], func["ea"], func["pfn"], func["tif"], func["udt"] = output
 
-        pfn = ida_funcs.get_func(ea)
-
-        func_tif = ida_typeinf.tinfo_t()
-        if not ida_frame.get_func_frame(func_tif, pfn):
-            return Err(result=f"Unable to get info for Function {function_name}.")
-
-        udt = ida_typeinf.udt_type_data_t()
-        if not func_tif.get_udt_details(udt):
-            return Err(result=f"Unable to get member info for Function {function_name}.")
-
-        ida_hexrays.mark_cfunc_dirty(ea)
-        cfunc = ida_hexrays.decompile(ea)
-        address = None
+        cfunc = ida_hexrays.decompile(func["ea"])
         frame_offset = None
-        lvars = {}
+        lvars = dict()
         for lvar in cfunc.get_lvars():
             # Attempt to get pseudocode var first
             lvars[lvar.get_stkoff()] = lvar
@@ -73,96 +117,76 @@ class ApplyStruct(Capability):
             if not lvar.type().is_ptr():
                 frame_offset = lvar.get_stkoff()
                 break
+            # Handle ptr
             new_tif = ida_typeinf.tinfo_t()
-            new_tif.create_ptr(tif)
+            new_tif.create_ptr(struct["tif"])
 
             info = ida_hexrays.lvar_saved_info_t()
             info.ll = lvar
             info.type = new_tif
 
-            if ida_hexrays.modify_user_lvar_info(ea, ida_hexrays.MLI_TYPE, info):
-                return Ok(
-                    result=AppliedStructInStack(
-                        function_name=function_name,
-                        struct_id=struct_id,
-                        struct_name=struct_name,
-                        variable=variable,
-                    )
-                )
-            else:
-                return Err(result=f"Failed to apply Struct {struct_name} on Variable {variable}.")
-
-        if frame_offset is None:
-            for member in udt:
-                if not variable == member.name:
-                    continue
-                frame_offset = member.offset // 8
-                if frame_offset in lvars:
-                    if not lvars[frame_offset].type().is_ptr():
-                        continue
-                    new_tif = ida_typeinf.tinfo_t()
-                    new_tif.create_ptr(tif)
-
-                    if ida_frame.set_frame_member_type(pfn, frame_offset, new_tif):
-                        return Ok(
-                            result=AppliedStructInStack(
-                                function_name=function_name,
-                                struct_id=struct_id,
-                                struct_name=struct_name,
-                                variable=variable,
-                            )
-                        )
-                    else:
-                        return Err(
-                            result=f"Failed to apply Struct {struct_name} on Variable {variable}."
-                        )
-                break
-
-        if address is None:
-            ea = ida_name.get_name_ea(idaapi.BADADDR, variable)
-        elif address == "Not Running":
-            return Err(result="To apply structs to ptr, please run binary first.")
-        else:
-            ea = address
-        if frame_offset is None:
-            # Attempt to get static global var last
-
-            if ida_typeinf.apply_tinfo(ea, tif, ida_typeinf.TINFO_DEFINITE):
+            if ida_hexrays.modify_user_lvar_info(func["ea"], ida_hexrays.MLI_TYPE, info):
+                ida_hexrays.mark_cfunc_dirty(func["ea"])
                 return Ok(
                     result=AppliedStruct(
-                        address=hex(ea),
-                        struct_id=struct_id,
-                        struct_name=struct_name,
+                        function_name=func["name"],
+                        struct_id=struct["id"],
+                        struct_name=struct["name"],
+                        variable=variable,
+                        address=func["ea"],
                     )
                 )
             else:
-                return Err(result=f"Variable {variable} does not exist.")
+                return Err(
+                    result=f"Failed to apply Struct {struct['name']} on Variable {variable}."
+                )
 
-        diff = 0x0 - ida_frame.calc_frame_offset(pfn, 0x0)
-        lvars_start = ida_frame.frame_off_lvars(pfn)
-        savregs_start = ida_frame.frame_off_savregs(pfn)
+        if frame_offset:
+            return self.handle_frame_offset(frame_offset, variable, func, struct)
 
-        stack_offset = frame_offset + diff
+        for member in func["udt"]:
+            if not variable == member.name:
+                continue
+            frame_offset = member.offset // 8
+            if frame_offset in lvars:
+                if not lvars[frame_offset].type().is_ptr():
+                    continue
+                # Handle ptr
+                new_tif = ida_typeinf.tinfo_t()
+                new_tif.create_ptr(struct["tif"])
 
-        if not (lvars_start <= frame_offset and frame_offset <= savregs_start - tif.get_size()):
-            return Err(
-                result=f"Struct {struct_name} is too big to replace Variable {variable} in stack."
-            )
+                if ida_frame.set_frame_member_type(func["pfn"], frame_offset, new_tif):
+                    ida_hexrays.mark_cfunc_dirty(func["ea"])
+                    return Ok(
+                        result=AppliedStruct(
+                            function_name=func["name"],
+                            struct_id=struct["id"],
+                            struct_name=struct["name"],
+                            variable=variable,
+                            address=func["ea"],
+                        )
+                    )
+                else:
+                    return Err(
+                        result=f"Failed to apply Struct {struct['name']} on Variable {variable}."
+                    )
+            break
 
-        for member in udt:
-            var_start = member.offset // 8
-            var_end = member.offset // 8 + member.type.get_size()
-            if not (var_end <= frame_offset or var_start >= frame_offset + tif.get_size()):
-                ida_frame.delete_frame_members(pfn, var_start, var_end)
+        if frame_offset:
+            return self.handle_frame_offset(frame_offset, variable, func, struct)
 
-        if ida_frame.define_stkvar(pfn, variable, stack_offset, tif):
+        # Attempt to get static global var last
+        address = ida_name.get_name_ea(idaapi.BADADDR, variable)
+        if ida_typeinf.apply_tinfo(address, struct["tif"], ida_typeinf.TINFO_DEFINITE):
+            ida_hexrays.mark_cfunc_dirty(func["ea"])
             return Ok(
-                result=AppliedStructInStack(
-                    function_name=function_name,
-                    struct_id=struct_id,
-                    struct_name=struct_name,
+                result=AppliedStruct(
+                    function_name=func["name"],
+                    struct_id=struct["id"],
+                    struct_name=struct["name"],
                     variable=variable,
+                    address=hex(address),
                 )
             )
         else:
-            return Err(result=f"Failed to apply Struct {struct_name} on Variable {variable}.")
+            return Err(result=f"Variable {variable} does not exist.")
