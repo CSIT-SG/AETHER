@@ -29,3 +29,42 @@ class TestGetXrefsTo:
         result = ida_client.root.get_xrefs_to(location="im_orphaned")
         assert result.success is True
         assert result.result["xrefs"] is not None and result.result["count"] == 2
+
+
+@pytest.mark.dependency(scope="package")
+class TestGetXrefsToStackVariable:
+    def test_get_xrefs_to_stack_variable(self, ida_client: rpyc.Connection) -> None:
+        result = ida_client.root.get_xrefs_to(location="stack_var_target", variable="var_8")
+        print(result.result)
+        assert result.success is True
+        assert result.result["xrefs"] is not None
+        assert result.result["count"] != 0
+
+    def test_stack_variable_name_does_not_corrupt(self, ida_client: rpyc.Connection) -> None:
+        result = ida_client.root.get_xrefs_to(location="stack_var_target", variable="var_8")
+        assert result.success is True
+        assert result.result["target_name"] == "stack_var_target::var_8"
+
+    def test_stack_variable_xrefs_reference_owning_function(
+        self, ida_client: rpyc.Connection
+    ) -> None:
+        result = ida_client.root.get_xrefs_to(location="stack_var_target", variable="var_8")
+        assert result.success is True
+        for xref in result.result["xrefs"]:
+            assert xref["is_code"] is True
+            assert xref["from_function"] is not None
+            assert xref["from_function"]["name"] == "stack_var_target"
+
+    # TODO: ADD TEST THAT WHOLE ENTRY DOES NOT CORRUPT
+
+    def test_return_none_for_invalid_stack_variable_name(self, ida_client: rpyc.Connection) -> None:
+        result = ida_client.root.get_xrefs_to(
+            location="stack_var_target", variable="s;kjfhsdjksndkgn"
+        )
+        assert result.success is False
+
+    def test_return_none_for_invalid_function_with_valid_variable_name(
+        self, ida_client: rpyc.Connection
+    ) -> None:
+        result = ida_client.root.get_xrefs_to(location="s;kjfhsdjksndkgn", variable="var_8")
+        assert result.success is False

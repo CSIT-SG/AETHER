@@ -74,7 +74,7 @@ def collect_stkvar_xrefs(stack_vars: StackVariableInfo) -> list[XrefEntry] | Non
     ida_frame.build_stkvar_xrefs(xreflist, func, start_off, end_off)
     if len(xreflist) == 0:
         return None
-    owner = function_info(start_off)
+    owner = function_info(func.start_ea)
     result: list[XrefEntry] = []
     for entry in xreflist:
         xref = XrefEntry(

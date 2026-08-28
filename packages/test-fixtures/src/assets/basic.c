@@ -202,3 +202,12 @@ void struct_test()
     printf("john->age = %d\n", john->age);
     printf("john->height = %.2f\n", john->height);
 }
+
+__attribute__((noinline))
+void stack_var_target(int seed) {
+    volatile int probe = seed;
+    probe += 7;
+    probe *= 3;
+    int result = probe;
+    (void)result;
+}
