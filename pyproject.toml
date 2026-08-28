@@ -16,7 +16,9 @@ version = "0.1.0"
 description = "AETHER - AI-powered Next Generation Framework"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "rich>=15.0.0",
+]
 
 [dependency-groups]
 dev = [
