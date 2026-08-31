@@ -59,21 +59,15 @@ async def _run_benchmark(
 ) -> BenchmarkSchemaWithResults:
     """Acquire evidence for the selected harness and run the grading loop."""
     schema = cast(BenchmarkSchema, await Run(ParseBenchmarkTask)(BenchmarkSchema, args.rubric))
-    if args.verbose:
-        print(f"Rubric: {schema.name} v{schema.version}")
-        print(f"Rubrics: {len(schema.rubrics)} entries")
-        print()
     results = await _run_eval(args, schema)
     return results
 
 
-def main() -> None:
+async def _async_main() -> None:
     set_tracing_disabled(True)
     args = get_config()
-
-    console = Console()
-    with console.status("[bold cyan]Evaluating rubric...[/bold cyan]"):
-        results = asyncio.run(_run_benchmark(args))
+    with Console().status("[bold cyan]Evaluating rubric...[/bold cyan]"):
+        results = await _run_benchmark(args)
 
     output = results.model_dump()
     if args.output is not None:
@@ -83,7 +77,12 @@ def main() -> None:
         print(json.dumps(output, indent=2))
         return
 
-    Run(PrintResultsTask)(args, results)
+    await Run(PrintResultsTask)(args, results)
+
+
+def main() -> None:
+    """Run the benchmark CLI."""
+    asyncio.run(_async_main())
 
 
 if __name__ == "__main__":

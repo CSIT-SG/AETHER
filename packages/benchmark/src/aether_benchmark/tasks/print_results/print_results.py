@@ -59,7 +59,9 @@ class PrintResultsTask(Task[[BenchmarkConfig, BenchmarkSchemaWithResults], None]
         rubric_passed_flags: list[bool],
     ) -> Tree:
         highlighter = ReprHighlighter()
-        tree = Tree(f"[bold]{results.name} v{results.version}[/bold]")
+        tree = Tree(
+            f"[bold]{results.name} {f'v{results.version}' if results.version else ''}[/bold]"
+        )
 
         for rubric, rubric_passed in zip(results.rubrics, rubric_passed_flags, strict=True):
             status = "[green]✓[/green]" if rubric_passed else "[red]✗[/red]"

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 from typing import Literal, Self
 
@@ -84,6 +85,10 @@ class BenchmarkConfig(BaseModel):
 
 def get_config() -> BenchmarkConfig:
     """Run the CLI, validate, and return an arg set."""
+    if len(sys.argv) == 1:
+        CliApp.print_help(BenchmarkSettings)
+        sys.exit(1)
+
     raw = CliApp.run(BenchmarkSettings)
 
     target: IdbTarget | DocTarget
