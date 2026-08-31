@@ -43,7 +43,7 @@ class TestGetXrefsToStackVariable:
     def test_stack_variable_name_does_not_corrupt(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.get_xrefs_to(location="stack_var_target", variable="var_8")
         assert result.success is True
-        assert result.result["target_name"] == "stack_var_target::var_8"
+        assert result.result["target_name"] == "0x1400018e0::var_8"
 
     def test_stack_variable_xrefs_reference_owning_function(
         self, ida_client: rpyc.Connection
@@ -54,8 +54,6 @@ class TestGetXrefsToStackVariable:
             assert xref["is_code"] is True
             assert xref["from_function"] is not None
             assert xref["from_function"]["name"] == "stack_var_target"
-
-    # TODO: ADD TEST THAT WHOLE ENTRY DOES NOT CORRUPT
 
     def test_return_none_for_invalid_stack_variable_name(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.get_xrefs_to(

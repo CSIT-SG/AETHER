@@ -21,13 +21,10 @@ class GetXrefsTo(Capability):
     def name(self) -> str:
         return "get_xrefs_to"
 
-    def stack_var(self, location: str | int, variable: str, func_ea: int) -> Result[XrefsResult]:
+    def stack_var(self, variable: str, func_ea: int) -> Result[XrefsResult]:
         """Find all locations that reference the given local/stack variable.
 
         Args:
-            location (str | int): The target to look up cross-references for.
-                Identifies the *function* that owns the stack variable (name,
-                hex address, or effective address).
             variable (str | None): The name of a local/stack variable (e.g.
                 "var_10" or a renamed local) inside the function identified
                 by `location`. `location` and `variable` act as a compound
@@ -56,22 +53,21 @@ class GetXrefsTo(Capability):
         """
         stack_var: StackVariableInfo | None = resolve_stack_variable(variable, func_ea)
         if stack_var is None:
-            return Err(result=f"Invalid stack variable '{variable}' in function {location}")
+            return Err(result=f"Invalid stack variable '{variable}' at {func_ea}")
         try:
             xrefs = collect_stkvar_xrefs(stack_var)
         except Exception as e:
             self.logger.exception(
                 "Failed to collect xrefs for stack var %s::%s: %s",
-                location,
                 variable,
                 e,
             )
-            return Err(result=f"Failed to collect xrefs for stack var {location}::{variable}: {e}")
+            return Err(result=f"Failed to collect xrefs for stack var {variable} at {func_ea}: {e}")
         if xrefs is None:
             return Err(result=f"failed to resolve {stack_var}")
         data: XrefsResult = XrefsResult(
             target_address=hex(stack_var["start_off"]),
-            target_name=f"{location}::{variable}",
+            target_name=f"{hex(func_ea)}::{variable}",
             count=len(xrefs),
             xrefs=xrefs,
         )
@@ -172,6 +168,6 @@ class GetXrefsTo(Capability):
         if variable is None:
             result = self.not_stack_var(func_ea)
         else:
-            result = self.stack_var(location, variable, func_ea)
+            result = self.stack_var(variable, func_ea)
 
         return result
