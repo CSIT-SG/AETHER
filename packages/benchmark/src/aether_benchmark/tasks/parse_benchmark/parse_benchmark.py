@@ -2,9 +2,8 @@ import asyncio
 from pathlib import Path
 
 import yaml
-from pydantic import BaseModel, ValidationError
-
 from aether_benchmark.utils.task import Task
+from pydantic import BaseModel, ValidationError
 
 
 class ParseBenchmarkTask[T: BaseModel](Task[[T, Path], T]):

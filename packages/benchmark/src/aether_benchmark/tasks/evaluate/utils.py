@@ -2,6 +2,8 @@ import asyncio
 from typing import Any
 
 from aether_backend.utils.force_structured_output import force_structured_output
+from aether_benchmark.cli import BenchmarkConfig
+from aether_benchmark.tasks.parse_benchmark.models import BenchmarkSchema
 from agents import (
     Agent,
     OpenAIChatCompletionsModel,
@@ -9,9 +11,6 @@ from agents import (
     Runner,
 )
 from openai import AsyncOpenAI
-
-from aether_benchmark.cli import BenchmarkConfig
-from aether_benchmark.tasks.parse_benchmark.models import BenchmarkSchema
 
 from .models import (
     AgentRunResult,

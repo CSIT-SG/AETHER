@@ -2,12 +2,11 @@ import asyncio
 from itertools import chain
 from pathlib import Path
 
-from aether_utils.get_content import get_content
-from agents import Agent
-
 from aether_benchmark.cli import BenchmarkConfig
 from aether_benchmark.tasks.parse_benchmark.models import BenchmarkSchema
 from aether_benchmark.utils.task import Task
+from aether_utils.get_content import get_content
+from agents import Agent
 
 from .models import (
     AgentRunResult,

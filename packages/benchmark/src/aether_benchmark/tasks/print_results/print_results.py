@@ -1,7 +1,3 @@
-from rich.console import Console
-from rich.highlighter import ReprHighlighter
-from rich.tree import Tree
-
 from aether_benchmark.cli import BenchmarkConfig
 from aether_benchmark.tasks.evaluate.models import (
     BenchmarkSchemaWithResults,
@@ -9,6 +5,9 @@ from aether_benchmark.tasks.evaluate.models import (
     RubricEntryWithResults,
 )
 from aether_benchmark.utils.task import Task
+from rich.console import Console
+from rich.highlighter import ReprHighlighter
+from rich.tree import Tree
 
 
 class PrintResultsTask(Task[[BenchmarkConfig, BenchmarkSchemaWithResults], None]):

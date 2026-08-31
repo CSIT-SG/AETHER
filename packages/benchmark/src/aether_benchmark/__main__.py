@@ -9,10 +9,6 @@ import json
 import logging
 from typing import cast
 
-from aether_utils.logger import get_logger
-from agents import set_tracing_disabled
-from rich.console import Console
-
 from aether_benchmark.tasks.evaluate import (
     EvaluateIDBTask,
     EvaluateMDTask,
@@ -22,6 +18,9 @@ from aether_benchmark.tasks.parse_benchmark.models import BenchmarkSchema
 from aether_benchmark.tasks.print_results import PrintResultsTask
 from aether_benchmark.tasks.start_rpc_server import StartRPCServerTask
 from aether_benchmark.utils.task import Run
+from aether_utils.logger import get_logger
+from agents import set_tracing_disabled
+from rich.console import Console
 
 from .cli import BenchmarkConfig, DocTarget, IdbTarget, get_config
 from .tasks import ParseBenchmarkTask

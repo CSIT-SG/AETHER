@@ -15,14 +15,13 @@ from threading import Event
 import aether_rpc.capabilities as caps
 import rpyc
 from aether_backend.utils.get_rpc_service import AnyService
+from aether_benchmark.utils.task import Task
 from aether_rpc.executors.headless_executor import HeadlessExecutor
 from aether_rpc.server import RPCServer
 from aether_utils.configure_ida import configure_ida
 from aether_utils.file_id import file_id
 from aether_utils.get_port import get_port
 from aether_utils.logger import get_logger
-
-from aether_benchmark.utils.task import Task
 
 logger = get_logger("AETHER_BENCHMARK.RPC")
 
