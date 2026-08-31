@@ -14,6 +14,7 @@ from .get_local_variables import get_local_variables
 from .get_struct_id_by_name import get_struct_id_by_name
 from .get_struct_info import get_struct_info
 from .get_xrefs_to import get_xrefs_to
+from .list_structs import list_structs
 from .rename_function import rename_function
 from .rename_local_variable import rename_local_variable
 from .rename_struct import rename_struct
@@ -34,6 +35,7 @@ __all__ = [
     "get_binary_metadata",
     "set_inline_comment",
     "set_summary_comment",
+    "list_structs",
     "add_struct_field",
     "change_struct_field_size",
     "change_struct_field_type",

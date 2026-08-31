@@ -34,9 +34,15 @@ Use `get_data_at_address` on all addresses you findto get information about the 
 
 Use `create_struct` to craft a struct. Ensure to give it the struct name and list of fields as input values. You MUST use this.
 
+Use `apply_struct` to apply the struct as a type to the specified local vairable
+
 # RESPONSE
 
 End with a brief explanation of what you did. Highlight any step that failed or was partially successful.
+
+# STRUCT NAME CONSIDERATIONS
+
+When naming a struct. Ensure to take into consideration the context in which the struct is applied. You MUST give it meaningful names. Simply setting the variable name as the struct name is not allowed. e.g. naming the struct `var_120` is not allowed.
 
 
 # ADDITIONAL INFORMATION
