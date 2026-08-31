@@ -168,9 +168,9 @@ class StructFieldWithOffset(NamedTuple):
 
 
 class StructInfo(TypedDict):
-    struct_id: str
+    struct_id: int
     struct_name: str
-    applied_to: list[int]
+    applied_to: list[str]
     struct_fields: list[StructFieldWithOffset]
 
 

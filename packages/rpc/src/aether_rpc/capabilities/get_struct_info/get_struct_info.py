@@ -3,12 +3,10 @@ import ida_xref
 from ..base import Capability
 from ..result import Err, Ok, Result
 from ..types import StructInfo
-from ..utils import get_struct_info_util
+from ..utils import get_struct, get_struct_fields
 
 
 class GetStructInfo(Capability):
-    """"""
-
     @property
     def name(self) -> str:
         return "get_struct_info"
@@ -24,27 +22,29 @@ class GetStructInfo(Capability):
             whose ``result`` carries info about the struct. Each field returned
             is in the format of [name, type, size, offset]
         """
-        error, struct_id, struct_name, fields = get_struct_info_util(struct)
+        struct_result = get_struct(struct)
+        if isinstance(struct_result, Err):
+            return Err(result=struct_result.result)
+
+        struct_info = struct_result.result
+        fields = get_struct_fields(struct_info.udt)
         xrefs = []
         xb = ida_xref.xrefblk_t()
 
-        if not error:
-            if len(fields) > 0:
-                if xb.first_to(struct_id, ida_xref.XREF_ALL):
-                    while True:
-                        xrefs.append(hex(xb.frm))
+        if len(fields) > 0:
+            if xb.first_to(struct_info.struct_id, ida_xref.XREF_ALL):
+                while True:
+                    xrefs.append(hex(xb.frm))
 
-                        if not xb.next_to():
-                            break
-                return Ok(
-                    result=StructInfo(
-                        struct_id=struct_id,
-                        struct_name=struct_name,
-                        applied_to=xrefs,
-                        struct_fields=fields,
-                    )
+                    if not xb.next_to():
+                        break
+            return Ok(
+                result=StructInfo(
+                    struct_id=struct_info.struct_id,
+                    struct_name=struct_info.struct_name,
+                    applied_to=xrefs,
+                    struct_fields=fields,
                 )
-            else:
-                return Err(result=f"Struct {struct_name} has no fields.")
-        else:
-            return Err(result=error)
+            )
+
+        return Err(result=f"Struct {struct_info.struct_name} has no fields.")

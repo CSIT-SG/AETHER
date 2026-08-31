@@ -15,10 +15,10 @@ class GUIRPCServer:
         self.file_id = file_id
         self.server = RPCServer(id=file_id, executor=executor, capabilities=CAPABILITIES)
 
-    def start(self):
+    def start(self) -> None:
         self.server.start()
         logger.info(f"GUI RPC server for file_id {self.file_id} started on port {self.server.port}")
 
-    def stop(self):
+    def stop(self) -> None:
         self.server.stop()
         logger.info(f"GUI RPC server for file_id {self.file_id} stopped")

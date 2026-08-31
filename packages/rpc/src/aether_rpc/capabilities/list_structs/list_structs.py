@@ -3,12 +3,10 @@ import ida_typeinf
 from ..base import Capability
 from ..result import Err, Ok, Result
 from ..types import AllStructs, StructInfo
-from ..utils import get_struct_info_util
+from ..utils import get_struct, get_struct_fields
 
 
 class ListStructs(Capability):
-    """"""
-
     @property
     def name(self) -> str:
         return "list_structs"
@@ -32,14 +30,18 @@ class ListStructs(Capability):
             if not name or not tif.is_struct():
                 continue
 
-            error, struct_id, struct_name, fields = get_struct_info_util(name)
-            if error:
+            struct_result = get_struct(name)
+            if isinstance(struct_result, Err):
                 continue
+
+            struct_info = struct_result.result
+            fields = get_struct_fields(struct_info.udt)
 
             structs.append(
                 StructInfo(
-                    struct_id=struct_id,
-                    struct_name=struct_name,
+                    struct_id=struct_info.struct_id,
+                    struct_name=struct_info.struct_name,
+                    applied_to=[],
                     struct_fields=fields,
                 )
             )
