@@ -1,4 +1,5 @@
 import asyncio
+from typing import Any
 
 from aether_backend.utils.force_structured_output import force_structured_output
 from agents import (
@@ -58,7 +59,13 @@ class ParallelRunner:
             except Exception as e:
                 return {"success": False, "error": str(e)}
 
-    async def run_all(self, *, context=None, max_turns=20, run_config=None) -> list[AgentRunResult]:
+    async def run_all(
+        self,
+        *,
+        context: Any = None,
+        max_turns: int = 20,
+        run_config: RunConfig | None = None,
+    ) -> list[AgentRunResult]:
         self._tasks = [
             asyncio.create_task(
                 self._run_one(prompt, context=context, max_turns=max_turns, run_config=run_config)
