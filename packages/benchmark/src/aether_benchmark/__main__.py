@@ -12,8 +12,6 @@ from typing import cast
 from aether_utils.logger import get_logger
 from agents import set_tracing_disabled
 from rich.console import Console
-from rich.highlighter import ReprHighlighter
-from rich.tree import Tree
 
 from aether_benchmark.tasks.evaluate import (
     EvaluateIDBTask,
@@ -21,6 +19,7 @@ from aether_benchmark.tasks.evaluate import (
 )
 from aether_benchmark.tasks.evaluate.models import BenchmarkSchemaWithResults
 from aether_benchmark.tasks.parse_benchmark.models import BenchmarkSchema
+from aether_benchmark.tasks.print_results import PrintResultsTask
 from aether_benchmark.tasks.start_rpc_server import StartRPCServerTask
 from aether_benchmark.utils.task import Run
 
@@ -69,23 +68,6 @@ async def _run_benchmark(
     return results
 
 
-def _aggregate(
-    rubric_results: list[bool],
-    weights: list[float],
-) -> dict[str, float | int]:
-    """Compute overall weighted score."""
-    total = len(rubric_results)
-    passed = sum(rubric_results)
-    total_weight = sum(weights)
-    weighted_score = (
-        sum(w for r, w in zip(rubric_results, weights, strict=True) if r) / total_weight
-        if total_weight > 0
-        else 0.0
-    )
-    score = passed / total if total else 0.0
-    return {"score": score, "passed": passed, "total": total, "weighted_score": weighted_score}
-
-
 def main() -> None:
     set_tracing_disabled(True)
     args = get_config()
@@ -102,44 +84,7 @@ def main() -> None:
         print(json.dumps(output, indent=2))
         return
 
-    rubric_passed_flags = [
-        all(
-            c.result["success"] and "data" in c.result and c.result["data"]["passed"]
-            for c in rubric.criteria
-        )
-        for rubric in results.rubrics
-    ]
-    weights = [rubric.weight for rubric in results.rubrics]
-    agg = _aggregate(rubric_passed_flags, weights)
-
-    highlighter = ReprHighlighter()
-
-    tree = Tree(f"[bold]{results.name} v{results.version}[/bold]")
-    for rubric, rubric_passed in zip(results.rubrics, rubric_passed_flags, strict=True):
-        status = "[green]✓[/green]" if rubric_passed else "[red]✗[/red]"
-        rubric_node = tree.add(f"[{status}] [bold cyan]{rubric.name}[/bold cyan]")
-        if not args.verbose:
-            continue
-        for c in rubric.criteria:
-            if c.result["success"]:
-                assert "data" in c.result
-                c_status = "[green]✓[/green]" if c.result["data"]["passed"] else "[red]✗[/red]"
-                reasoning = c.result["data"]["reasoning"]
-            else:
-                assert "error" in c.result
-                c_status = "[yellow]![/yellow]"
-                reasoning = f"Agent run failed: {c.result['error']}"
-            c_node = rubric_node.add(f"[{c_status}] [bold]{c.criterion}[/bold]")
-            reasoning_text = highlighter(reasoning)
-            reasoning_text.stylize("dim")
-            c_node.add(reasoning_text)
-
-    console.print(tree)
-    console.print()
-    console.print(
-        f"Overall score: [bold]{agg['score']:.1%}[/bold] ({agg['passed']}/{agg['total']} passed)"
-    )
-    console.print(f"Weighted score: [bold]{agg['weighted_score']:.1%}[/bold]")
+    Run(PrintResultsTask)(args, results)
 
 
 if __name__ == "__main__":
