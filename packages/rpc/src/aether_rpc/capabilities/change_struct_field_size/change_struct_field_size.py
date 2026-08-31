@@ -7,8 +7,6 @@ from ..utils import get_struct
 
 
 class ChangeStructFieldSize(Capability):
-    """"""
-
     @property
     def name(self) -> str:
         return "change_struct_field_size"
@@ -26,11 +24,14 @@ class ChangeStructFieldSize(Capability):
         Returns:
             A Result object whose ``result`` attribute contains the outcome.
         """
-        status, output = get_struct(struct)
-        if status:
-            struct_name, struct_id, _, udt = output
-        else:
-            return Err(result=output)
+        struct_result = get_struct(struct)
+        if isinstance(struct_result, Err):
+            return Err(result=struct_result.result)
+
+        struct_info = struct_result.result
+        struct_name = struct_info.struct_name
+        struct_id = struct_info.struct_id
+        udt = struct_info.udt
 
         # Locate member
         member_index = next((i for i, member in enumerate(udt) if member.name == field_name), -1)

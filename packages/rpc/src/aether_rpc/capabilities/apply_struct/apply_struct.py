@@ -7,6 +7,8 @@ import ida_name
 import ida_typeinf
 import idaapi
 
+from aether_rpc.capabilities.utils.struct_utils.types import InternalStructInfo
+
 from ..base import Capability
 from ..result import Err, Ok, Result
 from ..types import AppliedStruct
@@ -14,8 +16,6 @@ from ..utils import get_struct, resolve_function_name
 
 
 class ApplyStruct(Capability):
-    """"""
-
     @property
     def name(self) -> str:
         return "apply_struct"
@@ -25,7 +25,7 @@ class ApplyStruct(Capability):
         frame_offset: int,
         variable: str,
         func: dict[str, Any],
-        struct: dict[str, Any],
+        struct: InternalStructInfo,
     ) -> Result[AppliedStruct]:
 
         diff = 0x0 - ida_frame.calc_frame_offset(func["pfn"], 0x0)
@@ -35,33 +35,33 @@ class ApplyStruct(Capability):
         stack_offset = frame_offset + diff
 
         if not (
-            lvars_start <= frame_offset and frame_offset <= savregs_start - struct["tif"].get_size()
+            lvars_start <= frame_offset and frame_offset <= savregs_start - struct.tif.get_size()
         ):
             return Err(
-                result=f"Struct {struct['name']} is too big to replace Variable {variable} in stack."
+                result=f"Struct {struct.struct_name} is too big to replace Variable {variable} in stack."
             )
 
         for member in func["udt"]:
             var_start = member.offset // 8
             var_end = member.offset // 8 + member.type.get_size()
-            if not (
-                var_end <= frame_offset or var_start >= frame_offset + struct["tif"].get_size()
-            ):
+            if not (var_end <= frame_offset or var_start >= frame_offset + struct.tif.get_size()):
                 ida_frame.delete_frame_members(func["pfn"], var_start, var_end)
 
-        if ida_frame.define_stkvar(func["pfn"], variable, stack_offset, struct["tif"]):
+        if ida_frame.define_stkvar(func["pfn"], variable, stack_offset, struct.tif):
             ida_hexrays.mark_cfunc_dirty(func["ea"])
             return Ok(
                 result=AppliedStruct(
                     function_name=func["name"],
-                    struct_id=struct["id"],
-                    struct_name=struct["name"],
+                    struct_id=struct.struct_id,
+                    struct_name=struct.struct_name,
                     variable=variable,
                     address=hex(func["ea"]),
                 )
             )
         else:
-            return Err(result=f"Failed to apply Struct {struct['name']} on Variable {variable}.")
+            return Err(
+                result=f"Failed to apply Struct {struct.struct_name} on Variable {variable}."
+            )
 
     def execute(
         self,
@@ -82,12 +82,11 @@ class ApplyStruct(Capability):
             applied, the variable the struct was applied to and its address.
         """
         # Obtain struct info and populate struct dict
-        status, output = get_struct(struct)
-        struct = dict()
-        if status:
-            struct["name"], struct["id"], struct["tif"], _ = output
-        else:
-            return Err(result=output)
+        struct_result = get_struct(struct)
+        if isinstance(struct_result, Err):
+            return Err(result=struct_result.result)
+
+        struct_info = struct_result.result
 
         # Obtain function info and populate func dict
         func = dict()
@@ -128,7 +127,7 @@ class ApplyStruct(Capability):
 
             # Handle variable being a ptr
             new_tif = ida_typeinf.tinfo_t()
-            new_tif.create_ptr(struct["tif"])
+            new_tif.create_ptr(struct_info.tif)
             info = ida_hexrays.lvar_saved_info_t()
             info.ll = lvar
             info.type = new_tif
@@ -137,19 +136,19 @@ class ApplyStruct(Capability):
                 return Ok(
                     result=AppliedStruct(
                         function_name=func["name"],
-                        struct_id=struct["id"],
-                        struct_name=struct["name"],
+                        struct_id=struct_info.struct_id,
+                        struct_name=struct_info.struct_name,
                         variable=variable,
                         address=hex(func["ea"]),
                     )
                 )
             else:
                 return Err(
-                    result=f"Failed to apply Struct {struct['name']} on Variable {variable}."
+                    result=f"Failed to apply Struct {struct_info.struct_name} on Variable {variable}."
                 )
 
         if frame_offset:
-            return self.handle_frame_offset(frame_offset, variable, func, struct)
+            return self.handle_frame_offset(frame_offset, variable, func, struct_info)
 
         # Check if variable is stack variable second
         for member in func["udt"]:
@@ -161,37 +160,37 @@ class ApplyStruct(Capability):
                     continue
                 # Handle variable being a ptr
                 new_tif = ida_typeinf.tinfo_t()
-                new_tif.create_ptr(struct["tif"])
+                new_tif.create_ptr(struct_info.tif)
 
                 if ida_frame.set_frame_member_type(func["pfn"], frame_offset, new_tif):
                     ida_hexrays.mark_cfunc_dirty(func["ea"])
                     return Ok(
                         result=AppliedStruct(
                             function_name=func["name"],
-                            struct_id=struct["id"],
-                            struct_name=struct["name"],
+                            struct_id=struct_info.struct_id,
+                            struct_name=struct_info.struct_name,
                             variable=variable,
                             address=hex(func["ea"]),
                         )
                     )
                 else:
                     return Err(
-                        result=f"Failed to apply Struct {struct['name']} on Variable {variable}."
+                        result=f"Failed to apply Struct {struct_info.struct_name} on Variable {variable}."
                     )
             break
 
         if frame_offset:
-            return self.handle_frame_offset(frame_offset, variable, func, struct)
+            return self.handle_frame_offset(frame_offset, variable, func, struct_info)
 
         # Check if variable is global variable last
         address = ida_name.get_name_ea(idaapi.BADADDR, variable)
-        if ida_typeinf.apply_tinfo(address, struct["tif"], ida_typeinf.TINFO_DEFINITE):
+        if ida_typeinf.apply_tinfo(address, struct_info.tif, ida_typeinf.TINFO_DEFINITE):
             ida_hexrays.mark_cfunc_dirty(func["ea"])
             return Ok(
                 result=AppliedStruct(
                     function_name=func["name"],
-                    struct_id=struct["id"],
-                    struct_name=struct["name"],
+                    struct_id=struct_info.struct_id,
+                    struct_name=struct_info.struct_name,
                     variable=variable,
                     address=hex(address),
                 )

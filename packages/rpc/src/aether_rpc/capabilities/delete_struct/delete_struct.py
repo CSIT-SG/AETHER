@@ -7,8 +7,6 @@ from ..utils import get_struct
 
 
 class DeleteStruct(Capability):
-    """"""
-
     @property
     def name(self) -> str:
         return "delete_struct"
@@ -23,21 +21,19 @@ class DeleteStruct(Capability):
             A Result whose ``success`` reports whether the deletion succeeded and
             whose ``result`` carries the struct id and name.
         """
-        status, output = get_struct(struct)
-        if status:
-            struct_name, struct_id, tif, _ = output
-        else:
-            return Err(result=output)
+        struct_result = get_struct(struct)
+        if isinstance(struct_result, Err):
+            return Err(result=struct_result.result)
 
-        struct_name = str(tif.get_type_name())
+        struct_info = struct_result.result
         til = ida_typeinf.get_idati()
-        ordinal = ida_typeinf.get_type_ordinal(til, struct_name)
+        ordinal = ida_typeinf.get_type_ordinal(til, struct_info.struct_name)
         if ida_typeinf.del_numbered_type(til, ordinal):
             return Ok(
                 result=StructResult(
-                    struct_id=struct_id,
-                    struct_name=struct_name,
+                    struct_id=struct_info.struct_id,
+                    struct_name=struct_info.struct_name,
                 )
             )
         else:
-            return Err(result=f"Unable to delete struct {struct_name}.")
+            return Err(result=f"Unable to delete struct {struct_info.struct_name}.")

@@ -7,8 +7,6 @@ from .constants import TYPE_MAP
 
 
 class CreateStruct(Capability):
-    """"""
-
     @property
     def name(self) -> str:
         return "create_struct"

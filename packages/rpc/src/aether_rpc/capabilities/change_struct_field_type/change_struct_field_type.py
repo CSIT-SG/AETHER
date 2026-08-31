@@ -8,8 +8,6 @@ from .constants import TYPE_MAP
 
 
 class ChangeStructFieldType(Capability):
-    """"""
-
     @property
     def name(self) -> str:
         return "change_struct_field_type"
@@ -27,22 +25,24 @@ class ChangeStructFieldType(Capability):
         Returns:
             A Result object whose ``result`` attribute contains the outcome.
         """
-        status, output = get_struct(struct)
-        if status:
-            struct_name, struct_id, _, udt = output
-        else:
-            return Err(result=output)
+        struct_result = get_struct(struct)
+        if isinstance(struct_result, Err):
+            return Err(result=struct_result.result)
+
+        struct_info = struct_result.result
 
         # Locate member
         member_index = next(
-            (i for i, member in enumerate(udt) if member.name == field_name),
+            (i for i, member in enumerate(struct_info.udt) if member.name == field_name),
             -1,
         )
 
         if member_index == -1:
-            return Err(result=f"Field '{field_name}' does not exist in '{struct_name}'.")
+            return Err(
+                result=f"Field '{field_name}' does not exist in '{struct_info.struct_name}'."
+            )
 
-        old_member = udt[member_index]
+        old_member = struct_info.udt[member_index]
         old_size = old_member.type.get_size()
 
         if old_size == ida_typeinf.BADSIZE or old_size <= 0:
@@ -75,7 +75,7 @@ class ChangeStructFieldType(Capability):
         previous_end = 0
         padding_index = 0
 
-        for i, old_member in enumerate(udt):
+        for i, old_member in enumerate(struct_info.udt):
             offset = old_member.offset
 
             if i > member_index:
@@ -125,15 +125,15 @@ class ChangeStructFieldType(Capability):
 
         result = new_tif.set_named_type(
             til,
-            struct_name,
+            struct_info.struct_name,
             ida_typeinf.NTF_REPLACE,
         )
         final_tif = ida_typeinf.tinfo_t()
-        if not final_tif.get_named_type(til, struct_name):
-            return Err(result=f"Failed to retrieve structure '{struct_name}'.")
+        if not final_tif.get_named_type(til, struct_info.struct_name):
+            return Err(result=f"Failed to retrieve structure '{struct_info.struct_name}'.")
         final_udt = ida_typeinf.udt_type_data_t()
         if not final_tif.get_udt_details(final_udt):
-            return Err(result=f"Failed to get details for '{struct_name}'.")
+            return Err(result=f"Failed to get details for '{struct_info.struct_name}'.")
         for i in range(len(final_udt) - 1, -1, -1):
             member = final_udt[i]
             if member.name.startswith("__padding_") or (
@@ -153,8 +153,8 @@ class ChangeStructFieldType(Capability):
 
         return Ok(
             result=ChangeStructFieldTypeResult(
-                struct_id=struct_id,
-                struct_name=struct_name,
+                struct_id=struct_info.struct_id,
+                struct_name=struct_info.struct_name,
                 field_name=field_name,
                 new_type=new_type,
             )

@@ -5,8 +5,6 @@ from ..utils import get_struct
 
 
 class RenameStruct(Capability):
-    """"""
-
     @property
     def name(self) -> str:
         return "rename_struct"
@@ -22,20 +20,20 @@ class RenameStruct(Capability):
             A Result whose ``success`` reports whether the rename succeeded and
             whose ``result`` carries struct id, old and new name
         """
-        status, output = get_struct(struct)
-        if status:
-            struct_name, struct_id, tif, _ = output
-        else:
-            return Err(result=output)
+        struct_result = get_struct(struct)
+        if isinstance(struct_result, Err):
+            return Err(result=struct_result.result)
 
-        struct_name = tif.get_type_name()
-        status = tif.rename_type(new_name)
+        struct_info = struct_result.result
+
+        struct_name = struct_info.tif.get_type_name()
+        status = struct_info.tif.rename_type(new_name)
 
         if not status:
             return Ok(
                 result=RenameStructResult(
-                    struct_id=struct_id,
-                    old_struct_name=struct_name,
+                    struct_id=struct_info.struct_id,
+                    old_struct_name=struct_info.struct_name,
                     new_struct_name=new_name,
                 )
             )

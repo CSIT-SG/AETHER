@@ -184,7 +184,7 @@ class AppliedStruct(TypedDict):
     struct_id: int
     struct_name: str
     variable: str
-    address: int
+    address: str
 
 
 class RenameStructResult(TypedDict):

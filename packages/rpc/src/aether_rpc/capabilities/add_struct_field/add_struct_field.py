@@ -8,8 +8,6 @@ from .constants import TYPE_MAP
 
 
 class AddStructField(Capability):
-    """"""
-
     @property
     def name(self) -> str:
         return "add_struct_field"
@@ -36,15 +34,16 @@ class AddStructField(Capability):
             whose ``result`` carries struct id, struct name, field name, field
             type, and array length if applicable.
         """
-        status, output = get_struct(struct)
-        if status:
-            struct_name, struct_id, _, udt = output
-        else:
-            return Err(result=output)
+        struct_result = get_struct(struct)
+        if isinstance(struct_result, Err):
+            return Err(result=struct_result.result)
 
+        struct_info = struct_result.result
         # Check for duplicate field name
-        if any(member.name == field_name for member in udt):
-            return Err(result=f"Field '{field_name}' already exists in '{struct_name}'.")
+        if any(member.name == field_name for member in struct_info.udt):
+            return Err(
+                result=f"Field '{field_name}' already exists in '{struct_info.struct_name}'."
+            )
 
         til = ida_typeinf.get_idati()
         new_type = ida_typeinf.tinfo_t()
@@ -84,10 +83,10 @@ class AddStructField(Capability):
         if new_member_size <= 0:
             return Err(result=f"Unable to determine size of field type '{field_type}'.")
 
-        insert_index = len(udt)
+        insert_index = len(struct_info.udt)
         insert_offset = offset
 
-        for i, member in enumerate(udt):
+        for i, member in enumerate(struct_info.udt):
             member_offset = member.offset // 8
             member_size = member.type.get_size()
 
@@ -109,9 +108,9 @@ class AddStructField(Capability):
                 insert_offset = offset
                 break
 
-        for i in range(insert_index, len(udt)):
+        for i in range(insert_index, len(struct_info.udt)):
             # Create space for new member
-            udt[i].offset += new_member_size * 8
+            struct_info.udt[i].offset += new_member_size * 8
 
         new_member = ida_typeinf.udt_member_t()
         new_member.name = field_name
@@ -120,13 +119,13 @@ class AddStructField(Capability):
 
         new_udt = ida_typeinf.udt_type_data_t()
 
-        for i, member in enumerate(udt):
+        for i, member in enumerate(struct_info.udt):
             if i == insert_index:
                 new_udt.append(new_member)
 
             new_udt.append(member)
 
-        if insert_index == len(udt):
+        if insert_index == len(struct_info.udt):
             new_udt.append(new_member)
 
         new_tif = ida_typeinf.tinfo_t()
@@ -136,15 +135,15 @@ class AddStructField(Capability):
 
         if new_tif.set_named_type(
             til,
-            struct_name,
+            struct_info.struct_name,
             ida_typeinf.NTF_REPLACE,
         ):
             return Err(result=f"Failed to add struct field '{field_name}'.")
 
         return Ok(
             result=StructFieldResult(
-                struct_id=struct_id,
-                struct_name=struct_name,
+                struct_id=struct_info.struct_id,
+                struct_name=struct_info.struct_name,
                 field_name=field_name,
             )
         )
