@@ -30,44 +30,23 @@ logger = get_logger("AETHER_BENCHMARK.RPC", logging.INFO)
 
 async def _run_eval(args: BenchmarkConfig, schema: BenchmarkSchema) -> BenchmarkSchemaWithResults:
     """Run evaluation for the given benchmark config and schema."""
-
-    match args.target.name:
-        case "idb":
-            assert isinstance(args.target, IdbTarget)
-            async with Run(StartRPCServerTask)(
-                args.target.ida_dir, str(args.target.idb)
-            ) as rpc_handle:
-                logger.debug("Starting RPC handle")
-                service = await rpc_handle
-                logger.debug(service)
-                logger.debug("Completed RPC handle")
-                return await Run(EvaluateIDBTask)(service, args, schema)
-        case "doc":
-            assert isinstance(args.target, DocTarget)
-            transcript = args.target.doc.read_text(encoding="utf-8")  # io error will propagate
-
-            return await Run(EvaluateMDTask)(args, schema, transcript)
+    match args.target:
+        case IdbTarget(ida_dir=ida_dir, idb=idb):
+            async with Run(StartRPCServerTask)(ida_dir, str(idb)) as rpc_handle:
+                return await Run(EvaluateIDBTask)(await rpc_handle, args, schema)
+        case DocTarget(doc=doc):
+            return await Run(EvaluateMDTask)(args, schema, doc.read_text(encoding="utf-8"))
         case _:
-            raise RuntimeError(
-                f"Invariant: unknown kind {args.target.name!r} (should be 'idb' or 'doc')"
-            )
-    raise RuntimeError("Unreachable code reached in _run_eval")
-
-
-async def _run_benchmark(
-    args: BenchmarkConfig,
-) -> BenchmarkSchemaWithResults:
-    """Acquire evidence for the selected harness and run the grading loop."""
-    schema = cast(BenchmarkSchema, await Run(ParseBenchmarkTask)(BenchmarkSchema, args.rubric))
-    results = await _run_eval(args, schema)
-    return results
+            raise RuntimeError(f"Invariant: unknown target {args.target!r}")
+    raise RuntimeError("Unreachable code.")
 
 
 async def _async_main() -> None:
     set_tracing_disabled(True)
     args = get_config()
     with Console().status("[bold cyan]Evaluating rubric...[/bold cyan]"):
-        results = await _run_benchmark(args)
+        schema = cast(BenchmarkSchema, await Run(ParseBenchmarkTask)(BenchmarkSchema, args.rubric))
+        results = await _run_eval(args, schema)
 
     output = results.model_dump()
     if args.output is not None:
