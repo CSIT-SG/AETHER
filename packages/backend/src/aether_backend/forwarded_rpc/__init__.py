@@ -1,4 +1,5 @@
 from .add_struct_field import add_struct_field
+from .apply_struct import apply_struct
 from .change_struct_field_size import change_struct_field_size
 from .change_struct_field_type import change_struct_field_type
 from .create_struct import create_struct
@@ -44,4 +45,5 @@ __all__ = [
     "rename_struct",
     "rename_struct_field",
     "get_function_by_address",
+    "apply_struct",
 ]

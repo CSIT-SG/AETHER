@@ -3,12 +3,13 @@ from typing import Any
 
 from aether_backend.forwarded_rpc import (
     add_struct_field,
+    apply_struct,
     create_struct,
     get_data_at_address,
     get_function_by_address,
     get_function_pseudocode,
 )
-from aether_backend.utils.effect import Log, Program, Return
+from aether_backend.utils.effect import Log, Program
 from aether_backend.utils.validation import HexAddress
 from aether_rpc.capabilities.types import XrefsResult
 from aether_utils.get_content import get_content
@@ -33,16 +34,17 @@ async def perform_create_struct(
     name = "struct creator"
     system_prompt = get_content(Path(__file__).parent, "struct_creator_prompt.md")
     tool_list = [
+        apply_struct,
         get_function_pseudocode,
         get_data_at_address,
         add_struct_field,
         create_struct,
     ]
     agent = create_agent(tool_list, system_prompt, name)
-    result = run_agent(
+    async for effect in run_agent(
         service,
         agent=agent,
         user_prompt=user_prompt,
         custom_prompt=custom_prompt,
-    )
-    yield Return(result)
+    ):
+        yield effect

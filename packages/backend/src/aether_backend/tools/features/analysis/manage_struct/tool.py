@@ -51,7 +51,7 @@ async def manage_struct(
 
     match operation:
         case StructOperation.CREATE:
-            refs = await resolve_xrefs(svc, var_name)
+            refs = await resolve_xrefs(svc, function_address, var_name)
             async for effect in perform_create_struct(
                 svc,
                 function_address=function_address,
@@ -61,7 +61,7 @@ async def manage_struct(
             ):
                 yield effect
         case StructOperation.UPDATE:
-            refs = await resolve_xrefs(svc, var_name)
+            refs = await resolve_xrefs(svc, function_address, var_name)
             async for effect in perform_update_struct(
                 svc,
                 function_address=function_address,

@@ -3,7 +3,9 @@ from aether_rpc.capabilities.result import Result
 from aether_rpc.capabilities.types import XrefsResult
 
 
-async def get_xrefs_to(service: AnyService, *, location: str | int) -> Result[XrefsResult]:
+async def get_xrefs_to(
+    service: AnyService, *, location: str | int, variable: str | None = None
+) -> Result[XrefsResult]:
     """Find all locations that reference the given address or symbol name.
 
     Args:
@@ -11,6 +13,11 @@ async def get_xrefs_to(service: AnyService, *, location: str | int) -> Result[Xr
             Accepts a hex address string (e.g. "0x140001000"), a plain
             symbol name (e.g. "assign_buffer"), an IDA auto-generated name
             (e.g. "sub_DEADBEEF"), or an integer effective address.
+        variable (str | None): The name of a local/stack variable (e.g.
+            "var_10" or a renamed local) inside the function identified
+            by `location`. If provided, `location` and `variable` act as
+            a compound key identifying one stack variable. If omitted,
+            `location` is resolved as a normal global address/symbol..
 
     Returns:
         Ok[XrefsResult]: A structured object containing:
@@ -33,4 +40,4 @@ async def get_xrefs_to(service: AnyService, *, location: str | int) -> Result[Xr
         get_xrefs_to("sub_DEADBEEF")
     """
 
-    return service.get_xrefs_to(location=location)
+    return service.get_xrefs_to(location=location, variable=variable)

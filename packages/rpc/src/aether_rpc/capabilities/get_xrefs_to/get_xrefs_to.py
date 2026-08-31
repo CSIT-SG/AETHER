@@ -169,5 +169,6 @@ class GetXrefsTo(Capability):
             result = self.not_stack_var(func_ea)
         else:
             result = self.stack_var(variable, func_ea)
+        self.logger.debug(f"result: {result}")
 
         return result

@@ -13,7 +13,7 @@ from aether_backend.forwarded_rpc import (
     rename_struct,
     rename_struct_field,
 )
-from aether_backend.utils.effect import Program, Return
+from aether_backend.utils.effect import Program
 from aether_backend.utils.validation import HexAddress
 from aether_rpc.capabilities.types import XrefsResult
 from aether_utils.get_content import get_content
@@ -48,10 +48,10 @@ async def perform_update_struct(
         get_struct_id_by_name,
     ]
     agent = create_agent(tool_list, system_prompt, name)
-    result = run_agent(
+    async for effect in run_agent(
         service,
         agent=agent,
         user_prompt=user_prompt,
         custom_prompt=custom_prompt,
-    )
-    yield Return(result)
+    ):
+        yield effect

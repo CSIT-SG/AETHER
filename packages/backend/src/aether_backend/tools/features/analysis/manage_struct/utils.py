@@ -2,7 +2,7 @@ from collections.abc import Awaitable, Callable, Iterable
 from typing import Any, cast
 
 from aether_backend.forwarded_rpc import get_function_by_address, get_local_variables, get_xrefs_to
-from aether_backend.utils.effect import Program
+from aether_backend.utils.effect import Log, Program
 from aether_backend.utils.subagent import (
     SubagentToolDependencies,
     build_subagent_tool,
@@ -54,7 +54,17 @@ async def run_agent(
         max_turns=100000,
     )
 
-    return result.final_output
+    async for event in result.stream_events():
+        if event.type != "run_item_stream_event":
+            continue
+
+        run_item = event.item
+        if run_item.type == "tool_call_item":
+            args = getattr(run_item.raw_item, "arguments", "")
+            yield Log(f"{run_item.tool_name}({args})")
+
+        elif run_item.type == "tool_call_output_item":
+            yield Log(str(run_item.output))
 
 
 async def get_var_type(svc: Any, function_address: HexAddress, variable: str) -> str:
@@ -71,11 +81,8 @@ async def get_var_type(svc: Any, function_address: HexAddress, variable: str) ->
     raise RuntimeError(f"variable {variable} not found")
 
 
-async def resolve_xrefs(svc: Any, var_name: str) -> XrefsResult:
-    xrefs = await get_xrefs_to(
-        svc,
-        location=var_name,
-    )
+async def resolve_xrefs(svc: Any, function_address: HexAddress, var_name: str) -> XrefsResult:
+    xrefs = await get_xrefs_to(svc, location=function_address, variable=var_name)
 
     if xrefs.success is False:
         raise RuntimeError(f"Failed to get xrefs {xrefs.result}")
