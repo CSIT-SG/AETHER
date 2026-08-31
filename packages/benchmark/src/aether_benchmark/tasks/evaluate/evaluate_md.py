@@ -40,13 +40,13 @@ class EvaluateMDTask(Task[[BenchmarkConfig, BenchmarkSchema, str], BenchmarkSche
 
         {rubric.description or "No description provided."}
 
-        ## Criterion
-
-        {criterion}
-
         ## Chatbot conversation transcript
 
         {evidence}
+
+        ## Criterion
+
+        {criterion}
 
         Determine whether the chatbot's final answer satisfies the criterion.
         """

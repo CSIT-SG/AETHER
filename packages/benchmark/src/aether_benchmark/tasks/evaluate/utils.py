@@ -1,4 +1,5 @@
 import asyncio
+import random
 from typing import Any
 
 from aether_backend.utils.force_structured_output import force_structured_output
@@ -77,6 +78,10 @@ class ParallelRunner:
     ) -> AgentRunResult:
         async with self._sem:
             try:
+                # Prevents rate-limiting (hopefully)
+                delay = 1.0 + random.uniform(0, 1)
+                await asyncio.sleep(delay)
+
                 result = await Runner.run(
                     self.agent,
                     prompt,
