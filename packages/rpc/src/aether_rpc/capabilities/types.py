@@ -1,7 +1,5 @@
 from typing import NamedTuple, TypedDict
 
-from ida_funcs import func_t
-
 
 class FunctionInfo(TypedDict):
     """Brief identifying info for a function (name + entry point)."""
@@ -220,6 +218,6 @@ class BinaryMetadataResult(TypedDict):
 
 
 class StackVariableInfo(TypedDict):
-    function: func_t
+    caller_func_ea: int
     start_off: int
     end_off: int

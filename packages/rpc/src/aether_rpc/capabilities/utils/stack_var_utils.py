@@ -42,7 +42,7 @@ def resolve_stack_variable(var_name: str, func_ea: int) -> StackVariableInfo | N
         if udm.name == var_name:
             start_off: int = udm.begin() // 8
             end_off: int = udm.end() // 8
-            return StackVariableInfo(function=func, start_off=start_off, end_off=end_off)
+            return StackVariableInfo(caller_func_ea=func_ea, start_off=start_off, end_off=end_off)
 
     return None
 
@@ -60,10 +60,15 @@ def collect_stkvar_xrefs(stack_vars: StackVariableInfo) -> list[XrefEntry] | Non
     Returns:
         A list of strings, each represents an xref.
     """
-    func: func_t = stack_vars["function"]
+    func_ea: int = stack_vars["caller_func_ea"]
     start_off: int = stack_vars["start_off"]
     end_off: int = stack_vars["end_off"]
     xreflist = ida_frame.xreflist_t()
+
+    func: func_t | None = ida_funcs.get_func(func_ea)
+    if func is None:
+        return None
+
     ida_frame.build_stkvar_xrefs(xreflist, func, start_off, end_off)
     if len(xreflist) == 0:
         return None
