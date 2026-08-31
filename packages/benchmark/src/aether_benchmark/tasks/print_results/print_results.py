@@ -13,38 +13,24 @@ from rich.tree import Tree
 class PrintResultsTask(Task[[BenchmarkConfig, BenchmarkSchemaWithResults], None]):
     async def start(self, args: BenchmarkConfig, results: BenchmarkSchemaWithResults) -> None:
         console = Console()
-        rubric_passed_flags = [self._rubric_passed(rubric) for rubric in results.rubrics]
-        weights = [rubric.weight for rubric in results.rubrics]
-        agg = self._aggregate(rubric_passed_flags, weights)
+        passed_flags = [self._rubric_passed(r) for r in results.rubrics]
+        weights = [r.weight for r in results.rubrics]
+        total, passed, total_weight = len(passed_flags), sum(passed_flags), sum(weights)
+        weighted_score = (
+            sum(w for r, w in zip(passed_flags, weights, strict=True) if r) / total_weight
+            if total_weight
+            else 0.0
+        )
 
-        tree = self._build_tree(args, results, rubric_passed_flags)
-
-        console.print(tree)
+        console.print(self._build_tree(args, results, passed_flags))
         console.print()
         console.print(
-            f"Overall score: [bold]{agg['score']:.1%}[/bold] ({agg['passed']}/{agg['total']} passed)"
+            f"Overall score: [bold]{passed / total if total else 0.0:.1%}[/bold] ({passed}/{total} passed)"
         )
-        console.print(f"Weighted score: [bold]{agg['weighted_score']:.1%}[/bold]")
+        console.print(f"Weighted score: [bold]{weighted_score:.1%}[/bold]")
 
     async def cancel(self) -> None:
         pass
-
-    def _aggregate(
-        self,
-        rubric_results: list[bool],
-        weights: list[float],
-    ) -> dict[str, float | int]:
-        """Compute overall weighted score."""
-        total = len(rubric_results)
-        passed = sum(rubric_results)
-        total_weight = sum(weights)
-        weighted_score = (
-            sum(w for r, w in zip(rubric_results, weights, strict=True) if r) / total_weight
-            if total_weight > 0
-            else 0.0
-        )
-        score = passed / total if total else 0.0
-        return {"score": score, "passed": passed, "total": total, "weighted_score": weighted_score}
 
     def _rubric_passed(self, rubric: RubricEntryWithResults) -> bool:
         return all(
@@ -53,38 +39,35 @@ class PrintResultsTask(Task[[BenchmarkConfig, BenchmarkSchemaWithResults], None]
         )
 
     def _build_tree(
-        self,
-        args: BenchmarkConfig,
-        results: BenchmarkSchemaWithResults,
-        rubric_passed_flags: list[bool],
+        self, args: BenchmarkConfig, results: BenchmarkSchemaWithResults, passed_flags: list[bool]
     ) -> Tree:
         highlighter = ReprHighlighter()
         tree = Tree(
             f"[bold]{results.name} {f'v{results.version}' if results.version else ''}[/bold]"
         )
-
-        for rubric, rubric_passed in zip(results.rubrics, rubric_passed_flags, strict=True):
-            status = "[green]✓[/green]" if rubric_passed else "[red]✗[/red]"
-            rubric_node = tree.add(f"[{status}] [bold cyan]{rubric.name}[/bold cyan]")
-            if not args.verbose:
-                continue
-            for c in rubric.criteria:
-                rubric_node.add(self._build_criterion_node(c, highlighter))
-
+        for rubric, ok in zip(results.rubrics, passed_flags, strict=True):
+            node = tree.add(
+                f"[{'green' if ok else 'red'}][{'✓' if ok else '✗'}][/] [bold cyan]{rubric.name}[/bold cyan]"
+            )
+            if args.verbose:
+                for c in rubric.criteria:
+                    node.add(self._build_criterion_node(c, highlighter))
         return tree
 
     def _build_criterion_node(self, c: CriterionWithResult, highlighter: ReprHighlighter) -> Tree:
         if c.result["success"]:
             assert "data" in c.result
-            status = "[green]✓[/green]" if c.result["data"]["passed"] else "[red]✗[/red]"
-            reasoning = c.result["data"]["reasoning"]
+            ok = c.result["data"]["passed"]
+            status, reasoning = (
+                ("[green]✓[/green]" if ok else "[red]✗[/red]"),
+                c.result["data"]["reasoning"],
+            )
         else:
             assert "error" in c.result
-            status = "[yellow]![/yellow]"
-            reasoning = f"Agent run failed: {c.result['error']}"
+            status, reasoning = "[yellow]![/yellow]", f"Agent run failed: {c.result['error']}"
 
         node = Tree(f"[{status}] [bold]{c.criterion}[/bold]")
-        reasoning_text = highlighter(reasoning)
-        reasoning_text.stylize("dim")
-        node.add(reasoning_text)
+        text = highlighter(reasoning)
+        text.stylize("dim")
+        node.add(text)
         return node
