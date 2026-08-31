@@ -4,7 +4,7 @@ import ida_typeinf
 
 from ..base import Capability
 from ..result import Err, Ok, Result
-from ..types import AppliedStruct
+from ..types import StructAtAddress
 from ..utils import get_struct, resolve_effective_address
 
 
@@ -16,7 +16,7 @@ class GetStructAtAddress(Capability):
     def execute(
         self,
         address: str | int,
-    ) -> Result[AppliedStruct]:
+    ) -> Result[StructAtAddress]:
         """Get the struct applied to specified address
 
         Args:
@@ -50,7 +50,7 @@ class GetStructAtAddress(Capability):
 
         struct_info = struct_result.result
         return Ok(
-            result=AppliedStruct(
+            result=StructAtAddress(
                 address=hex(ea),
                 struct_id=struct_info.struct_id,
                 struct_name=struct_info.struct_name,

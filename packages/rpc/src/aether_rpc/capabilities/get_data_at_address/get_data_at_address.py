@@ -3,6 +3,7 @@ import ida_ida
 import ida_lines
 import ida_nalt
 import ida_name
+import ida_typeinf
 from idautils import XrefsFrom, XrefsTo
 
 from ..base import Capability
@@ -44,13 +45,17 @@ class GetDataAtAddress(Capability):
         flags = ida_bytes.get_flags(ea)
         item_size = max(ida_bytes.get_item_size(ea), 1)
         raw = ida_bytes.get_bytes(ea, item_size)
+        raw_bytes: str = raw.hex() if raw is not None else ""
 
+        tif = ida_typeinf.tinfo_t()
+        ida_nalt.get_tinfo(tif, ea)
         data = AddressData(
             address=hex(ea),
             name=ida_name.get_name(ea) or None,
+            type=str(tif.get_type_name()),
             function=function_info(ea),
             item_size=item_size,
-            raw_bytes=raw.hex() if raw else "",
+            raw_bytes=raw_bytes,
             is_code=bool(ida_bytes.is_code(flags)),
             is_data=bool(ida_bytes.is_data(flags)),
             disassembly=self._get_disassembly(ea, flags),

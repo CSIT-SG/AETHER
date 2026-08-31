@@ -187,6 +187,12 @@ class AppliedStruct(TypedDict):
     address: str
 
 
+class StructAtAddress(TypedDict):
+    address: str
+    struct_id: int
+    struct_name: str
+
+
 class RenameStructResult(TypedDict):
     struct_id: int
     old_struct_name: str
