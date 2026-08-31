@@ -5,6 +5,7 @@ from aether_rpc.capabilities.types import StructFieldResult
 
 async def add_struct_field(
     service: AnyService,
+    *,
     struct: str | int,
     field_name: str,
     field_type: str,
