@@ -34,7 +34,7 @@ class MCPClient:
             return
 
         transport = StreamableHttpTransport(url=self.mcp_url)
-        self._client = Client(transport, timeout=10.0)
+        self._client = Client(transport)
 
         try:
             await self._client.__aenter__()  # type: ignore[no-untyped-call]

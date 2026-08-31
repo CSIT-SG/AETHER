@@ -1,3 +1,7 @@
+import importlib
+
+from .base import Capability
+
 # map exactly: capability name to module name
 # this will be dynamically loaded by the RPC server to register capabilities
 EXPORTS: dict[str, str] = {
@@ -32,3 +36,11 @@ EXPORTS: dict[str, str] = {
     "SetInlineComment": ".set_inline_comment",
     "SetSummaryComment": ".set_summary_comment",
 }
+
+
+def load_capabilities() -> list[Capability]:
+    """Dynamically load all capabilities from the EXPORTS mapping."""
+    return [
+        getattr(importlib.import_module(module_path, __package__), name)()
+        for name, module_path in EXPORTS.items()
+    ]

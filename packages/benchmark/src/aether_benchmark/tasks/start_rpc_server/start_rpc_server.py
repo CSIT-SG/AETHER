@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
-import importlib
 import os
 import signal
 import subprocess
@@ -12,10 +11,10 @@ import threading
 from pathlib import Path
 from threading import Event
 
-import aether_rpc.capabilities as caps
 import rpyc
 from aether_backend.utils.get_rpc_service import AnyService
 from aether_benchmark.utils.task import Task
+from aether_rpc.capabilities import load_capabilities
 from aether_rpc.server import RPCServer
 from aether_utils.configure_ida import configure_ida
 from aether_utils.file_id import file_id
@@ -32,10 +31,7 @@ def headless_main(idb_path: str, ida_dir: str, host: str, port: int) -> None:
     from aether_rpc.executors.headless_executor import HeadlessExecutor
 
     executor = HeadlessExecutor(idb_path, ida_dir)
-    capabilities = [
-        getattr(importlib.import_module(module_path, caps.__name__), name)()
-        for name, module_path in caps.EXPORTS.items()
-    ]
+    capabilities = load_capabilities()
     server = RPCServer(file_id(idb_path), executor, capabilities, host=host, port=port)
     server.start()
     logger.info("Headless IDA RPC server started on port %d", server.port)

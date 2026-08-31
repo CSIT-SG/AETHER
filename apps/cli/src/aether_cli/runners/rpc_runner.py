@@ -1,4 +1,3 @@
-import importlib
 import signal
 import sys
 import threading
@@ -19,15 +18,12 @@ def rpc_runner(
 ) -> None:
     configure_ida(ida_install_dir)
 
-    import aether_rpc.capabilities as caps
+    from aether_rpc.capabilities import load_capabilities
     from aether_rpc.executors.headless_executor import HeadlessExecutor
     from aether_rpc.server import RPCServer
 
     executor = HeadlessExecutor(idb_path, ida_install_dir)
-    capabilities = [
-        getattr(importlib.import_module(module_path, caps.__name__), name)()
-        for name, module_path in caps.EXPORTS.items()
-    ]
+    capabilities = load_capabilities()
 
     port = get_port(host)
 

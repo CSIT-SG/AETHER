@@ -1,5 +1,4 @@
 import argparse
-import importlib
 import signal
 import sys
 import threading
@@ -26,14 +25,11 @@ def main(
 ) -> None:
     configure_ida(ida_install_dir)
 
-    import aether_rpc.capabilities as caps
+    from aether_rpc.capabilities import load_capabilities
     from aether_rpc.server import RPCServer
 
     executor = HeadlessExecutor(idb_path, ida_install_dir)
-    capabilities = [
-        getattr(importlib.import_module(module_path, caps.__name__), name)()
-        for name, module_path in caps.EXPORTS.items()
-    ]
+    capabilities = load_capabilities()
 
     server = RPCServer(file_id(idb_path), executor, capabilities, host=host, port=port)
     server.start()  # calls executor.startup() on this (main) thread

@@ -1,3 +1,3 @@
-from .exports import EXPORTS
+from .exports import load_capabilities
 
-__all__ = ["EXPORTS"]
+__all__ = ["load_capabilities"]
