@@ -103,7 +103,10 @@ def main() -> None:
         return
 
     rubric_passed_flags = [
-        all(c.result["success"] and c.result["data"]["passed"] for c in rubric.criteria)
+        all(
+            c.result["success"] and "data" in c.result and c.result["data"]["passed"]
+            for c in rubric.criteria
+        )
         for rubric in results.rubrics
     ]
     weights = [rubric.weight for rubric in results.rubrics]
@@ -115,18 +118,21 @@ def main() -> None:
     for rubric, rubric_passed in zip(results.rubrics, rubric_passed_flags, strict=True):
         status = "[green]✓[/green]" if rubric_passed else "[red]✗[/red]"
         rubric_node = tree.add(f"[{status}] [bold cyan]{rubric.name}[/bold cyan]")
-        if args.verbose:
-            for c in rubric.criteria:
-                if c.result["success"]:
-                    c_status = "[green]✓[/green]" if c.result["data"]["passed"] else "[red]✗[/red]"
-                    reasoning = c.result["data"]["reasoning"]
-                else:
-                    c_status = "[yellow]![/yellow]"
-                    reasoning = f"Agent run failed: {c.result['error']}"
-                c_node = rubric_node.add(f"[{c_status}] [bold]{c.criterion}[/bold]")
-                reasoning_text = highlighter(reasoning)
-                reasoning_text.stylize("dim")
-                c_node.add(reasoning_text)
+        if not args.verbose:
+            continue
+        for c in rubric.criteria:
+            if c.result["success"]:
+                assert "data" in c.result
+                c_status = "[green]✓[/green]" if c.result["data"]["passed"] else "[red]✗[/red]"
+                reasoning = c.result["data"]["reasoning"]
+            else:
+                assert "error" in c.result
+                c_status = "[yellow]![/yellow]"
+                reasoning = f"Agent run failed: {c.result['error']}"
+            c_node = rubric_node.add(f"[{c_status}] [bold]{c.criterion}[/bold]")
+            reasoning_text = highlighter(reasoning)
+            reasoning_text.stylize("dim")
+            c_node.add(reasoning_text)
 
     console.print(tree)
     console.print()
