@@ -56,7 +56,7 @@ class ParallelRunner:
         *,
         agent: Agent,
         prompts: list[str],
-        limit: int = 5,
+        limit: int = 10,
         usage_hook: TokenUsageHook | None = None,
     ) -> None:
         self.agent = agent
