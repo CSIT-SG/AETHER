@@ -16,7 +16,6 @@ import aether_rpc.capabilities as caps
 import rpyc
 from aether_backend.utils.get_rpc_service import AnyService
 from aether_benchmark.utils.task import Task
-from aether_rpc.executors.headless_executor import HeadlessExecutor
 from aether_rpc.server import RPCServer
 from aether_utils.configure_ida import configure_ida
 from aether_utils.file_id import file_id
@@ -30,6 +29,8 @@ def headless_main(idb_path: str, ida_dir: str, host: str, port: int) -> None:
     """Run the IDA-bound RPC server in the child process main thread."""
 
     configure_ida(ida_dir)
+    from aether_rpc.executors.headless_executor import HeadlessExecutor
+
     executor = HeadlessExecutor(idb_path, ida_dir)
     capabilities = [
         getattr(importlib.import_module(module_path, caps.__name__), name)()
