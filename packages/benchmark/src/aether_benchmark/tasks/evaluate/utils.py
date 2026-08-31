@@ -11,6 +11,7 @@ from agents import (
     Runner,
 )
 from openai import AsyncOpenAI
+from rich.progress import Progress
 
 from .models import (
     AgentRunResult,
@@ -71,8 +72,12 @@ class ParallelRunner:
             )
             for prompt in self.prompts
         ]
-        results = await asyncio.gather(*self._tasks)
-        return results
+        with Progress() as progress:
+            bar = progress.add_task("[cyan]Evaluating...", total=len(self._tasks))
+            for coro in asyncio.as_completed(self._tasks):
+                await coro
+                progress.advance(bar)
+        return [t.result() for t in self._tasks]
 
     def cancel(self) -> None:
         for t in self._tasks:

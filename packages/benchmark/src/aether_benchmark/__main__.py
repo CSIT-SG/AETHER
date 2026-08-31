@@ -20,7 +20,6 @@ from aether_benchmark.tasks.start_rpc_server import StartRPCServerTask
 from aether_benchmark.utils.task import Run
 from aether_utils.logger import get_logger
 from agents import set_tracing_disabled
-from rich.console import Console
 
 from .cli import BenchmarkConfig, DocTarget, IdbTarget, get_config
 from .tasks import ParseBenchmarkTask
@@ -43,10 +42,11 @@ async def _run_eval(args: BenchmarkConfig, schema: BenchmarkSchema) -> Benchmark
 
 async def _async_main() -> None:
     set_tracing_disabled(True)
+
     args = get_config()
-    with Console().status("[bold cyan]Evaluating rubric...[/bold cyan]"):
-        schema = cast(BenchmarkSchema, await Run(ParseBenchmarkTask)(BenchmarkSchema, args.rubric))
-        results = await _run_eval(args, schema)
+    schema = cast(BenchmarkSchema, await Run(ParseBenchmarkTask)(BenchmarkSchema, args.rubric))
+
+    results = await _run_eval(args, schema)
 
     output = results.model_dump()
     if args.output is not None:
