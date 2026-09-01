@@ -4,6 +4,7 @@ from typing import cast
 import ida_kernwin
 from aether_gui.features.annotator import AnnotatorHandler
 from aether_gui.features.chatbot import ChatbotHandler
+from aether_gui.features.manage_struct import ManageStructHandler
 from aether_gui.utils.mcp import MCPClient
 from aether_utils.config import get_config
 from aether_utils.logger import get_logger
@@ -27,10 +28,32 @@ class AetherUIHooks(ida_kernwin.UI_Hooks):
         super().__init__()
 
         self.mcp_client = MCPClient()
+
+        manage_struct_operations = [
+            ContextMenuItem(
+                "aether:create_struct",
+                "Create Struct",
+                ManageStructHandler(self.mcp_client, "create"),
+            ),
+            ContextMenuItem(
+                "aether:update_struct",
+                "Update Struct",
+                ManageStructHandler(self.mcp_client, "update"),
+            ),
+            ContextMenuItem(
+                "aether:delete_struct",
+                "Delete Struct",
+                ManageStructHandler(self.mcp_client, "delete"),
+            ),
+        ]
+
         self.items = [
             ContextMenuItem("aether:chatbot", "Open AI Chatbot", ChatbotHandler(self.mcp_client)),
             ContextMenuItem(
                 "aether:annotator", "Annotate Function", AnnotatorHandler(self.mcp_client)
+            ),
+            ContextMenuItem(
+                "aether:manage_struct", "Manage Struct", children=manage_struct_operations
             ),
             ContextMenuItem("aether:whats_new", "What's new", DummyHandler()),
         ]
