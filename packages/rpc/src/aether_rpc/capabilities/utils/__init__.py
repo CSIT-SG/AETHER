@@ -6,6 +6,7 @@ from aether_rpc.capabilities.utils.function_utils import function_info, get_func
 from aether_rpc.capabilities.utils.stack_var_utils import (
     collect_stkvar_xrefs,
     resolve_stack_variable,
+    resolve_stack_variable_name,
 )
 from aether_rpc.capabilities.utils.struct_utils import (
     get_struct,
@@ -25,4 +26,5 @@ __all__ = [
     "get_struct_fields",
     "collect_stkvar_xrefs",
     "resolve_stack_variable",
+    "resolve_stack_variable_name",
 ]

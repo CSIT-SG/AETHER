@@ -2,12 +2,16 @@
 
 import ida_frame
 import ida_funcs
+import ida_hexrays
 import ida_name
 import ida_typeinf
+from aether_utils.logger import get_logger
 from ida_funcs import func_t
 
 from aether_rpc.capabilities.types import StackVariableInfo, XrefEntry
 from aether_rpc.capabilities.utils.function_utils import function_info
+
+LOGGER = get_logger("LOGGING")
 
 
 def resolve_stack_variable(var_name: str, func_ea: int) -> StackVariableInfo | None:
@@ -84,3 +88,52 @@ def collect_stkvar_xrefs(stack_vars: StackVariableInfo) -> list[XrefEntry] | Non
         )
         result.append(xref)
     return result
+
+
+def resolve_stack_variable_name(func_ea: int, variable: str) -> str | None:
+    """Resolve a Hex-Rays pseudocode variable name to its underlying stack
+    frame member name (e.g. "var_120"), by stack offset rather than name match.
+
+    Args:
+        func_ea: Address of the function to inspect.
+        variable: Name of the pseudocode (decompiler) local variable.
+
+    Returns:
+        The frame member name corresponding to the pseudocode variable, or
+        None if the function/lvar can't be resolved, the lvar isn't a stack
+        variable, or no frame member exists at the computed offset.
+    """
+    pfn = ida_funcs.get_func(func_ea)
+    if pfn is None:
+        return None
+
+    cfunc = ida_hexrays.decompile(func_ea)
+    if cfunc is None:
+        return None
+
+    lvar: ida_hexrays.lvar_t | None = None
+    for candidate in cfunc.get_lvars():
+        if candidate.name == variable:
+            lvar = candidate
+            break
+
+    if lvar is None or not lvar.is_stk_var():
+        return None
+
+    # cfunc.get_stkoff_delta() is the documented conversion factor between
+    # decompiler lvar stack offsets and true frame-struct offsets.
+    frame_offset: int = lvar.get_stkoff() + cfunc.get_stkoff_delta()
+
+    frame_tif = ida_typeinf.tinfo_t()
+    if not ida_frame.get_func_frame(frame_tif, pfn):
+        return None
+
+    udt_data = ida_typeinf.udt_type_data_t()
+    if not frame_tif.get_udt_details(udt_data):
+        return None
+
+    for member in udt_data:
+        if member.offset // 8 == frame_offset:
+            return member.name
+
+    return None

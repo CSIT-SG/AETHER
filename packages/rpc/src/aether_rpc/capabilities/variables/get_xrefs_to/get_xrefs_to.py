@@ -8,6 +8,7 @@ from aether_rpc.capabilities.utils import (
     collect_xrefs,
     resolve_effective_address,
     resolve_stack_variable,
+    resolve_stack_variable_name,
 )
 
 
@@ -23,7 +24,7 @@ class GetXrefsTo(Capability):
 
         Args:
             variable (str | None): The name of a local/stack variable (e.g.
-                "var_10" or a renamed local) inside the function identified
+                "v8" or a renamed local) inside the function identified
                 by `location`. `location` and `variable` act as a compound
                 key identifying one stack variable.
             func_ea (int): The resolved effective address of the function
@@ -45,10 +46,13 @@ class GetXrefsTo(Capability):
                 - An exception was raised while collecting cross-references.
 
         Examples:
-            execute("assign_buffer", variable="var_10")
+            execute("assign_buffer", variable="v8")
             execute("0x140001000", variable="buf_ptr")
         """
-        stack_var: StackVariableInfo | None = resolve_stack_variable(variable, func_ea)
+        resolved_name: str | None = resolve_stack_variable_name(func_ea, variable)
+        if resolved_name is None:
+            return Err(result=f"Unable to resolve {variable} to its stack variable")
+        stack_var: StackVariableInfo | None = resolve_stack_variable(resolved_name, func_ea)
         if stack_var is None:
             return Err(result=f"Invalid stack variable '{variable}' at {func_ea}")
         try:
