@@ -6,6 +6,15 @@ You are to look at the xrefs to the target function to get more information and 
 
 The pseudocode may already be annoated with variable names, function renames, and comments. You are to use these to assist with your struct operations
 
+# INPUT VALUES
+
+You will be given:
+
+- variable name: this is the variable which you are creating the struct for
+- function name: this is the name of the function where the variable is found
+- function address: this is the address of the function specified
+- xrefs: these are the xrefs to the function specif
+
 # KEY CONSIDERATIONS
 
 - Consider the pointer type when crafting the C struct. For example:

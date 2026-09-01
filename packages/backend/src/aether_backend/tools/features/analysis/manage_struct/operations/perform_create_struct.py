@@ -8,6 +8,7 @@ from aether_backend.forwarded_rpc import (
     get_data_at_address,
     get_function_by_address,
     get_function_pseudocode,
+    list_structs,
 )
 from aether_backend.utils.effect import Log, Program
 from aether_backend.utils.validation import HexAddress
@@ -29,8 +30,10 @@ async def perform_create_struct(
     yield Log(f"{func}")
     if func.success is False:
         raise RuntimeError(f"Unable to get function {function_address}")
+
+    struct_list = await list_structs(service=service)
     function_name = func.result["name"]
-    user_prompt = f"create the struct representative of {var_name} which is found in the function {function_name} at {function_address} For added context you are to take a look at {xrefs}. These are the cross references to {var_name}"
+    user_prompt = f"These are the current structs in the idb file {struct_list} Create the struct representative of {var_name} which is found in the function {function_name} at {function_address} For added context you are to take a look at {xrefs}. These are the cross references to {var_name}. GIVE THE STRUCT AND IT'S FIELDS MEANINGFUL NAMES"
     name = "struct creator"
     system_prompt = get_content(Path(__file__).parent, "struct_creator_prompt.md")
     tool_list = [

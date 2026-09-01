@@ -19,7 +19,7 @@ async def add_struct_field(
         field_name: Name of the new field.
         field_type: Type of the new field.
         offset: Byte offset at which to add the field.
-        array_size: Number of elements if the field is an array.
+        array_size: Optional if type is not an array. Number of elements if the field is an array.
 
     Returns:
         A Result whose ``success`` reports whether the add succeeded and
