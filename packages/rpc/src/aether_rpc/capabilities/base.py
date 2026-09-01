@@ -1,11 +1,11 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, cast
+from typing import cast
 
 from aether_utils.logger import get_logger
 
 
-class Capability(ABC):
+class Capability[**P, R](ABC):
     @property
     def logger(self) -> logging.Logger:
         return cast(logging.Logger, get_logger(f"rpc.{self.name}"))
@@ -16,5 +16,5 @@ class Capability(ABC):
         pass
 
     @abstractmethod
-    def execute(self, *args: Any, **kwargs: Any) -> Any:
+    def execute(self, *args: P.args, **kwargs: P.kwargs) -> R:
         pass

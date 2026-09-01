@@ -25,7 +25,7 @@ dev = [
     "pytest==9.0.3",
     "pytest-cov==7.1.0",
     "ruff==0.15.16",
-    "mypy==2.1.0",
+    "mypy==2.3.1",
     "pytest-dependency==0.6.1",
     "pytest-order==1.4.0",
     "pre-commit==4.6.0",
