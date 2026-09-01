@@ -1,10 +1,9 @@
 import ida_funcs
 import ida_name
-
-from ...base import Capability
-from ...result import Err, Ok, Result
-from ...types import RenameFuncResult
-from ...utils import resolve_effective_address
+from aether_rpc.capabilities.base import Capability
+from aether_rpc.capabilities.result import Err, Ok, Result
+from aether_rpc.capabilities.types import RenameFuncResult
+from aether_rpc.capabilities.utils import resolve_effective_address
 
 
 class RenameFunction(Capability):

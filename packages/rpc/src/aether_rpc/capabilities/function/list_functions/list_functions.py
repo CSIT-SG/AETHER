@@ -1,9 +1,8 @@
 import ida_funcs
 import idautils
-
-from ...base import Capability
-from ...result import Err, Ok, Result
-from ...types import FuncNameAddr, ListFunctionResult
+from aether_rpc.capabilities.base import Capability
+from aether_rpc.capabilities.result import Err, Ok, Result
+from aether_rpc.capabilities.types import FuncNameAddr, ListFunctionResult
 
 
 class ListFunctions(Capability):

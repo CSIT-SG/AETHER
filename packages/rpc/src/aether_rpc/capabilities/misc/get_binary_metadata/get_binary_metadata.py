@@ -4,10 +4,9 @@ import ida_nalt
 import ida_segment
 import idaapi
 import idautils
-
-from ...base import Capability
-from ...result import Err, Ok, Result
-from ...types import BinaryMetadataResult, SectionInfo
+from aether_rpc.capabilities.base import Capability
+from aether_rpc.capabilities.result import Err, Ok, Result
+from aether_rpc.capabilities.types import BinaryMetadataResult, SectionInfo
 
 
 class GetBinaryMetadata(Capability):

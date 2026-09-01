@@ -1,10 +1,9 @@
 import ida_typeinf
-
-from ...base import Capability
-from ...result import Err, Ok, Result
-from ...types import ChangeStructFieldTypeResult
-from ...utils import get_struct
-from .constants import TYPE_MAP
+from aether_rpc.capabilities.base import Capability
+from aether_rpc.capabilities.result import Err, Ok, Result
+from aether_rpc.capabilities.struct.change_struct_field_type.constants import TYPE_MAP
+from aether_rpc.capabilities.types import ChangeStructFieldTypeResult
+from aether_rpc.capabilities.utils import get_struct
 
 
 class ChangeStructFieldType(Capability):

@@ -1,11 +1,10 @@
 import ida_idaapi
 import ida_nalt
 import ida_typeinf
-
-from ...base import Capability
-from ...result import Err, Ok, Result
-from ...types import StructAtAddress
-from ...utils import get_struct, resolve_effective_address
+from aether_rpc.capabilities.base import Capability
+from aether_rpc.capabilities.result import Err, Ok, Result
+from aether_rpc.capabilities.types import StructAtAddress
+from aether_rpc.capabilities.utils import get_struct, resolve_effective_address
 
 
 class GetStructAtAddress(Capability):

@@ -2,8 +2,7 @@ import ida_name
 import idautils
 
 from aether_rpc.capabilities.types import XrefEntry
-
-from .function_utils import function_info
+from aether_rpc.capabilities.utils.function_utils import function_info
 
 
 def collect_xrefs(xref) -> XrefEntry:

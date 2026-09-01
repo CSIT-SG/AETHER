@@ -1,6 +1,6 @@
 import importlib
 
-from .base import Capability
+from aether_rpc.capabilities.base import Capability
 
 # map exactly: capability name to module name
 # this will be dynamically loaded by the RPC server to register capabilities

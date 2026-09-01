@@ -1,11 +1,10 @@
 import ida_funcs
 import ida_hexrays
-
-from ...base import Capability
-from ...result import Err, Ok, Result
-from ...types import SetCommentResult
-from ...utils import resolve_effective_address
-from .constants import OP_TO_ITP
+from aether_rpc.capabilities.base import Capability
+from aether_rpc.capabilities.comments.set_inline_comment.constants import OP_TO_ITP
+from aether_rpc.capabilities.result import Err, Ok, Result
+from aether_rpc.capabilities.types import SetCommentResult
+from aether_rpc.capabilities.utils import resolve_effective_address
 
 
 class SetInlineComment(Capability):

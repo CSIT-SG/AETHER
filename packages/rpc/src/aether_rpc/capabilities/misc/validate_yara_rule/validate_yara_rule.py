@@ -1,9 +1,8 @@
 import ida_bytes
 import ida_ida
 import yara_x
-
-from ...base import Capability
-from ...result import Err, Ok, Result
+from aether_rpc.capabilities.base import Capability
+from aether_rpc.capabilities.result import Err, Ok, Result
 
 
 class ValidateYaraRule(Capability):

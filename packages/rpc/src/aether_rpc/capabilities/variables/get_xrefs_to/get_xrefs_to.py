@@ -1,11 +1,9 @@
 import ida_name
 import idautils
-from aether_rpc.capabilities.types import XrefsResult
-
-from ...base import Capability
-from ...result import Err, Ok, Result
-from ...types import StackVariableInfo
-from ...utils import (
+from aether_rpc.capabilities.base import Capability
+from aether_rpc.capabilities.result import Err, Ok, Result
+from aether_rpc.capabilities.types import StackVariableInfo, XrefsResult
+from aether_rpc.capabilities.utils import (
     collect_stkvar_xrefs,
     collect_xrefs,
     resolve_effective_address,

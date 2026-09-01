@@ -2,7 +2,7 @@
 
 import ida_funcs
 
-from ..types import FunctionInfo, FunctionMetadata
+from aether_rpc.capabilities.types import FunctionInfo, FunctionMetadata
 
 
 def function_info(ea: int) -> FunctionInfo | None:

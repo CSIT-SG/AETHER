@@ -4,16 +4,15 @@ import ida_lines
 import ida_nalt
 import ida_name
 import ida_typeinf
-from idautils import XrefsFrom, XrefsTo
-
-from ...base import Capability
-from ...result import Err, Ok, Result
-from ...types import AddressData, PointerInfo
-from ...utils import (
+from aether_rpc.capabilities.base import Capability
+from aether_rpc.capabilities.result import Err, Ok, Result
+from aether_rpc.capabilities.types import AddressData, PointerInfo
+from aether_rpc.capabilities.utils import (
     collect_xrefs,
     function_info,
     resolve_effective_address,
 )
+from idautils import XrefsFrom, XrefsTo
 
 
 class GetDataAtAddress(Capability):

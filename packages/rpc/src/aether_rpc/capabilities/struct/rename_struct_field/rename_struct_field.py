@@ -1,9 +1,8 @@
 import ida_typeinf
-
-from ...base import Capability
-from ...result import Err, Ok, Result
-from ...types import RenameStructFieldResult
-from ...utils import get_struct
+from aether_rpc.capabilities.base import Capability
+from aether_rpc.capabilities.result import Err, Ok, Result
+from aether_rpc.capabilities.types import RenameStructFieldResult
+from aether_rpc.capabilities.utils import get_struct
 
 
 class RenameStructField(Capability):

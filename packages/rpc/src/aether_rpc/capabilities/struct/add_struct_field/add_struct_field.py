@@ -1,10 +1,9 @@
 import ida_typeinf
-
-from ...base import Capability
-from ...result import Err, Ok, Result
-from ...types import StructFieldResult
-from ...utils import get_struct
-from .constants import TYPE_MAP
+from aether_rpc.capabilities.base import Capability
+from aether_rpc.capabilities.result import Err, Ok, Result
+from aether_rpc.capabilities.struct.add_struct_field.constants import TYPE_MAP
+from aether_rpc.capabilities.types import StructFieldResult
+from aether_rpc.capabilities.utils import get_struct
 
 
 class AddStructField(Capability):

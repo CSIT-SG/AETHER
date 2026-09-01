@@ -1,9 +1,8 @@
 import ida_xref
-
-from ..base import Capability
-from ..result import Err, Ok, Result
-from ..types import StructInfo
-from ..utils import get_struct, get_struct_fields
+from aether_rpc.capabilities.base import Capability
+from aether_rpc.capabilities.result import Err, Ok, Result
+from aether_rpc.capabilities.types import StructInfo
+from aether_rpc.capabilities.utils import get_struct, get_struct_fields
 
 
 class GetStructInfo(Capability):

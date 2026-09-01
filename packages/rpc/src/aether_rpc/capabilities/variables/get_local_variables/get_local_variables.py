@@ -1,11 +1,10 @@
 from typing import cast
 
 import ida_hexrays
-
-from ...base import Capability
-from ...result import Err, Ok, Result
-from ...types import LocalVar
-from ...utils import resolve_function_name
+from aether_rpc.capabilities.base import Capability
+from aether_rpc.capabilities.result import Err, Ok, Result
+from aether_rpc.capabilities.types import LocalVar
+from aether_rpc.capabilities.utils import resolve_function_name
 
 
 class GetLocalVariables(Capability):

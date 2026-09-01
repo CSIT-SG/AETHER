@@ -6,12 +6,11 @@ import ida_hexrays
 import ida_name
 import ida_typeinf
 import idaapi
+from aether_rpc.capabilities.base import Capability
+from aether_rpc.capabilities.result import Err, Ok, Result
+from aether_rpc.capabilities.types import AppliedStruct
+from aether_rpc.capabilities.utils import get_struct, resolve_function_name
 from aether_rpc.capabilities.utils.struct_utils.types import InternalStructInfo
-
-from ..base import Capability
-from ..result import Err, Ok, Result
-from ..types import AppliedStruct
-from ..utils import get_struct, resolve_function_name
 
 
 class ApplyStruct(Capability):

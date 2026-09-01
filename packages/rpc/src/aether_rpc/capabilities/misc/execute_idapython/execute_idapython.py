@@ -1,8 +1,8 @@
 import contextlib
 import io
 
-from ...base import Capability
-from ...result import Err, Ok, Result
+from aether_rpc.capabilities.base import Capability
+from aether_rpc.capabilities.result import Err, Ok, Result
 
 
 class ExecuteIDAPython(Capability):

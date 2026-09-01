@@ -1,12 +1,14 @@
 import idaapi
 import idautils
 import idc
-
-from ...base import Capability
-from ...result import Err, Ok, Result
-from ...types import FunctionTreeNode, FunctionTreeResult
-from ...utils import get_function, resolve_effective_address
-from .constants import FILTERED_FUNCTIONS, MAX_DEPTH
+from aether_rpc.capabilities.base import Capability
+from aether_rpc.capabilities.function.get_functions_called_recursively.constants import (
+    FILTERED_FUNCTIONS,
+    MAX_DEPTH,
+)
+from aether_rpc.capabilities.result import Err, Ok, Result
+from aether_rpc.capabilities.types import FunctionTreeNode, FunctionTreeResult
+from aether_rpc.capabilities.utils import get_function, resolve_effective_address
 
 
 class GetFunctionsCalledRecursively(Capability):

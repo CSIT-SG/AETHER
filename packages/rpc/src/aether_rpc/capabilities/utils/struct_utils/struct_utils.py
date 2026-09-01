@@ -2,9 +2,8 @@ import ida_idaapi
 import ida_typeinf
 
 from aether_rpc.capabilities.result import Err, Ok, Result
-
-from ...types import StructFieldWithOffset
-from .types import InternalStructInfo
+from aether_rpc.capabilities.types import StructFieldWithOffset
+from aether_rpc.capabilities.utils.struct_utils.types import InternalStructInfo
 
 
 def get_struct_id_by_name(struct_name: str) -> int | None:
