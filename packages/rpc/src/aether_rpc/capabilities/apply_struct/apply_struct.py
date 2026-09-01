@@ -89,7 +89,6 @@ class ApplyStruct(Capability):
         struct_info = struct_result.result
 
         # Obtain function info and populate func dict
-        func = dict()
 
         ea = resolve_function_name(function_name)
         if ea is None:
@@ -105,18 +104,18 @@ class ApplyStruct(Capability):
         if not tif.get_udt_details(udt):
             return Err(result=f"Unable to get member info for Function {function_name}.")
 
-        func["name"], func["ea"], func["pfn"], func["tif"], func["udt"] = (
-            function_name,
-            ea,
-            pfn,
-            tif,
-            udt,
-        )
+        func = {
+            "name": function_name,
+            "ea": ea,
+            "pfn": pfn,
+            "tif": tif,
+            "udt": udt,
+        }
 
         # Check if variable is pseudocode variable first
         cfunc = ida_hexrays.decompile(func["ea"])
         frame_offset = None
-        lvars = dict()
+        lvars = {}
         for lvar in cfunc.get_lvars():
             lvars[lvar.get_stkoff()] = lvar
             if variable != lvar.name:
@@ -152,7 +151,7 @@ class ApplyStruct(Capability):
 
         # Check if variable is stack variable second
         for member in func["udt"]:
-            if not variable == member.name:
+            if variable != member.name:
                 continue
             frame_offset = member.offset // 8
             if frame_offset in lvars:
