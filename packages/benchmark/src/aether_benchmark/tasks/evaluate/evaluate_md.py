@@ -35,14 +35,16 @@ class EvaluateMDTask(Task[[BenchmarkConfig, BenchmarkSchema, str], BenchmarkSche
 
         constructed_prompts = (
             [
-                f"""# Rubric: {rubric.name}
+                f"""# Chatbot conversation transcript
+
+        {evidence}
+
+        # Rubric: {rubric.name}
+
         ## Description
 
         {rubric.description or "No description provided."}
 
-        ## Chatbot conversation transcript
-
-        {evidence}
 
         ## Criterion
 
