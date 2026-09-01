@@ -26,7 +26,8 @@ dev = [
     "pytest-dependency==0.6.1",
     "pytest-order==1.4.0",
     "pre-commit==4.6.0",
-    "pytest-asyncio==1.4.0"
+    "pytest-asyncio==1.4.0",
+    "commitizen>=4.18.0",
 ]
 
 # Dev dependencies are managed at workspace level
@@ -76,3 +77,9 @@ asyncio_default_test_loop_scope = "session"
 strict = true
 python_version = "3.12"
 ignore_missing_imports = true
+
+[tool.commitizen]
+version_provider = "uv"
+version_scheme = "pep440"
+tag_format = "$version"
+update_changelog_on_bump = true
