@@ -10,10 +10,28 @@ from rich.highlighter import ReprHighlighter
 from rich.tree import Tree
 
 
-class PrintResultsTask(Task[[BenchmarkConfig, BenchmarkSchemaWithResults], None]):
-    async def start(self, args: BenchmarkConfig, results: BenchmarkSchemaWithResults) -> None:
+class PrintResultsTask(Task[[BenchmarkConfig, BenchmarkSchemaWithResults], dict[str, float | int]]):
+    async def start(
+        self, args: BenchmarkConfig, results: BenchmarkSchemaWithResults
+    ) -> dict[str, float | int]:
         console = Console()
-        passed_flags = [self._rubric_passed(r) for r in results.rubrics]
+        agg = self._aggregate(results)
+
+        console.print(self._build_tree(args, results))
+        console.print()
+        console.print(f"Overall score: [bold]{agg['score']:.1%}[/bold]")
+        console.print(
+            f"[dim]({agg['passed']}/{agg['total']} passed)[/dim] "
+            f"Weighted score: [bold]{agg['weighted_score']:.1%}[/bold]"
+        )
+        return agg
+
+    async def cancel(self) -> None:
+        pass
+
+    @staticmethod
+    def _aggregate(results: BenchmarkSchemaWithResults) -> dict[str, float | int]:
+        passed_flags = [PrintResultsTask._rubric_passed(r) for r in results.rubrics]
         weights = [r.weight for r in results.rubrics]
         total, passed, total_weight = len(passed_flags), sum(passed_flags), sum(weights)
         weighted_score = (
@@ -21,34 +39,26 @@ class PrintResultsTask(Task[[BenchmarkConfig, BenchmarkSchemaWithResults], None]
             if total_weight
             else 0.0
         )
+        score = passed / total if total else 0.0
+        return {"score": score, "passed": passed, "total": total, "weighted_score": weighted_score}
 
-        console.print(self._build_tree(args, results, passed_flags))
-        console.print()
-        console.print(
-            f"Overall score: [bold]{passed / total if total else 0.0:.1%}[/bold] ({passed}/{total} passed)"
-        )
-        console.print(f"Weighted score: [bold]{weighted_score:.1%}[/bold]")
-
-    async def cancel(self) -> None:
-        pass
-
-    def _rubric_passed(self, rubric: RubricEntryWithResults) -> bool:
+    @staticmethod
+    def _rubric_passed(rubric: RubricEntryWithResults) -> bool:
         return all(
             c.result["success"] and "data" in c.result and c.result["data"]["passed"]
             for c in rubric.criteria
         )
 
-    def _build_tree(
-        self, args: BenchmarkConfig, results: BenchmarkSchemaWithResults, passed_flags: list[bool]
-    ) -> Tree:
+    def _build_tree(self, args: BenchmarkConfig, results: BenchmarkSchemaWithResults) -> Tree:
         highlighter = ReprHighlighter()
         tree = Tree(
             f"[bold]{results.name} {f'v{results.version}' if results.version else ''}[/bold]"
         )
-        for rubric, ok in zip(results.rubrics, passed_flags, strict=True):
-            node = tree.add(
-                f"[{'green' if ok else 'red'}][{'✓' if ok else '✗'}][/] [bold cyan]{rubric.name}[/bold cyan]"
-            )
+        for rubric in results.rubrics:
+            ok = self._rubric_passed(rubric)
+            color = "green" if ok else "red"
+            mark = "✓" if ok else "✗"
+            node = tree.add(f"[{color}][{mark}][/] [bold cyan]{rubric.name}[/bold cyan]")
             if args.verbose:
                 for c in rubric.criteria:
                     node.add(self._build_criterion_node(c, highlighter))
