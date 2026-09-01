@@ -16,9 +16,6 @@ version = "0.1.0"
 description = "AETHER - AI-powered Next Generation Framework"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = [
-    "rich>=15.0.0",
-]
 
 [dependency-groups]
 dev = [
@@ -50,7 +47,8 @@ select = [
     "UP",     # pyupgrade
     "ARG",    # flake8-unused-arguments
     "SIM",    # flake8-simplify
-    "FIX"
+    "FIX",
+    "C90",    # flake8-cognitive-complexity
 ]
 ignore = [
     "E501",   # line too long (handled by line-length)
@@ -73,3 +71,8 @@ python_files = ["test_*.py"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
 asyncio_default_test_loop_scope = "session"
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+ignore_missing_imports = true
