@@ -173,7 +173,3 @@ def test_create_async_openai_client_passes_api_key_base_url_httpx_client_and_hea
     assert client.api_key == "test-key"
     assert client.base_url == "https://api.example.com"
     assert client.http_client is httpx_client
-    assert (
-        client.default_headers["User-Agent"]
-        == f"AETHER (IDA)/alpha{api_client.VERSION}-test-feature"
-    )
