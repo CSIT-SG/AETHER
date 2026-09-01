@@ -3,16 +3,21 @@ name: Release
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: "Release version (e.g. 1.2.3). Defaults to the contents of VERSION if omitted."
+      increment:
+        description: "Force bump type (MAJOR, MINOR, PATCH). Leave empty to auto-detect from commits."
         required: false
+      prerelease:
+        description: "Prerelease type (alpha, beta, rc). Leave empty for a stable release."
+        required: false
+        type: choice
+        options:
+          - ""
+          - alpha
+          - beta
+          - rc
 
 permissions:
   contents: write
-
-concurrency:
-  group: release-${{ github.ref }}
-  cancel-in-progress: false # never abort a release mid-tag-push; let the second run wait
 
 jobs:
   release:
@@ -22,23 +27,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
         with:
-          fetch-depth: 0 # full history needed for auto-generated release notes
+          fetch-depth: 0
 
-      - name: Resolve release version
-        id: version
-        run: |
-          if [ -n "${{ inputs.version }}" ]; then
-            RAW="${{ inputs.version }}"
-          else
-            RAW="$(cat VERSION)"
-          fi
-          # strip all surrounding/embedded whitespace (guards against trailing newline in VERSION)
-          VERSION_CLEAN="$(printf '%s' "$RAW" | tr -d '[:space:]')"
-          if ! printf '%s' "$VERSION_CLEAN" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([-+.][0-9A-Za-z.-]+)?$'; then
-            echo "::error::Resolved version '$VERSION_CLEAN' is not valid semver (expected e.g. 1.2.3)."
-            exit 1
-          fi
-          echo "version=$VERSION_CLEAN" >> "$GITHUB_OUTPUT"
+      - name: Bump version, tag, and push
+        id: cz
+        uses: commitizen-tools/commitizen-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          increment: ${{ inputs.increment }}
+          prerelease: ${{ inputs.prerelease }}
+          changelog: true
+          push: true # commits + tags + pushes straight to master
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -65,32 +64,17 @@ jobs:
           mkdir -p release-zips
           for app_dir in dist/*/; do
             app="$(basename "$app_dir")"
-            zip_name="${app}-v${{ steps.version.outputs.version }}.zip"
+            zip_name="${app}-v${{ steps.cz.outputs.version }}.zip"
             (cd dist && zip -qr "../release-zips/${zip_name}" "${app}")
-            echo "Packaged ${zip_name}"
           done
-          ls -la release-zips
-
-      - name: Create Git tag
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          VERSION="v${{ steps.version.outputs.version }}"
-          REMOTE="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
-          if git ls-remote --tags "$REMOTE" "$VERSION" | grep -q "$VERSION"; then
-            echo "::error::Tag $VERSION already exists. Bump the version in VERSION file or pass a different version input."
-            exit 1
-          fi
-          git tag "$VERSION"
-          git push "$REMOTE" "$VERSION"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3.0.1
         with:
-          tag_name: v${{ steps.version.outputs.version }}
-          name: Release v${{ steps.version.outputs.version }}
+          tag_name: v${{ steps.cz.outputs.version }}
+          name: Release v${{ steps.cz.outputs.version }}
           generate_release_notes: true
-          draft: ${{ env.ACT == 'true' }} # act automatically sets ACT=true. https://nektosact.com/usage/index.html?highlight=env.ACT#skipping-steps
+          draft: ${{ env.ACT == 'true' }}
           files: release-zips/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
