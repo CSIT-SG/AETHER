@@ -4,7 +4,9 @@ import { Callout } from 'nextra/components'
 
 ![Anatomy of the ChatbotPanel](/chatbot-panel-anatomy.png)
 
-Every component here is a `StyledComponent`, except `ButtonComponent`.
+Every component here is a `StyledComponent`, except `ButtonComponent`. They all
+live under `features/chatbot/components/`, each in its own folder with the class
+in `component.py`. E.g. `chatbot_panel/component.py`.
 
 The widgets nest: `ChatbotPanel` holds the `MessageArea`, which holds
 `MessageColumn` bubbles, each holding one or more `MessageParagraph`s.
@@ -24,16 +26,29 @@ reopens, and cleans up on close.
 
 Where all messages are placed: user, LLM, and tool output.
 
-### The three important backend functions
+### The backend surface: `ChatAreaProtocol`
 
-The `ChatAreaProtocol` surface.
+The backend never touches `MessageArea` directly. It writes through
+`ChatAreaProtocol`, a `Protocol` (structural interface) defined in
+`backend/chatbot/renderer/types.py`. `MessageArea` implements its three methods,
+so it satisfies the protocol without either side importing the other.
 
-- `add_new_message_column()`
-- `add_paragraph_to_last_column()`
-- `append_to_last_paragraph_of_last_column()`
+**Why a protocol.** The renderer lives in the backend and needs to draw into the
+`MessageArea`, but `MessageArea` lives in the frontend. Importing the widget into
+the backend would create a circular import, so the backend types against this
+protocol instead of the concrete class.
+
+**The three methods**, each mapping to one of the renderer's placement choices:
+
+- `add_new_message_column(message, id, timestamp, role)`: start a new bubble
+  (`MessageColumn`) with its first paragraph.
+- `add_paragraph_to_last_column(message, role)`: add a new paragraph to the
+  current bubble.
+- `append_to_last_paragraph_of_last_column(message)`: append text into the
+  current paragraph, used while a message streams in.
 
 <Callout type="warning">
-Call these on IDA's main thread — the widget belongs to IDA's GUI thread.
+Call these on IDA's main thread. The widget belongs to IDA's GUI thread.
 </Callout>
 
 ## MessageColumn
@@ -46,14 +61,14 @@ the copy button.
 
 ## MessageParagraph
 
-One block of rendered Markdown — a `StyledComponent` wrapping a `QTextBrowser`,
+One block of rendered Markdown, a `StyledComponent` wrapping a `QTextBrowser`,
 with `FontPlugin` so it tracks IDA font changes.
 
 <Callout type="warning">
 Be conscious of when you re-render. Re-rendering one paragraph forces Qt to
 re-lay out **every** message in the conversation.
 
-So the cost scales with conversation length, not paragraph size — and it happens
+So the cost scales with conversation length, not paragraph size, and it happens
 once per streamed delta, on the IDA main thread.
 </Callout>
 
@@ -62,7 +77,7 @@ Be careful adding `StyledComponent`s inside a message. Every one is part of that
 re-layout, and each installs its own theme and font plugins on construction and
 re-renders its QSS on theme changes.
 
-So per-message widgets — badges, buttons, inline controls — multiply the cost:
+So per-message widgets (badges, buttons, inline controls) multiply the cost:
 Qt reprocesses the whole conversation on every delta. Keep the per-message tree
 small.
 </Callout>
@@ -72,7 +87,7 @@ small.
 The naming is a bit confusing, but it is just content plus metadata: `id`, `role`,
 `content`, `timestamp`.
 
-`MessageRole` is only `USER` or `AETHER`. There is no tool role — tool call input
+`MessageRole` is only `USER` or `AETHER`. There is no tool role: tool call input
 and output both render as `AETHER`, since the calls are the llm's.
 
 ## ChatInput
@@ -98,4 +113,4 @@ instead.
 
 ## ButtonComponent
 
-Current use copy button in each message footer. A plain `QPushButton`.
+Currently used as the copy button in each message footer. A plain `QPushButton`.

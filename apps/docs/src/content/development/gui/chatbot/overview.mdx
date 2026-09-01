@@ -2,18 +2,13 @@ import { Callout } from 'nextra/components'
 
 # Chatbot Overview
 
-<Callout>
-These pages were transcribed from the chatbot design whiteboard, then corrected
-against the code. The unedited transcription is kept on the Whiteboard
-Transcript page, so some of it is now out of date on purpose.
-</Callout>
-
 The AETHER chatbot is built using the following parts:
 
-1. **GUI and Rendering**: widgets created under `features/chatbot/components`, and `ChatbotAreaRenderer` writes into the widgets.
-2. **Orchestrator**: constructed by the chatbot panel, runs on IDA main thread. At the start of each turn submits agent task to WorkerManager, and routes streamed output back to renderer.
-3. **Agent**: built in `backend/chatbot/task`. Streams the provider, renders prompts from `task/content`, and wraps each MCP tool so the model can call it.
-4. **Session**: `ChatSession` in `utils/chat_session` holds UI messages and a `CompactingSession`. Agent SDK provides SQLite storage and we provide compaction.
+1. **GUI and Rendering**: the GUI widgets live under `features/chatbot/components`. `ChatbotAreaRenderer` writes into them.
+2. **Orchestrator**: constructed by the chatbot panel, it runs on IDA's main thread. 
+At the start of each turn it submits an agent task to WorkerManager, creates a worker thread, and routes streamed output from the worker thread back to the renderer.
+3. **Agent**: built in `backend/chatbot/task`. Streams the provider's output, renders the prompts from `task/content`, and wraps each MCP tool so the model can call it.
+4. **Session**: `ChatSession` in `utils/chat_session` holds UI messages and a `CompactingSession`. Agent SDK provides SQLite storage for conversation history, while we manage history via compaction.
 
 ## Panel anatomy
 
@@ -33,34 +28,33 @@ Each is covered on UI Components.
 
 ## Session and lifecycle
 
-`ChatbotHandler` is the entry point — a context-menu action on pseudocode views. 
+`ChatbotHandler` is the entry point, a context-menu action on pseudocode views. 
 It owns the `ChatSession` and opens the panel. 
 Because the session lives on the handler and not the window, it survives the chatbot being closed and reopened, and dies only with the IDA process.
 
 `ChatSession` holds two things:
 
-- **UI messages** — replayed to redraw the conversation when the window reopens.
-- **A `CompactingSession`** — the turn-by-turn history the LLM sees.
+- **UI messages**: replayed to redraw the conversation when the window reopens.
+- **A `CompactingSession`**: the turn-by-turn history the LLM sees.
 
 `CompactingSession` subclasses the Agent SDK's `SQLiteSession`. 
 Once history grows past a threshold it summarises the oldest turns and keeps the rest. 
-That compaction is our code, not the SDK's.
 
 ## A turn, end to end
 
-1. **Submit**: User sends their prompt. The panel draws their own message first, before other tasks proceed.
-2. **Offload**: `ChatOrchestrator` gathers current IDA context, package with prompt to become task for `WorkerManager`. Main thread is freed.
-3. **Running**: On worker thread, agent is built with provided prompt and context and provide MCP tooling. 
-Streams provider output and calls MCP tools as needed. MCP is a separate layer designed to give convinient tooling, and chatbot is one of the consumers. 
-A tool may call RPC to read/write into IDA idb, and returns its output to the agent. No UI involved.
-4. **Render**: Agent streaming, tool input, and tool output are processed at worker. 
-Each piece is pushed to main thread and renderer draws what is new: a new bubble (`MessageColumn`), a new paragraph (`MessageParagraph`), or text appended within the paragraph during streaming.
+1. **Submit**: A user sends their prompt. The panel draws their own message first, before other tasks proceed.
+2. **Offload**: `ChatOrchestrator` gathers the current IDA context and packages it with the chat prompt into a task for `WorkerManager`. The main thread is freed as a new worker thread takes over.
+3. **Running**: On the new worker thread, an agent is built with the provided prompt and context. It is also provided with MCP tools it can call. 
+The worker streams provider output and calls MCP tools as needed. MCP is a separate layer designed to give convenient tooling, and the chatbot is one of the consumers. 
+A tool may call RPC to read/write into the IDA IDB, and return its output to the agent. No UI involved.
+4. **Render**: On the worker thread, the agent streams text and tool calls, and consumes tool output. 
+Each piece of info is pushed to the main thread, and the renderer draws what is new: a new bubble (`MessageColumn`), a new paragraph (`MessageParagraph`), or text appended within the paragraph during streaming.
 
-Only way to cancel during a turn, for now, is to close the window during a task. The `ChatSession` containing history survives.
+The only way to cancel the task during a turn, for now, is to close the chatbot window. The `ChatSession` containing history survives.
 
 ## Configuration
 
-The chatbot will not start without a provider API key — `OpenAIGateway` raises
+The chatbot will not start without a provider API key. `OpenAIGateway` raises
 `ValueError`. See the Configuration page for the file itself.
 
 | Key | Read by | Notes |

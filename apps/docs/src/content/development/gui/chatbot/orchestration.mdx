@@ -6,22 +6,26 @@ How a turn runs inside the backend: orchestrator hands off work, the agent runs 
 
 ## Orchestrator
 
-The orchestrator bridges the UI and the agent. It runs on the IDA main thread, so it starts the work on worker thread and returns without blocking.
-
+The orchestrator bridges the UI and the agent. It runs on the IDA main thread, so it starts the work on a worker thread and returns without blocking. 
 Each prompt, it:
 
 1. Gathers the IDA context at the cursor (function, disassembly, pseudocode, xrefs).
 2. Hands the prompt and context to the agent as a background task.
 3. Routes the agent's streamed output to the renderer as it arrives.
 
-The orchestrator trackes if new message has been created and what the last type of message was. Both are handed
-to the Renderer. The renderer will create the UI selements and decide to append messages or create paragraphs etc.
+The orchestrator tracks if a new message has been created and what the last type of message was. Both are handed
+to the renderer. The renderer will create the UI elements and decide to append messages or create paragraphs etc.
 
 ## Agent
 
-The agent talks to the LLM provider on the worker thread.
+The agent talks to the LLM provider on the worker thread. It is given four things:
 
-It is given four things: the user prompt, the IDA context, the available tools, and the session history. From these it builds the model call and streams the response.
+1. User's prompt 
+2. Current IDA context 
+3. Available MCP tools 
+4. Session history
+
+From these it builds the model call and streams the response.
 
 ### Prompts
 
@@ -32,7 +36,7 @@ Two prompts shape every turn, and they land in different places:
 
 ### Tools
 
-Each turn, the agent is handed the tools the MCP server currently exposes. When the model calls one, the call is forwarded to MCP, which may reach through RPC into the open disassembler e.g. IDA, and the result returns to the model.
+Each turn, the agent is handed the tools the MCP server currently exposes. When the model calls one, the call is forwarded to MCP, which may reach through RPC into the open disassembler (e.g. IDA), and the result returns to the model.
 
 So a tool call is a chain: **model → MCP → RPC → IDA**, and back.
 
@@ -68,6 +72,6 @@ The system prompt tells the model which RPC id to use, and the model supplies th
 
 The renderer is the only part that writes to widgets. For each streamed piece it decides what the UI needs: a new bubble (column), a new paragraph, or text appended to the current paragraph.
 
-E.g. If previous message was text type and current message is text type, append onto the last paragraph
+E.g. if the previous message was text type and the current message is text type, append onto the last paragraph.
 
-Text and reasoning become assistant messages; tool calls and results become tool messages; errors become their own message. The orchestrator carries the per-turn state, so the renderer only draws (no need to retrieve info itself).
+Text and reasoning become assistant messages; tool calls and results become tool messages; errors become their own messages. The orchestrator carries the per-turn state, so the renderer only draws (no need to retrieve info itself).
