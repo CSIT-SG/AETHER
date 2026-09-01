@@ -46,10 +46,7 @@ def _create_httpx_client(client_cert_key: tuple[str, str] | None) -> httpx.Async
 
 
 def _build_user_agent_header(feature: str | None) -> dict[str, str]:
-    if feature:
-        user_agent = f"AETHER (IDA)/alpha{VERSION}-{feature}"
-    else:
-        user_agent = f"AETHER (IDA)/alpha{VERSION}"
+    user_agent = f"AETHER (IDA)/{VERSION}-{feature}" if feature else f"AETHER (IDA)/{VERSION}"
 
     logger.info(f"Added User-Agent header: {user_agent}")
     return {"User-Agent": user_agent}

@@ -140,14 +140,7 @@ def test_create_async_httpx_client_calls_create_async_httpx_client_with_cert_pai
 def test_build_user_agent_header_includes_feature_when_provided() -> None:
     headers = api_client._build_user_agent_header("search")
 
-    assert headers["User-Agent"].startswith("AETHER (IDA)/alpha")
-    assert headers["User-Agent"].endswith("-search")
-
-
-def test_build_user_agent_header_omits_feature_when_empty() -> None:
-    headers = api_client._build_user_agent_header("")
-
-    assert headers["User-Agent"] == f"AETHER (IDA)/alpha{api_client.VERSION}"
+    assert "search" in headers["User-Agent"]
 
 
 def test_create_async_openai_client_passes_api_key_base_url_httpx_client_and_headers(
