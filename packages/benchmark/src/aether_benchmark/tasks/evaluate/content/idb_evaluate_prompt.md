@@ -9,5 +9,4 @@ pass or fail.
 Be strict but fair. Consider what a reasonable human reverse engineer would
 expect from an automated annotation tool.
 
-Call `submit_output` with your structured result when you have reached a
-verdict. Be concise about your reasoning.
+When you have reached a verdict, submit your structured result.
