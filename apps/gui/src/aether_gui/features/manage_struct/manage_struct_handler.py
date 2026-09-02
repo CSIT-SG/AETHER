@@ -35,17 +35,17 @@ class ManageStructHandler(ida_kernwin.action_handler_t):
         screen_ea = ida_kernwin.get_screen_ea()
 
         # Resolve name to effective address (ea)
-        ea = ida_name.get_name_ea(screen_ea, highlighted_string)
+        highlighted_ea = ida_name.get_name_ea(screen_ea, highlighted_string)
 
-        if ea == idaapi.BADADDR:
+        if highlighted_ea == idaapi.BADADDR:
             logger.error(
                 f"Unable to resolve {highlighted_string}, please highlight a valid variable."
             )
             return 0
 
-        func = ida_funcs.get_func(ea)
+        func = ida_funcs.get_func(highlighted_ea)
 
-        if func and func.start_ea == ea:
+        if func and func.start_ea == highlighted_ea:
             logger.error(
                 f"cannot make struct from {func.name}, please highlight a variable instead"
             )
