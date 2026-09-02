@@ -27,9 +27,10 @@ class ManageStructHandler(ida_kernwin.action_handler_t):
             view
         )  # get_highlight returns a tuple: (highlighted_string, flags)
 
-        if hl is None:
+        if hl is None or len(hl) == 0:
             logger.error("No highlighted values")
             return 0
+
         highlighted_string = hl[0]
         screen_ea = ida_kernwin.get_screen_ea()
 
@@ -38,7 +39,7 @@ class ManageStructHandler(ida_kernwin.action_handler_t):
 
         if ea == idaapi.BADADDR:
             logger.error(
-                f"Unable to resolve {highlighted_string}. Please highlight a valid variable."
+                f"Unable to resolve {highlighted_string}, please highlight a valid variable."
             )
             return 0
 
@@ -48,6 +49,7 @@ class ManageStructHandler(ida_kernwin.action_handler_t):
             logger.error(
                 f"cannot make struct from {func.name}, please highlight a variable instead"
             )
+            return 0
 
         task = CallToolTask()
         handle = worker_manager.submit(

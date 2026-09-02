@@ -48,6 +48,7 @@ def effectful(  # noqa: UP047
                 case Return(value):
                     result = value
                     break
+            print(effect)
         return result
 
     return wrapper
