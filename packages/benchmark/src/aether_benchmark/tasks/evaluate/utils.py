@@ -8,8 +8,10 @@ from agents import (
     Agent,
     OpenAIChatCompletionsModel,
     RunConfig,
+    RunHooks,
     Runner,
 )
+from agents.items import ModelResponse
 from openai import AsyncOpenAI
 from rich.progress import Progress
 
@@ -29,12 +31,36 @@ def build_model(config: BenchmarkConfig) -> OpenAIChatCompletionsModel:
     return OpenAIChatCompletionsModel(model=config.model, openai_client=client)
 
 
+class TokenUsageHook(RunHooks[Any]):
+    """Accumulate the total LLM tokens consumed across every model call."""
+
+    def __init__(self) -> None:
+        self.total_tokens = 0
+
+    async def on_llm_end(
+        self,
+        context: Any,
+        agent: Any,
+        response: ModelResponse,
+    ) -> None:
+        if response.usage:
+            self.total_tokens += response.usage.total_tokens
+
+
 class ParallelRunner:
     """A Runner that runs agent completions in parallel."""
 
-    def __init__(self, *, agent: Agent, prompts: list[str], limit: int = 5) -> None:
+    def __init__(
+        self,
+        *,
+        agent: Agent,
+        prompts: list[str],
+        limit: int = 5,
+        usage_hook: TokenUsageHook | None = None,
+    ) -> None:
         self.agent = agent
         self.prompts = prompts
+        self._usage_hook = usage_hook
 
         # we dont want to be rate limited by the number of concurrent requests,
         # so we limit the number of concurrent completions to a reasonable number
@@ -52,7 +78,12 @@ class ParallelRunner:
         async with self._sem:
             try:
                 result = await Runner.run(
-                    self.agent, prompt, context=context, max_turns=max_turns, run_config=run_config
+                    self.agent,
+                    prompt,
+                    context=context,
+                    max_turns=max_turns,
+                    run_config=run_config,
+                    hooks=self._usage_hook,
                 )
                 cr = await force_structured_output(self.agent, CriterionResult, result)
                 return {"success": True, "data": cr}

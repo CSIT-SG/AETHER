@@ -12,10 +12,12 @@ from .models import (
     AgentRunResult,
     BenchmarkSchemaWithResults,
 )
-from .utils import ParallelRunner, build_model, reconstruct_results
+from .utils import ParallelRunner, TokenUsageHook, build_model, reconstruct_results
 
 
-class EvaluateMDTask(Task[[BenchmarkConfig, BenchmarkSchema, str], BenchmarkSchemaWithResults]):
+class EvaluateMDTask(
+    Task[[BenchmarkConfig, BenchmarkSchema, str], tuple[BenchmarkSchemaWithResults, int]]
+):
     """Evaluate a single rubric entry against supplied information/evidence."""
 
     def __init__(self) -> None:
@@ -24,8 +26,9 @@ class EvaluateMDTask(Task[[BenchmarkConfig, BenchmarkSchema, str], BenchmarkSche
 
     async def start(
         self, config: BenchmarkConfig, benchmark: BenchmarkSchema, evidence: str
-    ) -> BenchmarkSchemaWithResults:
+    ) -> tuple[BenchmarkSchemaWithResults, int]:
         model = build_model(config)
+        usage_hook = TokenUsageHook()
         agent = Agent(
             name="MD Grading Agent",
             instructions=get_content(Path(__file__).parent, "md_evaluate_prompt.md"),
@@ -56,13 +59,13 @@ class EvaluateMDTask(Task[[BenchmarkConfig, BenchmarkSchema, str], BenchmarkSche
 
         prompts = list(chain.from_iterable(constructed_prompts))
 
-        runner = ParallelRunner(agent=agent, prompts=prompts)
+        runner = ParallelRunner(agent=agent, prompts=prompts, usage_hook=usage_hook)
         self._run_handle = asyncio.create_task(runner.run_all())
 
         results = await self._run_handle
 
         # reconstruct the results into a BenchmarkSchema extension with the results of the evaluation
-        return reconstruct_results(benchmark, results)
+        return reconstruct_results(benchmark, results), usage_hook.total_tokens
 
     async def cancel(self) -> None:
         if self._run_handle is not None:

@@ -20,11 +20,11 @@ from .models import (
     AgentRunResult,
     BenchmarkSchemaWithResults,
 )
-from .utils import ParallelRunner, build_model, reconstruct_results
+from .utils import ParallelRunner, TokenUsageHook, build_model, reconstruct_results
 
 
 class EvaluateIDBTask(
-    Task[[AnyService, BenchmarkConfig, BenchmarkSchema], BenchmarkSchemaWithResults]
+    Task[[AnyService, BenchmarkConfig, BenchmarkSchema], tuple[BenchmarkSchemaWithResults, int]]
 ):
     def __init__(self) -> None:
         super().__init__()
@@ -32,8 +32,9 @@ class EvaluateIDBTask(
 
     async def start(
         self, service: AnyService, config: BenchmarkConfig, benchmark: BenchmarkSchema
-    ) -> BenchmarkSchemaWithResults:
+    ) -> tuple[BenchmarkSchemaWithResults, int]:
         model = build_model(config)
+        usage_hook = TokenUsageHook()
         agent = Agent(
             name="IDB Grading Agent",
             instructions=get_content(Path(__file__).parent, "idb_evaluate_prompt.md"),
@@ -69,7 +70,7 @@ class EvaluateIDBTask(
 
         prompts = list(chain.from_iterable(constructed_prompts))
 
-        runner = ParallelRunner(agent=agent, prompts=prompts)
+        runner = ParallelRunner(agent=agent, prompts=prompts, usage_hook=usage_hook)
         self._run_handle = asyncio.create_task(
             runner.run_all(context=SubagentToolDependencies(service=service))
         )
@@ -77,7 +78,7 @@ class EvaluateIDBTask(
         results = await self._run_handle
 
         # reconstruct the results into a BenchmarkSchema extension with the results of the evaluation
-        return reconstruct_results(benchmark, results)
+        return reconstruct_results(benchmark, results), usage_hook.total_tokens
 
     async def cancel(self) -> None:
         if self._run_handle is not None:

@@ -14,7 +14,14 @@ class DummyAgent:
 
 
 class DummyRunner:
-    def __init__(self, *, agent: object, prompts: list[str], limit: int = 5) -> None:
+    def __init__(
+        self,
+        *,
+        agent: object,
+        prompts: list[str],
+        limit: int = 5,
+        usage_hook: object | None = None,
+    ) -> None:
         self.prompts = prompts
 
     async def run_all(
@@ -51,9 +58,10 @@ def test_evaluate_md_task_simple(monkeypatch: pytest.MonkeyPatch) -> None:
     config = make_config()
     benchmark = BenchmarkSchema(name="b", rubrics=[RubricEntry(name="r", criteria=["c"])])
 
-    out = asyncio.run(task.start(config, benchmark, "evidence"))
+    out, tokens = asyncio.run(task.start(config, benchmark, "evidence"))
 
     assert out.rubrics[0].criteria[0].result["success"] is True
+    assert tokens == 0
 
 
 def test_evaluate_idb_task_simple(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -75,6 +83,9 @@ def test_evaluate_idb_task_simple(monkeypatch: pytest.MonkeyPatch) -> None:
 
             return _stub
 
-    out = asyncio.run(task.start(service=DummyService(), config=config, benchmark=benchmark))
+    out, tokens = asyncio.run(
+        task.start(service=DummyService(), config=config, benchmark=benchmark)
+    )
 
     assert out.rubrics[0].criteria[0].result["success"] is True
+    assert tokens == 0

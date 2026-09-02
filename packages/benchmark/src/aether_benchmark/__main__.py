@@ -28,7 +28,9 @@ from .tasks import ParseBenchmarkTask
 logger = get_logger("AETHER_BENCHMARK.RPC", logging.INFO)
 
 
-async def _run_eval(args: BenchmarkConfig, schema: BenchmarkSchema) -> BenchmarkSchemaWithResults:
+async def _run_eval(
+    args: BenchmarkConfig, schema: BenchmarkSchema
+) -> tuple[BenchmarkSchemaWithResults, int]:
     """Run evaluation for the given benchmark config and schema."""
     match args.target:
         case IdbTarget(ida_dir=ida_dir, idb=idb):
@@ -48,10 +50,15 @@ async def _async_main() -> None:
     schema = cast(BenchmarkSchema, await Run(ParseBenchmarkTask)(BenchmarkSchema, args.rubric))
 
     start = time.monotonic()
-    results = await _run_eval(args, schema)
+    results, tokens_used = await _run_eval(args, schema)
     elapsed = time.monotonic() - start
 
-    meta = BenchmarkMetadata(run_at=datetime.now(), time_taken_s=elapsed, model=args.model)
+    meta = BenchmarkMetadata(
+        run_at=datetime.now(),
+        time_taken_s=elapsed,
+        model=args.model,
+        tokens_used=tokens_used,
+    )
     await Run(PrintResultsTask)(args, results, meta)
 
 
