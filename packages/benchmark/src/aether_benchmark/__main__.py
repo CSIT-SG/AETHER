@@ -6,6 +6,8 @@ Usage:
 
 import asyncio
 import logging
+import time
+from datetime import datetime
 from typing import cast
 
 from aether_benchmark.tasks.evaluate import (
@@ -14,7 +16,7 @@ from aether_benchmark.tasks.evaluate import (
 )
 from aether_benchmark.tasks.evaluate.models import BenchmarkSchemaWithResults
 from aether_benchmark.tasks.parse_benchmark.models import BenchmarkSchema
-from aether_benchmark.tasks.print_results import PrintResultsTask
+from aether_benchmark.tasks.print_results import BenchmarkMetadata, PrintResultsTask
 from aether_benchmark.tasks.start_rpc_server import StartRPCServerTask
 from aether_benchmark.utils.task import Run
 from aether_utils.logger import get_logger
@@ -45,8 +47,12 @@ async def _async_main() -> None:
     args = get_config()
     schema = cast(BenchmarkSchema, await Run(ParseBenchmarkTask)(BenchmarkSchema, args.rubric))
 
+    start = time.monotonic()
     results = await _run_eval(args, schema)
-    await Run(PrintResultsTask)(args, results)
+    elapsed = time.monotonic() - start
+
+    meta = BenchmarkMetadata(run_at=datetime.now(), time_taken_s=elapsed, model=args.model)
+    await Run(PrintResultsTask)(args, results, meta)
 
 
 def main() -> None:

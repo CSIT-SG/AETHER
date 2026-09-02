@@ -11,9 +11,18 @@ from rich.console import Console
 from rich.highlighter import ReprHighlighter
 from rich.tree import Tree
 
+from .models import BenchmarkMetadata
 
-class PrintResultsTask(Task[[BenchmarkConfig, BenchmarkSchemaWithResults], None]):
-    async def start(self, args: BenchmarkConfig, results: BenchmarkSchemaWithResults) -> None:
+
+class PrintResultsTask(
+    Task[[BenchmarkConfig, BenchmarkSchemaWithResults, BenchmarkMetadata], None]
+):
+    async def start(
+        self,
+        args: BenchmarkConfig,
+        results: BenchmarkSchemaWithResults,
+        meta: BenchmarkMetadata,
+    ) -> None:
         """Print the results and write the JSON output."""
         console = Console()
         agg = self._aggregate(results)
@@ -31,6 +40,7 @@ class PrintResultsTask(Task[[BenchmarkConfig, BenchmarkSchemaWithResults], None]
             "weighted_score": agg["weighted_score"],
             "passed": agg["passed"],
             "total": agg["total"],
+            **meta.model_dump(),
             **results.model_dump(),
         }
         if args.output is not None:
