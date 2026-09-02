@@ -1,5 +1,6 @@
 from typing import Any, Literal
 
+import ida_funcs
 import ida_kernwin
 import ida_name
 import idaapi
@@ -40,6 +41,13 @@ class ManageStructHandler(ida_kernwin.action_handler_t):
                 f"Unable to resolve {highlighted_string}. Please highlight a valid variable."
             )
             return 0
+
+        func = ida_funcs.get_func(ea)
+
+        if func and func.start_ea == ea:
+            logger.error(
+                f"cannot make struct from {func.name}, please highlight a variable instead"
+            )
 
         task = CallToolTask()
         handle = worker_manager.submit(
