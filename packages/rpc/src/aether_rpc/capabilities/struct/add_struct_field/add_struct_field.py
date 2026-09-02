@@ -50,7 +50,7 @@ class AddStructField(Capability):
         if not new_type.get_named_type(til, field_type):
             type_code = TYPE_MAP.get(field_type)
 
-            if type_code is None or not new_type.create_simple_type(field_type):
+            if type_code is None or not new_type.create_simple_type(type_code):
                 return Err(
                     result=f"Unable to resolve field type '{field_type}'. Please provide a user-defined type or use one of the following supported types: uint8_t, uint16_t, word, uint32_t, dword, uint64_t, int8_t, int16_t, short, int32_t, long, int64_t, char, bool, byte, float, double, or void."
                 )
