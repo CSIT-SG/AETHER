@@ -38,7 +38,6 @@ def make_config() -> BenchmarkConfig:
         model="m",
         base_url="u",
         verbose=False,
-        json_output=False,
         output=None,
     )
 

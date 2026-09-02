@@ -35,9 +35,6 @@ class BenchmarkSettings(
         description="IDA Pro installation directory (default: IDADIR env; only used for ida harness)",
     )
     verbose: bool = Field(default=False, description="Show detailed per-entry results", alias="v")
-    json_output: bool = Field(
-        default=False, alias="json", description="Print the benchmark result as JSON"
-    )
     output: Path | None = Field(
         default=None, description="Write the benchmark result as JSON to this file", alias="o"
     )
@@ -79,7 +76,6 @@ class BenchmarkConfig(BaseModel):
     model: str
     base_url: str
     verbose: bool
-    json_output: bool
     output: Path | None
 
 
@@ -107,6 +103,5 @@ def get_config() -> BenchmarkConfig:
         model=raw.model,
         base_url=raw.base_url,
         verbose=raw.verbose,
-        json_output=raw.json_output,
         output=raw.output,
     )
