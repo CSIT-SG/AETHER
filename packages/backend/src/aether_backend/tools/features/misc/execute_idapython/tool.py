@@ -4,6 +4,7 @@ from typing import Annotated
 from aether_backend.utils.effect import Program, effectful
 from aether_backend.utils.get_rpc_service import get_rpc_service
 from aether_utils.get_content import get_content
+from fastmcp import Context
 from fastmcp.tools import tool
 from mcp.types import ToolAnnotations
 
@@ -24,6 +25,7 @@ async def execute_idapython(
         str, "The ID of the RPC service/IDB to use. Formatted as `<file_name>_<date>-<time>`."
     ],
     code: Annotated[str, "The IDAPython code to execute."],
+    ctx: Context,
 ) -> Program:
-    async for effect in exec_code(await get_rpc_service(rpc_id), code):
+    async for effect in exec_code(await get_rpc_service(rpc_id, ctx), code):
         yield effect

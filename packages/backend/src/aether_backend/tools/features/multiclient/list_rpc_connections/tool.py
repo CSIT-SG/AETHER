@@ -2,7 +2,6 @@ from typing import cast
 
 from aether_backend.services.rpc_discovery import RPC_REGISTRY_KEY, RPCRegistry
 from aether_backend.utils.effect import Program, effectful
-from fastmcp.dependencies import CurrentContext
 from fastmcp.server.context import Context
 from fastmcp.tools import tool
 from mcp.types import ToolAnnotations
@@ -18,7 +17,7 @@ from .list_rpc_connections import list_rpc_connections as list_rpc_connections_c
     timeout=TIMEOUT_SECONDS,
 )  # tool is untyped in fastmcp
 @effectful  # type: ignore
-async def list_rpc_connections(ctx: Context = CurrentContext()) -> Program:
+async def list_rpc_connections(ctx: Context) -> Program:
     """List all active connection ids to the IDA remote procedure call servers.
     Each id is formatted `<file_name>_<date>-<time>`.
     """

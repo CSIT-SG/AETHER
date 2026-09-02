@@ -4,6 +4,7 @@ from aether_backend.utils.effect import Program, effectful
 from aether_backend.utils.get_rpc_service import get_rpc_service
 from aether_backend.utils.validation import HexAddress
 from aether_utils.config import get_config
+from fastmcp import Context
 from fastmcp.tools import tool
 from mcp.types import ToolAnnotations
 
@@ -19,6 +20,7 @@ config = get_config()
 )  # tool is untyped in fastmcp
 @effectful  # type: ignore
 async def generate_report_tool(
+    ctx: Context,
     rpc_id: Annotated[
         str, "The ID of the RPC service/IDB to use. Formatted as `<file_name>_<date>-<time>`."
     ],
@@ -27,7 +29,7 @@ async def generate_report_tool(
     ],
 ) -> Program:
 
-    svc = await get_rpc_service(rpc_id)
+    svc = await get_rpc_service(rpc_id, ctx)
 
     async for effect in generate_report(svc, address):
         yield effect
