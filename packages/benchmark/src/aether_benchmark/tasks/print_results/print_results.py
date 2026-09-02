@@ -1,3 +1,5 @@
+import json
+
 from aether_benchmark.cli import BenchmarkConfig
 from aether_benchmark.tasks.evaluate.models import (
     BenchmarkSchemaWithResults,
@@ -10,10 +12,9 @@ from rich.highlighter import ReprHighlighter
 from rich.tree import Tree
 
 
-class PrintResultsTask(Task[[BenchmarkConfig, BenchmarkSchemaWithResults], dict[str, float | int]]):
-    async def start(
-        self, args: BenchmarkConfig, results: BenchmarkSchemaWithResults
-    ) -> dict[str, float | int]:
+class PrintResultsTask(Task[[BenchmarkConfig, BenchmarkSchemaWithResults], None]):
+    async def start(self, args: BenchmarkConfig, results: BenchmarkSchemaWithResults) -> None:
+        """Print the results and write the JSON output."""
         console = Console()
         agg = self._aggregate(results)
 
@@ -24,7 +25,19 @@ class PrintResultsTask(Task[[BenchmarkConfig, BenchmarkSchemaWithResults], dict[
             f"[dim]({agg['passed']}/{agg['total']} passed)[/dim] "
             f"Weighted score: [bold]{agg['weighted_score']:.1%}[/bold]"
         )
-        return agg
+
+        output = {
+            "score": agg["score"],
+            "weighted_score": agg["weighted_score"],
+            "passed": agg["passed"],
+            "total": agg["total"],
+            **results.model_dump(),
+        }
+        if args.output is not None:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(json.dumps(output, indent=2), encoding="utf-8")
+        if args.json_output:
+            print(json.dumps(output, indent=2))
 
     async def cancel(self) -> None:
         pass

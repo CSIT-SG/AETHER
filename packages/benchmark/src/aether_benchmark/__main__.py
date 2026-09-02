@@ -5,7 +5,6 @@ Usage:
 """
 
 import asyncio
-import json
 import logging
 from typing import cast
 
@@ -47,22 +46,7 @@ async def _async_main() -> None:
     schema = cast(BenchmarkSchema, await Run(ParseBenchmarkTask)(BenchmarkSchema, args.rubric))
 
     results = await _run_eval(args, schema)
-
-    agg = await Run(PrintResultsTask)(args, results)
-
-    data = results.model_dump()
-    output = {
-        "score": agg["score"],
-        "weighted_score": agg["weighted_score"],
-        "passed": agg["passed"],
-        "total": agg["total"],
-        **data,
-    }
-    if args.output is not None:
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(json.dumps(output, indent=2), encoding="utf-8")
-    if args.json_output:
-        print(json.dumps(output, indent=2))
+    await Run(PrintResultsTask)(args, results)
 
 
 def main() -> None:
