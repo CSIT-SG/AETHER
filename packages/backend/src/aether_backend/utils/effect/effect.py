@@ -3,7 +3,7 @@ import functools
 from collections.abc import Callable, Coroutine
 from typing import Any, ParamSpec
 
-from fastmcp.server.dependencies import get_context
+from fastmcp import Context
 
 from .models import Log, Progress, Return, Sleep
 from .types import Program
@@ -25,7 +25,7 @@ def effectful(  # noqa: UP047
 
     @mcp.tool
     @effectful
-    async def process_items(p: int, conn: Connection = Depends(get_db_connection), ctx: Context = CurrentContext()) -> Program:
+    async def process_items(p: int, conn: Connection = Depends(get_db_connection), ctx: Context) -> Program:
         \"\"\"Process p items with streaming progress.\"\"\"
         async for effect in process_items_cb(p, conn, ctx.lifespan_context["rpc_registry"]):
             yield effect
@@ -35,7 +35,7 @@ def effectful(  # noqa: UP047
 
     @functools.wraps(fn)
     async def wrapper(*args: P.args, **kwargs: P.kwargs) -> Any:
-        ctx = get_context()
+        ctx: Context = kwargs.get("ctx")
         result: Any = None
         async for effect in fn(*args, **kwargs):
             match effect:
