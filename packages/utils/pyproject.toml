@@ -7,9 +7,9 @@ requires-python = ">=3.12"
 dependencies = [
     "httpx==0.28.1",
     "pydantic==2.13.4",
-    "openai==2.41.0",
+    "openai==2.45.0",
     "platformdirs==4.10.0",
-    "openai-agents==0.17.5"
+    "openai-agents==0.20.0"
 ]
 
 [tool.mypy]

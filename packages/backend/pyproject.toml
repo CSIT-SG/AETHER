@@ -10,7 +10,7 @@ dependencies = [
     "rpyc==6.0.2",
     "aether_utils",
     "aether_rpc",
-    "openai-agents==0.17.5",
+    "openai-agents==0.20.0",
     "watchfiles==1.2.0",
 ]
 
