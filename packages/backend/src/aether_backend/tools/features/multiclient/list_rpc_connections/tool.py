@@ -12,7 +12,10 @@ from .list_rpc_connections import list_rpc_connections as list_rpc_connections_c
 
 @tool(
     annotations=ToolAnnotations(
-        title="List RPC Connections", readOnlyHint=True, idempotentHint=True, destructiveHint=False
+        title="List RPC Connections",
+        read_only_hint=True,
+        idempotent_hint=True,
+        destructive_hint=False,
     ),
     timeout=TIMEOUT_SECONDS,
 )  # tool is untyped in fastmcp

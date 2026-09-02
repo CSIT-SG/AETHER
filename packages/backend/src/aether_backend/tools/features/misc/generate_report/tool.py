@@ -15,7 +15,7 @@ config = get_config()
 
 
 @tool(
-    annotations=ToolAnnotations(title="Generate Report", destructiveHint=True),
+    annotations=ToolAnnotations(title="Generate Report", destructive_hint=True),
     timeout=TIMEOUT_SECONDS,
 )  # tool is untyped in fastmcp
 @effectful  # type: ignore
