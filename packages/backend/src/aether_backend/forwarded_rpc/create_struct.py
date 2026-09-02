@@ -14,7 +14,7 @@ async def create_struct(
             empty struct is created.
 
             Each field must be specified as either:
-            - ["field_name", "field_type"]
+            - ["field_name", "field_type"]; or
             - ["field_name", "field_type", array_size]
 
             Where:
@@ -22,6 +22,10 @@ async def create_struct(
             - ``field_type`` is the member type (for example, ``uint32_t`` or ``char``).
             - ``array_size`` is an optional positive integer specifying the number
             of elements if the member is an array.
+
+        in NO situation should you put the length of the array in the field_type property. The length of the array should be in the array_size property. E.g.
+
+        If you want to create a char array of length 8 for a field called `name` it should be defined as ["name", "char", 8] and NOT ["name", "char[8]"].
 
     Returns:
         A Result whose ``success`` indicates whether the struct was created
