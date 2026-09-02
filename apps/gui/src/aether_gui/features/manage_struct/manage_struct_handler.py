@@ -1,6 +1,8 @@
 from typing import Any, Literal
 
 import ida_kernwin
+import ida_name
+import idaapi
 from aether_gui.runner import get_shared_worker_manager
 from aether_gui.utils.mcp import CallToolTask, MCPClient
 from aether_gui.utils.rpc_id import get_rpc_id
@@ -24,6 +26,21 @@ class ManageStructHandler(ida_kernwin.action_handler_t):
             view
         )  # get_highlight returns a tuple: (highlighted_string, flags)
 
+        if hl is None:
+            logger.error("No highlighted values")
+            return 0
+        highlighted_string = hl[0]
+        screen_ea = ida_kernwin.get_screen_ea()
+
+        # Resolve name to effective address (ea)
+        ea = ida_name.get_name_ea(screen_ea, highlighted_string)
+
+        if ea == idaapi.BADADDR:
+            logger.error(
+                f"Unable to resolve {highlighted_string}. Please highlight a valid variable."
+            )
+            return 0
+
         task = CallToolTask()
         handle = worker_manager.submit(
             task,
@@ -33,7 +50,7 @@ class ManageStructHandler(ida_kernwin.action_handler_t):
                 "rpc_id": rpc_id,
                 "operation": self.operation,
                 "function_address": hex(ea),
-                "var_name": hl[0],
+                "var_name": highlighted_string,
             },
         )
 
