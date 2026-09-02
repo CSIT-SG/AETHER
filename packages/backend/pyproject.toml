@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "pydantic==2.13.4",
-    "fastmcp[tasks]==3.4.2",
+    "fastmcp[tasks]>=4",
     "rpyc==6.0.2",
     "aether_utils",
     "aether_rpc",
