@@ -34,13 +34,15 @@ class PrintResultsTask(
             f"[dim]({agg['passed']}/{agg['total']} passed)[/dim] "
             f"Weighted score: [bold]{agg['weighted_score']:.1%}[/bold]"
         )
+        if meta.tokens_used is not None:
+            console.print(f"[dim]Tokens used:[/dim] [bold]{meta.tokens_used:,}[/bold]")
 
         output = {
             "score": agg["score"],
             "weighted_score": agg["weighted_score"],
             "passed": agg["passed"],
             "total": agg["total"],
-            **meta.model_dump(),
+            **meta.model_dump(mode="json"),
             **results.model_dump(),
         }
         if args.output is not None:

@@ -49,4 +49,5 @@ class BenchmarkSchemaWithResults(BaseModel):
     name: str
     version: str | None = None
     description: str | None = None
+    tokens: int = 0
     rubrics: list[RubricEntryWithResults]

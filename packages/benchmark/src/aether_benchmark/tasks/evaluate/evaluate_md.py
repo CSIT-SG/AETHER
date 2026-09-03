@@ -15,9 +15,7 @@ from .models import (
 from .utils import ParallelRunner, TokenUsageHook, build_model, reconstruct_results
 
 
-class EvaluateMDTask(
-    Task[[BenchmarkConfig, BenchmarkSchema, str], tuple[BenchmarkSchemaWithResults, int]]
-):
+class EvaluateMDTask(Task[[BenchmarkConfig, BenchmarkSchema, str], BenchmarkSchemaWithResults]):
     """Evaluate a single rubric entry against supplied information/evidence."""
 
     def __init__(self) -> None:
@@ -26,7 +24,7 @@ class EvaluateMDTask(
 
     async def start(
         self, config: BenchmarkConfig, benchmark: BenchmarkSchema, evidence: str
-    ) -> tuple[BenchmarkSchemaWithResults, int]:
+    ) -> BenchmarkSchemaWithResults:
         model = build_model(config)
         usage_hook = TokenUsageHook()
         agent = Agent(
@@ -65,7 +63,7 @@ class EvaluateMDTask(
         results = await self._run_handle
 
         # reconstruct the results into a BenchmarkSchema extension with the results of the evaluation
-        return reconstruct_results(benchmark, results), usage_hook.total_tokens
+        return reconstruct_results(benchmark, results, usage_hook.total_tokens)
 
     async def cancel(self) -> None:
         if self._run_handle is not None:

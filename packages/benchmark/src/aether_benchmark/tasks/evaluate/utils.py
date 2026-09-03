@@ -116,7 +116,7 @@ class ParallelRunner:
 
 
 def reconstruct_results(
-    benchmark: BenchmarkSchema, results: list[AgentRunResult]
+    benchmark: BenchmarkSchema, results: list[AgentRunResult], total_tokens: int
 ) -> BenchmarkSchemaWithResults:
     """Reconstruct the results into a BenchmarkSchema extension with the results of the evaluation."""
     results_iter = iter(results)
@@ -125,6 +125,7 @@ def reconstruct_results(
         name=benchmark.name,
         version=benchmark.version,
         description=benchmark.description,
+        tokens=total_tokens,
         rubrics=[
             RubricEntryWithResults(
                 name=rubric.name,

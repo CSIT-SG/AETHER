@@ -19,7 +19,7 @@ def test_reconstruct_results_basic() -> None:
         {"success": True, "data": {"passed": False, "reasoning": "no"}},
     ]
 
-    out = reconstruct_results(benchmark, results)
+    out = reconstruct_results(benchmark, results, 0)
 
     assert out.name == "b"
     assert len(out.rubrics) == 2
@@ -37,7 +37,7 @@ def test_reconstruct_results_insufficient_results_raises() -> None:
     results: list[AgentRunResult] = [{"success": True, "data": {"passed": True, "reasoning": "ok"}}]
 
     try:
-        _ = reconstruct_results(benchmark, results)
+        _ = reconstruct_results(benchmark, results, 0)
         raised = False
     except Exception:
         raised = True

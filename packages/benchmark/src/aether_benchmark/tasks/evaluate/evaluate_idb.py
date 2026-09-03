@@ -24,7 +24,7 @@ from .utils import ParallelRunner, TokenUsageHook, build_model, reconstruct_resu
 
 
 class EvaluateIDBTask(
-    Task[[AnyService, BenchmarkConfig, BenchmarkSchema], tuple[BenchmarkSchemaWithResults, int]]
+    Task[[AnyService, BenchmarkConfig, BenchmarkSchema], BenchmarkSchemaWithResults]
 ):
     def __init__(self) -> None:
         super().__init__()
@@ -32,7 +32,7 @@ class EvaluateIDBTask(
 
     async def start(
         self, service: AnyService, config: BenchmarkConfig, benchmark: BenchmarkSchema
-    ) -> tuple[BenchmarkSchemaWithResults, int]:
+    ) -> BenchmarkSchemaWithResults:
         model = build_model(config)
         usage_hook = TokenUsageHook()
         agent = Agent(
@@ -78,7 +78,7 @@ class EvaluateIDBTask(
         results = await self._run_handle
 
         # reconstruct the results into a BenchmarkSchema extension with the results of the evaluation
-        return reconstruct_results(benchmark, results), usage_hook.total_tokens
+        return reconstruct_results(benchmark, results, usage_hook.total_tokens)
 
     async def cancel(self) -> None:
         if self._run_handle is not None:

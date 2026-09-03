@@ -58,10 +58,10 @@ def test_evaluate_md_task_simple(monkeypatch: pytest.MonkeyPatch) -> None:
     config = make_config()
     benchmark = BenchmarkSchema(name="b", rubrics=[RubricEntry(name="r", criteria=["c"])])
 
-    out, tokens = asyncio.run(task.start(config, benchmark, "evidence"))
+    out = asyncio.run(task.start(config, benchmark, "evidence"))
 
     assert out.rubrics[0].criteria[0].result["success"] is True
-    assert tokens == 0
+    assert out.tokens == 0
 
 
 def test_evaluate_idb_task_simple(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -83,9 +83,7 @@ def test_evaluate_idb_task_simple(monkeypatch: pytest.MonkeyPatch) -> None:
 
             return _stub
 
-    out, tokens = asyncio.run(
-        task.start(service=DummyService(), config=config, benchmark=benchmark)
-    )
+    out = asyncio.run(task.start(service=DummyService(), config=config, benchmark=benchmark))
 
     assert out.rubrics[0].criteria[0].result["success"] is True
-    assert tokens == 0
+    assert out.tokens == 0
