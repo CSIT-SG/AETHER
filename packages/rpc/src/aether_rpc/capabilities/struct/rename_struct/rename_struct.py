@@ -1,7 +1,7 @@
 from aether_rpc.capabilities.base import Capability
 from aether_rpc.capabilities.result import Err, Ok, Result
 from aether_rpc.capabilities.struct.struct_utils import get_struct
-from aether_rpc.capabilities.struct.types import RenameStructResult
+from aether_rpc.capabilities.types import RenameStructResult
 
 
 class RenameStruct(Capability):

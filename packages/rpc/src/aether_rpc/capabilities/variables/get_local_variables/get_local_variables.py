@@ -4,7 +4,7 @@ import ida_hexrays
 from aether_rpc.capabilities.base import Capability
 from aether_rpc.capabilities.misc.address_utils import resolve_function_name
 from aether_rpc.capabilities.result import Err, Ok, Result
-from aether_rpc.capabilities.variables.types import LocalVar
+from aether_rpc.capabilities.types import LocalVar
 
 
 class GetLocalVariables(Capability):

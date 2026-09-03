@@ -2,7 +2,7 @@ from typing import Any
 
 from aether_backend.forwarded_rpc import delete_struct
 from aether_backend.utils.validation import HexAddress
-from aether_rpc.capabilities.struct.types import StructResult
+from aether_rpc.capabilities.types import StructResult
 
 from ..utils import get_var_type
 

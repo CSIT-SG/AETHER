@@ -2,9 +2,9 @@ import ida_hexrays
 import ida_lines
 import idaapi
 from aether_rpc.capabilities.base import Capability
-from aether_rpc.capabilities.function.types import FunctionPseudocode
 from aether_rpc.capabilities.misc.address_utils import resolve_function_name
 from aether_rpc.capabilities.result import Err, Ok, Result
+from aether_rpc.capabilities.types import FunctionPseudocode
 
 
 class GetFunctionPseudocode(Capability):

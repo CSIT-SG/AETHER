@@ -11,7 +11,7 @@ from aether_rpc.capabilities.misc.address_utils import resolve_function_name
 from aether_rpc.capabilities.result import Err, Ok, Result
 from aether_rpc.capabilities.struct.struct_utils import get_struct
 from aether_rpc.capabilities.struct.struct_utils.types import InternalStructInfo
-from aether_rpc.capabilities.struct.types import AppliedStruct
+from aether_rpc.capabilities.types import AppliedStruct
 
 
 class ApplyStruct(Capability):

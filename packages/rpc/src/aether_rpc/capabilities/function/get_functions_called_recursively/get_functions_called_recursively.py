@@ -7,9 +7,9 @@ from aether_rpc.capabilities.function.get_functions_called_recursively.constants
     FILTERED_FUNCTIONS,
     MAX_DEPTH,
 )
-from aether_rpc.capabilities.function.types import FunctionTreeNode, FunctionTreeResult
 from aether_rpc.capabilities.misc.address_utils import resolve_effective_address
 from aether_rpc.capabilities.result import Err, Ok, Result
+from aether_rpc.capabilities.types import FunctionTreeNode, FunctionTreeResult
 
 
 class GetFunctionsCalledRecursively(Capability):

@@ -1,8 +1,8 @@
 from aether_rpc.capabilities.base import Capability
 from aether_rpc.capabilities.function.function_utils import get_function
-from aether_rpc.capabilities.function.types import FunctionMetadata
 from aether_rpc.capabilities.misc.address_utils import resolve_effective_address
 from aether_rpc.capabilities.result import Err, Ok, Result
+from aether_rpc.capabilities.types import FunctionMetadata
 
 
 class GetFunctionByAddress(Capability):

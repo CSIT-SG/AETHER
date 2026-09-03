@@ -1,6 +1,6 @@
 from aether_backend.utils.get_rpc_service import AnyService
-from aether_rpc.capabilities.misc.types import AddressData
 from aether_rpc.capabilities.result import Result
+from aether_rpc.capabilities.types import AddressData
 
 
 async def get_data_at_address(service: AnyService, *, location: str | int) -> Result[AddressData]:

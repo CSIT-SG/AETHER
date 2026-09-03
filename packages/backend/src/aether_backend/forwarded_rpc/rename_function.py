@@ -1,6 +1,6 @@
 from aether_backend.forwarded_rpc.get_data_at_address import AnyService
-from aether_rpc.capabilities.function.types import RenameFuncResult
 from aether_rpc.capabilities.result import Result
+from aether_rpc.capabilities.types import RenameFuncResult
 
 
 async def rename_function(

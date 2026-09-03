@@ -1,6 +1,6 @@
 from aether_backend.utils.get_rpc_service import AnyService
 from aether_rpc.capabilities.result import Result
-from aether_rpc.capabilities.variables.types import XrefsResult
+from aether_rpc.capabilities.types import XrefsResult
 
 
 async def get_xrefs_to(

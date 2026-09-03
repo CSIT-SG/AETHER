@@ -15,7 +15,7 @@ from aether_backend.utils.subagent import (
     SubagentToolDependencies,
     build_subagent_tool,
 )
-from aether_rpc.capabilities.function.types import FunctionTreeResult
+from aether_rpc.capabilities.types import FunctionTreeResult
 from aether_utils.api_client import (
     OpenAIGateway,
 )

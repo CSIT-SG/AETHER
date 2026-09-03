@@ -1,6 +1,6 @@
 from aether_backend.forwarded_rpc.get_data_at_address import AnyService
 from aether_rpc.capabilities.result import Result
-from aether_rpc.capabilities.variables.types import RenameLocalVarResult
+from aether_rpc.capabilities.types import RenameLocalVarResult
 
 
 async def rename_local_variable(

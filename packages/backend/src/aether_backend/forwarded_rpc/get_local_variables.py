@@ -1,6 +1,6 @@
 from aether_backend.utils.get_rpc_service import AnyService
 from aether_rpc.capabilities.result import Result
-from aether_rpc.capabilities.variables.types import LocalVar
+from aether_rpc.capabilities.types import LocalVar
 
 
 async def get_local_variables(service: AnyService, *, function_name: str) -> Result[list[LocalVar]]:

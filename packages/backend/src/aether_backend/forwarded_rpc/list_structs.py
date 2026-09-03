@@ -1,6 +1,6 @@
 from aether_backend.utils.get_rpc_service import AnyService
 from aether_rpc.capabilities.result import Result
-from aether_rpc.capabilities.struct.types import AllStructs
+from aether_rpc.capabilities.types import AllStructs
 
 
 async def list_structs(service: AnyService) -> Result[AllStructs]:

@@ -1,7 +1,7 @@
 """Function context and metadata helpers for capabilities."""
 
 import ida_funcs
-from aether_rpc.capabilities.function.types import FunctionInfo, FunctionMetadata
+from aether_rpc.capabilities.types import FunctionInfo, FunctionMetadata
 
 
 def function_info(ea: int) -> FunctionInfo | None:

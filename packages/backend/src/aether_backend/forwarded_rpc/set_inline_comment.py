@@ -1,6 +1,6 @@
 from aether_backend.utils.get_rpc_service.types import AnyService
-from aether_rpc.capabilities.comments.types import SetCommentResult
 from aether_rpc.capabilities.result import Result
+from aether_rpc.capabilities.types import SetCommentResult
 
 
 async def set_inline_comment(

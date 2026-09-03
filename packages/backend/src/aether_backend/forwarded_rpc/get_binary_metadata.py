@@ -1,6 +1,6 @@
 from aether_backend.utils.get_rpc_service import AnyService
-from aether_rpc.capabilities.misc.types import BinaryMetadataResult
 from aether_rpc.capabilities.result import Result
+from aether_rpc.capabilities.types import BinaryMetadataResult
 
 
 async def get_binary_metadata(service: AnyService) -> Result[BinaryMetadataResult]:
