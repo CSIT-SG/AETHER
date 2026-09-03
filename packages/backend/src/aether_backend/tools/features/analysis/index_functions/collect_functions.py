@@ -1,8 +1,8 @@
 import asyncio
 from typing import Any
 
+from aether_rpc.capabilities.function.types import FuncNameAddr, ListFunctionResult
 from aether_rpc.capabilities.result import Result
-from aether_rpc.capabilities.types import FuncNameAddr, ListFunctionResult
 
 from .is_non_common_function import is_non_common_function
 

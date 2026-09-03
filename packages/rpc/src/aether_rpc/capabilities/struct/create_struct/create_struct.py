@@ -2,7 +2,7 @@ import ida_typeinf
 from aether_rpc.capabilities.base import Capability
 from aether_rpc.capabilities.result import Err, Ok, Result
 from aether_rpc.capabilities.struct.create_struct.constants import TYPE_MAP
-from aether_rpc.capabilities.types import StructField, StructResult
+from aether_rpc.capabilities.struct.types import StructField, StructResult
 
 
 class CreateStruct(Capability):

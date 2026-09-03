@@ -5,7 +5,7 @@ from aether_backend.forwarded_rpc import get_functions_called_recursively
 from aether_backend.utils.effect import Log, Program, effectful
 from aether_backend.utils.get_rpc_service import get_rpc_service
 from aether_backend.utils.validation import HexAddress
-from aether_rpc.capabilities.types import FunctionTreeResult
+from aether_rpc.capabilities.function.types import FunctionTreeResult
 from aether_utils.config import get_config
 from aether_utils.get_content import get_content
 from fastmcp.tools import tool

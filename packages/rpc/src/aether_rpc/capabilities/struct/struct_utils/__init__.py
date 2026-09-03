@@ -1,4 +1,4 @@
-from aether_rpc.capabilities.utils.struct_utils.struct_utils import (
+from aether_rpc.capabilities.struct.struct_utils.struct_utils import (
     get_struct,
     get_struct_fields,
     get_struct_id_by_name,

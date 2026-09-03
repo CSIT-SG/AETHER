@@ -1,6 +1,6 @@
 from aether_backend.utils.get_rpc_service import AnyService
+from aether_rpc.capabilities.function.types import FunctionMetadata
 from aether_rpc.capabilities.result import Result
-from aether_rpc.capabilities.types import FunctionMetadata
 
 
 async def get_function_by_address(

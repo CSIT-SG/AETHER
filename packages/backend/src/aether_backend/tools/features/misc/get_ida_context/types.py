@@ -1,6 +1,7 @@
 from typing import TypedDict
 
-from aether_rpc.capabilities.types import FunctionInfo, XrefEntry
+from aether_rpc.capabilities.function.types import FunctionInfo
+from aether_rpc.capabilities.variables.types import XrefEntry
 
 
 class IDAContext(TypedDict):

@@ -12,7 +12,7 @@ from aether_backend.forwarded_rpc import (
 )
 from aether_backend.utils.effect import Log, Program
 from aether_backend.utils.validation import HexAddress
-from aether_rpc.capabilities.types import XrefsResult
+from aether_rpc.capabilities.variables.types import XrefsResult
 from aether_utils.get_content import get_content
 
 from ..utils import create_agent, run_agent

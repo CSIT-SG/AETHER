@@ -7,10 +7,11 @@ import ida_name
 import ida_typeinf
 import idaapi
 from aether_rpc.capabilities.base import Capability
+from aether_rpc.capabilities.misc.address_utils import resolve_function_name
 from aether_rpc.capabilities.result import Err, Ok, Result
-from aether_rpc.capabilities.types import AppliedStruct
-from aether_rpc.capabilities.utils import get_struct, resolve_function_name
-from aether_rpc.capabilities.utils.struct_utils.types import InternalStructInfo
+from aether_rpc.capabilities.struct.struct_utils import get_struct
+from aether_rpc.capabilities.struct.struct_utils.types import InternalStructInfo
+from aether_rpc.capabilities.struct.types import AppliedStruct
 
 
 class ApplyStruct(Capability):

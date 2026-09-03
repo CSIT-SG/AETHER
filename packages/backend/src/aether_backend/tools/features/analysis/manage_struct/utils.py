@@ -8,7 +8,7 @@ from aether_backend.utils.subagent import (
     build_subagent_tool,
 )
 from aether_backend.utils.validation import HexAddress
-from aether_rpc.capabilities.types import XrefsResult
+from aether_rpc.capabilities.variables.types import XrefsResult
 from aether_utils.api_client import (
     OpenAIGateway,
 )

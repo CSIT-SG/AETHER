@@ -1,6 +1,6 @@
 from collections.abc import Iterator
 
-from aether_rpc.capabilities.types import FunctionTreeNode
+from aether_rpc.capabilities.function.types import FunctionTreeNode
 
 
 def iter_addresses(node: FunctionTreeNode) -> Iterator[str]:

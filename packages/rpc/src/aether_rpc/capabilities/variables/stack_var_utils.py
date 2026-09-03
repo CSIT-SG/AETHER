@@ -5,10 +5,9 @@ import ida_funcs
 import ida_hexrays
 import ida_name
 import ida_typeinf
+from aether_rpc.capabilities.function.function_utils import function_info
+from aether_rpc.capabilities.variables.types import StackVariableInfo, XrefEntry
 from ida_funcs import func_t
-
-from aether_rpc.capabilities.types import StackVariableInfo, XrefEntry
-from aether_rpc.capabilities.utils.function_utils import function_info
 
 
 def resolve_stack_variable(var_name: str, func_ea: int) -> StackVariableInfo | None:

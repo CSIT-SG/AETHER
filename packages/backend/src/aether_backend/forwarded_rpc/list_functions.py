@@ -1,6 +1,6 @@
 from aether_backend.utils.get_rpc_service import AnyService
+from aether_rpc.capabilities.function.types import ListFunctionResult
 from aether_rpc.capabilities.result import Result
-from aether_rpc.capabilities.types import ListFunctionResult
 
 
 async def list_functions(service: AnyService) -> Result[ListFunctionResult]:

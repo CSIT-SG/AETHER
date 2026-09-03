@@ -1,8 +1,8 @@
 import asyncio
 from typing import Any
 
+from aether_rpc.capabilities.function.types import FunctionPseudocode
 from aether_rpc.capabilities.result import Result
-from aether_rpc.capabilities.types import FunctionPseudocode
 from rpyc import async_
 
 from .models import DecompileResult

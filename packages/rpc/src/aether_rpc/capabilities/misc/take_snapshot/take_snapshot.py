@@ -1,8 +1,8 @@
 import ida_kernwin
 import ida_loader
 from aether_rpc.capabilities.base import Capability
+from aether_rpc.capabilities.misc.types import TakeSnapshotResult
 from aether_rpc.capabilities.result import Err, Ok, Result
-from aether_rpc.capabilities.types import TakeSnapshotResult
 
 
 class TakeSnapshot(Capability):
