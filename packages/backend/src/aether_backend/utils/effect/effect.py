@@ -25,7 +25,7 @@ def effectful(  # noqa: UP047
 
     @mcp.tool
     @effectful
-    async def process_items(p: int, conn: Connection = Depends(get_db_connection), ctx: Context) -> Program:
+    async def process_items(p: int, conn: Connection = Depends(get_db_connection), ctx: Context = CurrentContext()) -> Program:
         \"\"\"Process p items with streaming progress.\"\"\"
         async for effect in process_items_cb(p, conn, ctx.lifespan_context["rpc_registry"]):
             yield effect
