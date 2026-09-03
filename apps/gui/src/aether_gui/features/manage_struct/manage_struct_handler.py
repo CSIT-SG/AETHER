@@ -73,25 +73,21 @@ class ManageStructHandler(ida_kernwin.action_handler_t):
             return 0
 
         highlighted_string = hl[0]
-        screen_ea = ida_kernwin.get_screen_ea()
 
-        # Resolve name to effective address (ea)
-        highlighted_ea = ida_name.get_name_ea(screen_ea, highlighted_string)
-
-        if highlighted_ea == idaapi.BADADDR:
+        if not (
+            self.is_valid_local_var(ea, highlighted_string)
+            or self.is_valid_global_var(highlighted_string)
+        ):
             logger.error(
                 f"Unable to resolve {highlighted_string}, please highlight a valid variable."
             )
             return 0
 
-        func = ida_funcs.get_func(highlighted_ea)
-
-        if func and func.start_ea == highlighted_ea:
-            logger.error(
-                f"cannot make struct from {func.name}, please highlight a variable instead"
-            )
+        if self.is_function(highlighted_string):
+            logger.error(f"{highlighted_string} is a function, please highlight a variable instead")
             return 0
 
+        func_ea = ida_funcs.get_func(ea).start_ea
         task = CallToolTask()
         handle = worker_manager.submit(
             task,
@@ -100,7 +96,7 @@ class ManageStructHandler(ida_kernwin.action_handler_t):
             tool_args={
                 "rpc_id": rpc_id,
                 "operation": self.operation,
-                "function_address": hex(ea),
+                "function_address": hex(func_ea),
                 "var_name": highlighted_string,
             },
         )
