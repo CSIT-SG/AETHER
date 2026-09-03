@@ -8,6 +8,23 @@ Your script will be executed in a pre-configured environment inside IDA Pro 9.2+
     - Many older APIs have moved or been renamed. Always prefer modern IDA 9.2 namespaces.
 - Executing code: The environment automatically schedules work on the ida main thread. Output is captured in the sysout pipe, so you can `print()` results and you will get back the console logs.
 
+# Output Limits
+Your `print()` output is captured from stdout and returned to you, so it must stay small.
+- Output is capped at about 20,000 characters. Anything past that is dropped and replaced with a truncation notice.
+- Print only what you need. Do not dump the whole database.
+- Bound your loops: filter, `break` early, or print counts and summaries instead of every item.
+- Prefer the dedicated tools for bulk facts. They return structured, bounded data.
+- Investigate incrementally: one targeted question per call, not a mega-script.
+- If you hit the truncation notice, narrow the query and re-run rather than repeating the same script.
+
+## Output Anti-Patterns
+
+| Avoid | Do Instead |
+|-------|------------|
+| Decompiling every function | Decompile the one function in question |
+| Printing all strings, bytes, or functions | Filter first, then print only the matches |
+| Raw dumps of large structures | Print a count or a short summary |
+
 # Using the IDAPython API
 
 Use modern `ida_*` modules. Avoid legacy `idc` module.
