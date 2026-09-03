@@ -3,7 +3,7 @@ import functools
 from collections.abc import Callable, Coroutine
 from typing import Any, ParamSpec
 
-from fastmcp import Context
+from fastmcp.server.dependencies import get_context
 
 from .models import Log, Progress, Return, Sleep
 from .types import Program
@@ -35,7 +35,7 @@ def effectful(  # noqa: UP047
 
     @functools.wraps(fn)
     async def wrapper(*args: P.args, **kwargs: P.kwargs) -> Any:
-        ctx: Context = kwargs.get("ctx")
+        ctx = get_context()
         result: Any = None
         async for effect in fn(*args, **kwargs):
             match effect:

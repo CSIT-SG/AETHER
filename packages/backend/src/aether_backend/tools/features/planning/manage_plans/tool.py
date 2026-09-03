@@ -18,7 +18,7 @@ INSTRUCTIONS = get_content(Path(__file__).parent, "instructions.md")
 
 @tool(
     description=INSTRUCTIONS,
-    annotations=ToolAnnotations(title="Manage Plans", destructiveHint=True),
+    annotations=ToolAnnotations(title="Manage Plans", destructive_hint=True),
 )  # tool is untyped in fastmcp
 @effectful  # type: ignore
 async def manage_plans(

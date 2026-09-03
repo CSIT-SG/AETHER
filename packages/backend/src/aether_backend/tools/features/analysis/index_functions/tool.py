@@ -14,12 +14,11 @@ config = get_config()
 
 
 @tool(
-    annotations=ToolAnnotations(title="Index Functions", destructiveHint=True),
+    annotations=ToolAnnotations(title="Index Functions", destructive_hint=True),
     timeout=TIMEOUT_SECONDS,
 )  # tool is untyped in fastmcp
 @effectful  # type: ignore
 async def index_functions(
-    ctx: Context,
     rpc_id: Annotated[
         str, "The ID of the RPC service/IDB to use. Formatted as `<file_name>_<date>-<time>`."
     ],

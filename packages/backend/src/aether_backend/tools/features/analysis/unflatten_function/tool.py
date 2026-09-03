@@ -3,7 +3,6 @@ from typing import Annotated
 from aether_backend.utils.effect import Program, effectful
 from aether_backend.utils.get_rpc_service import get_rpc_service
 from aether_backend.utils.validation import HexAddress
-from fastmcp import Context
 from fastmcp.tools import tool
 from mcp.types import ToolAnnotations
 
@@ -17,7 +16,6 @@ from .unflatten_function import unflatten
 )  # tool is untyped in fastmcp
 @effectful  # type: ignore
 async def unflatten_function(
-    ctx: Context,
     rpc_id: Annotated[
         str, "The ID of the RPC service/IDB to use. Formatted as `<file_name>_<date>-<time>`."
     ],
@@ -29,5 +27,5 @@ async def unflatten_function(
         "A hint regarding behavior for the subagent to guide analysis. Keep it less than 3 sentences.",
     ] = "",
 ) -> Program:
-    async for effect in unflatten(await get_rpc_service(rpc_id, ctx), address, custom_prompt):
+    async for effect in unflatten(await get_rpc_service(rpc_id), address, custom_prompt):
         yield effect

@@ -8,7 +8,6 @@ from aether_backend.utils.validation import HexAddress
 from aether_rpc.capabilities.types import FunctionTreeResult
 from aether_utils.config import get_config
 from aether_utils.get_content import get_content
-from fastmcp import Context
 from fastmcp.tools import tool
 from mcp.types import ToolAnnotations
 
@@ -23,12 +22,11 @@ config = get_config()
 
 @tool(
     description=INSTRUCTIONS,
-    annotations=ToolAnnotations(title="Annotate Function", destructiveHint=True),
+    annotations=ToolAnnotations(title="Annotate Function", destructive_hint=True),
     timeout=TIMEOUT_SECONDS,
 )  # tool is untyped in fastmcp
 @effectful  # type: ignore
 async def annotate_function(
-    ctx: Context,
     rpc_id: Annotated[
         str, "The ID of the RPC service/IDB to use. Formatted as `<file_name>_<date>-<time>`."
     ],
@@ -41,7 +39,7 @@ async def annotate_function(
     ] = "",
 ) -> Program:
 
-    svc = await get_rpc_service(rpc_id, ctx)
+    svc = await get_rpc_service(rpc_id)
 
     if config.backup:
         svc.take_snapshot()
