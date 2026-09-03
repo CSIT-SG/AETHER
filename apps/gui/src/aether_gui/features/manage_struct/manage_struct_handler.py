@@ -1,6 +1,7 @@
 from typing import Any, Literal
 
 import ida_funcs
+import ida_hexrays
 import ida_kernwin
 import ida_name
 import idaapi
@@ -17,6 +18,46 @@ class ManageStructHandler(ida_kernwin.action_handler_t):
         ida_kernwin.action_handler_t.__init__(self)
         self.mcp_client = mcp_client
         self.operation = operation
+
+    def is_valid_local_var(self, ea: int, name: str) -> bool:
+        """
+        Check if `name` is a valid Hex-Rays local (stack or register) variable
+        for the function containing `ea`.
+        """
+        func: ida_funcs.func_t | None = ida_funcs.get_func(ea)
+        if func is None:
+            return False
+
+        try:
+            cfunc = ida_hexrays.decompile(func)
+        except ida_hexrays.DecompilationFailure:
+            return False
+
+        if cfunc is None:
+            return False
+
+        return any(lv.name == name for lv in cfunc.get_lvars())
+
+    def is_valid_global_var(self, name: str) -> bool:
+        """
+        Check if `name` resolves to a valid global address (function, data, etc).
+        """
+        return ida_name.get_name_ea(idaapi.BADADDR, name) != idaapi.BADADDR
+
+    def is_function(self, name: str) -> bool:
+        """
+        Check if `name` resolves to an address that is the start of a
+        recognized function (defined or a known/imported one).
+        """
+        name = name.strip()
+        if not name:
+            return False
+
+        ea: int = ida_name.get_name_ea(idaapi.BADADDR, name)
+        if ea == idaapi.BADADDR:
+            return False
+
+        return ida_funcs.get_func(ea) is not None
 
     def activate(self, ctx: ida_kernwin.action_ctx_base_t) -> Literal[0]:
         worker_manager = get_shared_worker_manager()
