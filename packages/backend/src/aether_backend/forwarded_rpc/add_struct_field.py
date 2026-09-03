@@ -10,7 +10,7 @@ async def add_struct_field(
     field_name: str,
     field_type: str,
     offset: int,
-    array_size: int | None,
+    array_length: int | None,
 ) -> Result[StructFieldResult]:
     """Add a field to a structure.
 
@@ -19,7 +19,7 @@ async def add_struct_field(
         field_name: Name of the new field.
         field_type: Type of the new field.
         offset: Byte offset at which to add the field.
-        array_size: Optional if type is not an array. Number of elements if the field is an array.
+        array_length: Optional if type is not an array. Number of elements if the field is an array.
 
     Returns:
         A Result whose ``success`` reports whether the add succeeded and
@@ -31,5 +31,5 @@ async def add_struct_field(
         field_name=field_name,
         field_type=field_type,
         offset=offset,
-        array_size=array_size,
+        array_length=array_length,
     )
