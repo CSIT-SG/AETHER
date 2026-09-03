@@ -1,6 +1,6 @@
 from os import path
 
-import httpx
+import httpx2
 from openai import AsyncOpenAI
 
 from aether_utils.find_root import get_version
@@ -34,15 +34,15 @@ def _build_client_cert_key(client_cert_path: str, client_key_path: str) -> tuple
     return (client_cert_path, client_key_path)
 
 
-def _create_httpx_client(client_cert_key: tuple[str, str] | None) -> httpx.AsyncClient:
+def _create_httpx_client(client_cert_key: tuple[str, str] | None) -> httpx2.AsyncClient:
     TIMEOUT = 600  # 10 minutes
     if not client_cert_key:
         logger.info(
             "No client certificate provided. Creating Async HTTPX client without client cert."
         )
-        return httpx.AsyncClient(verify=False, timeout=TIMEOUT)
+        return httpx2.AsyncClient(verify=False, timeout=TIMEOUT)
 
-    return httpx.AsyncClient(cert=client_cert_key, verify=False, timeout=TIMEOUT)
+    return httpx2.AsyncClient(cert=client_cert_key, verify=False, timeout=TIMEOUT)
 
 
 def _build_user_agent_header(feature: str | None) -> dict[str, str]:
@@ -56,7 +56,7 @@ def create_async_httpx_client(
     *,
     client_cert_path: str = "",
     client_key_path: str = "",
-) -> httpx.AsyncClient:
+) -> httpx2.AsyncClient:
     """Create an Async HTTPX client with optional mTLS configuration.
 
     This function builds a low-level transport (`httpx.AsyncClient`) that
@@ -88,7 +88,7 @@ def create_async_openai_client(
     *,
     api_key: str,
     base_url: str,
-    httpx_client: httpx.AsyncClient,
+    httpx_client: httpx2.AsyncClient,
     feature: str | None = None,
 ) -> AsyncOpenAI:
     """Create an `AsyncOpenAI` client using an existing `httpx.AsyncClient`.

@@ -1,6 +1,6 @@
 from typing import Any, cast
 
-import httpx
+import httpx2
 import pytest
 from aether_utils.provider_check.gateway import probe_gateway
 from openai import (
@@ -16,9 +16,9 @@ from openai import (
 )
 
 
-def _response(status: int) -> httpx.Response:
-    request = httpx.Request("POST", "https://gateway.test/v1/chat/completions")
-    return httpx.Response(status, request=request)
+def _response(status: int) -> httpx2.Response:
+    request = httpx2.Request("POST", "https://gateway.test/v1/chat/completions")
+    return httpx2.Response(status, request=request)
 
 
 def _status_error(cls: type[APIStatusError], status: int) -> APIStatusError:
@@ -99,7 +99,7 @@ async def test_error_message_extracted(body: dict[str, Any]) -> None:
 
 
 async def test_no_response_has_no_status() -> None:
-    request = httpx.Request("POST", "https://gateway.test")
+    request = httpx2.Request("POST", "https://gateway.test")
     for exc in (APIConnectionError(request=request), APITimeoutError(request=request)):
         result = await probe_gateway(_client(exc=exc), "m")
         assert result.verdict is False

@@ -48,7 +48,7 @@ def test_create_httpx_client_without_cert_is_configured_without_cert(
             captured["timeout"] = timeout
             captured["cert"] = cert
 
-    monkeypatch.setattr(api_client.httpx, "AsyncClient", DummyAsyncClient)
+    monkeypatch.setattr(api_client.httpx2, "AsyncClient", DummyAsyncClient)
 
     client = api_client._create_httpx_client(None)
 
@@ -80,7 +80,7 @@ def test_create_httpx_client_with_cert_pair_is_configured_with_cert(
             captured["timeout"] = timeout
             captured["cert"] = cert
 
-    monkeypatch.setattr(api_client.httpx, "AsyncClient", DummyAsyncClient)
+    monkeypatch.setattr(api_client.httpx2, "AsyncClient", DummyAsyncClient)
 
     client = api_client._create_httpx_client((str(cert_path), str(key_path)))
 
