@@ -1,8 +1,16 @@
+from typing import NamedTuple
+
 import ida_idaapi
 import ida_typeinf
 from aether_rpc.capabilities.result import Err, Ok, Result
-from aether_rpc.capabilities.struct.struct_utils.types import InternalStructInfo
 from aether_rpc.capabilities.types import StructFieldWithOffset
+
+
+class InternalStructInfo(NamedTuple):
+    struct_id: int
+    struct_name: str
+    tif: ida_typeinf.tinfo_t
+    udt: ida_typeinf.udt_type_data_t
 
 
 def get_struct_id_by_name(struct_name: str) -> int | None:

@@ -1,7 +1,7 @@
 import ida_funcs
 import ida_hexrays
 from aether_rpc.capabilities.base import Capability
-from aether_rpc.capabilities.misc.address_utils import resolve_effective_address
+from aether_rpc.capabilities.misc.utils import resolve_effective_address
 from aether_rpc.capabilities.result import Err, Ok, Result
 from aether_rpc.capabilities.types import RenameLocalVarResult
 

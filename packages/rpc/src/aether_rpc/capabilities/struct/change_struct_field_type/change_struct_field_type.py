@@ -2,7 +2,7 @@ import ida_typeinf
 from aether_rpc.capabilities.base import Capability
 from aether_rpc.capabilities.result import Err, Ok, Result
 from aether_rpc.capabilities.struct.change_struct_field_type.constants import TYPE_MAP
-from aether_rpc.capabilities.struct.struct_utils import get_struct
+from aether_rpc.capabilities.struct.utils import get_struct
 from aether_rpc.capabilities.types import ChangeStructFieldTypeResult
 
 

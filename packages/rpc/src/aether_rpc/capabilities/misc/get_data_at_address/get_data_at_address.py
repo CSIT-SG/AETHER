@@ -5,11 +5,11 @@ import ida_nalt
 import ida_name
 import ida_typeinf
 from aether_rpc.capabilities.base import Capability
-from aether_rpc.capabilities.function.function_utils import function_info
-from aether_rpc.capabilities.misc.address_utils import resolve_effective_address
+from aether_rpc.capabilities.function.utils import function_info
+from aether_rpc.capabilities.misc.utils import resolve_effective_address
 from aether_rpc.capabilities.result import Err, Ok, Result
 from aether_rpc.capabilities.types import AddressData, PointerInfo
-from aether_rpc.capabilities.variables.xref_utils import collect_xrefs
+from aether_rpc.capabilities.variables.utils import collect_xrefs
 from idautils import XrefsFrom, XrefsTo
 
 
