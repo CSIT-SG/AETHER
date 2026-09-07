@@ -1,3 +1,17 @@
+## v0.0.1.dev3 (2026-09-07)
+
+### Feat
+
+- update struct constants
+
+### Fix
+
+- remove user arg
+- fix test model
+- remove gatherer model refs
+- migrate to mcp_types
+- make dev install to user packages
+
 ## v0.0.1.dev2 (2026-09-07)
 
 ### Feat
