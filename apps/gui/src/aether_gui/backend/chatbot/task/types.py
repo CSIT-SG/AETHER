@@ -59,8 +59,8 @@ class ToolOutput(LLMOutput):
         # For now, output will be stringed to ensure the `success` context isn't lost
         # We can select `result` if we don't need the dict object.
         # processed = str(self._parse_call_tool_result_text(self.output))
-
-        return f"Result: {self.output}"
+        processed = str(self._parse_call_tool_result_text(self.output))
+        return f"Result: {processed}"
 
     @staticmethod
     def _parse_call_tool_result_text(repr_str: str) -> dict[str, bool] | str:

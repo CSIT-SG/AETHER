@@ -87,7 +87,7 @@ class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
                             )
                         case "tool_call_output_item":
                             yield ToolOutput(
-                                output=item.output,
+                                output=str(item.output),
                                 call_id=item.call_id or "",
                             )
             # No touchy touchy end
