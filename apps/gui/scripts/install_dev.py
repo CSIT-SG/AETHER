@@ -89,7 +89,7 @@ def export_requirements(uv_path: str) -> Path:
 def install_requirements(
     uv_path: str, requirements_path: Path, *, force_reinstall: bool = False
 ) -> None:
-    cmd = [uv_path, "pip", "install", "--user", "-r", str(requirements_path)]
+    cmd = [uv_path, "pip", "install", "--system", "-r", str(requirements_path)]
     if force_reinstall:
         cmd.append("--reinstall")
     run(cmd, cwd=requirements_path.parent)
