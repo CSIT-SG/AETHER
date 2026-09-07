@@ -1,3 +1,21 @@
+## v0.0.1.dev4 (2026-09-07)
+
+### Feat
+
+- add call tool json parser
+- moved evidence to top for better caching
+- increase concurrency to 10
+- cache hit optimized and add tiny jitter
+- update struct constants
+
+### Fix
+
+- remove user arg
+- fix test model
+- remove gatherer model refs
+- migrate to mcp_types
+- make dev install to user packages
+
 ## v0.0.1.dev3 (2026-09-07)
 
 ### Feat
