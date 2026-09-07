@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [master]
+    types: [closed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: ci-master
+  cancel-in-progress: false # never abort mid-tag-push; let the second run wait
+
+jobs:
+  test:
+    name: Run tests
+    # skip merges of our own bump PRs, otherwise this loops forever
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.merged == true && !startsWith(github.head_ref, 'bump/'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync --all-packages
+
+      - name: Run pytest
+        run: uv run pytest apps/*/tests/unit packages/*/tests/unit
+
+  dev-release:
+    name: Bump dev version
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # full history for commitizen + release notes
+          ref: master
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Bump on a new branch
+        id: bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          BRANCH="bump/dev-${{ github.run_number }}"
+          git switch -c "$BRANCH"
+          # keep the x.y.z base, only the dev segment moves
+          BASE="$(uv run cz version --project)"
+          VERSION="${BASE%%.dev*}.dev${{ github.run_number }}"
+          # explicit version: avoids "no commits found" and the --devrelease increment quirks
+          uv run cz bump "$VERSION" --yes --no-verify
+          git push origin "$BRANCH"
+          git push origin "v$VERSION"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Open PR and auto-merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base master \
+            --head "${{ steps.bump.outputs.branch }}" \
+            --title "bump: v${{ steps.bump.outputs.version }}" \
+            --body "Automated dev version bump from #${{ github.event.pull_request.number }}."
+          gh pr merge "${{ steps.bump.outputs.branch }}" --squash --auto --delete-branch
+
+      - name: Create prerelease
+        uses: softprops/action-gh-release@v3.0.1
+        with:
+          tag_name: v${{ steps.bump.outputs.version }}
+          name: v${{ steps.bump.outputs.version }}
+          prerelease: true
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

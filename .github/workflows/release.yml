@@ -3,9 +3,12 @@ name: Release
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: "Release version (e.g. 1.2.3). Defaults to the contents of VERSION if omitted."
-        required: false
+      increment:
+        description: "Version increment"
+        type: choice
+        required: true
+        default: PATCH
+        options: [PATCH, MINOR, MAJOR]
 
 permissions:
   contents: write
@@ -15,40 +18,47 @@ concurrency:
   cancel-in-progress: false # never abort a release mid-tag-push; let the second run wait
 
 jobs:
-  release:
-    name: Release
+  bump:
+    name: Bump ${{ inputs.increment }}
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v7
         with:
-          fetch-depth: 0 # full history needed for auto-generated release notes
-
-      - name: Resolve release version
-        id: version
-        run: |
-          if [ -n "${{ inputs.version }}" ]; then
-            RAW="${{ inputs.version }}"
-          else
-            RAW="$(cat VERSION)"
-          fi
-          # strip all surrounding/embedded whitespace (guards against trailing newline in VERSION)
-          VERSION_CLEAN="$(printf '%s' "$RAW" | tr -d '[:space:]')"
-          if ! printf '%s' "$VERSION_CLEAN" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([-+.][0-9A-Za-z.-]+)?$'; then
-            echo "::error::Resolved version '$VERSION_CLEAN' is not valid semver (expected e.g. 1.2.3)."
-            exit 1
-          fi
-          echo "version=$VERSION_CLEAN" >> "$GITHUB_OUTPUT"
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+          fetch-depth: 0 # full history for commitizen + release notes
+          ref: master
 
       - name: Install uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
         with:
           enable-cache: true
+          python-version: "3.12"
+
+      - name: Bump and tag
+        id: bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          uv run cz bump --increment ${{ inputs.increment }} --yes --no-verify
+          VERSION="$(uv run cz version --project)"
+          git push origin master
+          git push origin "v$VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build
+    needs: bump
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: v${{ needs.bump.outputs.version }}
+
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          enable-cache: true
+          python-version: "3.12"
 
       - name: Build release bundles
         run: uv run python -m scripts.release.build
@@ -60,37 +70,108 @@ jobs:
             exit 1
           fi
 
-      - name: Zip release bundles
-        run: |
-          mkdir -p release-zips
-          for app_dir in dist/*/; do
-            app="$(basename "$app_dir")"
-            zip_name="${app}-v${{ steps.version.outputs.version }}.zip"
-            (cd dist && zip -qr "../release-zips/${zip_name}" "${app}")
-            echo "Packaged ${zip_name}"
-          done
-          ls -la release-zips
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-online-ubuntu-latest-py3.12
+          path: dist/
 
-      - name: Create Git tag
+  build-offline:
+    name: Build offline (${{ matrix.os }}, py${{ matrix.python-version }})
+    needs: bump
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.12", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: v${{ needs.bump.outputs.version }}
+
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python-version }}
+
+      - name: Build offline release bundles
+        run: uv run python -m scripts.release.build_offline
+
+      - name: Verify build output
+        shell: bash
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          VERSION="v${{ steps.version.outputs.version }}"
-          REMOTE="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
-          if git ls-remote --tags "$REMOTE" "$VERSION" | grep -q "$VERSION"; then
-            echo "::error::Tag $VERSION already exists. Bump the version in VERSION file or pass a different version input."
+          if [ ! -d dist ] || [ -z "$(ls -A dist 2>/dev/null)" ]; then
+            echo "::error::dist/ is missing or empty after the build step."
             exit 1
           fi
-          git tag "$VERSION"
-          git push "$REMOTE" "$VERSION"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-offline-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: dist/
+
+  docs:
+    name: Build docs
+    needs: bump
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: v${{ needs.bump.outputs.version }}
+
+      - name: Build Docker image
+        run: docker build -f apps/docs/Dockerfile -t aether-docs .
+
+      - name: Extract standalone artifact
+        run: |
+          docker create --name docs-extract aether-docs
+          docker cp docs-extract:/app ./docs-standalone
+          docker rm docs-extract
+          zip -qr "docs-v${{ needs.bump.outputs.version }}.zip" docs-standalone
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: docs-zip
+          path: docs-v${{ needs.bump.outputs.version }}.zip
+
+  publish:
+    name: Publish release
+    needs: [bump, build, build-offline, docs]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: dist-*
+          path: artifacts
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: docs-zip
+          path: release-zips
+
+      - name: Zip each combo's bundles
+        run: |
+          mkdir -p release-zips
+          for combo_dir in artifacts/*/; do
+            combo="$(basename "$combo_dir")"          # e.g. dist-offline-ubuntu-latest-py3.12
+            for app_dir in "$combo_dir"*/; do
+              app="$(basename "$app_dir")"
+              zip_name="${app}-${combo#dist-}-v${{ needs.bump.outputs.version }}.zip"
+              (cd "$combo_dir" && zip -qr "../../release-zips/${zip_name}" "${app}")
+              echo "Packaged ${zip_name}"
+            done
+          done
+          ls -la release-zips
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3.0.1
         with:
-          tag_name: v${{ steps.version.outputs.version }}
-          name: Release v${{ steps.version.outputs.version }}
+          tag_name: v${{ needs.bump.outputs.version }}
+          name: Release v${{ needs.bump.outputs.version }}
           generate_release_notes: true
-          draft: ${{ env.ACT == 'true' }} # act automatically sets ACT=true. https://nektosact.com/usage/index.html?highlight=env.ACT#skipping-steps
+          draft: ${{ env.ACT == 'true' }} # act sets ACT=true. https://nektosact.com/usage/index.html#skipping-steps
           files: release-zips/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
