@@ -29,17 +29,16 @@ VALID_FULL = {
         "extra_body": {"transforms": ["middle-out"]},
     },
     "subagents": {
-        "gatherer_model": "Claude Sonnet",
         "annotator_model": "Qwen Coder",
-        "single_analysis_model": None,
+        "unflattener_model": "Claude Sonnet",
         "struct_creator_model": None,
         "index_agent_model": None,
+        "struct_reevaluator_model": None,
     },
     "features": {
         "annotator": {"enabled": True},
         "deobfuscator": None,
         "chatbot": {},
-        "gatherer": None,
     },
     "debug": True,
     "tls": {
@@ -56,11 +55,11 @@ VALID_SUBAGENTS_ALL_NULL = {
         "default_model": "GPT-4o",
     },
     "subagents": {
-        "gatherer_model": None,
         "annotator_model": None,
-        "single_analysis_model": None,
+        "unflattener_model": None,
         "struct_creator_model": None,
         "index_agent_model": None,
+        "struct_reevaluator_model": None,
     },
 }
 
@@ -123,7 +122,7 @@ INVALID_SUBAGENT_NOT_IN_PROVIDER = {
         "models": {"GPT-4o": "openai/gpt-4o"},
         "default_model": "GPT-4o",
     },
-    "subagents": {"gatherer_model": "Claude Sonnet"},  # not in provider models
+    "subagents": {"annotator_model": "Claude Sonnet"},  # not in provider models
 }
 
 INVALID_SUBAGENT_USES_MODEL_ID = {
@@ -133,7 +132,7 @@ INVALID_SUBAGENT_USES_MODEL_ID = {
         "models": {"GPT-4o": "openai/gpt-4o"},
         "default_model": "GPT-4o",
     },
-    "subagents": {"gatherer_model": "openai/gpt-4o"},  # ID, not key
+    "subagents": {"annotator_model": "openai/gpt-4o"},  # ID, not key
 }
 
 INVALID_MISSING_GATEWAY_URL = {
