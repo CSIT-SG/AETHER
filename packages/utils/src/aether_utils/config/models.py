@@ -44,20 +44,10 @@ class ProviderModel(BaseModel):
 
 
 class SubagentsModel(BaseModel):
-    gatherer_model: str | None = Field(
-        default=None,
-        title="Gatherer Model",
-        description="Model override for the gatherer subagent.",
-    )
     annotator_model: str | None = Field(
         default=None,
         title="Annotator Model",
         description="Model override for the annotator subagent.",
-    )
-    single_analysis_model: str | None = Field(
-        default=None,
-        title="Single Analysis Model",
-        description="Model override for the single analysis subagent.",
     )
     unflattener_model: str | None = Field(
         default=None,
@@ -73,6 +63,11 @@ class SubagentsModel(BaseModel):
         default=None,
         title="Index Agent Model",
         description="Model override for the index agent subagent.",
+    )
+    struct_reevaluator_model: str | None = Field(
+        default=None,
+        title="Struct Reevaluator",
+        description="Feature flags and parameters for the structure reevaluator component.",
     )
 
 
@@ -91,11 +86,6 @@ class FeaturesModel(BaseModel):
         default=None,
         title="Chatbot",
         description="Feature flags and parameters for the chatbot component.",
-    )
-    gatherer: dict[str, object] | None = Field(
-        default=None,
-        title="Gatherer",
-        description="Feature flags and parameters for the gatherer component.",
     )
 
 

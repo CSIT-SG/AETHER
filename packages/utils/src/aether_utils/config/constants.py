@@ -19,5 +19,7 @@ DEFAULT_CONFIG = ConfigModel(
         models=DEFAULT_MODEL_LIST,
         default_model="Minimax m2.7",
     ),
-    subagents=SubagentsModel(annotator_model="Qwen3-next Instruct"),
+    subagents=SubagentsModel(
+        annotator_model="Qwen3-next Instruct", struct_reevaluator_model="GLM 5.3"
+    ),
 )
