@@ -11,7 +11,9 @@ RUNNER = "aether_utils.compacting_session.compacting_session.Runner.run"
 
 def _session() -> CompactingSession:
     return CompactingSession(
-        summarizer=Agent(name="s", instructions="summarize"), threshold=10, keep_last_n=5
+        get_summarizer=lambda: Agent(name="s", instructions="summarize"),
+        threshold=10,
+        keep_last_n=5,
     )
 
 

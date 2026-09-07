@@ -60,10 +60,12 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           BRANCH="bump/dev-${{ github.run_number }}-${{ github.run_attempt }}"
           git switch -c "$BRANCH"
-          # keep the x.y.z base, only the dev segment moves
+          
           BASE="$(uv run cz version --project)"
-          VERSION="${BASE%%.dev*}.dev${{ github.run_number }}"
-          # explicit version: avoids "no commits found" and the --devrelease increment quirks
+          CURRENT="${BASE##*.dev}"
+          if [ "$CURRENT" = "$BASE" ]; then N=1; else N=$((CURRENT + 1)); fi
+          VERSION="${BASE%%.dev*}.dev${N}"
+
           uv run cz bump "$VERSION" --yes --no-verify
           TAG="$(git tag --points-at HEAD)"
           git push origin "$BRANCH"
