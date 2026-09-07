@@ -9,7 +9,7 @@ from aether_rpc.capabilities.types import FunctionTreeResult
 from aether_utils.config import get_config
 from aether_utils.get_content import get_content
 from fastmcp.tools import tool
-from mcp.types import ToolAnnotations
+from mcp_types import ToolAnnotations
 
 from .annotate_function import annotate
 from .constants import TIMEOUT_SECONDS

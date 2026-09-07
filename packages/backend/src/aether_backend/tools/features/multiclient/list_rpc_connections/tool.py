@@ -5,7 +5,7 @@ from aether_backend.utils.effect import Program, effectful
 from fastmcp.dependencies import CurrentContext
 from fastmcp.server.context import Context
 from fastmcp.tools import tool
-from mcp.types import ToolAnnotations
+from mcp_types import ToolAnnotations
 
 from .constants import TIMEOUT_SECONDS
 from .list_rpc_connections import list_rpc_connections as list_rpc_connections_cb

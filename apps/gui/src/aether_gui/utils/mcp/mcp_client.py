@@ -8,8 +8,7 @@ from aether_utils.logger import get_logger
 from fastmcp import Client
 from fastmcp.client.client import CallToolResult
 from fastmcp.client.transports import StreamableHttpTransport
-
-from mcp.types import Tool
+from mcp_types import Tool
 
 config = get_config()
 

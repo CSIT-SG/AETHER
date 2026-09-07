@@ -2,7 +2,7 @@ from typing import Annotated
 
 from aether_backend.utils.effect import Program, effectful
 from fastmcp.tools import tool
-from mcp.types import ToolAnnotations
+from mcp_types import ToolAnnotations
 
 from .web_request import fetch_url_stream
 

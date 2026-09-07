@@ -7,7 +7,7 @@ from aether_backend.utils.validation import HexAddress
 from aether_utils.config import get_config
 from aether_utils.get_content import get_content
 from fastmcp.tools import tool
-from mcp.types import ToolAnnotations
+from mcp_types import ToolAnnotations
 
 from .constants import TIMEOUT_SECONDS
 from .operations import perform_create_struct, perform_delete_struct, perform_update_struct

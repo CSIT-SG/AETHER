@@ -5,7 +5,7 @@ from aether_backend.tools.features.planning.utils import PlanCrudAction, PlanSta
 from aether_backend.utils.effect import Program, effectful
 from aether_utils.get_content import get_content
 from fastmcp.tools import tool
-from mcp.types import ToolAnnotations
+from mcp_types import ToolAnnotations
 
 from .create import create_plan_cb
 from .delete import delete_plan_cb
