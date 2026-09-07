@@ -30,6 +30,12 @@ def parse_args() -> argparse.Namespace:
         default=default_plugin_path(),
         help="IDA plugins directory to install into",
     )
+    parser.add_argument(
+        "--force-reinstall",
+        help="Force reinstall even if the dependencies already exist",
+        action="store_true",
+        default=False,
+    )
     return parser.parse_args()
 
 
@@ -80,11 +86,13 @@ def export_requirements(uv_path: str) -> Path:
     return requirements_path
 
 
-def install_requirements(uv_path: str, requirements_path: Path) -> None:
-    run(
-        [uv_path, "pip", "install", "--system", "-r", str(requirements_path)],
-        cwd=requirements_path.parent,
-    )
+def install_requirements(
+    uv_path: str, requirements_path: Path, *, force_reinstall: bool = False
+) -> None:
+    cmd = [uv_path, "pip", "install", "--user", "-r", str(requirements_path)]
+    if force_reinstall:
+        cmd.append("--reinstall")
+    run(cmd, cwd=requirements_path.parent)
 
 
 def link_entrypoint(plugin_path: Path) -> None:
@@ -109,7 +117,7 @@ def main() -> None:
     requirements_path = export_requirements(uv_path)
 
     try:
-        install_requirements(uv_path, requirements_path)
+        install_requirements(uv_path, requirements_path, force_reinstall=args.force_reinstall)
     finally:
         requirements_path.unlink(missing_ok=True)
 

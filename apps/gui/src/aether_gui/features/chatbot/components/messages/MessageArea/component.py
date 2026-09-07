@@ -119,8 +119,7 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
             widget = cast(MessageColumn, item.widget()) if item else None
             if widget is None:
                 continue
-            for paragraph in widget.paragraphs:
-                yield paragraph
+            yield from widget.paragraphs
 
     def _on_search_changed(self, text: str) -> None:
         self._clear_highlights()

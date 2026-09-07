@@ -113,7 +113,10 @@ class ChatOrchestrator:
             handle,
             on_event=lambda e: self._run_on_ida_ui_thread(lambda ev=e: handler(ev)),
             on_error=lambda err: self._run_on_ida_ui_thread(
-                lambda: self.chat_renderer.render_error(f"Stream failed: {err}")
+                lambda: (
+                    self.chat_renderer.render_error(f"Stream failed: {err}")
+                    and self._set_turn_active(False)
+                )
             ),
             on_done=lambda: self._run_on_ida_ui_thread(lambda: self._set_turn_active(False)),
         )

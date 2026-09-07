@@ -10,7 +10,17 @@ from aether_gui.utils.chat_session import ChatSession
 from aether_gui.utils.mcp import MCPClient
 from aether_gui.utils.rpc_id import get_rpc_id
 from aether_utils.api_client import OpenAIGateway
-from agents import Agent, FunctionTool, RunContextWrapper, Runner, RunResultStreaming, Tool
+from agents import (
+    Agent,
+    FunctionTool,
+    RunContextWrapper,
+    Runner,
+    RunResultStreaming,
+)
+from agents import (
+    Tool as AgentTool,
+)
+from mcp_types import Tool as MCPTool
 from openai.types.responses import (
     ResponseReasoningSummaryTextDeltaEvent,
     ResponseTextDeltaEvent,
@@ -97,12 +107,12 @@ class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
                 pass
             self._result = None
 
-    async def list_mcp_tools_as_agent_tools(self, client: MCPClient) -> list[Tool]:
+    async def list_mcp_tools_as_agent_tools(self, client: MCPClient) -> list[AgentTool]:
         """List MCP tools and wrap each as an Agents SDK FunctionTool."""
         tools = await client.list_tools()
         return [self._wrap_mcp_tool(client, tool) for tool in tools]
 
-    def _wrap_mcp_tool(self, client: MCPClient, tool: Any) -> Tool:
+    def _wrap_mcp_tool(self, client: MCPClient, tool: MCPTool) -> AgentTool:
         """Wrap a single MCP tool as an Agents SDK FunctionTool."""
 
         async def on_invoke(_ctx: RunContextWrapper[Any], args_json: str) -> str:
