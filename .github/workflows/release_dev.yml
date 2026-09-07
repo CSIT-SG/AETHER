@@ -1,4 +1,4 @@
-name: CI
+name: Bump dev version
 
 on:
   pull_request:
