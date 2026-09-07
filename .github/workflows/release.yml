@@ -24,6 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.bump.outputs.version }}
+      tag: ${{ steps.bump.outputs.tag }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -43,19 +44,21 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          BRANCH="bump/release-${{ github.run_number }}"
+          BRANCH="bump/release-${{ github.run_number }}-${{ github.run_attempt }}"
           git switch -c "$BRANCH"
           uv run cz bump --increment ${{ inputs.increment }} --yes --no-verify
           VERSION="$(uv run cz version --project)"
+          TAG="$(git tag --points-at HEAD)"
           git push origin "$BRANCH"
-          git push origin "v$VERSION"
+          git push origin "$TAG"
           gh pr create \
             --base master \
             --head "$BRANCH" \
-            --title "bump: v$VERSION" \
+            --title "bump: $TAG" \
             --body "Automated ${{ inputs.increment }} release bump."
           gh pr merge "$BRANCH" --squash --delete-branch
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
   build:
     name: Build
@@ -64,7 +67,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: v${{ needs.bump.outputs.version }}
+          ref: ${{ needs.bump.outputs.tag }}
 
       - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
         with:
@@ -99,7 +102,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: v${{ needs.bump.outputs.version }}
+          ref: ${{ needs.bump.outputs.tag }}
 
       - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
         with:
@@ -130,7 +133,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: v${{ needs.bump.outputs.version }}
+          ref: ${{ needs.bump.outputs.tag }}
 
       - name: Build Docker image
         run: docker build -f apps/docs/Dockerfile -t aether-docs .
@@ -179,7 +182,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3.0.1
         with:
-          tag_name: v${{ needs.bump.outputs.version }}
+          tag_name: ${{ needs.bump.outputs.tag }}
           name: Release v${{ needs.bump.outputs.version }}
           generate_release_notes: true
           draft: ${{ env.ACT == 'true' }} # act sets ACT=true. https://nektosact.com/usage/index.html#skipping-steps

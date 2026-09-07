@@ -58,17 +58,19 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          BRANCH="bump/dev-${{ github.run_number }}"
+          BRANCH="bump/dev-${{ github.run_number }}-${{ github.run_attempt }}"
           git switch -c "$BRANCH"
           # keep the x.y.z base, only the dev segment moves
           BASE="$(uv run cz version --project)"
           VERSION="${BASE%%.dev*}.dev${{ github.run_number }}"
           # explicit version: avoids "no commits found" and the --devrelease increment quirks
           uv run cz bump "$VERSION" --yes --no-verify
+          TAG="$(git tag --points-at HEAD)"
           git push origin "$BRANCH"
-          git push origin "v$VERSION"
+          git push origin "$TAG"
           echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Open PR and auto-merge
         env:
@@ -77,14 +79,14 @@ jobs:
           gh pr create \
             --base master \
             --head "${{ steps.bump.outputs.branch }}" \
-            --title "bump: v${{ steps.bump.outputs.version }}" \
+            --title "bump: ${{ steps.bump.outputs.tag }}" \
             --body "Automated dev version bump from #${{ github.event.pull_request.number }}."
           gh pr merge "${{ steps.bump.outputs.branch }}" --squash --delete-branch
 
       - name: Create prerelease
         uses: softprops/action-gh-release@v3.0.1
         with:
-          tag_name: v${{ steps.bump.outputs.version }}
+          tag_name: ${{ steps.bump.outputs.tag }}
           name: v${{ steps.bump.outputs.version }}
           prerelease: true
           generate_release_notes: true
