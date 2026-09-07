@@ -27,7 +27,6 @@ async def generate_report(service: Any, function_address: HexAddress) -> Program
     agent = Agent(
         name="report_generator",
         model=OpenAIGateway().get_model(
-            model_name=config.subagents.gatherer_model if config.subagents else None,
             feature="generate_report",
         ),
         instructions=SYSTEM_PROMPT,

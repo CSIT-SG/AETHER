@@ -180,13 +180,11 @@ class TestValidConfigs:
         assert cfg.debug is True
         assert cfg.tls is not None
         assert cfg.subagents is not None
-        assert cfg.subagents.gatherer_model == "Claude Sonnet"
 
     def test_subagents_all_null(self) -> None:
         """Subagents block present but every override is None — validator should pass."""
         cfg = ConfigModel.model_validate(VALID_SUBAGENTS_ALL_NULL)
         assert cfg.subagents is not None
-        assert cfg.subagents.gatherer_model is None
 
     def test_extra_body_null(self) -> None:
         cfg = ConfigModel.model_validate(VALID_EXTRA_BODY_NULL)
@@ -298,7 +296,6 @@ class TestConfigManagerIO:
         assert manager.config.debug is True
         assert manager.config.provider.default_model == "GPT-4o"
         assert manager.config.subagents is not None
-        assert manager.config.subagents.gatherer_model == "Claude Sonnet"
 
     def test_invalid_file_raises(self, tmp_path: Path) -> None:
         """A config.json that fails Pydantic validation raises ValidationError on load."""
