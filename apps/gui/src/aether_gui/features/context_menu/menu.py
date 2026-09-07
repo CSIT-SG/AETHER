@@ -36,14 +36,9 @@ class AetherUIHooks(ida_kernwin.UI_Hooks):
                 ManageStructHandler(self.mcp_client, "create"),
             ),
             ContextMenuItem(
-                "aether:update_struct",
-                "Update Struct",
+                "aether:reevaluate_struct",
+                "Re-evaluate Struct",
                 ManageStructHandler(self.mcp_client, "update"),
-            ),
-            ContextMenuItem(
-                "aether:delete_struct",
-                "Delete Struct",
-                ManageStructHandler(self.mcp_client, "delete"),
             ),
         ]
 

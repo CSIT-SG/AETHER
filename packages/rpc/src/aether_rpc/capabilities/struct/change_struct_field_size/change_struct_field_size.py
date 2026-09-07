@@ -11,7 +11,7 @@ class ChangeStructFieldSize(Capability):
         return "change_struct_field_size"
 
     def execute(
-        self, struct: str | int, field_name: str, new_size: str
+        self, struct: str | int, field_name: str, new_size: int
     ) -> Result[ChangeStructFieldSizeResult]:
         """Change struct field size.
 
@@ -53,7 +53,7 @@ class ChangeStructFieldSize(Capability):
 
         array_type = ida_typeinf.tinfo_t()
         try:
-            array_type.create_array(elem_type, int(new_size))
+            array_type.create_array(elem_type, new_size)
         except ValueError:
             return Err(result=f"Invalid size provided: '{new_size}'.")
         new_member_size = array_type.get_size()
@@ -85,6 +85,6 @@ class ChangeStructFieldSize(Capability):
                 struct_id=struct_id,
                 struct_name=struct_name,
                 field_name=field_name,
-                new_size=new_size,
+                new_size=str(new_size),
             )
         )

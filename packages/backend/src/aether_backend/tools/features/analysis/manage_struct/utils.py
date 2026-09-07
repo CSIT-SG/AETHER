@@ -53,7 +53,6 @@ async def run_agent(
         input=user_prompt + custom_prompt,
         max_turns=100000,
     )
-
     async for event in result.stream_events():
         if event.type != "run_item_stream_event":
             continue

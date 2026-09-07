@@ -36,16 +36,6 @@ void func2(DWORD* a1){
 - You should also give the fields a meaningful name as much as possible. If the purpose of the field name is unclear, you may give a more generic name.
 - You can only define 1 field at 1 offset.
 
-# TOOLS USAGE
-
-You MUST use these tools for struct creation
-
-Use `get_data_at_address` on all addresses you findto get information about the symbol at a specific address. This will allow you to get the variable the name property which can be parsed into `get_function_pseudocode`
-
-Use `create_struct` to craft a struct. Ensure to give it the struct name and list of fields as input values. You MUST use this.
-
-Use `apply_struct` to apply the struct as a type to the specified local vairable
-
 # RESPONSE
 
 End with a brief explanation of what you did. Highlight any step that failed or was partially successful.
@@ -61,3 +51,13 @@ Remember: reason carefully, be deliberate, and back your improvements with evide
 Do not hallucinate - that refers to struct definition which do not reflect reality and the actual code state and path.
 
 You must not assume the analysis is "completed in the background" and you must not truncate it, that is BANNED.
+
+# TOOLS USAGE
+
+You MUST use these tools for struct creation
+
+Use `get_data_at_address` on all addresses you findto get information about the symbol at a specific address. This will allow you to get the variable the name property which can be parsed into `get_function_pseudocode`
+
+Use `create_struct` to craft a struct. Ensure to give it the struct name and list of fields as input values. You MUST use this.
+
+Use `apply_struct` to apply the struct as a type to the specified local vairable

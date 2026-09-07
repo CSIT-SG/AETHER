@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Annotated
 
-from aether_backend.utils.effect import Log, Program, effectful
+from aether_backend.utils.effect import Program, effectful
 from aether_backend.utils.get_rpc_service import get_rpc_service
 from aether_backend.utils.validation import HexAddress
 from aether_utils.config import get_config
@@ -10,7 +10,7 @@ from fastmcp.tools import tool
 from mcp_types import ToolAnnotations
 
 from .constants import TIMEOUT_SECONDS
-from .operations import perform_create_struct, perform_delete_struct, perform_update_struct
+from .operations import perform_create_struct, perform_update_struct
 from .types import StructOperation
 from .utils import resolve_xrefs
 
@@ -70,9 +70,3 @@ async def manage_struct(
                 custom_prompt=custom_prompt,
             ):
                 yield effect
-        case StructOperation.DELETE:
-            deleted = await perform_delete_struct(
-                svc, function_address=function_address, var_name=var_name
-            )
-            yield Log(f"Deleted struct {deleted}")
-            return

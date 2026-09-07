@@ -4,7 +4,6 @@ from pathlib import Path
 
 from aether_gui.utils.chat_session.models import Message
 from aether_gui.utils.rpc_id import get_rpc_id
-from aether_utils.compacting_session import CompactingSession, get_compacting_agent
 from aether_utils.data_dir import get_data_dir
 
 

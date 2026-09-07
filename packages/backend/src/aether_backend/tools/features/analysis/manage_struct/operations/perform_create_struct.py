@@ -33,7 +33,7 @@ async def perform_create_struct(
 
     struct_list = await list_structs(service=service)
     function_name = func.result["name"]
-    user_prompt = f"These are the current structs in the idb file {struct_list} Create the struct representative of {var_name} which is found in the function {function_name} at {function_address} For added context you are to take a look at {xrefs}. These are the cross references to {var_name}. GIVE THE STRUCT AND IT'S FIELDS MEANINGFUL NAMES"
+    user_prompt = f"These are the current structs in the idb file {struct_list}. Create the struct representative of {var_name} which is found in the function {function_name} at {function_address} For added context you are to take a look at {xrefs}. These are the cross references to {var_name}. GIVE THE STRUCT AND IT'S FIELDS MEANINGFUL NAMES"
     name = "struct creator"
     system_prompt = get_content(Path(__file__).parent, "struct_creator_prompt.md")
     tool_list = [
