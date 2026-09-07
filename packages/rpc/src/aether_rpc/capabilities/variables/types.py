@@ -30,6 +30,11 @@ class LocalVar(TypedDict):
     is_reg_var: bool
 
 
+class LocalVarOffset(TypedDict):
+    name: str
+    stack_offset: str
+
+
 class RenameLocalVarResult(TypedDict):
     function_address: str
     old_var_name: str

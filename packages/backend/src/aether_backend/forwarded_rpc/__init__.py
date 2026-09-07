@@ -11,6 +11,7 @@ from .get_function_by_address import get_function_by_address
 from .get_function_pseudocode import get_function_pseudocode
 from .get_functions_called_recursively import get_functions_called_recursively
 from .get_local_variables import get_local_variables
+from .get_local_variables_offset import get_local_variables_offset
 from .get_struct_id_by_name import get_struct_id_by_name
 from .get_struct_info import get_struct_info
 from .get_xrefs_to import get_xrefs_to
@@ -27,6 +28,7 @@ __all__ = [
     "get_data_at_address",
     "get_function_pseudocode",
     "get_local_variables",
+    "get_local_variables_offset",
     "rename_function",
     "rename_local_variable",
     "get_xrefs_to",
