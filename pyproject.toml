@@ -81,5 +81,5 @@ ignore_missing_imports = true
 [tool.commitizen]
 version_provider = "uv"
 version_scheme = "pep440"
-tag_format = "$version"
+tag_format = "v$version"
 update_changelog_on_bump = true
