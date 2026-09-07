@@ -105,7 +105,6 @@ class ManageStructHandler(ida_kernwin.action_handler_t):
             if handle.error:
                 logger.error(handle.error)
             logger.info(handle.results.get())
-            print(handle.done.is_set())
 
         return 0
 

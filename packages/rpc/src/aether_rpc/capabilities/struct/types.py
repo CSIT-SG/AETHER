@@ -12,7 +12,7 @@ class ChangeStructFieldSizeResult(TypedDict):
     struct_id: int
     struct_name: str
     field_name: str
-    new_size: str
+    new_size: int
 
 
 class ChangeStructFieldTypeResult(TypedDict):

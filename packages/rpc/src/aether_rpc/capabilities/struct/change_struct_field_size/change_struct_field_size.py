@@ -85,6 +85,6 @@ class ChangeStructFieldSize(Capability):
                 struct_id=struct_id,
                 struct_name=struct_name,
                 field_name=field_name,
-                new_size=str(new_size),
+                new_size=new_size,
             )
         )
