@@ -28,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0 # full history for commitizen + release notes
+          fetch-depth: 0 # full history + tags for commitizen's incremental changelog
           ref: master
 
       - name: Install uv
@@ -48,7 +48,9 @@ jobs:
           git switch -c "$BRANCH"
           uv run cz bump --increment ${{ inputs.increment }} --yes --no-verify
           VERSION="$(uv run cz version --project)"
-          TAG="$(git tag --points-at HEAD)"
+          TAG="$(git tag --points-at HEAD)" # whatever tag_format cz is configured with
+          # commitizen's own notes for this version only, not GitHub's PR-title list
+          uv run cz changelog "$VERSION" --dry-run > RELEASE_NOTES.md
           git push origin "$BRANCH"
           git push origin "$TAG"
           gh pr create \
@@ -59,6 +61,12 @@ jobs:
           gh pr merge "$BRANCH" --squash --delete-branch
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Upload release notes
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: RELEASE_NOTES.md
 
   build:
     name: Build
@@ -143,12 +151,12 @@ jobs:
           docker create --name docs-extract aether-docs
           docker cp docs-extract:/app ./docs-standalone
           docker rm docs-extract
-          zip -qr "docs-v${{ needs.bump.outputs.version }}.zip" docs-standalone
+          zip -qr "docs-${{ needs.bump.outputs.tag }}.zip" docs-standalone
 
       - uses: actions/upload-artifact@v4
         with:
           name: docs-zip
-          path: docs-v${{ needs.bump.outputs.version }}.zip
+          path: docs-${{ needs.bump.outputs.tag }}.zip
 
   publish:
     name: Publish release
@@ -165,6 +173,11 @@ jobs:
           name: docs-zip
           path: release-zips
 
+      - name: Download release notes
+        uses: actions/download-artifact@v4
+        with:
+          name: release-notes # lands RELEASE_NOTES.md at the workspace root for body_path
+
       - name: Zip each combo's bundles
         run: |
           mkdir -p release-zips
@@ -172,7 +185,7 @@ jobs:
             combo="$(basename "$combo_dir")"          # e.g. dist-offline-ubuntu-latest-py3.12
             for app_dir in "$combo_dir"*/; do
               app="$(basename "$app_dir")"
-              zip_name="${app}-${combo#dist-}-v${{ needs.bump.outputs.version }}.zip"
+              zip_name="${app}-${combo#dist-}-${{ needs.bump.outputs.tag }}.zip"
               (cd "$combo_dir" && zip -qr "../../release-zips/${zip_name}" "${app}")
               echo "Packaged ${zip_name}"
             done
@@ -183,9 +196,9 @@ jobs:
         uses: softprops/action-gh-release@v3.0.1
         with:
           tag_name: ${{ needs.bump.outputs.tag }}
-          name: Release v${{ needs.bump.outputs.version }}
-          generate_release_notes: true
+          name: Release ${{ needs.bump.outputs.tag }}
           draft: ${{ env.ACT == 'true' }} # act sets ACT=true. https://nektosact.com/usage/index.html#skipping-steps
           files: release-zips/*.zip
+          body_path: RELEASE_NOTES.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

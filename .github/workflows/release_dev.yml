@@ -54,7 +54,11 @@ jobs:
           echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-
+      
+      - name: Extract changelog section
+        id: notes
+        run: uv run cz changelog "${{ steps.bump.outputs.version }}" --dry-run > RELEASE_NOTES.md
+      
       - name: Open PR and auto-merge
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -70,8 +74,8 @@ jobs:
         uses: softprops/action-gh-release@v3.0.1
         with:
           tag_name: ${{ steps.bump.outputs.tag }}
-          name: v${{ steps.bump.outputs.version }}
+          name: ${{ steps.bump.outputs.tag }}
           prerelease: true
-          generate_release_notes: true
+          body_path: RELEASE_NOTES.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
