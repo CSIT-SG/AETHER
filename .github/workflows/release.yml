@@ -54,7 +54,7 @@ jobs:
             --head "$BRANCH" \
             --title "bump: v$VERSION" \
             --body "Automated ${{ inputs.increment }} release bump."
-          gh pr merge "$BRANCH" --squash --auto --delete-branch
+          gh pr merge "$BRANCH" --squash --delete-branch
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
   build:

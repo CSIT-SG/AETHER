@@ -79,7 +79,7 @@ jobs:
             --head "${{ steps.bump.outputs.branch }}" \
             --title "bump: v${{ steps.bump.outputs.version }}" \
             --body "Automated dev version bump from #${{ github.event.pull_request.number }}."
-          gh pr merge "${{ steps.bump.outputs.branch }}" --squash --auto --delete-branch
+          gh pr merge "${{ steps.bump.outputs.branch }}" --squash --delete-branch
 
       - name: Create prerelease
         uses: softprops/action-gh-release@v3.0.1
