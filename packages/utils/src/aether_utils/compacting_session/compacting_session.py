@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import cast
 from uuid import uuid4
 
@@ -22,7 +23,7 @@ def _has_orphan_tool_result(items: list[TResponseInputItem]) -> bool:
         if item.get("type") == "function_call"
     }
     return any(
-        cast(FunctionCallOutput, item)["call_id"] not in calls
+        (cast(FunctionCallOutput, item).get("call_id") or "") not in calls
         for item in items
         if item.get("type") == "function_call_output"
     )
@@ -34,13 +35,13 @@ class CompactingSession(SQLiteSession):
         session_id: str | None = None,
         db_path: str = ":memory:",
         *,
-        summarizer: Agent,
+        get_summarizer: Callable[[], Agent],
         threshold: int = 10,
         keep_last_n: int = 5,
     ) -> None:
         super().__init__(session_id or str(uuid4()), db_path)
 
-        self._summarizer = summarizer
+        self._get_summarizer = get_summarizer
         self._threshold = threshold
         self._keep_last_n = keep_last_n
         self.logger = get_logger(f"compacting_session-{self.session_id}")
@@ -73,7 +74,7 @@ class CompactingSession(SQLiteSession):
         attempt, result = history, None
         for call in range(MAX_SUMMARIZE_CALLS):
             try:
-                result = await Runner.run(self._summarizer, input=attempt, max_turns=1)
+                result = await Runner.run(self._get_summarizer(), input=attempt, max_turns=1)
                 break
             except Exception as error:
                 self.logger.warning(f"Compaction failed ({error}).")

@@ -11,7 +11,7 @@ from aether_utils.data_dir import get_data_dir
 class ChatSession:
     def __init__(self) -> None:
         self.messages: list[Message] = []
-        self.chat_session = CompactingSession(summarizer=get_compacting_agent())
+        self.chat_session = CompactingSession(get_summarizer=get_compacting_agent)
 
         rpc_id = get_rpc_id()
         if rpc_id is None:
