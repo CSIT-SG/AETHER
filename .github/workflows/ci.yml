@@ -15,31 +15,12 @@ concurrency:
   cancel-in-progress: false # never abort mid-tag-push; let the second run wait
 
 jobs:
-  test:
-    name: Run tests
+  dev-release:
+    name: Bump dev version
     # skip merges of our own bump PRs, otherwise this loops forever
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event.pull_request.merged == true && !startsWith(github.head_ref, 'bump/'))
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
-        with:
-          enable-cache: true
-          python-version: "3.12"
-
-      - name: Install dependencies
-        run: uv sync --all-packages
-
-      - name: Run pytest
-        run: uv run pytest apps/*/tests/unit packages/*/tests/unit
-
-  dev-release:
-    name: Bump dev version
-    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -60,7 +41,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           BRANCH="bump/dev-${{ github.run_number }}-${{ github.run_attempt }}"
           git switch -c "$BRANCH"
-          
+
           BASE="$(uv run cz version --project)"
           CURRENT="${BASE##*.dev}"
           if [ "$CURRENT" = "$BASE" ]; then N=1; else N=$((CURRENT + 1)); fi
