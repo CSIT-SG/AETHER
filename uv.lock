@@ -47,7 +47,7 @@ requires-dist = [
 
 [[package]]
 name = "aether-benchmark"
-version = "0.1.0"
+version = "0.1"
 source = { editable = "packages/benchmark" }
 dependencies = [
     { name = "aether-backend" },
@@ -201,6 +201,7 @@ name = "aether-utils"
 version = "0.0.1"
 source = { editable = "packages/utils" }
 dependencies = [
+    { name = "commitizen" },
     { name = "httpx2" },
     { name = "openai" },
     { name = "openai-agents" },
@@ -210,6 +211,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "commitizen", specifier = ">=4.18.0" },
     { name = "httpx2", specifier = "==2.12.0" },
     { name = "openai", specifier = ">=3.0.0,<4" },
     { name = "openai-agents", specifier = "==0.21.0" },

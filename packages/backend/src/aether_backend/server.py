@@ -1,5 +1,5 @@
 from aether_utils.config import get_config
-from aether_utils.find_root import get_version
+from aether_utils.get_version import get_version
 from fastmcp import FastMCP
 from starlette.applications import Starlette
 from starlette.routing import Mount

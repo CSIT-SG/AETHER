@@ -3,7 +3,7 @@ from os import path
 import httpx2
 from openai import AsyncOpenAI
 
-from aether_utils.find_root import get_version
+from aether_utils.get_version import get_version
 from aether_utils.logger import get_logger
 
 VERSION = get_version()

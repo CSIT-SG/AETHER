@@ -9,7 +9,8 @@ dependencies = [
     "pydantic==2.13.4",
     "openai>=3.0.0,<4",
     "platformdirs==4.10.0",
-    "openai-agents==0.21.0"
+    "openai-agents==0.21.0",
+    "commitizen>=4.18.0"
 ]
 
 [tool.mypy]
