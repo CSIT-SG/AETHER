@@ -48,6 +48,12 @@ jobs:
           VERSION="${BASE%%.dev*}.dev${N}"
 
           uv run cz bump "$VERSION" --yes --no-verify
+          # cz bump rewrites each member's pyproject version but never the lockfile
+          uv lock
+          if ! git diff --quiet -- uv.lock; then
+            git commit --no-verify -m "chore: sync uv.lock for $VERSION" -- uv.lock
+            git tag -f "$VERSION" # tag the tree that actually builds; not pushed yet
+          fi
           git push origin "$BRANCH"
           git push origin "$VERSION" # tag_format matches version exactly
           echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
