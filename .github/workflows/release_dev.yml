@@ -53,9 +53,14 @@ jobs:
           echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Extract changelog section
+      # https://github.com/commitizen-tools/commitizen/issues/1367
+      # - name: Extract changelog section
+      #   id: notes
+      #   run: uv run cz changelog "${{ steps.bump.outputs.version }}" --dry-run > RELEASE_NOTES.md
+
+      - name: Write release notes
         id: notes
-        run: uv run cz changelog "${{ steps.bump.outputs.version }}" --dry-run > RELEASE_NOTES.md
+        run: echo "Automated dev build ${{ steps.bump.outputs.version }}." > RELEASE_NOTES.md
 
       - name: Open PR and auto-merge
         env:
