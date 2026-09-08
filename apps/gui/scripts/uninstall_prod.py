@@ -8,9 +8,13 @@ import subprocess
 import sys
 from pathlib import Path
 
+from platformdirs import user_data_dir
+
 SOURCE_DIR = Path(__file__).resolve().parent
 ENTRYPOINT_NAME = "aether-next.py"
 PYTHON_VERSIONS = {(3, 12), (3, 13)}
+APP_AUTHOR = "AETHER-next"
+APP_NAMES = ("gui", "rpc", "mcp", "_global")
 
 
 def default_plugin_path() -> Path:
@@ -81,6 +85,14 @@ def remove_entrypoint(plugin_path: Path) -> None:
     remove_path(destination)
 
 
+def remove_data_dirs() -> None:
+    for appname in APP_NAMES:
+        shutil.rmtree(
+            user_data_dir(appname=appname, appauthor=APP_AUTHOR),
+            ignore_errors=True,
+        )
+
+
 def main() -> None:
     args = parse_args()
     resolve_command("python", "python3")
@@ -91,6 +103,7 @@ def main() -> None:
 
     bundle_dir = resource_dir()
     remove_entrypoint(args.plugin_path)
+    remove_data_dirs()
     uninstall_requirements(bundle_dir)
     print(f"Uninstalled AETHER GUI production plugin from: {args.plugin_path}")
 

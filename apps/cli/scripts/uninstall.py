@@ -6,8 +6,12 @@ import subprocess
 import sys
 from pathlib import Path
 
+from platformdirs import user_data_dir
+
 SOURCE_DIR = Path(__file__).resolve().parent
 PYTHON_VERSIONS = {(3, 12), (3, 13)}
+APP_AUTHOR = "AETHER-next"
+APP_NAMES = ("gui", "rpc", "mcp", "_global")
 
 
 def resolve_command(*names: str) -> None:
@@ -44,6 +48,14 @@ def uninstall_requirements(bundle_dir: Path) -> None:
     )
 
 
+def remove_data_dirs() -> None:
+    for appname in APP_NAMES:
+        shutil.rmtree(
+            user_data_dir(appname=appname, appauthor=APP_AUTHOR),
+            ignore_errors=True,
+        )
+
+
 def main() -> None:
     resolve_command("python", "python3")
     resolve_command("pip")
@@ -52,6 +64,7 @@ def main() -> None:
         raise SystemExit("Python 3.12 or 3.13 is required")
 
     bundle_dir = resource_dir()
+    remove_data_dirs()
     uninstall_requirements(bundle_dir)
     print("Uninstalled AETHER CLI")
 
