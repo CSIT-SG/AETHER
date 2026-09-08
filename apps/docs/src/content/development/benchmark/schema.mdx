@@ -22,13 +22,14 @@ The `rubrics.yaml` file must contain the frontmatter followed by rubric structur
 | :--- | :--- | :--- |
 | `name` | Yes | Report title / Malware nickname |
 | `description` | No | Brief summary of the malware report and background information. |
-| `version` | No | Purely semantic |
+| `version` | Yes | Schema version this rubric targets. Its **major** component must match the installed `aether_benchmark` package's major version, or parsing fails. |
 
 #### Example
 <Tabs items={['Minimal example', 'All optional fields']}>
   <Tabs.Tab>
   ```yaml copy
   name: "Report Name"
+  version: "1.0.0"
   ```
   </Tabs.Tab>
   <Tabs.Tab>

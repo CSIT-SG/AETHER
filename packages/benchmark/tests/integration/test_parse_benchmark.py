@@ -127,6 +127,62 @@ version: "1.0.0"
 
 
 @pytest.mark.asyncio
+async def test_missing_version_field_is_rejected(tmp_path: Path) -> None:
+    rubric_path = tmp_path / "missing_version.yaml"
+    rubric_path.write_text(
+        """
+name: "No Version"
+rubrics:
+  - name: "some_group"
+    criteria:
+      - "This should fail"
+""".strip(),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError):
+        await ParseBenchmarkTask().start(BenchmarkSchema, rubric_path)
+
+
+@pytest.mark.asyncio
+async def test_mismatched_major_version_is_rejected(tmp_path: Path) -> None:
+    rubric_path = tmp_path / "mismatched_version.yaml"
+    rubric_path.write_text(
+        """
+name: "Wrong Major"
+version: "2.0.0"
+rubrics:
+  - name: "some_group"
+    criteria:
+      - "This should fail"
+""".strip(),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="targets major version 2"):
+        await ParseBenchmarkTask().start(BenchmarkSchema, rubric_path)
+
+
+@pytest.mark.asyncio
+async def test_matching_major_version_with_different_minor_is_accepted(tmp_path: Path) -> None:
+    rubric_path = tmp_path / "compatible_minor.yaml"
+    rubric_path.write_text(
+        """
+name: "Compatible Minor"
+version: "1.9.0"
+rubrics:
+  - name: "some_group"
+    criteria:
+      - "This should pass"
+""".strip(),
+        encoding="utf-8",
+    )
+
+    parsed = await ParseBenchmarkTask().start(BenchmarkSchema, rubric_path)
+    assert parsed.version == "1.9.0"
+
+
+@pytest.mark.asyncio
 async def test_invalid_yaml_is_rejected(tmp_path: Path) -> None:
     rubric_path = tmp_path / "invalid_yaml.yaml"
     rubric_path.write_text(

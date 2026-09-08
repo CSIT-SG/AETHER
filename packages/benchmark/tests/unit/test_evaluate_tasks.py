@@ -56,7 +56,9 @@ def test_evaluate_md_task_simple(monkeypatch: pytest.MonkeyPatch) -> None:
 
     task = evaluate_md.EvaluateMDTask()
     config = make_config()
-    benchmark = BenchmarkSchema(name="b", rubrics=[RubricEntry(name="r", criteria=["c"])])
+    benchmark = BenchmarkSchema(
+        name="b", version="1.0.0", rubrics=[RubricEntry(name="r", criteria=["c"])]
+    )
 
     out = asyncio.run(task.start(config, benchmark, "evidence"))
 
@@ -73,7 +75,9 @@ def test_evaluate_idb_task_simple(monkeypatch: pytest.MonkeyPatch) -> None:
 
     task = evaluate_idb.EvaluateIDBTask()
     config = make_config()
-    benchmark = BenchmarkSchema(name="b", rubrics=[RubricEntry(name="r", criteria=["c"])])
+    benchmark = BenchmarkSchema(
+        name="b", version="1.0.0", rubrics=[RubricEntry(name="r", criteria=["c"])]
+    )
 
     # service can be a simple object since the runner ignores it, but provide a minimal stub
     class DummyService:

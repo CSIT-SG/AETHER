@@ -28,7 +28,7 @@ aether-benchmark --rubric path/to/rubric.yaml --doc path/to/transcript.md --api-
 
 ## Rubric Format
 
-Rubrics are written as YAML. For the full schema and writing guidelines, run the docs site locally (see [apps/docs/README.md](../../apps/docs/README.md)) and browse to `http://localhost:3000/development/benchmark/schema`.
+Rubrics are written as YAML and require a `version` field. Its major component must match this package's major version (see [Versioning](#versioning)) — a mismatch is a hard error at parse time. For the full schema and writing guidelines, run the docs site locally (see [apps/docs/README.md](../../apps/docs/README.md)) and browse to `http://localhost:3000/development/benchmark/schema`.
 
 ## Versioning
 

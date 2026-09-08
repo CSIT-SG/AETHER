@@ -1,4 +1,6 @@
 import contextlib
+import inspect
+from pathlib import Path
 
 from commitizen.config import read_cfg
 from commitizen.exceptions import CommitizenException
@@ -9,11 +11,12 @@ from aether_utils.find_root import find_repo_root
 
 def get_version() -> str:
     """
-    Get the version of the repo using the commitizen SDK's configured version provider.
+    Get the local package version, resolved relative to the caller's file.
     """
     try:
-        repo_root = find_repo_root()
-        with contextlib.chdir(repo_root):
+        caller_file = Path(inspect.stack()[1].filename)
+        root = find_repo_root(start=caller_file, markers=["pyproject.toml"])
+        with contextlib.chdir(root):
             provider = get_provider(read_cfg())
             return provider.get_version()
     except (FileNotFoundError, KeyError, CommitizenException):

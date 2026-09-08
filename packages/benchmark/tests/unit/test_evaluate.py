@@ -31,6 +31,7 @@ def test_reconstruct_results_basic() -> None:
 def test_reconstruct_results_insufficient_results_raises() -> None:
     benchmark = BenchmarkSchema(
         name="b",
+        version="1.0.0",
         rubrics=[RubricEntry(name="r1", criteria=["c1", "c2"])],
     )
 
