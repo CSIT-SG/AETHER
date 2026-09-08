@@ -17,6 +17,5 @@ Read more in `apps/docs` (follow the setup guide).
 To uninstall,
 
 ```bash
-pip uninstall -r requirements.txt
-rm /path/to/ida/plugins/aether-next.py
+python ./uninstall_prod.py
 ```

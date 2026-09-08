@@ -16,5 +16,5 @@ Read more in `apps/docs` (follow the setup guide).
 To uninstall,
 
 ```bash
-pip uninstall -r requirements.txt
+python ./uninstall.py
 ```
