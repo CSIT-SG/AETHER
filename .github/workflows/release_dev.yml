@@ -43,11 +43,16 @@ jobs:
           git switch -c "$BRANCH"
 
           BASE="$(uv run cz version --project)"
-          CURRENT="${BASE##*.dev}"
-          if [ "$CURRENT" = "$BASE" ]; then N=1; else N=$((CURRENT + 1)); fi
-          VERSION="${BASE%%.dev*}.dev${N}"
+          case "$BASE" in
+            *.dev*) N=$(( ${BASE##*.dev} + 1 )) ;; # same target version, next counter
+            *)      N=1 ;;                         # last bump was a release, see below
+          esac
 
-          uv run cz bump "$VERSION" --yes --no-verify
+          # --devrelease picks the base for us: 0.0.2.dev1 -> 0.0.2.devN, but 0.0.1 -> 0.0.2.devN,
+          # since a bare 0.0.1.devN sorts *below* the published 0.0.1 and collides on release.
+          # --allow-no-commit: every merge gets a dev build, even a docs- or chore-only one.
+          uv run cz bump --increment PATCH --devrelease "$N" --yes --no-verify --allow-no-commit
+          VERSION="$(uv run cz version --project)"
           # cz bump rewrites each member's pyproject version but never the lockfile
           uv lock
           if ! git diff --quiet -- uv.lock; then

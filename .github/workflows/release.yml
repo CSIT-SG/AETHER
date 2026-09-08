@@ -45,6 +45,14 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           BRANCH="bump/release-${{ github.run_number }}-${{ github.run_attempt }}"
           git switch -c "$BRANCH"
+
+          # fail before anything is committed if the target tag is already published
+          TARGET="$(uv run cz bump --increment ${{ inputs.increment }} --yes --get-next)"
+          if git rev-parse -q --verify "refs/tags/$TARGET" >/dev/null; then
+            echo "::error::$TARGET is already tagged. master is at $(uv run cz version --project), a prerelease of an already-released version; move master onto the next patch before releasing."
+            exit 1
+          fi
+
           uv run cz bump --increment ${{ inputs.increment }} --yes --no-verify
           VERSION="$(uv run cz version --project)" # tag_format matches version exactly
           # cz bump rewrites each member's pyproject version but never the lockfile
