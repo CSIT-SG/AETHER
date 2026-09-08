@@ -1,6 +1,7 @@
 from aether_utils.config import get_config
 from aether_utils.get_version import get_version
 from fastmcp import FastMCP
+from fastmcp.server.middleware.timing import DetailedTimingMiddleware
 from starlette.applications import Starlette
 from starlette.routing import Mount
 
@@ -28,6 +29,7 @@ mcp = FastMCP(
 )
 
 mcp.disable(tags=get_disabled_channels())
+mcp.add_middleware(DetailedTimingMiddleware())
 
 mcp_app = mcp.http_app(path="/")
 
