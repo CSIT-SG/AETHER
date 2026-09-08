@@ -82,3 +82,12 @@ ignore_missing_imports = true
 version_provider = "uv"
 version_scheme = "pep440"
 update_changelog_on_bump = true
+version_files = [
+    "apps/cli/pyproject.toml:version",
+    "apps/docs/pyproject.toml:version",
+    "apps/docs/package.json:version",
+    "apps/gui/pyproject.toml:version",
+    "packages/backend/pyproject.toml:version",
+    "packages/rpc/pyproject.toml:version",
+    "packages/utils/pyproject.toml:version",
+]
