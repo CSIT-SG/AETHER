@@ -48,17 +48,15 @@ jobs:
           VERSION="${BASE%%.dev*}.dev${N}"
 
           uv run cz bump "$VERSION" --yes --no-verify
-          TAG="$(git tag --points-at HEAD)"
           git push origin "$BRANCH"
-          git push origin "$TAG"
+          git push origin "$VERSION" # tag_format matches version exactly
           echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-      
+
       - name: Extract changelog section
         id: notes
         run: uv run cz changelog "${{ steps.bump.outputs.version }}" --dry-run > RELEASE_NOTES.md
-      
+
       - name: Open PR and auto-merge
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -66,15 +64,15 @@ jobs:
           gh pr create \
             --base master \
             --head "${{ steps.bump.outputs.branch }}" \
-            --title "bump: ${{ steps.bump.outputs.tag }}" \
+            --title "bump: ${{ steps.bump.outputs.version }}" \
             --body "Automated dev version bump from #${{ github.event.pull_request.number }}."
           gh pr merge "${{ steps.bump.outputs.branch }}" --squash --delete-branch
 
       - name: Create prerelease
         uses: softprops/action-gh-release@v3.0.1
         with:
-          tag_name: ${{ steps.bump.outputs.tag }}
-          name: ${{ steps.bump.outputs.tag }}
+          tag_name: ${{ steps.bump.outputs.version }}
+          name: ${{ steps.bump.outputs.version }}
           prerelease: true
           body_path: RELEASE_NOTES.md
         env:

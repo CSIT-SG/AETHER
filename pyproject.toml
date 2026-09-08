@@ -12,7 +12,7 @@ aether_benchmark = { workspace = true }
 
 [project]
 name = "aether-next"
-version = "0.0.1.dev4"
+version = "0.0.1"
 description = "AETHER - AI-powered Next Generation Framework"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -81,5 +81,4 @@ ignore_missing_imports = true
 [tool.commitizen]
 version_provider = "uv"
 version_scheme = "pep440"
-tag_format = "v$version"
 update_changelog_on_bump = true

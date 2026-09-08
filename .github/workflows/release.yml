@@ -24,7 +24,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.bump.outputs.version }}
-      tag: ${{ steps.bump.outputs.tag }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -47,20 +46,18 @@ jobs:
           BRANCH="bump/release-${{ github.run_number }}-${{ github.run_attempt }}"
           git switch -c "$BRANCH"
           uv run cz bump --increment ${{ inputs.increment }} --yes --no-verify
-          VERSION="$(uv run cz version --project)"
-          TAG="$(git tag --points-at HEAD)" # whatever tag_format cz is configured with
+          VERSION="$(uv run cz version --project)" # tag_format matches version exactly
           # commitizen's own notes for this version only, not GitHub's PR-title list
           uv run cz changelog "$VERSION" --dry-run > RELEASE_NOTES.md
           git push origin "$BRANCH"
-          git push origin "$TAG"
+          git push origin "$VERSION"
           gh pr create \
             --base master \
             --head "$BRANCH" \
-            --title "bump: $TAG" \
+            --title "bump: $VERSION" \
             --body "Automated ${{ inputs.increment }} release bump."
           gh pr merge "$BRANCH" --squash --delete-branch
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Upload release notes
         uses: actions/upload-artifact@v4
@@ -75,7 +72,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ needs.bump.outputs.tag }}
+          ref: ${{ needs.bump.outputs.version }}
 
       - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
         with:
@@ -110,7 +107,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ needs.bump.outputs.tag }}
+          ref: ${{ needs.bump.outputs.version }}
 
       - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
         with:
@@ -141,7 +138,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ needs.bump.outputs.tag }}
+          ref: ${{ needs.bump.outputs.version }}
 
       - name: Build Docker image
         run: docker build -f apps/docs/Dockerfile -t aether-docs .
@@ -151,12 +148,12 @@ jobs:
           docker create --name docs-extract aether-docs
           docker cp docs-extract:/app ./docs-standalone
           docker rm docs-extract
-          zip -qr "docs-${{ needs.bump.outputs.tag }}.zip" docs-standalone
+          zip -qr "docs-${{ needs.bump.outputs.version }}.zip" docs-standalone
 
       - uses: actions/upload-artifact@v4
         with:
           name: docs-zip
-          path: docs-${{ needs.bump.outputs.tag }}.zip
+          path: docs-${{ needs.bump.outputs.version }}.zip
 
   publish:
     name: Publish release
@@ -185,7 +182,7 @@ jobs:
             combo="$(basename "$combo_dir")"          # e.g. dist-offline-ubuntu-latest-py3.12
             for app_dir in "$combo_dir"*/; do
               app="$(basename "$app_dir")"
-              zip_name="${app}-${combo#dist-}-${{ needs.bump.outputs.tag }}.zip"
+              zip_name="${app}-${combo#dist-}-${{ needs.bump.outputs.version }}.zip"
               (cd "$combo_dir" && zip -qr "../../release-zips/${zip_name}" "${app}")
               echo "Packaged ${zip_name}"
             done
@@ -195,8 +192,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3.0.1
         with:
-          tag_name: ${{ needs.bump.outputs.tag }}
-          name: Release ${{ needs.bump.outputs.tag }}
+          tag_name: ${{ needs.bump.outputs.version }}
+          name: Release ${{ needs.bump.outputs.version }}
           draft: ${{ env.ACT == 'true' }} # act sets ACT=true. https://nektosact.com/usage/index.html#skipping-steps
           files: release-zips/*.zip
           body_path: RELEASE_NOTES.md
