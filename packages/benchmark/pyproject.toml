@@ -1,6 +1,6 @@
 [project]
 name = "aether_benchmark"
-version = "0.1.0"
+version = "0.1"
 description = "AETHER benchmark"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -20,6 +20,11 @@ aether-benchmark = "aether_benchmark.__main__:main"
 
 [tool.mypy]
 plugins = ["pydantic.mypy"]
+
+[tool.commitizen]
+version_provider = "uv"
+version_scheme = "pep440"
+tag_format = "benchmark-$version"
 
 [build-system]
 requires = ["hatchling"]
