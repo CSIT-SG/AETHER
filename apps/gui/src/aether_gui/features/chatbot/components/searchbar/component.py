@@ -29,7 +29,7 @@ class SearchBar(StyledComponent):  # type: ignore[misc]
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 1)
+        layout.setContentsMargins(5, 3, 5, 3)
         layout.setSpacing(4)
 
         search_input = QLineEdit(self)
@@ -43,16 +43,22 @@ class SearchBar(StyledComponent):  # type: ignore[misc]
 
         prev_btn = QPushButton("↑", self)
         prev_btn.setObjectName("SearchPrevButton")
+        prev_btn.setToolTip("Previous match (Shift+Enter)")
+        prev_btn.setAccessibleName("Previous match")
         prev_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         prev_btn.clicked.connect(self.prev_requested.emit)
 
         next_btn = QPushButton("↓", self)
         next_btn.setObjectName("SearchNextButton")
+        next_btn.setToolTip("Next match (Enter)")
+        next_btn.setAccessibleName("Next match")
         next_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         next_btn.clicked.connect(self.next_requested.emit)
 
         close_btn = QPushButton("✕", self)
         close_btn.setObjectName("SearchCloseButton")
+        close_btn.setToolTip("Close search (Esc)")
+        close_btn.setAccessibleName("Close search")
         close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         close_btn.clicked.connect(self.closed.emit)
 
