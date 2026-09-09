@@ -15,6 +15,7 @@ These fields are located at the top level of the configuration file.
 | `debug` | `boolean \| null` | No | Whether to enable debug mode, which may include more verbose logging and additional output for debugging purposes. |
 | `experimental` | `boolean \| null` | No | Whether to enable experimental features, which may be unstable or in development. |
 | `backup` | `boolean \| null` | No | Whether to enable backups before performing destructive actions. |
+| `mcp_url` | `string` | No | URL where the MCP client will connect to. Defaults to `http://127.0.0.1:8000/mcp/`. |
 
 ## `provider` (required)
 
@@ -40,11 +41,11 @@ If a field is omitted, the subagent falls back to [`provider.default_model`](#pr
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `gatherer_model` | `string \| null` | No | Model override for the gatherer subagent. |
 | `annotator_model` | `string \| null` | No | Model override for the annotator subagent. |
-| `single_analysis_model` | `string \| null` | No | Model override for the single analysis subagent. |
+| `unflattener_model` | `string \| null` | No | Model override for the unflattener subagent. |
 | `struct_creator_model` | `string \| null` | No | Model override for the structure creator subagent. |
 | `index_agent_model` | `string \| null` | No | Model override for the index agent subagent. |
+| `struct_reevaluator_model` | `string \| null` | No | Model override for the structure reevaluator subagent. |
 
 <Callout>
   Any non-null model name must be a key defined in `provider.models`.
@@ -63,7 +64,6 @@ Controls feature flags and component-level parameters. Each sub-key accepts a fr
 | `annotator` | `object \| null` | No | Feature flags and parameters for the annotator component. |
 | `deobfuscator` | `object \| null` | No | Feature flags and parameters for the deobfuscator component. |
 | `chatbot` | `object \| null` | No | Feature flags and parameters for the chatbot component. |
-| `gatherer` | `object \| null` | No | Feature flags and parameters for the gatherer component. |
 
 ## `tls` (optional)
 
