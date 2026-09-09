@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Annotated, cast
 
 from aether_backend.forwarded_rpc import get_functions_called_recursively
-from aether_backend.utils.effect import Log, Program, effectful
+from aether_backend.utils.effect import Program, Progress, effectful
 from aether_backend.utils.get_rpc_service import get_rpc_service
 from aether_backend.utils.validation import HexAddress
 from aether_rpc.capabilities.types import FunctionTreeResult
@@ -49,6 +49,6 @@ async def annotate_function(
         raise RuntimeError(f"Failed to get functions called recursively: {res.result}")
 
     funcs = cast(FunctionTreeResult, res.result)
-    yield Log(f"Found {funcs['count']} interesting child functions for {address}.")
+    yield Progress(f"Found {funcs['count']} interesting child functions for {address}.")
     async for effect in annotate(svc, funcs, custom_prompt):
         yield effect

@@ -10,7 +10,7 @@ from aether_backend.forwarded_rpc import (
     get_function_pseudocode,
     list_structs,
 )
-from aether_backend.utils.effect import Log, Program
+from aether_backend.utils.effect import Program, Progress
 from aether_backend.utils.validation import HexAddress
 from aether_rpc.capabilities.types import XrefsResult
 from aether_utils.get_content import get_content
@@ -27,7 +27,7 @@ async def perform_create_struct(
     custom_prompt: str | None = None,
 ) -> Program:
     func = await get_function_by_address(service=service, address=function_address)
-    yield Log(f"{func}")
+    yield Progress(f"{func}")
     if func.success is False:
         raise RuntimeError(f"Unable to get function {function_address}")
 

@@ -1,6 +1,6 @@
 from aether_backend.tools.features.planning.store_singleton import get_plan_store
 from aether_backend.tools.features.planning.utils import ObjectiveStatus
-from aether_backend.utils.effect import Log, Program, Return
+from aether_backend.utils.effect import Program, Progress, Return
 
 
 async def update_objective_cb(
@@ -18,5 +18,5 @@ async def update_objective_cb(
         objective.text = text
     if status is not None:
         objective.status = status
-    yield Log(f"Updated objective {objective.id!r} in plan {plan_id!r}")
+    yield Progress(f"Updated objective {objective.id!r} in plan {plan_id!r}")
     yield Return(objective.model_dump(mode="json"))

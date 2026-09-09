@@ -1,5 +1,5 @@
 import httpx2
-from aether_backend.utils.effect import Log, Program, Progress, Return
+from aether_backend.utils.effect import Program, Progress, Return
 
 from .constants import CHUNK_SIZE, CONNECT_TIMEOUT_SECONDS, TIMEOUT_SECONDS
 
@@ -20,7 +20,7 @@ async def fetch_url_stream(url: str) -> Program:
         downloaded = 0
         chunks: list[bytes] = []
 
-        yield Log(f"Fetching: {url}")
+        yield Progress(f"Fetching: {url}")
 
         async for chunk in resp.aiter_bytes(CHUNK_SIZE):
             if not chunk:
@@ -31,7 +31,7 @@ async def fetch_url_stream(url: str) -> Program:
 
             yield Progress(message=f"Downloading {downloaded}/{total}")
 
-        yield Log("Fetch complete")
+        yield Progress("Fetch complete")
 
         data = b"".join(chunks)
 

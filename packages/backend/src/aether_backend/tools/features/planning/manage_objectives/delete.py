@@ -1,5 +1,5 @@
 from aether_backend.tools.features.planning.store_singleton import get_plan_store
-from aether_backend.utils.effect import Log, Program, Return
+from aether_backend.utils.effect import Program, Progress, Return
 
 
 async def delete_objective_cb(plan_id: str, objective_id: str) -> Program:
@@ -9,5 +9,5 @@ async def delete_objective_cb(plan_id: str, objective_id: str) -> Program:
     if len(objectives) == len(plan.objectives):
         raise KeyError(f"Objective {objective_id!r} not found in plan {plan_id!r}")
     plan.objectives = objectives
-    yield Log(f"Deleted objective {objective_id!r} from plan {plan_id!r}")
+    yield Progress(f"Deleted objective {objective_id!r} from plan {plan_id!r}")
     yield Return({"plan_id": plan_id, "objective_id": objective_id})

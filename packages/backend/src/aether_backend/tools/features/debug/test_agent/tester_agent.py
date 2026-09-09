@@ -10,7 +10,7 @@ from aether_backend.forwarded_rpc import (
     set_inline_comment,
     set_summary_comment,
 )
-from aether_backend.utils.effect import Log, Program, Return
+from aether_backend.utils.effect import Program, Progress, Return
 from aether_backend.utils.subagent import (
     SubagentToolDependencies,
     build_subagent_tool,
@@ -49,7 +49,7 @@ async def test(service: Any, rpc_tool: str, **kwargs: Any) -> Program:
             )
         ),
     )
-    yield Log(f"Testing {rpc_tool} at address: {kwargs}")
+    yield Progress(f"Testing {rpc_tool} at address: {kwargs}")
 
     result = Runner.run_streamed(
         agent,
@@ -58,6 +58,6 @@ async def test(service: Any, rpc_tool: str, **kwargs: Any) -> Program:
     )
 
     async for event in result.stream_events():
-        yield Log(str(event))
+        yield Progress(str(event))
 
     yield Return(None)

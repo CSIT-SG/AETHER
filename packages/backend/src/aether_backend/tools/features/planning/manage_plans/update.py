@@ -1,6 +1,6 @@
 from aether_backend.tools.features.planning.store_singleton import get_plan_store
 from aether_backend.tools.features.planning.utils import PlanStatus
-from aether_backend.utils.effect import Log, Program, Return
+from aether_backend.utils.effect import Program, Progress, Return
 
 
 async def update_plan_cb(
@@ -16,5 +16,5 @@ async def update_plan_cb(
         description=description,
         status=status,
     )
-    yield Log(f"Updated plan {plan.id!r}")
+    yield Progress(f"Updated plan {plan.id!r}")
     yield Return(plan.model_dump(mode="json"))
