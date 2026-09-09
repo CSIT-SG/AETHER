@@ -1,4 +1,5 @@
 import asyncio
+import atexit
 import contextlib
 from abc import ABC, abstractmethod
 from collections.abc import Generator
@@ -38,11 +39,20 @@ class Run[**P, T]:
         self._task: Task[P, T] = task()
         self._future: asyncio.Task[T] | None = None
 
+    def _cancel(self) -> None:
+        if self._future is not None:
+            with contextlib.suppress(Exception):
+                self._future.cancel()
+        with contextlib.suppress(Exception):
+            asyncio.run(self._task.cancel())
+
     async def _run(self, *args: P.args, **kwargs: P.kwargs) -> T:
+        atexit.register(self._cancel)
         try:
             return await self._task.start(*args, **kwargs)
         except BaseException:
             await self._task.cancel()
+            atexit.unregister(self._cancel)
             raise
 
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Self:
@@ -67,4 +77,5 @@ class Run[**P, T]:
             await self._future
         if not was_cancelled:
             await self._task.cancel()
+            atexit.unregister(self._cancel)
         return False
