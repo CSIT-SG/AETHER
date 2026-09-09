@@ -1,6 +1,6 @@
 from collections.abc import AsyncGenerator
 
-from .models import Log, Progress, Return, Sleep
+from .models import Progress, Return, Sleep
 
-type Effect = Progress | Log | Sleep | Return
+type Effect = Progress | Sleep | Return
 type Program = AsyncGenerator[Effect, None]

@@ -1,17 +1,11 @@
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any
 
 
 @dataclass
 class Progress:
     message: str = ""
     current: int | float = 0
-
-
-@dataclass
-class Log:
-    message: str
-    level: Literal["debug", "info", "warning", "error"] = "info"
 
 
 @dataclass
