@@ -72,10 +72,9 @@ class Run[**P, T]:
 
     async def __aexit__(self, *exc_info: object) -> bool:
         assert self._future is not None, "Run must be called before exiting the context"
-        was_cancelled = self._future.cancel()
+        self._future.cancel()
         with contextlib.suppress(asyncio.CancelledError):
             await self._future
-        if not was_cancelled:
             await self._task.cancel()
             atexit.unregister(self._cancel)
         return False
