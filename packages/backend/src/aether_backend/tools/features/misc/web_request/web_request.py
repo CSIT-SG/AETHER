@@ -29,11 +29,7 @@ async def fetch_url_stream(url: str) -> Program:
             chunks.append(chunk)
             downloaded += len(chunk)
 
-            yield Progress(
-                current=downloaded,
-                total=total,
-                message="downloading",
-            )
+            yield Progress(message=f"Downloading {downloaded}/{total}")
 
         yield Log("Fetch complete")
 

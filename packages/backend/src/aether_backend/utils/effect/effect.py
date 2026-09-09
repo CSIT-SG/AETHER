@@ -1,11 +1,12 @@
 import asyncio
 import functools
 from collections.abc import Callable, Coroutine
+from itertools import count
 from typing import Any, ParamSpec
 
 from fastmcp.server.dependencies import get_context
 
-from .models import Log, Progress, Return, Sleep
+from .models import Progress, Return, Sleep
 from .types import Program
 
 P = ParamSpec("P")
@@ -37,12 +38,11 @@ def effectful(  # noqa: UP047
     async def wrapper(*args: P.args, **kwargs: P.kwargs) -> Any:
         ctx = get_context()
         result: Any = None
+        counter = count()
         async for effect in fn(*args, **kwargs):
             match effect:
-                case Progress(current, total, message):
-                    await ctx.report_progress(current, total, message or None)
-                case Log(message, level):
-                    await ctx.log(message, level=level)
+                case Progress(message, _):
+                    await ctx.report_progress(progress=next(counter), message=message or None)
                 case Sleep(seconds):
                     await asyncio.sleep(seconds)
                 case Return(value):

@@ -4,9 +4,8 @@ from typing import Any, Literal
 
 @dataclass
 class Progress:
-    current: int | float
-    total: int | float
     message: str = ""
+    current: int | float = 0
 
 
 @dataclass
