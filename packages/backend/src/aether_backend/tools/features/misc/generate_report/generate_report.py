@@ -9,12 +9,13 @@ from aether_backend.forwarded_rpc import (
 )
 from aether_backend.utils.effect import Log, Program, Return
 from aether_backend.utils.force_structured_output import force_structured_output
+from aether_backend.utils.stream_tool_logs import stream_tool_logs
 from aether_backend.utils.subagent import SubagentToolDependencies, build_subagent_tool
 from aether_backend.utils.validation import HexAddress
 from aether_utils.api_client import OpenAIGateway
 from aether_utils.config import get_config
 from aether_utils.get_content import get_content
-from agents import Agent, ModelSettings, Runner, RunResultStreaming
+from agents import Agent, ModelSettings, Runner
 
 from .constants import MAX_VALIDATION_ATTEMPTS
 from .types import GeneratedReport
@@ -52,7 +53,7 @@ async def generate_report(service: Any, function_address: HexAddress) -> Program
         f"{function_address}.",
         max_turns=1000,
     )
-    async for log in _stream_logs(result):
+    async for log in stream_tool_logs(result):
         yield log
 
     report: GeneratedReport = await force_structured_output(agent, GeneratedReport, result)
@@ -85,7 +86,7 @@ async def generate_report(service: Any, function_address: HexAddress) -> Program
             ],
             max_turns=1000,
         )
-        async for log in _stream_logs(result):
+        async for log in stream_tool_logs(result):
             yield log
         rules = await force_structured_output(agent, list[str], result)
     else:
@@ -97,14 +98,3 @@ async def generate_report(service: Any, function_address: HexAddress) -> Program
             "yara_rules": rules,
         }
     )
-
-
-async def _stream_logs(result: RunResultStreaming) -> Program:
-    async for event in result.stream_events():
-        if event.type != "run_item_stream_event":
-            continue
-        item = event.item
-        if item.type == "tool_call_item":
-            yield Log(f"{item.tool_name}({getattr(item.raw_item, 'arguments', '')})")
-        elif item.type == "tool_call_output_item":
-            yield Log(str(item.output))

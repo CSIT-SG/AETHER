@@ -10,7 +10,8 @@ from aether_backend.forwarded_rpc import (
     set_inline_comment,
     set_summary_comment,
 )
-from aether_backend.utils.effect import Log, Program, Return
+from aether_backend.utils.effect import Program, Return
+from aether_backend.utils.stream_tool_logs import stream_tool_logs
 from aether_backend.utils.subagent import (
     SubagentToolDependencies,
     build_subagent_tool,
@@ -68,17 +69,8 @@ async def annotate(service: Any, funcs: FunctionTreeResult, custom_prompt: str |
         max_turns=100000,
     )
 
-    async for event in result.stream_events():
-        if event.type != "run_item_stream_event":
-            continue
-
-        run_item = event.item
-        if run_item.type == "tool_call_item":
-            args = getattr(run_item.raw_item, "arguments", "")
-            yield Log(f"{run_item.tool_name}({args})")
-
-        elif run_item.type == "tool_call_output_item":
-            yield Log(str(run_item.output))
+    async for log in stream_tool_logs(result):
+        yield log
 
     try:
         for address in addresses:
