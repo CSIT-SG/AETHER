@@ -1,5 +1,4 @@
-import { Callout, FileTree } from 'nextra/components'
-
+import { Callout, FileTree } from "nextra/components";
 
 # Getting Started
 
@@ -11,25 +10,26 @@ You should install one of of our clients (CLI or GUI) to use AETHER. You also ne
 - Python: `3.12` or `3.13`
 
 <Callout type="warning">
-  Python 3.14 is not supported by IDA Pro due to compatibility issues with `PySide6`.
+  Python 3.14 is not supported by IDA Pro due to compatibility issues with
+  `PySide6`.
 </Callout>
 
 - IDA Pro: Version `9.2` or later
 - LLM Gateway: You need a openai-compatible LLM gateway and api key to use Aether. The default is OpenRouter, but you can configure your own provider in the [configuration file](./configuration).
 
-
 ## Graphical User Interface (GUI)
 
-Download the release binaries. 
+Download the release binaries.
 
 1. In the [repository](https://github.com/csitgovsg-acube/AETHER-next) click on `Releases`
 2. Click on latest release
 3. Download `aether_gui-v<version>.zip`
 
 <Callout type="warning">
-  The GUI plugin runs inside IDA's embedded Python, so its dependencies must be installed into the **same** Python that IDA uses.
-  Point IDA at a Python `3.12` or `3.13` install with `idapyswitch` (ships with IDA), then run the install script below
-  with that same interpreter.
+  The GUI plugin runs inside IDA's embedded Python, so its dependencies must be
+  installed into the **same** Python that IDA uses. Point IDA at a Python `3.12`
+  or `3.13` install with `idapyswitch` (ships with IDA), then run the install
+  script below with that same interpreter.
 </Callout>
 
 4. Run the prod script.
@@ -63,7 +63,7 @@ Download the release binaries.
 python install.py
 ```
 
-This will install the wheel bundles. Afterwards, you can run `entrypoint.py` with your IDA database path and the install directory of **IDA**. 
+This will install the wheel bundles. Afterwards, you can run `entrypoint.py` with your IDA database path and the install directory of **IDA**.
 You can also pass in the host address to run the **CLI** on.
 
 For example:
@@ -102,6 +102,7 @@ Choose a model on [OpenRouter](https://openrouter.ai/) and generate an API key. 
 Follow their [install guide](https://github.com/ggml-org/llama.cpp#quick-start) to set up a `llama-server` instance.
 
 For example, running the following command will start a `llama-server` instance with [huggingface's `Qwen2.5-7B-Instruct-GGUF`](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct-GGUF) model on port `8080`:
+
 ```bash
 llama-server -hf bartowski/Qwen2.5-7B-Instruct-GGUF:Q4_K_M
 ```
@@ -125,12 +126,12 @@ Then your config will look like:
 
 If you need to support authentication, generate an API key on the `llama-server` instance and set it in your config in `provider.api_key`.
 
-
 ### LiteLLM
 
-Install LiteLLM by following their [installation guide](https://docs.litellm.ai/docs/#litellm-proxy-server-llm-gateway). 
+Install LiteLLM by following their [installation guide](https://docs.litellm.ai/docs/#litellm-proxy-server-llm-gateway).
 
 Then run a server.
+
 ```bash
 litellm --model huggingface/bartowski/Qwen2.5-7B-Instruct-GGUF:Q4_K_M
 ```
@@ -151,6 +152,71 @@ You should set the API key in the config to match the one you created. Then your
   ...rest of your config
 }
 ```
+
+## How to use AETHER (GUI)
+
+Once you have successfully installed the GUI plugin and set your API key. Follow the steps below to start using AETHER.
+
+1. Start the backend server
+2. Start IDA Pro and open a binary
+3. Press `tab` to open the `decompile view` in IDA Pro
+4. Right click anywhere in the `decompile view` to open the context menu
+5. Click on the `AETHER-next` dropdown to access the functions of AETHER.
+   <Callout type="info">
+     NOTE: AETHER is only accessible from the `decompile view`.
+   </Callout>
+
+### Annotator
+
+The Annotator is a tool that enhances readability of decompiled code. It does this by adding comments, renaming variables and renaming functions.
+
+The Annotator will analyse the decompile code starting at the **current function on screen** and add the annotations.
+
+#### Usage:
+
+1. Right click **anywhere** in the `decompile view` to open the context menu
+2. Click on the `AETHER-next` dropdown
+3. Click on `Annotate Function` to start the annotation process.
+
+### Struct Manager
+
+The Struct Manager is comprised of the `create` and `re-evaluate` functionalities. This aids the creation of structs in the reverse engineering process.
+
+The Struct Manager will look at the **highlighted variable** in the decompile view and create a struct for it.
+It takes into account the context in which the variable exists and that which it's function is called. Using this information, it will generate a struct that is most likely to be correct.
+
+<Callout type="info">
+  NOTE: you __MUST__ highlight a variable to use the struct create and
+  re-evaluate functionalities.
+</Callout>
+
+#### Usage(create):
+
+1. Highlight a variable in the `decompile view`
+2. Right click to open the context menu
+3. Click on the `AETHER-next` dropdown followed by the `struct manager` dropdown
+4. Click on `Create Struct` to start the struct creation process.
+
+#### Usage(re-evaluate):
+
+1. Highlight a variable in the `decompile view`
+2. Right click to open the context menu
+3. click on the `AETHER-next` dropdown followed by the `struct manager` dropdown
+4. Click on `Re-evaluate Struct` to start the struct re-evaluation process.
+
+### Chatbot
+
+The Chatbot is a tool that allows you to interact with the decompiled code in a conversational manner.
+You can ask questions about the code, request explanations, or seek guidance on specific functions or variables.
+
+The Chatbot also has access to the `annotator` and `struct manager` functionalities. This allows you to request for annotations or struct creation directly from the chatbot.
+
+#### Usage:
+
+1. Right click **anywhere** in the `decompile view` to open the context menu
+2. Click on the `AETHER-next` dropdown
+3. Click on `Chatbot` to open the chatbot window.
+4. type your prompt into the input box, press `enter` to create new lines and `ctrl + enter` to send the prompt to the chatbot.
 
 ## Development
 
@@ -173,7 +239,8 @@ uv run python ./scripts/run_headless.py
 ```
 
 <Callout type="info">
-Ensure that AETHER backend is running in the background as this bridges the RPC layer with the GUI instance.
+  Ensure that AETHER backend is running in the background as this bridges the
+  RPC layer with the GUI instance.
 </Callout>
 
 Follow the workspace README files for more information.
