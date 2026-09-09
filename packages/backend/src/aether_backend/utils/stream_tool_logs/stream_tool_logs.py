@@ -1,4 +1,4 @@
-from aether_backend.utils.effect import Log, Program
+from aether_backend.utils.effect import Program, Progress
 from agents import RunResultStreaming
 
 
@@ -25,7 +25,7 @@ async def stream_tool_logs(result: RunResultStreaming) -> Program:
         run_item = event.item
         if run_item.type == "tool_call_item":
             args = getattr(run_item.raw_item, "arguments", "")
-            yield Log(f"{run_item.tool_name}({args})")
+            yield Progress(f"{run_item.tool_name}({args})")
 
         elif run_item.type == "tool_call_output_item":
-            yield Log(str(run_item.output))
+            yield Progress(str(run_item.output))
