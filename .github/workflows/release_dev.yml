@@ -43,21 +43,16 @@ jobs:
           BRANCH="bump/dev-${{ github.run_number }}-${{ github.run_attempt }}"
           git switch -c "$BRANCH"
 
-          # cz keeps a prerelease's own base (0.0.2.dev3 -> 0.0.2.dev4); once that base is
-          # tagged the series sorts below its own release, so 'exact' opens the next patch.
+          # extend the current dev series; after a release, start one on the next patch
           CURRENT="$(uv run cz version --project)"
-          SERIES="${CURRENT%%.dev*}"
-          if [ "$CURRENT" = "$SERIES" ] || git rev-parse -q --verify "refs/tags/$SERIES" >/dev/null; then
-            MODE=exact
-            COUNTER=1
-          else
-            MODE=linear
-            COUNTER=$(( ${CURRENT##*.dev} + 1 ))
-          fi
+          case "$CURRENT" in
+            *.dev*) COUNTER=$(( ${CURRENT##*.dev} + 1 )) ;;
+            *)      COUNTER=1 ;;
+          esac
 
           # --allow-no-commit: every merge gets a dev build, even a docs- or chore-only one.
           uv run cz bump --yes --no-verify --allow-no-commit \
-            --increment PATCH --increment-mode "$MODE" --devrelease "$COUNTER"
+            --increment PATCH --devrelease "$COUNTER"
           VERSION="$(uv run cz version --project)" # tag_format is "$version"
 
           # cz bump never touches the lockfile; re-tag so the tag names the tree that builds

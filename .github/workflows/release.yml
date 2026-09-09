@@ -55,7 +55,7 @@ jobs:
             exit 1
           fi
 
-          uv run cz bump --yes --no-verify --increment "$INCREMENT"
+          uv run cz bump --yes --no-verify --changelog --increment "$INCREMENT"
           VERSION="$(uv run cz version --project)" # tag_format is "$version"
 
           # cz bump never touches the lockfile; re-tag so the tag names the tree that builds
