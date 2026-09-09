@@ -100,6 +100,8 @@ class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
         await self._cleanup()
 
     async def _cleanup(self) -> None:
+        if self._mcp is not None:
+            await self._mcp.cancel_tasks()
         if self._result is not None:
             try:
                 self._result.cancel()

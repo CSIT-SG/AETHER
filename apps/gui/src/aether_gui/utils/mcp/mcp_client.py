@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 from collections.abc import AsyncIterator
 from typing import Any
 
@@ -8,6 +9,8 @@ from aether_utils.logger import get_logger
 from fastmcp import Client
 from fastmcp.client.client import CallToolResult
 from fastmcp.client.transports import StreamableHttpTransport
+from fastmcp.exceptions import ToolError
+from fastmcp_tasks import ToolTask, call_tool_task
 from mcp_types import Tool
 
 config = get_config()
@@ -21,6 +24,7 @@ class MCPClient:
     def __init__(self) -> None:
         self.mcp_url = config.mcp_url
         self._client: Client[StreamableHttpTransport] | None = None
+        self._active_tasks: set[ToolTask] = set()
         self.logger = get_logger("MCPClient")
 
     def is_connected(self) -> bool:
@@ -42,10 +46,19 @@ class MCPClient:
             self._client = None
             raise Exception("Unable to connect to MCP server") from e
 
+    async def cancel_tasks(self) -> None:
+        tasks = list(self._active_tasks)
+        self._active_tasks.clear()
+        for task in tasks:
+            with contextlib.suppress(Exception):
+                await task.cancel()
+
     async def close(self) -> None:
         """Close the MCP server connection."""
         if not self.is_connected() or self._client is None:
             return
+
+        await self.cancel_tasks()
 
         try:
             await self._client.__aexit__(None, None, None)  # type: ignore[no-untyped-call]
@@ -77,7 +90,22 @@ class MCPClient:
 
             assert self._client is not None
             arguments = {**(args or {})}
-            yield await self._client.call_tool(tool_name, arguments=arguments, raise_on_error=False)
+
+            task: ToolTask | None = None
+            try:
+                task = await call_tool_task(
+                    self._client, tool_name, arguments=arguments, raise_on_error=False
+                )
+                self._active_tasks.add(task)
+                result = await task.result()
+                yield result
+            except ToolError:
+                yield await self._client.call_tool(
+                    tool_name, arguments=arguments, raise_on_error=False
+                )
+            finally:
+                if task is not None:
+                    self._active_tasks.discard(task)
         except Exception as e:
             self.logger.error(f"Tool call '{tool_name}' failed: {e}")
             raise

@@ -21,4 +21,5 @@ class CallToolTask(BaseTask[Any]):  # type: ignore[misc]
             yield event
 
     async def close(self) -> None:
-        pass
+        if self._mcp_client is not None:
+            await self._mcp_client.cancel_tasks()
