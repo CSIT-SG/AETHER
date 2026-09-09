@@ -2,9 +2,12 @@ from __future__ import annotations
 
 from typing import Any
 
+from aether_gui.utils.mcp.types import LogSubscription, ServerLogListener
 from aether_utils.config import get_config
 from aether_utils.logger import get_logger
 from fastmcp import Client
+from fastmcp.client.client import CallToolResult
+from fastmcp.client.logging import LogMessage
 from fastmcp.client.transports import StreamableHttpTransport
 from fastmcp_tasks import ToolTask, call_tool_task
 from mcp_types import Tool
@@ -21,6 +24,27 @@ class MCPClient:
         self.mcp_url = config.mcp_url
         self._client: Client[StreamableHttpTransport] | None = None
         self.logger = get_logger("MCPClient")
+        self._log_listeners: set[ServerLogListener] = set()
+
+    def subscribe_logs(self, listener: ServerLogListener) -> LogSubscription:
+        """Register async listener for server logs"""
+        self._log_listeners.add(listener)
+        return LogSubscription(self, listener)
+
+    def unsubscribe_logs(self, listener: ServerLogListener) -> None:
+        """Deregister a previously-subscribed listener"""
+        self._log_listeners.discard(listener)
+
+    async def _handle_log(self, message: LogMessage) -> None:
+        """Sends server logs to all listeners."""
+        if not self._log_listeners:
+            return
+        text = str(message.data)
+        for listener in list(self._log_listeners):
+            try:
+                await listener(text)
+            except Exception:
+                self.logger.exception("Server log listener failed")
 
     def is_connected(self) -> bool:
         """Check if the client is connected to the MCP server."""
@@ -32,7 +56,7 @@ class MCPClient:
             return
 
         transport = StreamableHttpTransport(url=self.mcp_url)
-        self._client = Client(transport)
+        self._client = Client(transport, log_handler=self._handle_log)
 
         try:
             await self._client.__aenter__()  # type: ignore[no-untyped-call]

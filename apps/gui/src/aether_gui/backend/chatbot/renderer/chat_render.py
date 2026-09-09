@@ -36,6 +36,15 @@ class ChatbotAreaRenderer:
         else:
             self.area.add_paragraph_to_last_column(message, MessageRole.AETHER)
 
+    def render_subtool_trace(self, trace: str, *, message_created: bool) -> None:
+        block = f"```\n{trace}\n```"
+        if not message_created:
+            self.area.add_new_message_column(
+                block, str(uuid4()), datetime.now(), MessageRole.AETHER
+            )
+        else:
+            self.area.add_paragraph_to_last_column(block, MessageRole.AETHER)
+
     def render_error(self, message: str) -> None:
         self.area.add_new_message_column(
             f"Error: {message}", str(uuid4()), datetime.now(), MessageRole.AETHER

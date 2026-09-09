@@ -43,6 +43,21 @@ class ChatOrchestrator:
         self._stop_requested = False
         self.on_turn_started = on_turn_started
         self.on_turn_finished = on_turn_finished
+        self._subtool_column_started = False
+        self._log_subscription = self.mcp_client.subscribe_logs(self._on_server_log)
+
+    async def _on_server_log(self, message: str) -> None:
+
+        if not message:
+            return
+
+        def _render() -> None:
+            self.chat_renderer.render_subtool_trace(
+                message, message_created=self._subtool_column_started
+            )
+            self._subtool_column_started = True
+
+        self._run_on_ida_ui_thread(_render)
 
     def _get_context(self) -> Future[dict[str, Any]]:
         current_ea = ida_kernwin.get_screen_ea()
@@ -157,11 +172,11 @@ class ChatOrchestrator:
 
     def _set_turn_active(self, active: bool) -> None:
         """Track whether a turn is streaming and fire the matching hook."""
-
         self._turn_active = active
         if active:
             self.on_turn_started()
         else:
+            self._subtool_column_started = False
             self.on_turn_finished()
 
     def _handle_worker_result(self) -> Callable[[LLMResponse], None]:
