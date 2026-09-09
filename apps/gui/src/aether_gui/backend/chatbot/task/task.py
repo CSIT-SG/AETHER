@@ -20,6 +20,8 @@ from agents import (
 from agents import (
     Tool as AgentTool,
 )
+from fastmcp.client.client import CallToolResult
+from mcp_types import TextContent
 from mcp_types import Tool as MCPTool
 from openai.types.responses import (
     ResponseReasoningSummaryTextDeltaEvent,
@@ -112,6 +114,19 @@ class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
         tools = await client.list_tools()
         return [self._wrap_mcp_tool(client, tool) for tool in tools]
 
+    @staticmethod
+    def _deserialize_flat(result: CallToolResult) -> str:
+        """Flatten a tool result into the text handed to both the LLM and the UI."""
+        texts = [block.text for block in result.content if isinstance(block, TextContent)]
+        if texts:
+            return "\n".join(texts)
+        if result.structured_content is not None:
+            try:
+                return json.dumps(result.structured_content)
+            except (TypeError, ValueError):
+                pass
+        return str(result)
+
     def _wrap_mcp_tool(self, client: MCPClient, tool: MCPTool) -> AgentTool:
         """Wrap a single MCP tool as an Agents SDK FunctionTool."""
 
@@ -119,7 +134,7 @@ class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
             args = json.loads(args_json) if args_json else {}
             try:
                 async for result in client.call_tool(tool_name=tool.name, args=args):
-                    return str(result)
+                    return self._deserialize_flat(result)
             except Exception as e:
                 return f"Tool {tool.name!r} is unavailable: {e}"
             return f"Tool {tool.name!r} returned no result."
