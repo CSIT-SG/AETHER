@@ -14,7 +14,6 @@ SOURCE_DIR = Path(__file__).resolve().parent
 ENTRYPOINT_NAME = "aether-next.py"
 PYTHON_VERSIONS = {(3, 12), (3, 13)}
 APP_AUTHOR = "AETHER-next"
-APP_NAMES = ("gui", "rpc", "mcp", "_global")
 
 
 def default_plugin_path() -> Path:
@@ -86,11 +85,10 @@ def remove_entrypoint(plugin_path: Path) -> None:
 
 
 def remove_data_dirs() -> None:
-    for appname in APP_NAMES:
-        shutil.rmtree(
-            user_data_dir(appname=appname, appauthor=APP_AUTHOR),
-            ignore_errors=True,
-        )
+    shutil.rmtree(
+        user_data_dir(appauthor=APP_AUTHOR),
+        ignore_errors=True,
+    )
 
 
 def main() -> None:

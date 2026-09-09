@@ -11,7 +11,6 @@ from platformdirs import user_data_dir
 SOURCE_DIR = Path(__file__).resolve().parent
 PYTHON_VERSIONS = {(3, 12), (3, 13)}
 APP_AUTHOR = "AETHER-next"
-APP_NAMES = ("gui", "rpc", "mcp", "_global")
 
 
 def resolve_command(*names: str) -> None:
@@ -49,11 +48,10 @@ def uninstall_requirements(bundle_dir: Path) -> None:
 
 
 def remove_data_dirs() -> None:
-    for appname in APP_NAMES:
-        shutil.rmtree(
-            user_data_dir(appname=appname, appauthor=APP_AUTHOR),
-            ignore_errors=True,
-        )
+    shutil.rmtree(
+        user_data_dir(appauthor=APP_AUTHOR),
+        ignore_errors=True,
+    )
 
 
 def main() -> None:
