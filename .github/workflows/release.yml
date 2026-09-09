@@ -40,37 +40,44 @@ jobs:
         id: bump
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INCREMENT: ${{ inputs.increment }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
           BRANCH="bump/release-${{ github.run_number }}-${{ github.run_attempt }}"
           git switch -c "$BRANCH"
 
-          # fail before anything is committed if the target tag is already published
-          TARGET="$(uv run cz bump --increment ${{ inputs.increment }} --yes --get-next)"
+          # fail before anything is committed if the target is already tagged
+          TARGET="$(uv run cz bump --increment "$INCREMENT" --yes --get-next)"
           if git rev-parse -q --verify "refs/tags/$TARGET" >/dev/null; then
             echo "::error::$TARGET is already tagged. master is at $(uv run cz version --project), a prerelease of an already-released version; move master onto the next patch before releasing."
             exit 1
           fi
 
-          uv run cz bump --increment ${{ inputs.increment }} --yes --no-verify
-          VERSION="$(uv run cz version --project)" # tag_format matches version exactly
-          # cz bump rewrites each member's pyproject version but never the lockfile
+          uv run cz bump --yes --no-verify --increment "$INCREMENT"
+          VERSION="$(uv run cz version --project)" # tag_format is "$version"
+
+          # cz bump never touches the lockfile; re-tag so the tag names the tree that builds
           uv lock
           if ! git diff --quiet -- uv.lock; then
             git commit --no-verify -m "chore: sync uv.lock for $VERSION" -- uv.lock
-            git tag -f "$VERSION" # tag the tree that actually builds; not pushed yet
+            git tag -f "$VERSION"
           fi
-          # commitizen's own notes for this version only, not GitHub's PR-title list
+
+          # commitizen's notes for this version only, not GitHub's PR-title list
           uv run cz changelog "$VERSION" --dry-run > RELEASE_NOTES.md
+
           git push origin "$BRANCH"
           git push origin "$VERSION"
+
           gh pr create \
             --base master \
             --head "$BRANCH" \
             --title "bump: $VERSION" \
-            --body "Automated ${{ inputs.increment }} release bump."
+            --body "Automated $INCREMENT release bump."
           gh pr merge "$BRANCH" --squash --delete-branch
+
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Upload release notes

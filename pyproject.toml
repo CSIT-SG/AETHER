@@ -82,6 +82,10 @@ ignore_missing_imports = true
 version_provider = "uv"
 version_scheme = "pep440"
 update_changelog_on_bump = true
+# https://github.com/commitizen-tools/commitizen/pull/2026
+# remove the following line when the PR is merged and released
+tag_format = "$version"
+legacy_tag_formats = ["$major.$minor.$patch$devrelease"]
 version_files = [
     "apps/cli/pyproject.toml:version",
     "apps/docs/pyproject.toml:version",

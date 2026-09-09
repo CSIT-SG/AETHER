@@ -39,28 +39,37 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
           BRANCH="bump/dev-${{ github.run_number }}-${{ github.run_attempt }}"
           git switch -c "$BRANCH"
 
-          BASE="$(uv run cz version --project)"
-          case "$BASE" in
-            *.dev*) N=$(( ${BASE##*.dev} + 1 )) ;; # same target version, next counter
-            *)      N=1 ;;                         # last bump was a release, see below
-          esac
+          # cz keeps a prerelease's own base (0.0.2.dev3 -> 0.0.2.dev4); once that base is
+          # tagged the series sorts below its own release, so 'exact' opens the next patch.
+          CURRENT="$(uv run cz version --project)"
+          SERIES="${CURRENT%%.dev*}"
+          if [ "$CURRENT" = "$SERIES" ] || git rev-parse -q --verify "refs/tags/$SERIES" >/dev/null; then
+            MODE=exact
+            COUNTER=1
+          else
+            MODE=linear
+            COUNTER=$(( ${CURRENT##*.dev} + 1 ))
+          fi
 
-          # --devrelease picks the base for us: 0.0.2.dev1 -> 0.0.2.devN, but 0.0.1 -> 0.0.2.devN,
-          # since a bare 0.0.1.devN sorts *below* the published 0.0.1 and collides on release.
           # --allow-no-commit: every merge gets a dev build, even a docs- or chore-only one.
-          uv run cz bump --increment PATCH --devrelease "$N" --yes --no-verify --allow-no-commit
-          VERSION="$(uv run cz version --project)"
-          # cz bump rewrites each member's pyproject version but never the lockfile
+          uv run cz bump --yes --no-verify --allow-no-commit \
+            --increment PATCH --increment-mode "$MODE" --devrelease "$COUNTER"
+          VERSION="$(uv run cz version --project)" # tag_format is "$version"
+
+          # cz bump never touches the lockfile; re-tag so the tag names the tree that builds
           uv lock
           if ! git diff --quiet -- uv.lock; then
             git commit --no-verify -m "chore: sync uv.lock for $VERSION" -- uv.lock
-            git tag -f "$VERSION" # tag the tree that actually builds; not pushed yet
+            git tag -f "$VERSION"
           fi
+
           git push origin "$BRANCH"
-          git push origin "$VERSION" # tag_format matches version exactly
+          git push origin "$VERSION"
+
           echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
