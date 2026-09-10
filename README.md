@@ -28,6 +28,7 @@
     - [API Requirements](#api-requirements)
   - [Installation](#installation)
   - [Documentation](#documentation)
+  - [Troubleshooting](#troubleshooting)
   - [Limitations](#limitations)
   - [Contributing](#contributing)
   - [Authors/Maintainers](#authorsmaintainers)
@@ -89,6 +90,12 @@ There's no hosted docs site yet, so the install guide lives in the docs. To inst
 ## Documentation
 
 All documentation lives in [`apps/docs`](apps/docs). Run docs locally (see [apps/docs/README.md](apps/docs/README.md)) and browse at `http://localhost:3000`.
+
+---
+
+## Troubleshooting
+
+**The chatbot fails with a dependency-version error** (e.g. `'Tool' object has no attribute 'input_schema'`, or an `httpx.AsyncClient` / `http_client` error) while other features keep working. An older copy of AETHER's dependencies in your **per-user** site-packages is shadowing the correct install in the Python that IDA uses. Remove the shadowing per-user packages so IDA falls through to its own install — see the [Troubleshooting guide](apps/docs/src/content/troubleshooting.mdx) for the exact steps.
 
 ---
 

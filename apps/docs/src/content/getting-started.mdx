@@ -42,6 +42,13 @@ This will install the wheel bundles and copy the plugin entrypoint into the IDA 
 
 You can install into a custom plugins folder with the `--plugin-path` argument. It defaults to `%APPDATA%\Hex-Rays\IDA Pro\plugins` (Windows) or `~/Hex-Rays/IDA Pro/plugins` (Linux), eg. `python install_prod.py --plugin-path "D:\ida-plugins"`.
 
+<Callout type="info">
+  If the chatbot later fails with a dependency-version error (e.g. `'Tool' object has
+  no attribute 'input_schema'`, or an `http_client` / `httpx.AsyncClient` type error)
+  while other features still work, an older copy of AETHER's packages in your per-user
+  site may be shadowing this install — see [Troubleshooting](./troubleshooting).
+</Callout>
+
 5. Start the backend server.
 
 ```bash

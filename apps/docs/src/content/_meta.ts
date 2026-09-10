@@ -8,6 +8,7 @@ export default {
 	"getting-started": "Getting Started",
 	configuration: "Configuration",
 	"user-guide-gui": "User Guide (GUI)",
+	troubleshooting: "Troubleshooting",
 	development: {
 		title: "Development",
 		display: env.NODE_ENV === "development" ? "normal" : "hidden",
