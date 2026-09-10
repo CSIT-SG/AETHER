@@ -5,7 +5,6 @@ from typing import Any
 @dataclass
 class Progress:
     message: str = ""
-    current: int | float = 0
 
 
 @dataclass

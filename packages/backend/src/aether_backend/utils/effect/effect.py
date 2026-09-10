@@ -41,7 +41,7 @@ def effectful(  # noqa: UP047
         counter = count()
         async for effect in fn(*args, **kwargs):
             match effect:
-                case Progress(message, _):
+                case Progress(message):
                     await ctx.report_progress(progress=next(counter), message=message or None)
                 case Sleep(seconds):
                     await asyncio.sleep(seconds)
