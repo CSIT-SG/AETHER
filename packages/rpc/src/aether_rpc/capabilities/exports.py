@@ -10,7 +10,6 @@ EXPORTS: dict[str, str] = {
     "GetFunctionByName": ".function.get_function_by_name.get_function_by_name",
     "GetFunctionPseudocode": ".function.get_function_pseudocode.get_function_pseudocode",
     "GetLocalVariables": ".variables.get_local_variables.get_local_variables",
-    "GetLocalVariablesOffset": ".variables.get_local_variables_offset.get_local_variables_offset",
     "GetXrefsTo": ".variables.get_xrefs_to.get_xrefs_to",
     "RenameFunction": ".function.rename_function.rename_function",
     "RenameLocalVariable": ".variables.rename_local_variable.rename_local_variable",

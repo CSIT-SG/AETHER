@@ -32,7 +32,6 @@ from aether_rpc.capabilities.struct.types import (
 )
 from aether_rpc.capabilities.variables.types import (
     LocalVar,
-    LocalVarOffset,
     RenameLocalVarResult,
     StackVariableInfo,
     XrefEntry,
