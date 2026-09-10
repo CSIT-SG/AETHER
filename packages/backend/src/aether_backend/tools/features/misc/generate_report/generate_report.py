@@ -7,7 +7,7 @@ from aether_backend.forwarded_rpc import (
     get_functions_called_recursively,
     validate_yara_rule,
 )
-from aether_backend.utils.effect import Log, Program, Return
+from aether_backend.utils.effect import Program, Progress, Return
 from aether_backend.utils.force_structured_output import force_structured_output
 from aether_backend.utils.stream_tool_logs import stream_tool_logs
 from aether_backend.utils.subagent import SubagentToolDependencies, build_subagent_tool
@@ -69,7 +69,7 @@ async def generate_report(service: Any, function_address: HexAddress) -> Program
         if not failed:
             break
 
-        yield Log(
+        yield Progress(
             f"{len(failed)} rule(s) failed validation (attempt {attempt + 1}); regenerating..."
         )
 
@@ -90,7 +90,7 @@ async def generate_report(service: Any, function_address: HexAddress) -> Program
             yield log
         rules = await force_structured_output(agent, list[str], result)
     else:
-        yield Log("Max validation attempts reached; returning last draft despite failures.")
+        yield Progress("Max validation attempts reached; returning last draft despite failures.")
 
     yield Return(
         {
