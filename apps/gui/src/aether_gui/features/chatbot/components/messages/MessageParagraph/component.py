@@ -1,12 +1,32 @@
 from pathlib import Path
 from typing import Any, cast
 
+import ida_kernwin
 from aether_gui.utils.chat_session import Message, MessageRole
+from aether_gui.utils.constants import WINDOW_PREFIX
 from aether_gui.utils.ui import FontPlugin, StyledComponent
 from markdown import markdown
 from PySide6 import QtCore
-from PySide6.QtGui import QColor, QFont, QResizeEvent, QTextCursor, QTextDocument
+from PySide6.QtGui import (
+    QColor,
+    QContextMenuEvent,
+    QFont,
+    QResizeEvent,
+    QTextCursor,
+    QTextDocument,
+)
 from PySide6.QtWidgets import QSizePolicy, QTextBrowser, QTextEdit, QVBoxLayout
+
+
+class MessageBrowser(QTextBrowser):
+    def contextMenuEvent(self, event: QContextMenuEvent) -> None:
+        menu = self.createStandardContextMenu()
+        menu.addSeparator()
+        menu.addAction("Font...").triggered.connect(
+            lambda _checked=False: ida_kernwin.process_ui_action(f"{WINDOW_PREFIX}_SetFont")
+        )
+        menu.exec(event.globalPos())
+        menu.deleteLater()
 
 
 class MessageParagraph(StyledComponent):  # type: ignore[misc]
@@ -31,7 +51,7 @@ class MessageParagraph(StyledComponent):  # type: ignore[misc]
         layout.setSpacing(0)
 
         # Markdown rendering Browser
-        md_browser = QTextBrowser(self)
+        md_browser = MessageBrowser(self)
         md_browser.setObjectName("ChatBox")
 
         # Style
