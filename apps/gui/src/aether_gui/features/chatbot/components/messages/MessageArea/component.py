@@ -20,11 +20,14 @@ from ..MessageParagraph import MessageParagraph
 class MessageArea(StyledComponent):  # type: ignore[misc]
     """Message area where message bubbles are placed"""
 
+    _AUTO_SCROLL_THRESHOLD = 80
+
     def __init__(self, session: ChatSession, *, parent: Any = None):
         self._session = session
         super().__init__(parent)
 
     def setup(self) -> None:
+        self._follow_latest = True
         self._scroll_area: QScrollArea | None = None
         self._messages_container: QWidget | None = None
         self._messages_layout: QVBoxLayout | None = None
@@ -59,7 +62,8 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
         scroll_area.setFrameShape(QFrame.Shape.NoFrame)
 
         scrollbar = scroll_area.verticalScrollBar()
-        scrollbar.rangeChanged.connect(self.scroll_to_bottom)
+        scrollbar.valueChanged.connect(self._on_scroll_value_changed)
+        scrollbar.rangeChanged.connect(self._scroll_to_bottom_if_following)
         scrollbar.setObjectName("ChatScrollBar")
 
         messages_container = QWidget(self)
@@ -199,7 +203,7 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
         if self._stack:
             self._stack.setCurrentIndex(1)  # switch to message list
 
-        QtCore.QTimer.singleShot(0, self.scroll_to_bottom)
+        QtCore.QTimer.singleShot(0, self._scroll_to_bottom_if_following)
 
         for data in self._session.messages:
             if data.id == id:
@@ -246,6 +250,16 @@ class MessageArea(StyledComponent):  # type: ignore[misc]
             return None
 
         return layout.widget()
+
+    def _on_scroll_value_changed(self, value: int) -> None:
+        if self._scroll_area is None or not isValid(self._scroll_area):
+            return
+        scrollbar = self._scroll_area.verticalScrollBar()
+        self._follow_latest = scrollbar.maximum() - value <= self._AUTO_SCROLL_THRESHOLD
+
+    def _scroll_to_bottom_if_following(self) -> None:
+        if self._follow_latest:
+            self.scroll_to_bottom()
 
     def scroll_to_bottom(self) -> None:
         if self._scroll_area is None or not isValid(self._scroll_area):
