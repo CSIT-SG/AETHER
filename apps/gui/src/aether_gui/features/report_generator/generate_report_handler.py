@@ -1,5 +1,6 @@
 from typing import Any, Literal
 
+import ida_funcs
 import ida_kernwin
 from aether_gui.runner import get_shared_worker_manager
 from aether_gui.utils.mcp import CallToolTask, MCPClient
@@ -17,7 +18,8 @@ class GenerateReportHandler(ida_kernwin.action_handler_t):
     def activate(self, ctx: ida_kernwin.action_ctx_base_t) -> Literal[0]:
         worker_manager = get_shared_worker_manager()
         rpc_id = get_rpc_id()
-        ea = ida_kernwin.get_screen_ea()
+        screen_ea = ida_kernwin.get_screen_ea()
+        ea = ida_funcs.get_func(screen_ea).start_ea
 
         task = CallToolTask()
         handle = worker_manager.submit(
