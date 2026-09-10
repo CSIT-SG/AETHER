@@ -78,6 +78,14 @@ class SearchBar(StyledComponent):  # type: ignore[misc]
         if (
             obj is self._input
             and isinstance(event, QKeyEvent)
+            and event.type() == QEvent.Type.ShortcutOverride
+            and event.key() == Qt.Key.Key_Escape
+        ):
+            event.accept()
+            return True
+        if (
+            obj is self._input
+            and isinstance(event, QKeyEvent)
             and event.type() == QKeyEvent.Type.KeyPress
         ):
             if event.key() == Qt.Key.Key_Escape:
