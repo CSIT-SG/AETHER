@@ -1,6 +1,6 @@
 [project]
 name = "aether_backend"
-version = "0.0.2.dev4"
+version = "0.0.2.dev5"
 description = "AETHER backend"
 readme = "README.md"
 requires-python = ">=3.12"
