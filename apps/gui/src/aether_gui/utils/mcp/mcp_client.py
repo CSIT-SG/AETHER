@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import contextlib
 from collections.abc import AsyncIterator
 from typing import Any
 
@@ -23,7 +22,6 @@ class MCPClient:
     def __init__(self) -> None:
         self.mcp_url = config.mcp_url
         self._client: Client[StreamableHttpTransport] | None = None
-        self._active_tasks: dict[str, ToolTask] = {}
         self.logger = get_logger("MCPClient")
 
     def is_connected(self) -> bool:
@@ -45,19 +43,10 @@ class MCPClient:
             self._client = None
             raise Exception("Unable to connect to MCP server") from e
 
-    async def cancel_task(self, task_id: str) -> None:
-        task = self._active_tasks.pop(task_id, None)
-        if task is not None:
-            with contextlib.suppress(Exception):
-                await task.cancel()
-
     async def close(self) -> None:
         """Close the MCP server connection."""
         if not self.is_connected() or self._client is None:
             return
-
-        for task_id in list(self._active_tasks.keys()):
-            await self.cancel_task(task_id)
 
         try:
             await self._client.__aexit__(None, None, None)  # type: ignore[no-untyped-call]
@@ -77,33 +66,29 @@ class MCPClient:
             self.logger.error(f"Failed to list tools: {e}")
             raise
 
+    async def call_fastmcp_tool_task(
+        self,
+        tool_name: str,
+        args: dict[str, Any] | None = None,
+    ) -> ToolTask:
+        if not self.is_connected():
+            await self.connect()
+
+        assert self._client is not None
+        arguments = {**(args or {})}
+        return await call_tool_task(
+            self._client, tool_name, arguments=arguments, raise_on_error=False
+        )
+
     async def call_tool(
         self,
         tool_name: str,
         args: dict[str, Any] | None = None,
-        task_id: str | None = None,
     ) -> AsyncIterator[CallToolResult]:
         """Connects, runs the tool, and automatically closes the connection when done."""
         try:
-            if not self.is_connected():
-                await self.connect()
-
-            assert self._client is not None
-            arguments = {**(args or {})}
-
-            task: ToolTask | None = None
-            key: str | None = None
-            try:
-                task = await call_tool_task(
-                    self._client, tool_name, arguments=arguments, raise_on_error=False
-                )
-                key = task_id or task.task_id
-                self._active_tasks[key] = task
-                result = await task.result()
-                yield result
-            finally:
-                if key is not None:
-                    self._active_tasks.pop(key, None)
+            task = await self.call_fastmcp_tool_task(tool_name, args)
+            yield await task.result()
         except Exception as e:
             self.logger.error(f"Tool call '{tool_name}' failed: {e}")
             raise

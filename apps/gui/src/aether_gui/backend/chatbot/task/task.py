@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import json
 from collections.abc import AsyncIterator
 from concurrent.futures import Future
@@ -21,6 +22,7 @@ from agents import (
     Tool as AgentTool,
 )
 from fastmcp.client.client import CallToolResult
+from fastmcp_tasks import ToolTask
 from mcp_types import TextContent
 from mcp_types import Tool as MCPTool
 from openai.types.responses import (
@@ -40,6 +42,7 @@ class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
         super().__init__()
         self._mcp: MCPClient | None = None
         self._result: RunResultStreaming | None = None
+        self._active_tool_tasks: set[ToolTask] = set()
 
     async def run(
         self,
@@ -100,8 +103,11 @@ class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
         await self._cleanup()
 
     async def _cleanup(self) -> None:
-        if self._mcp is not None:
-            await self._mcp.cancel_task(self.id)
+        tasks = list(self._active_tool_tasks)
+        self._active_tool_tasks.clear()
+        for task in tasks:
+            with contextlib.suppress(Exception):
+                await task.cancel()
         if self._result is not None:
             try:
                 self._result.cancel()
@@ -134,14 +140,15 @@ class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
 
         async def on_invoke(_ctx: RunContextWrapper[Any], args_json: str) -> str:
             args = json.loads(args_json) if args_json else {}
+            task = await client.call_fastmcp_tool_task(tool_name=tool.name, args=args)
+            self._active_tool_tasks.add(task)
             try:
-                async for result in client.call_tool(
-                    tool_name=tool.name, args=args, task_id=self.id
-                ):
-                    return self._deserialize_flat(result)
+                result = await task.result()
+                return self._deserialize_flat(result)
             except Exception as e:
                 return f"Tool {tool.name!r} is unavailable: {e}"
-            return f"Tool {tool.name!r} returned no result."
+            finally:
+                self._active_tool_tasks.discard(task)
 
         return FunctionTool(
             name=tool.name,
