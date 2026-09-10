@@ -2,30 +2,38 @@ import { Callout } from 'nextra/components'
 
 # Orchestration
 
-How a turn runs inside the backend: orchestrator hands off work, the agent runs the model, and the output becomes UI.
+The orchestrator schedules work, the agent calls the model and tools, and the renderer updates the UI.
+Start with the overview for the component and session lifecycle.
 
 ## Orchestrator
 
-The orchestrator bridges the UI and the agent. It runs on the IDA main thread, so it starts the work on a worker thread and returns without blocking. 
-Each prompt, it:
+`ChatOrchestrator` bridges the UI and the agent. Its submission entry point runs on
+IDA's main thread and schedules background work without waiting for the model.
+For each prompt, it:
 
-1. Gathers the IDA context at the cursor (function, disassembly, pseudocode, xrefs).
-2. Hands the prompt and context to the agent as a background task.
-3. Routes the agent's streamed output to the renderer as it arrives.
+1. Reads the cursor address and RPC ID, then submits a `CallToolTask` for `get_function_context` through MCP.
+2. Passes the prompt and a context future to `ChatBotTask`, which waits up to 30 seconds for the context.
+3. Routes streamed output from consumer threads to the renderer using `ida_kernwin.execute_sync`.
 
-The orchestrator tracks if a new message has been created and what the last type of message was. Both are handed
-to the renderer. The renderer will create the UI elements and decide to append messages or create paragraphs etc.
+`WorkerManager` runs tasks on a shared background event loop and creates separate
+consumer threads to read their output. It does not create a new agent event loop for each turn.
+
+The orchestrator tracks whether an assistant bubble has been created during the turn
+and whether the previous output was text or a tool event. It passes this state to the
+renderer to choose where each piece belongs.
 
 ## Agent
 
 The agent talks to the LLM provider on the worker thread. It is given four things:
 
-1. User's prompt 
-2. Current IDA context 
+1. The user's prompt
+2. Current IDA context
 3. Available MCP tools 
 4. Session history
 
-From these it builds the model call and streams the response.
+`ChatBotTask` builds an Agents SDK `Agent` from these inputs and uses
+`Runner.run_streamed` to stream the response. The task and prompt templates live in
+`backend/chatbot/task/` and `backend/chatbot/task/content/`, respectively.
 
 ### Prompts
 
@@ -38,40 +46,55 @@ Two prompts shape every turn, and they land in different places:
 
 Each turn, the agent is handed the tools the MCP server currently exposes. When the model calls one, the call is forwarded to MCP, which may reach through RPC into the open disassembler (e.g. IDA), and the result returns to the model.
 
-So a tool call is a chain: **model → MCP → RPC → IDA**, and back.
+For tools that access the IDA database, the chain is **model → MCP → RPC → IDA**, and back.
+Other tools can complete in the MCP backend without an RPC call.
 
 ## What a turn looks like
 
-The agent streams a sequence of typed pieces. A turn where the model calls a tool, then answers, looks like this:
+The agent streams typed events defined in `backend/chatbot/task/types.py`.
+For example, a tool call followed by an answer produces these kinds of output
+(simplified here; arguments and results depend on the tool):
 
 ```text
-Calling tool 'get_function_pseudocode' with args: {"function_name": "sub_401000"}
-Result: int __cdecl sub_401000(int a1) { ... }
+_[Tool Call `call_1`]_: `tool_name({...})`
+_[Tool Output `call_1`]_: ...
 This function validates the license key: it hashes the input and compares...
 ```
 
-Each line is one typed output:
+The event type determines how the output is placed:
 
 | Piece | Meaning | Renders as |
 | --- | --- | --- |
-| `Calling tool '...' with args: ...` | the model invoking a tool | a tool message |
-| `Result: ...` | what the tool returned | a tool message |
-| plain text | the model's answer | assistant text |
+| `ToolCall` | The model invoking a tool; includes its name, arguments, and call ID. | A new paragraph, starting an `AETHER` bubble if needed. |
+| `ToolOutput` | The tool result, labelled with the same call ID. | A new paragraph in the `AETHER` bubble. |
+| `TextDelta` | A chunk of the model's answer. | Assistant text, appended while consecutive text arrives. |
+| `ReasoningDelta` | A chunk of a reasoning summary, when supplied by the provider. | Assistant text prefixed with `_[Reasoning]_:`. |
 
-The `Calling tool` line is the model's request; `Result` is what MCP returned.
+The tool wrapper joins text blocks from MCP results, falls back to structured JSON,
+then to a string representation. Tool failures become text such as
+`Tool 'name' is unavailable: ...`, which is returned to the model.
 
 <Callout>
-Some models also stream a reasoning summary. When they do, it renders as plain assistant text prefixed `[Reasoning]:`.
+Tool calls and results use the `AETHER` UI role; there is no separate tool role.
+Their labels distinguish them from the assistant's answer.
 </Callout>
 
 <Callout type="warning">
-The system prompt tells the model which RPC id to use, and the model supplies that id in its tool arguments. If it omits or invents the id, the tool call fails.
+The system prompt supplies the active RPC ID. For tools that require `rpc_id`, the
+model must include that value in its arguments; the wrapper does not inject it.
+A missing or incorrect ID can cause the call to fail or target the wrong instance.
 </Callout>
 
 ## Renderer
 
-The renderer is the only part that writes to widgets. For each streamed piece it decides what the UI needs: a new bubble (column), a new paragraph, or text appended to the current paragraph.
+`ChatbotAreaRenderer` writes agent output through
+`ChatAreaProtocol`.
+For each streamed piece it chooses a new bubble, a new paragraph, or text appended
+to the current paragraph. The panel separately displays user messages and replays history.
 
-E.g. if the previous message was text type and the current message is text type, append onto the last paragraph.
+Consecutive text chunks append to the last paragraph. A tool event always starts
+a paragraph, and text following a tool event starts another. The first output in
+a turn creates the assistant bubble.
 
-Text and reasoning become assistant messages; tool calls and results become tool messages; errors become their own messages. The orchestrator carries the per-turn state, so the renderer only draws (no need to retrieve info itself).
+Errors create a separate `AETHER` bubble prefixed with `Error:`. The orchestrator
+owns per-turn state; the renderer does not fetch context or call the model.

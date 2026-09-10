@@ -1,14 +1,17 @@
-import { Callout } from 'nextra/components'
-
 # Chatbot Overview
+
+This guide explains how the chatbot's UI, background tasks, and conversation history fit together.
+For setup and everyday use, start with the GUI user guide.
 
 The AETHER chatbot is built using the following parts:
 
 1. **GUI and Rendering**: the GUI widgets live under `features/chatbot/components`. `ChatbotAreaRenderer` writes into them.
 2. **Orchestrator**: constructed by the chatbot panel, it runs on IDA's main thread. 
-At the start of each turn it submits an agent task to WorkerManager, creates a worker thread, and routes streamed output from the worker thread back to the renderer.
+At the start of each turn it submits context retrieval and agent tasks to the shared `WorkerManager`, then routes streamed output back to the renderer on the main thread.
 3. **Agent**: built in `backend/chatbot/task`. Streams the provider's output, renders the prompts from `task/content`, and wraps each MCP tool so the model can call it.
-4. **Session**: `ChatSession` in `utils/chat_session` holds UI messages and a `CompactingSession`. Agent SDK provides SQLite storage for conversation history, while we manage history via compaction.
+4. **Session**: `ChatSession` in `utils/chat_session` holds UI messages and a `CompactingSession`. The Agents SDK provides an in-memory SQLite database for model history; compaction summarises older items.
+
+Source paths on these pages are relative to `apps/gui/src/aether_gui/`, unless stated otherwise.
 
 ## Panel anatomy
 
@@ -24,38 +27,47 @@ At the start of each turn it submits an agent task to WorkerManager, creates a w
 | Footer | Copy button. |
 | Input box, submit button | Both are `ChatInput`. |
 
-Each is covered on UI Components.
+See UI Components for each widget's responsibilities.
 
 ## Session and lifecycle
 
 `ChatbotHandler` is the entry point, a context-menu action on pseudocode views. 
 It owns the `ChatSession` and opens the panel. 
-Because the session lives on the handler and not the window, it survives the chatbot being closed and reopened, and dies only with the IDA process.
+Because the session lives on the handler rather than the window, it survives closing and reopening the panel while that handler remains alive. History is not restored after restarting IDA.
 
 `ChatSession` holds two things:
 
 - **UI messages**: replayed to redraw the conversation when the window reopens.
 - **A `CompactingSession`**: the turn-by-turn history the LLM sees.
 
-`CompactingSession` subclasses the Agent SDK's `SQLiteSession`. 
-Once history grows past a threshold it summarises the oldest turns and keeps the rest. 
+`CompactingSession` subclasses the Agents SDK's `SQLiteSession` and lives in
+`packages/utils/src/aether_utils/compacting_session/`. By default, once history exceeds
+10 items, it summarises older items and retains the latest five, extending that tail
+when needed to keep tool calls with their results. These are history items, not whole
+user turns. If summarisation fails, the original history is kept.
+
+Compaction affects model history only; the visible conversation remains intact.
+`ChatSession` also appends a text log to `chat_sessions/<rpc_id>.log` under the GUI's
+application data directory. This log is not loaded to restore a session.
 
 ## A turn, end to end
 
-1. **Submit**: A user sends their prompt. The panel draws their own message first, before other tasks proceed.
-2. **Offload**: `ChatOrchestrator` gathers the current IDA context and packages it with the chat prompt into a task for `WorkerManager`. The main thread is freed as a new worker thread takes over.
-3. **Running**: On the new worker thread, an agent is built with the provided prompt and context. It is also provided with MCP tools it can call. 
-The worker streams provider output and calls MCP tools as needed. MCP is a separate layer designed to give convenient tooling, and the chatbot is one of the consumers. 
-A tool may call RPC to read/write into the IDA IDB, and return its output to the agent. No UI involved.
-4. **Render**: On the worker thread, the agent streams text and tool calls, and consumes tool output. 
-Each piece of info is pushed to the main thread, and the renderer draws what is new: a new bubble (`MessageColumn`), a new paragraph (`MessageParagraph`), or text appended within the paragraph during streaming.
+1. **Submit**: The panel displays the user's message and disables further submissions until the turn finishes.
+2. **Offload**: `ChatOrchestrator` reads the current address and RPC ID, then requests context through the Model Context Protocol (MCP) server. It passes the resulting future and the prompt to `ChatBotTask`. Tasks run on `WorkerManager`'s shared background event loop.
+3. **Run**: The task waits up to 30 seconds for context, builds the agent, and streams the response. The agent can call MCP tools, which may use remote procedure calls (RPC) to read or modify the open IDA database.
+4. **Render**: Consumer threads forward output to IDA's main thread. The renderer creates a bubble (`MessageColumn`), adds a paragraph (`MessageParagraph`), or appends streamed text to the current paragraph.
 
-The only way to cancel the task during a turn, for now, is to close the chatbot window. The `ChatSession` containing history survives.
+See Orchestration for prompts, tool calls, and rendering rules.
+
+To cancel a turn, close the chatbot window; there is no separate stop button.
+Closing requests cancellation of the panel's outstanding tasks and suppresses further UI callbacks.
+The `ChatSession` survives, but cancellation does not undo changes already made by tools.
 
 ## Configuration
 
-The chatbot will not start without a provider API key. `OpenAIGateway` raises
-`ValueError`. See the Configuration page for the file itself.
+A chatbot turn requires a non-empty provider API key. `OpenAIGateway.get_model()` raises
+`ValueError` if it is missing. Configure the provider in **Edit → Plugins → AETHER Settings**;
+see Configuration for the available fields.
 
 | Key | Read by | Notes |
 | --- | --- | --- |

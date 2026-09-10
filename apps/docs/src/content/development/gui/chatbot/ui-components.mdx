@@ -4,9 +4,10 @@ import { Callout } from 'nextra/components'
 
 ![Anatomy of the ChatbotPanel](/chatbot-panel-anatomy.png)
 
-Every component here is a `StyledComponent`, except `ButtonComponent`. They all
-live under `features/chatbot/components/`, each in its own folder with the class
-in `component.py`. E.g. `chatbot_panel/component.py`.
+The main chat widgets inherit from `StyledComponent`; `ButtonComponent` inherits
+from `QPushButton`, and `Message` is a data model. Widget sources live under
+`apps/gui/src/aether_gui/features/chatbot/components/`, with each component's class
+in `component.py`, for example `chatbot_panel/component.py`.
 
 The widgets nest: `ChatbotPanel` holds the `MessageArea`, which holds
 `MessageColumn` bubbles, each holding one or more `MessageParagraph`s.
@@ -16,11 +17,12 @@ The widgets nest: `ChatbotPanel` holds the `MessageArea`, which holds
 - The window spawned by the `ChatbotHandler`
 - Should hold no backend bridge logic beyond wiring `ChatInput` to the
   `MessageArea` and constructing the `ChatOrchestrator`
-- Extremely susceptible to prop drilling, so be conscious of that when adding
-  features
+- Keep shared state on the session or orchestrator instead of passing it through
+  multiple layers of widgets.
 
-It draws the user's own message, starts the turn, replays history when the window
-reopens, and cleans up on close.
+It draws the user's message, starts the turn, disables submission while the turn
+runs, replays history when the window reopens, and cancels tasks on close.
+See Orchestration for the task lifecycle.
 
 ## MessageArea
 
@@ -33,7 +35,7 @@ The backend never touches `MessageArea` directly. It writes through
 `backend/chatbot/renderer/types.py`. `MessageArea` implements its three methods,
 so it satisfies the protocol without either side importing the other.
 
-**Why a protocol.** The renderer lives in the backend and needs to draw into the
+The renderer lives in the backend and needs to draw into the
 `MessageArea`, but `MessageArea` lives in the frontend. Importing the widget into
 the backend would create a circular import, so the backend types against this
 protocol instead of the concrete class.
@@ -56,8 +58,8 @@ Call these on IDA's main thread. The widget belongs to IDA's GUI thread.
 The actual message bubble. Separates user from LLM messages, holds multiple
 `MessageParagraph`s, and is built as header, body, footer.
 
-Layout differs by role: `USER` is right-aligned, `AETHER` (llm) is centred. The footer holds
-the copy button.
+Layout differs by role: `USER` is right-aligned and `AETHER` is centred. The footer's
+copy button copies the Markdown content of every paragraph in the bubble.
 
 ## MessageParagraph
 
@@ -65,51 +67,38 @@ One block of rendered Markdown, a `StyledComponent` wrapping a `QTextBrowser`,
 with `FontPlugin` so it tracks IDA font changes.
 
 <Callout type="warning">
-Be conscious of when you re-render. Re-rendering one paragraph forces Qt to
-re-lay out **every** message in the conversation.
-
-So the cost scales with conversation length, not paragraph size, and it happens
-once per streamed delta, on the IDA main thread.
+Each streamed text chunk re-renders the current paragraph's Markdown and schedules
+a height update on IDA's main thread. Geometry changes can trigger layout work in
+the surrounding conversation. Profile long conversations when changing this path.
 </Callout>
 
 <Callout type="warning">
-Be careful adding `StyledComponent`s inside a message. Every one is part of that
-re-layout, and each installs its own theme and font plugins on construction and
-re-renders its QSS on theme changes.
-
-So per-message widgets (badges, buttons, inline controls) multiply the cost:
-Qt reprocesses the whole conversation on every delta. Keep the per-message tree
-small.
+Keep the per-message widget tree small. Additional badges, buttons, and controls
+add layout and styling work. `MessageColumn` and `MessageParagraph` explicitly
+install `FontPlugin` to respond to IDA font changes.
 </Callout>
 
 ## Message
 
-The naming is a bit confusing, but it is just content plus metadata: `id`, `role`,
-`content`, `timestamp`.
+`Message` is a data model in `utils/chat_session/models.py`, with `id`, `role`,
+`content`, and `timestamp` fields. It is not a widget.
 
 `MessageRole` is only `USER` or `AETHER`. There is no tool role: tool call input
-and output both render as `AETHER`, since the calls are the llm's.
+and output both render as `AETHER`.
 
 ## ChatInput
 
-- A `QTextEdit`, not a line edit, so it grows with the text
-- Ctrl+Enter submits, so does the button
+- Wraps a `QTextEdit` that grows with the text, up to 120 pixels high
+- Enter adds a newline; Ctrl+Enter or the send button submits
 - Emits `submitted(str)`, which the panel connects to
 - Clears and refocuses after submit
+- Ignores empty input and blocks submission while a turn is active
 
 ## Search
 
-Ctrl+F. Split across three components: `SearchBar` (the input and controls),
+With focus in the message area, Ctrl+F opens search. It is split across three components: `SearchBar` (the input and controls),
 `MessageArea` (finds matches and tracks the current one), and `MessageParagraph`
 (highlighting).
-
-## ScrollBar
-
-<Callout type="warning">
-Unfinished migration. `ScrollBar` is exported but nothing constructs it —
-`MessageArea` styles the raw `QScrollBar` through the `ChatScrollBar` object name
-instead.
-</Callout>
 
 ## ButtonComponent
 
