@@ -1,6 +1,6 @@
 [project]
 name = "aether_utils"
-version = "0.0.2.dev8"
+version = "0.0.2"
 description = "AETHER utilities shared package"
 readme = "README.md"
 requires-python = ">=3.12"

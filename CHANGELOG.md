@@ -1,3 +1,28 @@
+## 0.0.2 (2026-09-10)
+
+### Feat
+
+- refactor Progress model
+- **context menu**: added settings menu
+- add on font change to default QT context menu
+
+### Fix
+
+- revert atexit fix
+- suppress get_version output
+- add integration test
+- bench ctrl c hangs
+- abstract away stream_tool_logs
+
+### Refactor
+
+- **chatbot**: changed ask meee
+- change Log to Progress in generate_report
+- remove unnecessary `counter` from Progress model
+- additional Log changes
+- change all Log to Progress
+- remove Log dataclass
+
 ## 0.0.1 (2026-09-09)
 
 ### Feat
