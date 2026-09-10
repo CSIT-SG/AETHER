@@ -1,11 +1,3 @@
-"""Smoke test: interrupting a `Run` block cancels the task it wraps.
-
-Interrupt delivery cannot be exercised in-process -- pytest owns the main thread's
-SIGINT handler -- so this spawns a child mirroring `__main__.main`: a single
-`asyncio.run` around an `async with Run(...)` block holding a task that sleeps
-forever.
-"""
-
 import signal
 import subprocess
 import sys
