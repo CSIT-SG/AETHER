@@ -9,7 +9,6 @@ from aether_utils.logger import get_logger
 from fastmcp import Client
 from fastmcp.client.client import CallToolResult
 from fastmcp.client.transports import StreamableHttpTransport
-from fastmcp.exceptions import ToolError
 from fastmcp_tasks import ToolTask, call_tool_task
 from mcp_types import Tool
 
@@ -102,10 +101,6 @@ class MCPClient:
                 self._active_tasks[key] = task
                 result = await task.result()
                 yield result
-            except ToolError:
-                yield await self._client.call_tool(
-                    tool_name, arguments=arguments, raise_on_error=False
-                )
             finally:
                 if key is not None:
                     self._active_tasks.pop(key, None)
