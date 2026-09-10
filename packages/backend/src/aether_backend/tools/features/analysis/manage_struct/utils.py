@@ -74,7 +74,9 @@ async def get_var_type(svc: Any, function_address: HexAddress, variable: str) ->
     raise RuntimeError(f"variable {variable} not found")
 
 
-async def resolve_xrefs(svc: Any, function_address: HexAddress, var_name: str) -> XrefsResult:
+async def resolve_xrefs(
+    svc: Any, function_address: HexAddress, var_name: str | None
+) -> XrefsResult:
     xrefs = await get_xrefs_to(svc, location=function_address, variable=var_name)
 
     if xrefs.success is False:

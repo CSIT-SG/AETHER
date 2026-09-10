@@ -33,6 +33,7 @@ async def manage_struct(
         HexAddress, "The hexadecimal effective address of the function to annotate."
     ],
     var_name: Annotated[str, "name of target variable for which to create the struct"],
+    local_var: Annotated[bool, "Whether variable is stack or global"],
     custom_prompt: Annotated[
         str | None,
         "A hint regarding behavior for the subagent to guide analysis. Keep it less than 3 sentences.",
@@ -47,9 +48,13 @@ async def manage_struct(
     if custom_prompt is None:
         custom_prompt = ""
 
+    if local_var:
+        refs = await resolve_xrefs(svc, function_address, var_name)
+    else:
+        refs = await resolve_xrefs(svc, var_name, None)
+
     match operation:
         case StructOperation.CREATE:
-            refs = await resolve_xrefs(svc, function_address, var_name)
             async for effect in perform_create_struct(
                 svc,
                 function_address=function_address,
@@ -59,7 +64,6 @@ async def manage_struct(
             ):
                 yield effect
         case StructOperation.UPDATE:
-            refs = await resolve_xrefs(svc, function_address, var_name)
             async for effect in perform_update_struct(
                 svc,
                 function_address=function_address,
