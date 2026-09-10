@@ -5,7 +5,7 @@ DEFAULT_MODEL_LIST = {
     "Qwen3.5 Coder": "qwen/qwen3.5-397b-a17b",
     "Qwen3-next Instruct": "qwen/qwen3-next-80b-a3b-instruct",
     "Minimax m2.7": "minimax/minimax-m2.7",
-    "Gemini 2.5": "google/gemini-2.5-flash",
+    "Gemini 3.7": "google/gemini-3.7-flash",
     "Minimax m3": "minimax/minimax-m3",
 }
 
@@ -20,6 +20,8 @@ DEFAULT_CONFIG = ConfigModel(
         default_model="Minimax m2.7",
     ),
     subagents=SubagentsModel(
-        annotator_model="Qwen3-next Instruct", struct_reevaluator_model="GLM 5.3"
+        annotator_model="Qwen3-next Instruct",
+        struct_reevaluator_model="GLM 5.3",
+        struct_creator_model="Gemini 3.7",
     ),
 )

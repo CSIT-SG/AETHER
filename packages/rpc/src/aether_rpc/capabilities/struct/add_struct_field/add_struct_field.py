@@ -38,6 +38,7 @@ class AddStructField(Capability):
             return Err(result=struct_result.result)
 
         struct_info = struct_result.result
+        tif = struct_info.tif
         # Check for duplicate field name
         if any(member.name == field_name for member in struct_info.udt):
             return Err(
@@ -117,6 +118,7 @@ class AddStructField(Capability):
         new_member.offset = insert_offset * 8
 
         new_udt = ida_typeinf.udt_type_data_t()
+        new_udt.pack = 1
 
         for i, member in enumerate(struct_info.udt):
             if i == insert_index:
@@ -125,6 +127,15 @@ class AddStructField(Capability):
             new_udt.append(member)
 
         if insert_index == len(struct_info.udt):
+            if insert_offset > tif.get_size():
+                padding = ida_typeinf.udt_member_t()
+                padding.name = "padding_" + hex(offset)
+                new_type = ida_typeinf.tinfo_t()
+                new_type.create_simple_type(ida_typeinf.BTF_CHAR)
+                array_type = ida_typeinf.tinfo_t()
+                array_type.create_array(new_type, insert_offset - tif.get_size())
+                padding.type = array_type
+                new_udt.append(padding)
             new_udt.append(new_member)
 
         new_tif = ida_typeinf.tinfo_t()

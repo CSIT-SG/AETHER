@@ -5,7 +5,6 @@ from aether_backend.forwarded_rpc import (
     add_struct_field,
     apply_struct,
     create_struct,
-    get_data_at_address,
     get_function_by_address,
     get_function_pseudocode,
     list_structs,
@@ -32,22 +31,18 @@ async def perform_create_struct(
     if func.success is False:
         raise RuntimeError(f"Unable to get function {function_address}")
 
-    struct_list = await list_structs(service=service)
     function_name = func.result["name"]
-    user_prompt = f"These are the current structs in the idb file {struct_list}. Create the struct representative of {var_name} which is found in the function {function_name} at {function_address} For added context you are to take a look at {xrefs}. These are the cross references to {var_name}. GIVE THE STRUCT AND IT'S FIELDS MEANINGFUL NAMES"
-    config = get_config()
-    agent = create_agent(
-        tool_list=[
-            apply_struct,
-            get_function_pseudocode,
-            get_data_at_address,
-            add_struct_field,
-            create_struct,
-        ],
-        system_prompt=get_content(Path(__file__).parent, "struct_creator_prompt.md"),
-        name="struct creator",
-        model_name=config.subagents.struct_creator_model if config.subagents else None,
-    )
+    user_prompt = f"Create the struct for {var_name} in function {function_name}. For added context you are to take a look at {xrefs}. GIVE THE STRUCT AND IT'S FIELDS MEANINGFUL NAMES."
+    name = "struct creator"
+    system_prompt = get_content(Path(__file__).parent, "struct_creator_prompt.md")
+    tool_list = [
+        apply_struct,
+        get_function_pseudocode,
+        add_struct_field,
+        create_struct,
+        list_structs,
+    ]
+    agent = create_agent(tool_list, system_prompt, name)
     async for effect in run_agent(
         service,
         agent=agent,

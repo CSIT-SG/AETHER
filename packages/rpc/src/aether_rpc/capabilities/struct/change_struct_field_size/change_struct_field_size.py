@@ -53,7 +53,7 @@ class ChangeStructFieldSize(Capability):
 
         array_type = ida_typeinf.tinfo_t()
         try:
-            array_type.create_array(elem_type, new_size)
+            array_type.create_array(elem_type, int(new_size))
         except ValueError:
             return Err(result=f"Invalid size provided: '{new_size}'.")
         new_member_size = array_type.get_size()
