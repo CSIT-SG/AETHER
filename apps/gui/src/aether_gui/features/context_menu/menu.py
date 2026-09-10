@@ -5,6 +5,7 @@ import ida_kernwin
 from aether_gui.features.annotator import AnnotatorHandler
 from aether_gui.features.chatbot import ChatbotHandler
 from aether_gui.features.manage_struct import ManageStructHandler
+from aether_gui.features.report_generator import GenerateReportHandler
 from aether_gui.features.settings_menu import CtxSettingsMenuHandler
 from aether_gui.features.unflatten_function import UnflattenHandler
 from aether_gui.features.whats_new import WhatsNewHandler
@@ -53,6 +54,9 @@ class AetherUIHooks(ida_kernwin.UI_Hooks):
             ),
             ContextMenuItem(
                 "aether:unflattner", "Unflatten Function", UnflattenHandler(self.mcp_client)
+            ),
+            ContextMenuItem(
+                "aether:generate_report", "Generate Report", GenerateReportHandler(self.mcp_client)
             ),
             ContextMenuItem("aether:settings", "AETHER Settings", CtxSettingsMenuHandler()),
             ContextMenuItem("aether:whats_new", "What's New", WhatsNewHandler()),
