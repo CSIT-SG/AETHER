@@ -36,7 +36,7 @@ class ChatInput(StyledComponent):  # type: ignore[misc]
 
         # Textbox Widget
         textbox = QtWidgets.QTextEdit(self)
-        textbox.setPlaceholderText("Ask meee!")
+        textbox.setPlaceholderText("Ask AETHER")
 
         textbox.setAcceptRichText(True)
 
