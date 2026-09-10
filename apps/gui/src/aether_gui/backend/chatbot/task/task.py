@@ -101,7 +101,7 @@ class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
 
     async def _cleanup(self) -> None:
         if self._mcp is not None:
-            await self._mcp.cancel_tasks()
+            await self._mcp.cancel_task(self.id)
         if self._result is not None:
             try:
                 self._result.cancel()
@@ -135,7 +135,9 @@ class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
         async def on_invoke(_ctx: RunContextWrapper[Any], args_json: str) -> str:
             args = json.loads(args_json) if args_json else {}
             try:
-                async for result in client.call_tool(tool_name=tool.name, args=args):
+                async for result in client.call_tool(
+                    tool_name=tool.name, args=args, task_id=self.id
+                ):
                     return self._deserialize_flat(result)
             except Exception as e:
                 return f"Tool {tool.name!r} is unavailable: {e}"
