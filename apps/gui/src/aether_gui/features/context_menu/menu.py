@@ -6,6 +6,7 @@ from aether_gui.features.annotator import AnnotatorHandler
 from aether_gui.features.chatbot import ChatbotHandler
 from aether_gui.features.manage_struct import ManageStructHandler
 from aether_gui.features.settings_menu import CtxSettingsMenuHandler
+from aether_gui.features.whats_new import WhatsNewHandler
 from aether_gui.utils.mcp import MCPClient
 from aether_utils.config import get_config
 from aether_utils.logger import get_logger
@@ -52,7 +53,7 @@ class AetherUIHooks(ida_kernwin.UI_Hooks):
                 "aether:manage_struct", "Manage Struct", children=manage_struct_operations
             ),
             ContextMenuItem("aether:settings", "AETHER Settings", CtxSettingsMenuHandler()),
-            ContextMenuItem("aether:whats_new", "What's new", DummyHandler()),
+            ContextMenuItem("aether:whats_new", "What's New", WhatsNewHandler()),
         ]
 
     def finish_populating_widget_popup(
