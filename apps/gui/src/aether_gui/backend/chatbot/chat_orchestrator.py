@@ -64,11 +64,11 @@ class ChatOrchestrator:
 
         def on_error(error: BaseException) -> None:
             if not fut.done():
-                fut.set_exception(error)
+                fut.set_exception(RuntimeError(f"Failed to get IDA context: {error}"))
 
         def on_done() -> None:
             if not fut.done():
-                fut.set_exception(ValueError("IDA context request returned no result"))
+                fut.set_exception(ValueError("Failed to get IDA context: no result returned"))
 
         worker_manager.consume(
             handle,
