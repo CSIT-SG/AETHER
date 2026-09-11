@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Annotated
 
+from aether_backend.constants import ToolChannels
 from aether_backend.tools.features.planning.utils import ObjectiveCrudAction, ObjectiveStatus
 from aether_backend.utils.effect import Program, effectful
 from aether_utils.get_content import get_content
@@ -18,6 +19,7 @@ INSTRUCTIONS = get_content(Path(__file__).parent, "instructions.md")
     task=True,
     description=INSTRUCTIONS,
     annotations=ToolAnnotations(title="Manage Objectives", destructive_hint=True),
+    tags={ToolChannels.EXPERIMENTAL},
 )  # tool is untyped in fastmcp
 @effectful  # type: ignore
 async def manage_objectives(
