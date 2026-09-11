@@ -16,7 +16,15 @@ from aether_utils.config import get_config
 from fastmcp.client.client import CallToolResult
 
 from .renderer import ChatAreaProtocol, ChatbotAreaRenderer, MessageType
-from .task import ChatBotTask, LLMResponse, ReasoningDelta, TextDelta, ToolCall, ToolOutput
+from .task import (
+    ChatBotTask,
+    LLMResponse,
+    ReasoningDelta,
+    SubtoolTrace,
+    TextDelta,
+    ToolCall,
+    ToolOutput,
+)
 
 config = get_config()
 
@@ -44,20 +52,6 @@ class ChatOrchestrator:
         self.on_turn_started = on_turn_started
         self.on_turn_finished = on_turn_finished
         self._subtool_column_started = False
-        self._log_subscription = self.mcp_client.subscribe_logs(self._on_server_log)
-
-    async def _on_server_log(self, message: str) -> None:
-
-        if not message:
-            return
-
-        def _render() -> None:
-            self.chat_renderer.render_subtool_trace(
-                message, message_created=self._subtool_column_started
-            )
-            self._subtool_column_started = True
-
-        self._run_on_ida_ui_thread(_render)
 
     def _get_context(self) -> Future[dict[str, Any]]:
         current_ea = ida_kernwin.get_screen_ea()
@@ -199,6 +193,12 @@ class ChatOrchestrator:
                 last_message_type = "tool"
                 message_created = True
                 self.chat_renderer.render_tool_message(str(result), message_created=current_created)
+            elif isinstance(result, SubtoolTrace):
+                last_message_type = "subtool"
+                message_created = True
+                self.chat_renderer.render_subtool_trace(
+                    str(result), message_created=current_created
+                )
 
         return _call_renderer
 
