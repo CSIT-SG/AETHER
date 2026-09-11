@@ -61,13 +61,20 @@ class ChatOrchestrator:
         self.handles.append(handle)
 
         fut: Future[dict[str, Any]] = Future()
+
+        def on_error(error: BaseException) -> None:
+            if not fut.done():
+                fut.set_exception(error)
+
+        def on_done() -> None:
+            if not fut.done():
+                fut.set_exception(ValueError("IDA context request returned no result"))
+
         worker_manager.consume(
             handle,
             on_event=lambda e: self._format_context(e, fut),
-            on_error=lambda err: self._run_on_ida_ui_thread(
-                lambda: self.chat_renderer.render_error(f"Failed to get IDA context: {err}")
-            ),
-            on_done=None,
+            on_error=on_error,
+            on_done=on_done,
         )
         return fut
 
