@@ -5,7 +5,7 @@ import ida_kernwin
 from aether_utils.get_version import get_version
 from aether_utils.logger import get_logger
 
-from .utils import GITHUB
+from .constants import GITHUB
 
 logger = get_logger("whats_new_handler")
 
