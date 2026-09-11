@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
 from typing import Any
 
 from aether_utils.config import get_config
 from aether_utils.logger import get_logger
 from fastmcp import Client
-from fastmcp.client.client import CallToolResult
 from fastmcp.client.transports import StreamableHttpTransport
 from fastmcp_tasks import ToolTask, call_tool_task
 from mcp_types import Tool
@@ -79,16 +77,3 @@ class MCPClient:
         return await call_tool_task(
             self._client, tool_name, arguments=arguments, raise_on_error=False
         )
-
-    async def call_tool(
-        self,
-        tool_name: str,
-        args: dict[str, Any] | None = None,
-    ) -> AsyncIterator[CallToolResult]:
-        """Connects, runs the tool, and automatically closes the connection when done."""
-        try:
-            task = await self.call_fastmcp_tool_task(tool_name, args)
-            yield await task.result()
-        except Exception as e:
-            self.logger.error(f"Tool call '{tool_name}' failed: {e}")
-            raise
