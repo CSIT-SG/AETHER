@@ -95,11 +95,11 @@ class ChatOrchestrator:
         if self._turn_active:
             return
 
-        ida_context = self._get_context()
-
         self.prompt = prompt.strip()
         if not self.prompt:
             return
+
+        ida_context = self._get_context()
 
         self._set_turn_active(True)
 
