@@ -4,7 +4,7 @@ from collections.abc import Callable, Coroutine
 from itertools import count
 from typing import Any, ParamSpec
 
-from fastmcp.server.dependencies import get_context
+from fastmcp.server.dependencies import CurrentContext
 
 from .models import Progress, Return, Sleep
 from .types import Program
@@ -36,18 +36,18 @@ def effectful(  # noqa: UP047
 
     @functools.wraps(fn)
     async def wrapper(*args: P.args, **kwargs: P.kwargs) -> Any:
-        ctx = get_context()
-        result: Any = None
-        counter = count()
-        async for effect in fn(*args, **kwargs):
-            match effect:
-                case Progress(message):
-                    await ctx.report_progress(progress=next(counter), message=message or None)
-                case Sleep(seconds):
-                    await asyncio.sleep(seconds)
-                case Return(value):
-                    result = value
-                    break
+        async with CurrentContext() as ctx:
+            result: Any = None
+            counter = count()
+            async for effect in fn(*args, **kwargs):
+                match effect:
+                    case Progress(message):
+                        await ctx.report_progress(progress=next(counter), message=message or None)
+                    case Sleep(seconds):
+                        await asyncio.sleep(seconds)
+                    case Return(value):
+                        result = value
+                        break
         return result
 
     return wrapper

@@ -8,7 +8,7 @@ from fastmcp.tools import tool
 from .tester_agent import test
 
 
-@tool(tags={ToolChannels.DEBUG})  # tool is untyped in fastmcp
+@tool(task=True, tags={ToolChannels.DEBUG})  # tool is untyped in fastmcp
 @effectful  # type: ignore
 async def test_agent(rpc_id: str, rpc_tool: str, arguments: dict[str, Any]) -> Program:
     """Test agent spawning by calling an rpc function with the given arguments."""

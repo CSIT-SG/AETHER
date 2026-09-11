@@ -8,7 +8,7 @@ from fastmcp.tools import tool
 from .tester_tool import test
 
 
-@tool(tags={ToolChannels.DEBUG})  # tool is untyped in fastmcp
+@tool(task=True, tags={ToolChannels.DEBUG})  # tool is untyped in fastmcp
 @effectful  # type: ignore
 async def test_tool(rpc_id: str, func_name: str, arguments: dict[str, Any]) -> Program:
     """Test a function with the given arguments."""

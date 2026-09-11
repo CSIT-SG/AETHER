@@ -15,6 +15,7 @@ INSTRUCTIONS = get_content(Path(__file__).parent, "instructions.md")
 
 
 @tool(
+    task=True,
     description=INSTRUCTIONS,
     annotations=ToolAnnotations(title="Manage Objectives", destructive_hint=True),
 )  # tool is untyped in fastmcp

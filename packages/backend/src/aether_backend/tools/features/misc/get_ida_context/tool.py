@@ -13,6 +13,7 @@ INSTRUCTIONS = get_content(Path(__file__).parent, "instructions.md")
 
 
 @tool(
+    task=True,
     description=INSTRUCTIONS,
     annotations=ToolAnnotations(
         title="Fetch reverse-engineering context at address", open_world_hint=True

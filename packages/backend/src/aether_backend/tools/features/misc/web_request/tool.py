@@ -8,6 +8,7 @@ from .web_request import fetch_url_stream
 
 
 @tool(
+    task=True,
     annotations=ToolAnnotations(title="Fetch URL", read_only_hint=True, destructive_hint=False),
 )  # tool is untyped in fastmcp
 @effectful  # type: ignore

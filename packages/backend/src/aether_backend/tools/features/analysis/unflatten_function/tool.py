@@ -11,6 +11,7 @@ from .unflatten_function import unflatten
 
 
 @tool(
+    task=True,
     annotations=ToolAnnotations(title="Unflatten Function"),
     timeout=TIMEOUT_SECONDS,
 )  # tool is untyped in fastmcp

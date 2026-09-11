@@ -14,6 +14,7 @@ INSTRUCTIONS = get_content(Path(__file__).parent, "instructions.md")
 
 
 @tool(
+    task=True,
     description=INSTRUCTIONS,
     annotations=ToolAnnotations(title="Execute IDAPython", open_world_hint=True),
     timeout=TIMEOUT_SECONDS,

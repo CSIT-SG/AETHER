@@ -12,6 +12,7 @@ from .list_rpc_connections import list_rpc_connections as list_rpc_connections_c
 
 
 @tool(
+    task=True,
     annotations=ToolAnnotations(
         title="List RPC Connections",
         read_only_hint=True,

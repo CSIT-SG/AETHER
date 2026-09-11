@@ -21,6 +21,7 @@ config = get_config()
 
 
 @tool(
+    task=True,
     description=INSTRUCTIONS,
     annotations=ToolAnnotations(title="Manage Struct", destructive_hint=True),
     timeout=TIMEOUT_SECONDS,
