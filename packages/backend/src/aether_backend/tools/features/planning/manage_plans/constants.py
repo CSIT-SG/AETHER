@@ -1,0 +1,1 @@
+MAX_PLANS = 10
