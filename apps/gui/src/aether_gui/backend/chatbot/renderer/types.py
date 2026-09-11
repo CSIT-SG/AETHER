@@ -3,7 +3,7 @@ from typing import Literal, Protocol
 
 from aether_gui.utils.chat_session import MessageRole
 
-type MessageType = Literal["tool", "text", "error"]
+type MessageType = Literal["tool", "text", "subtool", "error"]
 
 
 class ChatAreaProtocol(Protocol):

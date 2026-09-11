@@ -4,7 +4,7 @@ import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
-type LLMResponse = TextDelta | ReasoningDelta | ToolCall | ToolOutput
+type LLMResponse = TextDelta | ReasoningDelta | ToolCall | ToolOutput | SubtoolTrace
 
 
 class LLMOutput(ABC):
@@ -69,3 +69,13 @@ class ToolOutput(LLMOutput):
         except (json.JSONDecodeError, TypeError):
             pass
         return f"_[Tool Output `{self.call_id}`]_:\n```{output}```"
+
+
+@dataclass
+class SubtoolTrace(LLMOutput):
+    """A server-side subtool log streamed during a tool call."""
+
+    trace: str
+
+    def __str__(self) -> str:
+        return f"_[Subtool Output]_:\n```{self.trace}```"
