@@ -2,12 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from aether_gui.utils.mcp.types import LogSubscription, ServerLogListener
+from aether_gui.utils.mcp.types import LogSubscription, ServerLogListener, ServerProgressMessage
 from aether_utils.config import get_config
 from aether_utils.logger import get_logger
 from fastmcp import Client
-from fastmcp.client.client import CallToolResult
-from fastmcp.client.logging import LogMessage
 from fastmcp.client.transports import StreamableHttpTransport
 from fastmcp_tasks import ToolTask, call_tool_task
 from mcp_types import Tool
@@ -35,16 +33,18 @@ class MCPClient:
         """Deregister a previously-subscribed listener"""
         self._log_listeners.discard(listener)
 
-    async def _handle_log(self, message: LogMessage) -> None:
-        """Sends server logs to all listeners."""
+    async def _handle_progress(
+        self, progress: float, total: float | None, message: str | None
+    ) -> None:
+        """Broadcast each server progress update using fastmcp `progress_handler`"""
         if not self._log_listeners:
             return
-        text = str(message.data)
+        event = ServerProgressMessage(message=message, progress=progress, total=total)
         for listener in list(self._log_listeners):
             try:
-                await listener(text)
+                await listener(event)
             except Exception:
-                self.logger.exception("Server log listener failed")
+                self.logger.exception("Server progress listener failed")
 
     def is_connected(self) -> bool:
         """Check if the client is connected to the MCP server."""
@@ -56,7 +56,7 @@ class MCPClient:
             return
 
         transport = StreamableHttpTransport(url=self.mcp_url)
-        self._client = Client(transport, log_handler=self._handle_log)
+        self._client = Client(transport, progress_handler=self._handle_progress)
 
         try:
             await self._client.__aenter__()  # type: ignore[no-untyped-call]

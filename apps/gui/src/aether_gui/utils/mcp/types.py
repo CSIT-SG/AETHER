@@ -4,7 +4,17 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Protocol
 
-type ServerLogListener = Callable[[str], Awaitable[None]]
+
+@dataclass
+class ServerProgressMessage:
+    """Server progress notification, abstracted from the MCP transport."""
+
+    message: str | None
+    progress: float
+    total: float | None = None
+
+
+type ServerLogListener = Callable[[ServerProgressMessage], Awaitable[None]]
 
 
 class LogListenerRegistry(Protocol):
@@ -15,7 +25,7 @@ class LogListenerRegistry(Protocol):
 
 @dataclass
 class LogSubscription:
-    """Handle for a log listener; call `.close()` to stop receiving logs."""
+    """Handle for a log listener. Call `.close()` to stop receiving logs."""
 
     client: LogListenerRegistry
     listener: ServerLogListener

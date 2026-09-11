@@ -51,7 +51,6 @@ class ChatOrchestrator:
         self._stop_requested = False
         self.on_turn_started = on_turn_started
         self.on_turn_finished = on_turn_finished
-        self._subtool_column_started = False
 
     def _get_context(self) -> Future[dict[str, Any]]:
         current_ea = ida_kernwin.get_screen_ea()

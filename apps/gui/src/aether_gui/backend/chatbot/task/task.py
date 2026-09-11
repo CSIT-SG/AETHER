@@ -8,7 +8,7 @@ from typing import Any
 
 from aether_gui.runner import BaseTask
 from aether_gui.utils.chat_session import ChatSession
-from aether_gui.utils.mcp import MCPClient
+from aether_gui.utils.mcp import MCPClient, SubtoolProgressBuffer, merge_aiterators
 from aether_gui.utils.rpc_id import get_rpc_id
 from aether_utils.api_client import OpenAIGateway
 from agents import (
@@ -31,10 +31,43 @@ from openai.types.responses import (
 )
 
 from .constants import get_template
-from .types import LLMResponse, ReasoningDelta, TextDelta, ToolCall, ToolOutput
+from .types import LLMResponse, ReasoningDelta, SubtoolTrace, TextDelta, ToolCall, ToolOutput
 
 SYSTEM_PROMPT_TEMPLATE = Path(__file__).parent / "content" / "system_prompt.md.jinja"
 USER_PROMPT_TEMPLATE = Path(__file__).parent / "content" / "user_prompt.md.jinja"
+
+
+async def _stream_llm_responses(result: RunResultStreaming) -> AsyncIterator[LLMResponse]:
+    """Map a streamed agent run into renderable LLMResponse values"""
+    async for event in result.stream_events():
+        if event.type == "raw_response_event":
+            raw = event.data
+            if isinstance(raw, ResponseTextDeltaEvent):
+                yield TextDelta(delta=raw.delta)
+            elif isinstance(raw, ResponseReasoningSummaryTextDeltaEvent):
+                yield ReasoningDelta(delta=raw.delta)
+
+        elif event.type == "run_item_stream_event":
+            item = event.item
+            match item.type:
+                case "tool_call_item":
+                    yield ToolCall(
+                        name=item.tool_name or "",
+                        arguments=getattr(item.raw_item, "arguments", None),
+                        call_id=item.call_id or "",
+                    )
+                case "tool_call_output_item":
+                    yield ToolOutput(
+                        output=str(item.output),
+                        call_id=item.call_id or "",
+                    )
+
+
+async def _stream_subtool_responses(
+    buffer: SubtoolProgressBuffer,
+) -> AsyncIterator[LLMResponse]:
+    async for message in buffer.traces():
+        yield SubtoolTrace(message)
 
 
 class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
@@ -60,6 +93,7 @@ class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
 
         self._mcp = mcp_client
         tools = await self.list_mcp_tools_as_agent_tools(self._mcp)
+        buffer = SubtoolProgressBuffer(mcp_client)
 
         try:
             agent = Agent(
@@ -72,30 +106,12 @@ class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
                 agent, input=user_prompt, max_turns=None, session=session.chat_session
             )
 
-            # No touchy touchy
-            async for event in self._result.stream_events():
-                if event.type == "raw_response_event":
-                    raw = event.data
-                    if isinstance(raw, ResponseTextDeltaEvent):
-                        yield TextDelta(delta=raw.delta)
-                    elif isinstance(raw, ResponseReasoningSummaryTextDeltaEvent):
-                        yield ReasoningDelta(delta=raw.delta)
-
-                elif event.type == "run_item_stream_event":
-                    item = event.item
-                    match item.type:
-                        case "tool_call_item":
-                            yield ToolCall(
-                                name=item.tool_name or "",
-                                arguments=getattr(item.raw_item, "arguments", None),
-                                call_id=item.call_id or "",
-                            )
-                        case "tool_call_output_item":
-                            yield ToolOutput(
-                                output=str(item.output),
-                                call_id=item.call_id or "",
-                            )
-            # No touchy touchy end
+            merged = merge_aiterators(
+                _stream_llm_responses(self._result),
+                _stream_subtool_responses(buffer),
+            )
+            async for item in merged:
+                yield item
         finally:
             await self._cleanup()
 
