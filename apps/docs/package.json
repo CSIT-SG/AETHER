@@ -1,6 +1,6 @@
 {
 	"name": "aether_docs",
-	"version": "0.0.3.dev1",
+	"version": "0.0.3.dev2",
 	"private": true,
 	"scripts": {
 		"dev": "next dev",
