@@ -39,6 +39,8 @@ class ChatOrchestrator:
         self.session = session
         self._turn_active = False
         self._closed = False
+        self._active_chat_handle: TaskHandle[LLMResponse] | None = None
+        self._stop_requested = False
         self.on_turn_started = on_turn_started
         self.on_turn_finished = on_turn_finished
 
@@ -113,19 +115,45 @@ class ChatOrchestrator:
                 session=self.session,
             )
             self.handles.append(handle)
+            self._active_chat_handle = handle
 
             handler = self._handle_worker_result()
             worker_manager.consume(
                 handle,
                 on_event=lambda e: self._run_on_ida_ui_thread(lambda ev=e: handler(ev)),
                 on_error=lambda err: self._run_on_ida_ui_thread(
-                    lambda: self.chat_renderer.render_error(f"Stream failed: {err}")
+                    lambda err=err: self._on_turn_error(err)
                 ),
-                on_done=lambda: self._run_on_ida_ui_thread(lambda: self._set_turn_active(False)),
+                on_done=lambda: self._run_on_ida_ui_thread(self._finish_turn),
             )
         except Exception as error:
             self._set_turn_active(False)
             self.chat_renderer.render_error(f"Failed to start response: {error}")
+
+    def cancel_turn(self) -> None:
+        handle = self._active_chat_handle
+        if handle is None:
+            return
+
+        self._active_chat_handle = None
+        self._stop_requested = True
+
+        get_shared_worker_manager().cancel(handle.task_id)
+
+    def _on_turn_error(self, err: BaseException) -> None:
+        if self._stop_requested:
+            self._stop_requested = False
+            self.chat_renderer.render_aether_message(
+                "⏹ Generation stopped", "text", message_created=False
+            )
+            return
+
+        self.chat_renderer.render_error(f"Stream failed: {err}")
+
+    def _finish_turn(self) -> None:
+        self._active_chat_handle = None
+        self._stop_requested = False
+        self._set_turn_active(False)
 
     def _set_turn_active(self, active: bool) -> None:
         """Track whether a turn is streaming and fire the matching hook."""
@@ -176,6 +204,7 @@ class ChatOrchestrator:
         worker_manager = get_shared_worker_manager()
         self._closed = True
         self._set_turn_active(False)
+        self._active_chat_handle = None
         for handle in self.handles:
             worker_manager.cancel(handle.task_id)
         self.handles.clear()

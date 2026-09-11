@@ -8,6 +8,7 @@ from PySide6.QtGui import QFont, QKeySequence, QShortcut, QTextOption
 from shiboken6 import isValid
 
 UPARROW_ICON = "\u2191"  # ↑
+STOP_ICON = "\u25a0"  # ■
 
 
 class ChatInput(StyledComponent):  # type: ignore[misc]
@@ -15,6 +16,9 @@ class ChatInput(StyledComponent):  # type: ignore[misc]
 
     # Submit Signal
     submitted = QtCore.Signal(str)
+
+    # Stop Signal
+    stop_requested = QtCore.Signal()
 
     def __init__(
         self,
@@ -25,6 +29,7 @@ class ChatInput(StyledComponent):  # type: ignore[misc]
     def setup(self) -> None:
         self._textbox: QtWidgets.QTextEdit | None = None
         self._send_button: QtWidgets.QPushButton | None = None
+        self._stop_mode: bool = False
 
     def init_ui(self) -> None:
         """Build chat input widget as expandable text area instead of single line input"""
@@ -105,14 +110,18 @@ class ChatInput(StyledComponent):  # type: ignore[misc]
             submit_btn = cast(QtWidgets.QPushButton, self._send_button)
             submit_btn.setFixedHeight(height)
 
-    def submit_enabled(self, enabled: bool) -> None:
-        """Open or close submission by button toggle"""
-
-        cast(QtWidgets.QPushButton, self._send_button).setEnabled(enabled)
+    def set_stop_mode(self, stop_mode: bool) -> None:
+        self._stop_mode = stop_mode
+        submit_btn = cast(QtWidgets.QPushButton, self._send_button)
+        submit_btn.setText(STOP_ICON if stop_mode else UPARROW_ICON)
+        submit_btn.setObjectName("StopButton" if stop_mode else "SendButton")
+        style = submit_btn.style()
+        style.unpolish(submit_btn)
+        style.polish(submit_btn)
 
     def _submit(self) -> None:
-        submit_btn = cast(QtWidgets.QPushButton, self._send_button)
-        if not submit_btn.isEnabled():
+        if self._stop_mode:
+            self.stop_requested.emit()
             return
 
         textbox = cast(QtWidgets.QTextEdit, self._textbox)

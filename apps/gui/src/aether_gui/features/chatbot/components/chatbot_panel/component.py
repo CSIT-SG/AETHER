@@ -48,6 +48,7 @@ class ChatbotPanel(StyledComponent):  # type: ignore[misc]
 
         chat_input = ChatInput(self)
         chat_input.submitted.connect(self._on_message_submitted)
+        chat_input.stop_requested.connect(self._on_stop_requested)
         layout.addWidget(chat_input)
 
         layout.setStretchFactor(message_area, 1)
@@ -76,8 +77,11 @@ class ChatbotPanel(StyledComponent):  # type: ignore[misc]
         self.chat_orchestrator.submit_user_prompt(user_input)
 
     def _set_responding(self, responding: bool) -> None:
-        cast(ChatInput, self._chat_input).submit_enabled(not responding)
+        cast(ChatInput, self._chat_input).set_stop_mode(responding)
         cast(ResponseStatus, self._response_status).setVisible(responding)
+
+    def _on_stop_requested(self) -> None:
+        self.chat_orchestrator.cancel_turn()
 
     def style_file(self) -> Path | None:
         """Return the QSS template that paints the panel background."""
