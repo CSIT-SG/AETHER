@@ -11,6 +11,7 @@ from PySide6 import QtCore, QtWidgets
 
 from ..chat_input import ChatInput
 from ..messages.MessageArea import MessageArea
+from ..response_status import ResponseStatus
 
 
 class ChatbotPanel(StyledComponent):  # type: ignore[misc]
@@ -25,6 +26,7 @@ class ChatbotPanel(StyledComponent):  # type: ignore[misc]
         self._layout_container: QtWidgets.QVBoxLayout | None = None
         self._message_area: MessageArea | None = None
         self._chat_input: ChatInput | None = None
+        self._response_status: ResponseStatus | None = None
         self.chat_orchestrator: ChatOrchestrator
 
     def init_ui(self) -> None:
@@ -40,6 +42,10 @@ class ChatbotPanel(StyledComponent):  # type: ignore[misc]
 
         layout.addWidget(message_area)
 
+        response_status = ResponseStatus(self)
+        layout.addWidget(response_status)
+        self._response_status = response_status
+
         chat_input = ChatInput(self)
         chat_input.submitted.connect(self._on_message_submitted)
         layout.addWidget(chat_input)
@@ -53,8 +59,8 @@ class ChatbotPanel(StyledComponent):  # type: ignore[misc]
             self._message_area,
             self.mcp_client,
             self._session,
-            on_turn_started=lambda: chat_input.submit_enabled(False),
-            on_turn_finished=lambda: chat_input.submit_enabled(True),
+            on_turn_started=lambda: self._set_responding(True),
+            on_turn_finished=lambda: self._set_responding(False),
         )
 
         self._message_area.load_message_history()
@@ -69,8 +75,9 @@ class ChatbotPanel(StyledComponent):  # type: ignore[misc]
         # Backend message handling logic goes here
         self.chat_orchestrator.submit_user_prompt(user_input)
 
-    # TODO:
-    # ADD LOADING FEATURE WHILE LLM IS PROCESSING
+    def _set_responding(self, responding: bool) -> None:
+        cast(ChatInput, self._chat_input).submit_enabled(not responding)
+        cast(ResponseStatus, self._response_status).setVisible(responding)
 
     def style_file(self) -> Path | None:
         """Return the QSS template that paints the panel background."""

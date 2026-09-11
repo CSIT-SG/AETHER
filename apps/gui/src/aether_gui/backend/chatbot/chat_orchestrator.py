@@ -46,8 +46,7 @@ class ChatOrchestrator:
         current_ea = ida_kernwin.get_screen_ea()
         rpc_id = get_rpc_id()
         if rpc_id is None:
-            self.chat_renderer.render_error("RPC server does not exist")
-            raise Exception("RPC server does not exist")
+            raise RuntimeError("RPC server does not exist")
 
         task = CallToolTask()
         worker_manager = get_shared_worker_manager()
@@ -92,7 +91,7 @@ class ChatOrchestrator:
 
     def submit_user_prompt(self, prompt: str) -> None:
         """Called from IDA main thread. Returns immediately."""
-        if self._turn_active:
+        if self._turn_active or self._closed:
             return
 
         self.prompt = prompt.strip()
@@ -103,30 +102,32 @@ class ChatOrchestrator:
 
         self._set_turn_active(True)
 
-        worker_manager = get_shared_worker_manager()
+        try:
+            ida_context = self._get_context()
+            worker_manager = get_shared_worker_manager()
 
-        task = ChatBotTask()
-        handle = worker_manager.submit(
-            task,
-            ida_context=ida_context,
-            mcp_client=self.mcp_client,
-            user_prompt=self.prompt,
-            session=self.session,
-        )
-        self.handles.append(handle)
+            task = ChatBotTask()
+            handle = worker_manager.submit(
+                task,
+                ida_context=ida_context,
+                mcp_client=self.mcp_client,
+                user_prompt=self.prompt,
+                session=self.session,
+            )
+            self.handles.append(handle)
 
-        handler = self._handle_worker_result()
-        worker_manager.consume(
-            handle,
-            on_event=lambda e: self._run_on_ida_ui_thread(lambda ev=e: handler(ev)),
-            on_error=lambda err: self._run_on_ida_ui_thread(
-                lambda: (
-                    self.chat_renderer.render_error(f"Stream failed: {err}")
-                    and self._set_turn_active(False)
-                )
-            ),
-            on_done=lambda: self._run_on_ida_ui_thread(lambda: self._set_turn_active(False)),
-        )
+            handler = self._handle_worker_result()
+            worker_manager.consume(
+                handle,
+                on_event=lambda e: self._run_on_ida_ui_thread(lambda ev=e: handler(ev)),
+                on_error=lambda err: self._run_on_ida_ui_thread(
+                    lambda: self.chat_renderer.render_error(f"Stream failed: {err}")
+                ),
+                on_done=lambda: self._run_on_ida_ui_thread(lambda: self._set_turn_active(False)),
+            )
+        except Exception as error:
+            self._set_turn_active(False)
+            self.chat_renderer.render_error(f"Failed to start response: {error}")
 
     def _set_turn_active(self, active: bool) -> None:
         """Track whether a turn is streaming and fire the matching hook."""
@@ -176,7 +177,7 @@ class ChatOrchestrator:
     def shutdown(self) -> None:
         worker_manager = get_shared_worker_manager()
         self._closed = True
-        self._turn_active = False
+        self._set_turn_active(False)
         for handle in self.handles:
             worker_manager.cancel(handle.task_id)
         self.handles.clear()
