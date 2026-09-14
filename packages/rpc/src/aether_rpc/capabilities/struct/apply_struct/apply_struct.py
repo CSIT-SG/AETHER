@@ -3,6 +3,7 @@ from typing import Any
 import ida_frame
 import ida_funcs
 import ida_hexrays
+import ida_lines
 import ida_name
 import ida_typeinf
 import idaapi
@@ -59,6 +60,45 @@ class ApplyStruct(Capability):
         else:
             return Err(
                 result=f"Failed to apply Struct {struct.struct_name} on Variable {variable}."
+            )
+
+    def handle_argument(
+        self,
+        lvar: ida_hexrays.lvar_t,
+        func: dict[str, Any],
+        struct: InternalStructInfo,
+    ) -> Result[AppliedStruct]:
+
+        info = ida_hexrays.lvar_saved_info_t()
+        lvar_size = lvar.type().get_size()
+        info.ll = lvar
+        info.type = struct.tif
+        success = ida_hexrays.modify_user_lvar_info(func["ea"], ida_hexrays.MLI_TYPE, info)
+        ida_hexrays.mark_cfunc_dirty(func["ea"])
+        cfunc = ida_hexrays.decompile(func["ea"])
+        pseudocode = "\n".join(ida_lines.tag_remove(line.line) for line in cfunc.get_pseudocode())
+        if f"&{lvar.name}" in pseudocode or lvar_size != struct.tif.get_size():
+            new_tif = ida_typeinf.tinfo_t()
+            new_tif.create_ptr(struct.tif)
+            info = ida_hexrays.lvar_saved_info_t()
+            info.ll = lvar
+            info.type = new_tif
+            success = ida_hexrays.modify_user_lvar_info(func["ea"], ida_hexrays.MLI_TYPE, info)
+
+        if success:
+            ida_hexrays.mark_cfunc_dirty(func["ea"])
+            return Ok(
+                result=AppliedStruct(
+                    function_name=func["name"],
+                    struct_id=struct.struct_id,
+                    struct_name=struct.struct_name,
+                    variable=lvar.name,
+                    address=hex(func["ea"]),
+                )
+            )
+        else:
+            return Err(
+                result=f"Failed to apply Struct {struct.struct_name} on Variable {lvar.name}."
             )
 
     def execute(
@@ -118,6 +158,8 @@ class ApplyStruct(Capability):
             lvars[lvar.get_stkoff()] = lvar
             if variable != lvar.name:
                 continue
+            if lvar.is_arg_var:
+                return self.handle_argument(lvar, func, struct_info)
             if not lvar.type().is_ptr():
                 frame_offset = lvar.get_stkoff()
                 break
