@@ -65,8 +65,13 @@ jobs:
             git tag -f "$VERSION"
           fi
 
-          # commitizen's notes for this version only, not GitHub's PR-title list
-          uv run cz changelog "$VERSION" --dry-run > RELEASE_NOTES.md
+          # `cz changelog "$VERSION"` only spans the previous (.dev) tag, so it comes out empty;
+          # lift the section cz bump --changelog just wrote, which merges the dev series.
+          # https://github.com/commitizen-tools/commitizen/issues/1367
+          awk -v v="$VERSION" '/^## /{p = index($0, "## " v " ") == 1} p' CHANGELOG.md > RELEASE_NOTES.md
+          if ! grep -q '^- ' RELEASE_NOTES.md; then
+            echo "::warning::No changelog entries found for $VERSION in CHANGELOG.md."
+          fi
 
           git push origin "$BRANCH"
           git push origin "$VERSION"
