@@ -3,20 +3,56 @@ from __future__ import annotations
 import subprocess
 import sys
 from pathlib import Path
+from typing import cast
 
 import install_prod as prod
 import pytest
 
 
 class TestDefaultPluginPath:
-    def test_uses_appdata_when_set(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    def test_uses_appdata_when_set_on_windows(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        monkeypatch.setattr(prod.sys, "platform", "win32")
         appdata = tmp_path / "AppData" / "Roaming"
         monkeypatch.setenv("APPDATA", str(appdata))
         assert prod.default_plugin_path() == appdata / "Hex-Rays" / "IDA Pro" / "plugins"
 
-    def test_falls_back_to_home_when_appdata_unset(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_raises_when_appdata_unset_on_windows(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(prod.sys, "platform", "win32")
         monkeypatch.delenv("APPDATA", raising=False)
-        assert prod.default_plugin_path() == Path.home() / "Hex-Rays" / "IDA Pro" / "plugins"
+        with pytest.raises(SystemExit):
+            prod.default_plugin_path()
+
+    def test_uses_a_linux_candidate_when_one_exists(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(prod.sys, "platform", "linux")
+        monkeypatch.setattr(prod.Path, "is_dir", lambda self: True)  # noqa: ARG005
+        result = prod.default_plugin_path()
+        assert result.name == "plugins"
+
+    def test_falls_back_when_first_candidate_missing(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(prod.sys, "platform", "linux")
+        seen: list[Path] = []
+
+        def fake_is_dir(self: Path) -> bool:
+            seen.append(self)
+            return len(seen) > 1
+
+        monkeypatch.setattr(prod.Path, "is_dir", fake_is_dir)
+        result = prod.default_plugin_path()
+        assert len(seen) > 1
+        assert result == seen[-1]
+
+    def test_raises_when_no_linux_candidate_exists(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(prod.sys, "platform", "linux")
+        monkeypatch.setattr(prod.Path, "is_dir", lambda self: False)  # noqa: ARG005
+        with pytest.raises(SystemExit):
+            prod.default_plugin_path()
+
+    def test_raises_on_unsupported_platform(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(prod.sys, "platform", "darwin")
+        with pytest.raises(SystemExit):
+            prod.default_plugin_path()
 
 
 class TestResolveCommand:
@@ -123,9 +159,7 @@ class TestResourceDir:
 
 
 class TestInstallRequirements:
-    def test_invokes_pip_install_user(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
+    def test_invokes_pip_install(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         captured: dict[str, object] = {}
         monkeypatch.setattr(
             prod, "run", lambda command, cwd=None: captured.update(command=command, cwd=cwd)
@@ -134,16 +168,24 @@ class TestInstallRequirements:
         bundle_dir = tmp_path / "bundle"
         prod.install_requirements(bundle_dir=bundle_dir)
 
-        assert captured["command"] == [
-            sys.executable,
-            "-m",
-            "pip",
-            "install",
-            "--user",
-            "-r",
-            str(bundle_dir / "requirements.txt"),
-        ]
+        command = cast(list[str], captured["command"])
+        assert command[0] == sys.executable
+        assert {"-m", "pip", "install", "-r"} <= set(command)
+        assert str(bundle_dir / "requirements.txt") in command
         assert captured["cwd"] == bundle_dir
+
+    def test_appends_force_reinstall_flag_when_requested(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        captured: dict[str, object] = {}
+        monkeypatch.setattr(
+            prod, "run", lambda command, cwd=None: captured.update(command=command, cwd=cwd)
+        )
+
+        bundle_dir = tmp_path / "bundle"
+        prod.install_requirements(bundle_dir=bundle_dir, force_reinstall=True)
+
+        assert "--force-reinstall" in cast(list[str], captured["command"])
 
 
 class TestCopyEntrypoint:

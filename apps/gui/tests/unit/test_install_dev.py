@@ -9,14 +9,49 @@ import pytest
 
 
 class TestDefaultPluginPath:
-    def test_uses_appdata_when_set(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    def test_uses_appdata_when_set_on_windows(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        monkeypatch.setattr(dev.sys, "platform", "win32")
         appdata = tmp_path / "AppData" / "Roaming"
         monkeypatch.setenv("APPDATA", str(appdata))
         assert dev.default_plugin_path() == appdata / "Hex-Rays" / "IDA Pro" / "plugins"
 
-    def test_falls_back_to_home_when_appdata_unset(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_raises_when_appdata_unset_on_windows(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(dev.sys, "platform", "win32")
         monkeypatch.delenv("APPDATA", raising=False)
-        assert dev.default_plugin_path() == Path.home() / "Hex-Rays" / "IDA Pro" / "plugins"
+        with pytest.raises(SystemExit):
+            dev.default_plugin_path()
+
+    def test_uses_a_linux_candidate_when_one_exists(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(dev.sys, "platform", "linux")
+        monkeypatch.setattr(dev.Path, "is_dir", lambda self: True)  # noqa: ARG005
+        result = dev.default_plugin_path()
+        assert result.name == "plugins"
+
+    def test_falls_back_when_first_candidate_missing(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(dev.sys, "platform", "linux")
+        seen: list[Path] = []
+
+        def fake_is_dir(self: Path) -> bool:
+            seen.append(self)
+            return len(seen) > 1
+
+        monkeypatch.setattr(dev.Path, "is_dir", fake_is_dir)
+        result = dev.default_plugin_path()
+        assert len(seen) > 1
+        assert result == seen[-1]
+
+    def test_raises_when_no_linux_candidate_exists(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(dev.sys, "platform", "linux")
+        monkeypatch.setattr(dev.Path, "is_dir", lambda self: False)  # noqa: ARG005
+        with pytest.raises(SystemExit):
+            dev.default_plugin_path()
+
+    def test_raises_on_unsupported_platform(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(dev.sys, "platform", "darwin")
+        with pytest.raises(SystemExit):
+            dev.default_plugin_path()
 
 
 class TestResolveCommand:

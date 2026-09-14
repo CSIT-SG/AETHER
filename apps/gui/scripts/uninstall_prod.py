@@ -23,13 +23,13 @@ def default_plugin_path() -> Path:
             return Path(appdata) / "Hex-Rays" / "IDA Pro" / "plugins"
         raise SystemExit("APPDATA is not set; pass --plugin-path explicitly")
     if sys.platform.startswith("linux"):
+        opt_dir = Path("/opt")
         for version in ("9.3", "9.2"):
-            candidate = Path(f"/opt/ida-pro-{version}/plugins")
+            candidate = opt_dir / f"ida-pro-{version}" / "plugins"
             if candidate.is_dir():
                 return candidate
         raise SystemExit(
-            "Could not find an IDA Pro install under /opt/ida-pro-92 or /opt/ida-pro-93; "
-            "pass --plugin-path explicitly"
+            f"Could not find an IDA Pro install under {opt_dir}; pass --plugin-path explicitly"
         )
     raise SystemExit("Unsupported platform; pass --plugin-path explicitly")
 
