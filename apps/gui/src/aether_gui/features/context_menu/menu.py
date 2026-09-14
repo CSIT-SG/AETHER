@@ -6,6 +6,7 @@ from aether_gui.features.annotator import AnnotatorHandler
 from aether_gui.features.chatbot import ChatbotHandler
 from aether_gui.features.manage_struct import ManageStructHandler
 from aether_gui.features.settings_menu import CtxSettingsMenuHandler
+from aether_gui.features.unflatten_function import UnflattenHandler
 from aether_gui.features.whats_new import WhatsNewHandler
 from aether_gui.utils.mcp import MCPClient
 from aether_utils.config import get_config
@@ -51,6 +52,9 @@ class AetherUIHooks(ida_kernwin.UI_Hooks):
             ),
             ContextMenuItem(
                 "aether:manage_struct", "Manage Struct", children=manage_struct_operations
+            ),
+            ContextMenuItem(
+                "aether:unflattner", "Unflatten Function", UnflattenHandler(self.mcp_client)
             ),
             ContextMenuItem("aether:settings", "AETHER Settings", CtxSettingsMenuHandler()),
             ContextMenuItem("aether:whats_new", "What's New", WhatsNewHandler()),
