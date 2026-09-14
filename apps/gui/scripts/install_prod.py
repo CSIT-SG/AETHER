@@ -14,10 +14,21 @@ PYTHON_VERSIONS = {(3, 12), (3, 13)}
 
 
 def default_plugin_path() -> Path:
-    appdata = os.environ.get("APPDATA")
-    if appdata:
-        return Path(appdata) / "Hex-Rays" / "IDA Pro" / "plugins"
-    return Path.home() / "Hex-Rays" / "IDA Pro" / "plugins"
+    if sys.platform == "win32":
+        appdata = os.environ.get("APPDATA")
+        if appdata:
+            return Path(appdata) / "Hex-Rays" / "IDA Pro" / "plugins"
+        raise SystemExit("APPDATA is not set; pass --plugin-path explicitly")
+    if sys.platform.startswith("linux"):
+        for version in ("9.3", "9.2"):
+            candidate = Path(f"/opt/ida-pro-{version}/plugins")
+            if candidate.is_dir():
+                return candidate
+        raise SystemExit(
+            "Could not find an IDA Pro install under /opt/ida-pro-92 or /opt/ida-pro-93; "
+            "pass --plugin-path explicitly"
+        )
+    raise SystemExit("Unsupported platform; pass --plugin-path explicitly")
 
 
 def parse_args() -> argparse.Namespace:
@@ -25,8 +36,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--plugin-path",
         type=Path,
-        default=default_plugin_path(),
-        help="IDA plugins directory to install into",
+        default=None,
+        help="IDA plugins directory to install into (auto-detected if omitted)",
     )
     parser.add_argument(
         "--force-reinstall",
@@ -34,7 +45,10 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         default=False,
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.plugin_path is None:
+        args.plugin_path = default_plugin_path()
+    return args
 
 
 def resolve_command(*names: str) -> str:
@@ -74,7 +88,6 @@ def install_requirements(*, bundle_dir: Path, force_reinstall: bool = False) -> 
         "-m",
         "pip",
         "install",
-        "--user",
         "-r",
         str(bundle_dir / "requirements.txt"),
     ]
