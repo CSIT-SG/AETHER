@@ -1,6 +1,6 @@
 [project]
 name = "aether_rpc"
-version = "0.0.3.dev10"
+version = "0.0.3.dev11"
 description = "AETHER RPC library"
 readme = "README.md"
 requires-python = ">=3.12"
