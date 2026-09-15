@@ -49,3 +49,24 @@ class TestExecuteIDAPython:
     def test_undefined_name_returns_failure(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.execute_idapython(code="print(this_does_not_exist)")
         assert result.success is False
+        assert "this_does_not_exist" in result.result
+
+    def test_infinite_loop_times_out(self, ida_client: rpyc.Connection) -> None:
+        result = ida_client.root.execute_idapython(code="while True: pass", timeout=1)
+        assert result.success is False
+        assert "timeout" in result.result
+
+    def test_timeout_not_swallowed_by_bare_except(self, ida_client: rpyc.Connection) -> None:
+        code = "\n".join(
+            [
+                "print('started')",
+                "while True:",
+                "    try:",
+                "        pass",
+                "    except:",
+                "        pass",
+            ]
+        )
+        result = ida_client.root.execute_idapython(code=code, timeout=1)
+        assert result.success is False
+        assert "started" in result.result
