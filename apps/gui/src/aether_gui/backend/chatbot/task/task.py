@@ -158,6 +158,7 @@ class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
             args = json.loads(args_json) if args_json else {}
             task = await client.call_fastmcp_tool_task(tool_name=tool.name, args=args)
             self._active_tool_tasks.add(task)
+            poller = asyncio.create_task(client.poll_subtool_traces(task))
             try:
                 result = await task.result()
                 return self._deserialize_flat(result)
@@ -165,6 +166,9 @@ class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
                 return f"Tool {tool.name!r} is unavailable: {e}"
             finally:
                 self._active_tool_tasks.discard(task)
+                poller.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await poller
 
         return FunctionTool(
             name=tool.name,

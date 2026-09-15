@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from aether_gui.utils.mcp.types import LogSubscription, ServerLogListener, ServerProgressMessage
@@ -33,19 +34,6 @@ class MCPClient:
         """Deregister a previously-subscribed listener"""
         self._log_listeners.discard(listener)
 
-    async def _handle_progress(
-        self, progress: float, total: float | None, message: str | None
-    ) -> None:
-        """Broadcast each server progress update using fastmcp `progress_handler`"""
-        if not self._log_listeners:
-            return
-        event = ServerProgressMessage(message=message, progress=progress, total=total)
-        for listener in list(self._log_listeners):
-            try:
-                await listener(event)
-            except Exception:
-                self.logger.exception("Server progress listener failed")
-
     def is_connected(self) -> bool:
         """Check if the client is connected to the MCP server."""
         return self._client is not None and self._client.is_connected()
@@ -56,7 +44,7 @@ class MCPClient:
             return
 
         transport = StreamableHttpTransport(url=self.mcp_url)
-        self._client = Client(transport, progress_handler=self._handle_progress)
+        self._client = Client(transport)
 
         try:
             await self._client.__aenter__()  # type: ignore[no-untyped-call]
@@ -101,3 +89,45 @@ class MCPClient:
         return await call_tool_task(
             self._client, tool_name, arguments=arguments, raise_on_error=False
         )
+
+    def _broadcast_progress(
+        self, message: str | None, progress: float = 0, total: float | None = None
+    ) -> None:
+        """Fan a subtool trace out to every subscribed listener."""
+        if not self._log_listeners:
+            return
+        event = ServerProgressMessage(message=message, progress=progress, total=total)
+        for listener in list(self._log_listeners):
+            try:
+                coro = listener(event)
+            except Exception:
+                self.logger.exception("Server progress listener failed")
+                continue
+            asyncio.ensure_future(coro)
+
+    async def poll_subtool_traces(self, task: ToolTask) -> None:
+        """Poll `task.status()` and broadcast new `status_message` traces."""
+        terminal = {"completed", "failed", "cancelled"}
+        last_message: str | None = None
+        default_interval = 0.5
+
+        while True:
+            try:
+                status = await task.status()
+            except Exception:
+                self.logger.exception("Subtool poll failed")
+                return
+
+            if status.status_message and status.status_message != last_message:
+                last_message = status.status_message
+                self._broadcast_progress(status.status_message)
+
+            if status.status in terminal:
+                return
+
+            interval = (
+                status.poll_interval_ms / 1000
+                if status.poll_interval_ms is not None and status.poll_interval_ms > 0
+                else default_interval
+            )
+            await asyncio.sleep(interval)
