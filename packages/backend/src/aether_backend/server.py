@@ -1,6 +1,7 @@
 from aether_utils.config import get_config
 from aether_utils.get_version import get_version
 from fastmcp import FastMCP
+from fastmcp.server.middleware.timing import DetailedTimingMiddleware
 from fastmcp_tasks import TasksExtension
 from starlette.applications import Starlette
 from starlette.routing import Mount
