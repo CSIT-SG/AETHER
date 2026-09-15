@@ -100,7 +100,7 @@ def remove_entrypoint(plugin_path: Path) -> None:
 
 def remove_data_dirs() -> None:
     shutil.rmtree(
-        user_data_dir(appauthor=APP_AUTHOR),
+        user_data_dir(appname=APP_AUTHOR, appauthor=False),
         ignore_errors=True,
     )
 

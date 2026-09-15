@@ -6,7 +6,10 @@ from .constants import AUTHORNAME, AppName
 
 
 def _get_base_dir(appname: AppName) -> Path:
-    return Path(user_data_dir(appname=appname, appauthor=AUTHORNAME))
+    # platformdirs ignores appauthor on Unix, so passing it there would put apps
+    # straight into ~/.local/share (e.g. ~/.local/share/gui). Carry the author in
+    # appname instead; Windows resolves to the same path it always has.
+    return Path(user_data_dir(appname=AUTHORNAME, appauthor=False)) / appname
 
 
 def _mkdir_if_not_exists(path: Path) -> None:

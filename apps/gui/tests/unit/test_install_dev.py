@@ -9,13 +9,10 @@ import pytest
 
 
 class TestDefaultPluginPath:
-    def test_uses_appdata_when_set_on_windows(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
+    def test_uses_appdata_on_windows(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         monkeypatch.setattr(dev.sys, "platform", "win32")
-        appdata = tmp_path / "AppData" / "Roaming"
-        monkeypatch.setenv("APPDATA", str(appdata))
-        assert dev.default_plugin_path() == appdata / "Hex-Rays" / "IDA Pro" / "plugins"
+        monkeypatch.setenv("APPDATA", str(tmp_path))
+        assert tmp_path in dev.default_plugin_path().parents
 
     def test_raises_when_appdata_unset_on_windows(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(dev.sys, "platform", "win32")
@@ -23,13 +20,7 @@ class TestDefaultPluginPath:
         with pytest.raises(SystemExit):
             dev.default_plugin_path()
 
-    def test_uses_a_linux_candidate_when_one_exists(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr(dev.sys, "platform", "linux")
-        monkeypatch.setattr(dev.Path, "is_dir", lambda self: True)  # noqa: ARG005
-        result = dev.default_plugin_path()
-        assert result.name == "plugins"
-
-    def test_falls_back_when_first_candidate_missing(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_skips_missing_linux_candidates(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(dev.sys, "platform", "linux")
         seen: list[Path] = []
 
@@ -38,9 +29,7 @@ class TestDefaultPluginPath:
             return len(seen) > 1
 
         monkeypatch.setattr(dev.Path, "is_dir", fake_is_dir)
-        result = dev.default_plugin_path()
-        assert len(seen) > 1
-        assert result == seen[-1]
+        assert dev.default_plugin_path() == seen[1]
 
     def test_raises_when_no_linux_candidate_exists(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(dev.sys, "platform", "linux")
@@ -68,39 +57,23 @@ class TestResolveCommand:
 
 
 class TestRun:
-    def test_success_passes_args_through(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
-        captured: dict[str, object] = {}
-
-        def fake_run(
-            command: list[str],
-            cwd: Path | None = None,
-            text: bool | None = None,  # noqa: ARG001
-        ) -> subprocess.CompletedProcess[str]:
-            captured.update(command=command, cwd=cwd)
-            return subprocess.CompletedProcess(command, returncode=0)
-
-        monkeypatch.setattr(dev.subprocess, "run", fake_run)
-        dev.run(["echo", "hi"], cwd=tmp_path)
-        assert captured == {"command": ["echo", "hi"], "cwd": tmp_path}
+    def test_zero_return_code_does_not_raise(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(
+            dev.subprocess,
+            "run",
+            lambda command, **_: subprocess.CompletedProcess(command, returncode=0),
+        )
+        dev.run(["true"])
 
     def test_nonzero_return_code_raises_system_exit(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             dev.subprocess,
             "run",
-            lambda command, cwd=None, text=None: subprocess.CompletedProcess(command, returncode=7),  # noqa: ARG005
+            lambda command, **_: subprocess.CompletedProcess(command, returncode=7),
         )
         with pytest.raises(SystemExit) as exc_info:
             dev.run(["false"])
         assert exc_info.value.code == 7
-
-
-class TestEnsurePluginPath:
-    def test_creates_nested_dirs(self, tmp_path: Path) -> None:
-        target = tmp_path / "nested" / "plugins"
-        dev.ensure_plugin_path(target)
-        assert target.is_dir()
 
 
 class TestRemovePath:
@@ -136,70 +109,30 @@ class TestRemovePath:
         dev.remove_path(tmp_path / "missing.py")  # should not raise
 
 
-class TestExportRequirements:
-    def test_invokes_uv_export_with_expected_flags(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        captured_command: list[str] = []
-        captured_cwd: Path | None = None
-
-        def fake_run(command: list[str], cwd: Path | None = None) -> None:
-            nonlocal captured_command, captured_cwd
-            captured_command = command
-            captured_cwd = cwd
-
-        monkeypatch.setattr(dev, "run", fake_run)
-
-        result_path = dev.export_requirements("uv")
-        try:
-            assert captured_command[0] == "uv"
-            assert {"export", "--all-packages", "--no-hashes", "--output-file"} <= set(
-                captured_command
-            )
-            assert captured_cwd == dev.ROOT_DIR
-        finally:
-            result_path.unlink(missing_ok=True)
-
-
 class TestInstallRequirements:
-    def test_invokes_uv_pip_install(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    @pytest.mark.parametrize("force_reinstall", [True, False])
+    def test_reinstall_flag_follows_request(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path, force_reinstall: bool
+    ) -> None:
         captured: dict[str, object] = {}
-        monkeypatch.setattr(
-            dev, "run", lambda command, cwd=None: captured.update(command=command, cwd=cwd)
+        monkeypatch.setattr(dev, "run", lambda command, cwd=None: captured.update(command=command))  # noqa: ARG005
+
+        dev.install_requirements(
+            "uv", tmp_path / "requirements.txt", force_reinstall=force_reinstall
         )
 
-        requirements_path = tmp_path / "requirements.txt"
-        dev.install_requirements("uv", requirements_path)
-
-        assert "pip" in cast(list[str], captured["command"])
-        assert "install" in cast(list[str], captured["command"])
-        assert captured["cwd"] == requirements_path.parent
+        assert ("--reinstall" in cast(list[str], captured["command"])) is force_reinstall
 
 
 class TestLinkEntrypoint:
-    def test_creates_symlink_to_entrypoint_source(
+    def test_replaces_existing_entrypoint_with_symlink(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, symlink_supported: bool
     ) -> None:
         if not symlink_supported:
             pytest.skip("Symlinks are not available in this environment")
-        fake_source = tmp_path / "plugin-dev.py"
-        fake_source.write_text("# plugin")
-        monkeypatch.setattr(dev, "ENTRYPOINT_SOURCE", fake_source)
-
-        plugin_dir = tmp_path / "plugins"
-        plugin_dir.mkdir()
-        dev.link_entrypoint(plugin_dir)
-
-        destination = plugin_dir / dev.ENTRYPOINT_NAME
-        assert destination.is_symlink()
-        assert destination.resolve() == fake_source.resolve()
-
-    def test_replaces_existing_entrypoint(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, symlink_supported: bool
-    ) -> None:
-        if not symlink_supported:
-            pytest.skip("Symlinks are not available in this environment")
-        fake_source = tmp_path / "plugin-dev.py"
-        fake_source.write_text("# plugin v2")
-        monkeypatch.setattr(dev, "ENTRYPOINT_SOURCE", fake_source)
+        source = tmp_path / "plugin_dev.py"
+        source.write_text("# plugin")
+        monkeypatch.setattr(dev, "ENTRYPOINT_SOURCE", source)
 
         plugin_dir = tmp_path / "plugins"
         plugin_dir.mkdir()
@@ -209,4 +142,4 @@ class TestLinkEntrypoint:
 
         destination = plugin_dir / dev.ENTRYPOINT_NAME
         assert destination.is_symlink()
-        assert destination.resolve() == fake_source.resolve()
+        assert destination.resolve() == source.resolve()

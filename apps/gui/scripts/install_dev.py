@@ -103,10 +103,13 @@ def export_requirements(uv_path: str) -> Path:
 def install_requirements(
     uv_path: str, requirements_path: Path, *, force_reinstall: bool = False
 ) -> None:
-    cmd = [uv_path, "pip", "install", "-r", str(requirements_path)]
+    # Without --python, uv looks for a venv relative to the cwd, which is the
+    # tempdir holding the exported requirements, and fails with "No virtual
+    # environment found". Target the interpreter running this script instead.
+    cmd = [uv_path, "pip", "install", "--python", sys.executable, "-r", str(requirements_path)]
     if force_reinstall:
         cmd.append("--reinstall")
-    run(cmd, cwd=requirements_path.parent)
+    run(cmd, cwd=ROOT_DIR)
 
 
 def link_entrypoint(plugin_path: Path) -> None:

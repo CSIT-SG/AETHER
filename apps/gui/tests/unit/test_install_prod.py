@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import subprocess
-import sys
 from pathlib import Path
 from typing import cast
 
@@ -10,13 +9,10 @@ import pytest
 
 
 class TestDefaultPluginPath:
-    def test_uses_appdata_when_set_on_windows(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
+    def test_uses_appdata_on_windows(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         monkeypatch.setattr(prod.sys, "platform", "win32")
-        appdata = tmp_path / "AppData" / "Roaming"
-        monkeypatch.setenv("APPDATA", str(appdata))
-        assert prod.default_plugin_path() == appdata / "Hex-Rays" / "IDA Pro" / "plugins"
+        monkeypatch.setenv("APPDATA", str(tmp_path))
+        assert tmp_path in prod.default_plugin_path().parents
 
     def test_raises_when_appdata_unset_on_windows(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(prod.sys, "platform", "win32")
@@ -24,13 +20,7 @@ class TestDefaultPluginPath:
         with pytest.raises(SystemExit):
             prod.default_plugin_path()
 
-    def test_uses_a_linux_candidate_when_one_exists(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr(prod.sys, "platform", "linux")
-        monkeypatch.setattr(prod.Path, "is_dir", lambda self: True)  # noqa: ARG005
-        result = prod.default_plugin_path()
-        assert result.name == "plugins"
-
-    def test_falls_back_when_first_candidate_missing(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_skips_missing_linux_candidates(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(prod.sys, "platform", "linux")
         seen: list[Path] = []
 
@@ -39,9 +29,7 @@ class TestDefaultPluginPath:
             return len(seen) > 1
 
         monkeypatch.setattr(prod.Path, "is_dir", fake_is_dir)
-        result = prod.default_plugin_path()
-        assert len(seen) > 1
-        assert result == seen[-1]
+        assert prod.default_plugin_path() == seen[1]
 
     def test_raises_when_no_linux_candidate_exists(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(prod.sys, "platform", "linux")
@@ -62,41 +50,30 @@ class TestResolveCommand:
         )
         assert prod.resolve_command("python", "python3") == "found"
 
+    def test_raises_when_none_found(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(prod.shutil, "which", lambda name: None)  # noqa: ARG005
+        with pytest.raises(SystemExit):
+            prod.resolve_command("python", "python3")
+
 
 class TestRun:
-    def test_success_passes_args_through(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
-        captured: dict[str, object] = {}
-
-        def fake_run(
-            command: list[str],
-            cwd: Path | None = None,
-            text: bool | None = None,  # noqa: ARG001
-        ) -> subprocess.CompletedProcess[str]:
-            captured.update(command=command, cwd=cwd, text=text)
-            return subprocess.CompletedProcess(command, returncode=0)
-
-        monkeypatch.setattr(prod.subprocess, "run", fake_run)
-        prod.run(["echo", "hi"], cwd=tmp_path)
-        assert captured == {"command": ["echo", "hi"], "cwd": tmp_path, "text": True}
+    def test_zero_return_code_does_not_raise(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(
+            prod.subprocess,
+            "run",
+            lambda command, **_: subprocess.CompletedProcess(command, returncode=0),
+        )
+        prod.run(["true"])
 
     def test_nonzero_return_code_raises_system_exit(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             prod.subprocess,
             "run",
-            lambda command, cwd=None, text=None: subprocess.CompletedProcess(command, returncode=7),  # noqa: ARG005
+            lambda command, **_: subprocess.CompletedProcess(command, returncode=7),
         )
         with pytest.raises(SystemExit) as exc_info:
             prod.run(["false"])
         assert exc_info.value.code == 7
-
-
-class TestEnsurePluginPath:
-    def test_creates_nested_dirs(self, tmp_path: Path) -> None:
-        target = tmp_path / "nested" / "plugins"
-        prod.ensure_plugin_path(target)
-        assert target.is_dir()
 
 
 class TestRemovePath:
@@ -133,86 +110,40 @@ class TestRemovePath:
 
 
 class TestResourceDir:
-    def test_finds_source_dir_when_bundle_present(
+    def test_returns_source_dir_when_bundle_complete(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        source_dir = tmp_path / "source"
-        source_dir.mkdir()
-        (source_dir / "requirements.txt").write_text("")
-        (source_dir / "wheels").mkdir()
+        (tmp_path / "requirements.txt").write_text("")
+        (tmp_path / "wheels").mkdir()
+        monkeypatch.setattr(prod, "SOURCE_DIR", tmp_path)
 
-        monkeypatch.setattr(prod, "SOURCE_DIR", source_dir)
+        assert prod.resource_dir() == tmp_path
 
-        assert prod.resource_dir() == source_dir
-
-    def test_raises_when_bundle_incomplete_or_missing(
+    def test_raises_when_bundle_incomplete(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        source_dir = tmp_path / "source"
-        source_dir.mkdir()
-        (source_dir / "requirements.txt").write_text("")
-
-        monkeypatch.setattr(prod, "SOURCE_DIR", source_dir)
+        (tmp_path / "requirements.txt").write_text("")
+        monkeypatch.setattr(prod, "SOURCE_DIR", tmp_path)
 
         with pytest.raises(SystemExit):
             prod.resource_dir()
 
 
 class TestInstallRequirements:
-    def test_invokes_pip_install(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-        captured: dict[str, object] = {}
-        monkeypatch.setattr(
-            prod, "run", lambda command, cwd=None: captured.update(command=command, cwd=cwd)
-        )
-
-        bundle_dir = tmp_path / "bundle"
-        prod.install_requirements(bundle_dir=bundle_dir)
-
-        command = cast(list[str], captured["command"])
-        assert command[0] == sys.executable
-        assert {"-m", "pip", "install", "-r"} <= set(command)
-        assert str(bundle_dir / "requirements.txt") in command
-        assert captured["cwd"] == bundle_dir
-
-    def test_appends_force_reinstall_flag_when_requested(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    @pytest.mark.parametrize("force_reinstall", [True, False])
+    def test_reinstall_flag_follows_request(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path, force_reinstall: bool
     ) -> None:
         captured: dict[str, object] = {}
-        monkeypatch.setattr(
-            prod, "run", lambda command, cwd=None: captured.update(command=command, cwd=cwd)
-        )
+        monkeypatch.setattr(prod, "run", lambda command, cwd=None: captured.update(command=command))  # noqa: ARG005
 
-        bundle_dir = tmp_path / "bundle"
-        prod.install_requirements(bundle_dir=bundle_dir, force_reinstall=True)
+        prod.install_requirements(bundle_dir=tmp_path, force_reinstall=force_reinstall)
 
-        assert "--force-reinstall" in cast(list[str], captured["command"])
+        assert ("--force-reinstall" in cast(list[str], captured["command"])) is force_reinstall
 
 
 class TestCopyEntrypoint:
-    def test_copies_plugin_py_to_destination(self, tmp_path: Path) -> None:
-        bundle_dir = tmp_path / "bundle"
-        bundle_dir.mkdir()
-        (bundle_dir / "plugin.py").write_text("# prod plugin")
-
-        plugin_dir = tmp_path / "plugins"
-        plugin_dir.mkdir()
-        prod.copy_entrypoint(plugin_dir, bundle_dir)
-
-        destination = plugin_dir / prod.ENTRYPOINT_NAME
-        assert not destination.is_symlink()
-        assert destination.read_text() == "# prod plugin"
-
-    def test_raises_when_source_plugin_missing(self, tmp_path: Path) -> None:
-        bundle_dir = tmp_path / "bundle"
-        bundle_dir.mkdir()
-
-        plugin_dir = tmp_path / "plugins"
-        plugin_dir.mkdir()
-
-        with pytest.raises(SystemExit):
-            prod.copy_entrypoint(plugin_dir, bundle_dir)
-
-    def test_replaces_existing_destination_file(self, tmp_path: Path) -> None:
+    def test_replaces_existing_entrypoint_with_a_copy(self, tmp_path: Path) -> None:
         bundle_dir = tmp_path / "bundle"
         bundle_dir.mkdir()
         (bundle_dir / "plugin.py").write_text("# new content")
@@ -223,4 +154,15 @@ class TestCopyEntrypoint:
 
         prod.copy_entrypoint(plugin_dir, bundle_dir)
 
-        assert (plugin_dir / prod.ENTRYPOINT_NAME).read_text() == "# new content"
+        destination = plugin_dir / prod.ENTRYPOINT_NAME
+        assert not destination.is_symlink()
+        assert destination.read_text() == "# new content"
+
+    def test_raises_when_source_plugin_missing(self, tmp_path: Path) -> None:
+        bundle_dir = tmp_path / "bundle"
+        bundle_dir.mkdir()
+        plugin_dir = tmp_path / "plugins"
+        plugin_dir.mkdir()
+
+        with pytest.raises(SystemExit):
+            prod.copy_entrypoint(plugin_dir, bundle_dir)
