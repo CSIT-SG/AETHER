@@ -194,9 +194,7 @@ class ChatOrchestrator:
             elif isinstance(result, SubtoolTrace):
                 last_message_type = "progress"
                 message_created = True
-                self.chat_renderer.render_subtool_trace(
-                    str(result), message_created=current_created
-                )
+                self.chat_renderer.render_tool_message(str(result), message_created=current_created)
 
         return _call_renderer
 
