@@ -1,6 +1,7 @@
 from typing import cast
 
 import ida_kernwin
+from aether_gui.utils.constants import WINDOW_PREFIX
 from PySide6 import QtGui, QtWidgets
 
 
@@ -8,7 +9,7 @@ class UnflattenOutputWindow(ida_kernwin.PluginForm):
     """Dockable view with a single block of replaceable text."""
 
     def __init__(
-        self, title: str = "AETHER Unflatten Function", initial: str = "Loading..."
+        self, title: str = f"{WINDOW_PREFIX} Unflatten Function", initial: str = "Loading..."
     ) -> None:
         super().__init__()
         self._title: str = title
