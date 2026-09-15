@@ -55,7 +55,7 @@ jobs:
             exit 1
           fi
 
-          uv run cz bump --yes --no-verify --changelog --increment "$INCREMENT"
+          uv run cz bump --yes --no-verify --increment "$INCREMENT"
           VERSION="$(uv run cz version --project)" # tag_format is "$version"
 
           # cz bump never touches the lockfile; re-tag so the tag names the tree that builds
@@ -65,12 +65,10 @@ jobs:
             git tag -f "$VERSION"
           fi
 
-          # `cz changelog "$VERSION"` only spans the previous (.dev) tag, so it comes out empty;
-          # lift the section cz bump --changelog just wrote, which merges the dev series.
-          # https://github.com/commitizen-tools/commitizen/issues/1367
-          awk -v v="$VERSION" '/^## /{p = index($0, "## " v " ") == 1} p' CHANGELOG.md > RELEASE_NOTES.md
+          PREV_STABLE="$(git tag --list --sort=-v:refname | grep -vE '\.dev[0-9]+$' | grep -vxF "$VERSION" | head -1)"
+          uv run cz changelog --dry-run --merge-prerelease --unreleased-version "$VERSION" ${PREV_STABLE:+--start-rev "$PREV_STABLE"} > RELEASE_NOTES.md
           if ! grep -q '^- ' RELEASE_NOTES.md; then
-            echo "::warning::No changelog entries found for $VERSION in CHANGELOG.md."
+            echo "::warning::No changelog entries found for $VERSION."
           fi
 
           git push origin "$BRANCH"
