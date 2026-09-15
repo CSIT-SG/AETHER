@@ -64,6 +64,7 @@ class ChatInput(StyledComponent):  # type: ignore[misc]
         # Submit Button
         submit_btn = QtWidgets.QPushButton(UPARROW_ICON, self)
         submit_btn.clicked.connect(self._submit)
+        submit_btn.setToolTip("Submit (Ctrl + Enter)")
         submit_btn.setObjectName("SendButton")
         submit_btn.setSizePolicy(
             QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred
