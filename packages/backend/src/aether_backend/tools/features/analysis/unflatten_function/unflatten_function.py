@@ -48,7 +48,7 @@ async def unflatten(
     result = Runner.run_streamed(
         agent,
         context=SubagentToolDependencies(service),
-        input=f"Deobfuscate the function at address {function_address}. Return the deobfuscated pseudocode.\n{custom_prompt}",
+        input=f"Deobfuscate the function {function_name}. Return the deobfuscated pseudocode.\n{custom_prompt}",
         max_turns=None,
     )
 
