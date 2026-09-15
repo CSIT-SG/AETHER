@@ -32,4 +32,6 @@ async def create_struct(
         successfully and whose ``result`` contains the created struct's ID and
         name.
     """
+    if not struct_name.startswith("AETHER_"):
+        struct_name = "AETHER_" + struct_name
     return service.create_struct(struct_name=struct_name, fields=fields)

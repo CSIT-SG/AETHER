@@ -33,6 +33,8 @@ async def rename_local_variable(
     Example:
         rename_local_variable(0xDEADBEEF, "v1", "buffer")
     """
+    if not new_var_name.startswith("AETHER_"):
+        new_var_name = "AETHER_" + new_var_name
     return service.rename_local_variable(
         function_address=function_address, old_var_name=old_var_name, new_var_name=new_var_name
     )
