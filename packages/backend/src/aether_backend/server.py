@@ -34,6 +34,7 @@ mcp = FastMCP(
 mcp.add_extension(TasksExtension())
 
 mcp.disable(tags=get_disabled_channels())
+mcp.add_middleware(DetailedTimingMiddleware())
 
 mcp_app = mcp.http_app(path="/")
 
