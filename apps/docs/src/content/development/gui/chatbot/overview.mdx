@@ -77,6 +77,3 @@ application data directory. This log is not loaded to restore a session.
     See [`Orchestration`](/development/gui/chatbot/orchestration) for prompts, tool calls, and rendering rules.
 </Callout>
 
-To cancel a turn, close the chatbot window; there is no separate stop button.
-Closing requests cancellation of the panel's outstanding tasks and suppresses further UI callbacks.
-The `ChatSession` survives, but cancellation does not undo changes already made by tools.

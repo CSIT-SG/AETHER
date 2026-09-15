@@ -2,99 +2,45 @@ import { Callout } from 'nextra/components'
 
 # Orchestration
 
-The orchestrator schedules work, the agent calls the model and tools, and the renderer updates the UI.
-Start with the overview for the component and session lifecycle.
+This page covers what happens during a chat turn.
+Read the [overview](/development/gui/chatbot/overview) first.
 
-## Orchestrator
+## Turn flow
 
-`ChatOrchestrator` bridges the UI and the agent. Its submission entry point runs on
-IDA's main thread and schedules background work without waiting for the model.
-For each prompt, it:
+1. The user submits a prompt. Only one turn can run at a time.
+2. The IDA context for the cursor address is fetched with the `get_function_context` MCP tool.
+3. The agent runs with the system prompt, the user prompt, all MCP tools, and the session history. If the context takes more than 30 seconds to arrive, the turn fails.
+4. Agent output is streamed into the chat panel.
+5. The turn ends, or the user clicks stop to cancel it.
 
-1. Reads the cursor address and RPC ID, then submits a `CallToolTask` for `get_function_context` through MCP.
-2. Passes the prompt and a context future to `ChatBotTask`, which waits up to 30 seconds for the context.
-3. Routes streamed output from consumer threads to the renderer using `ida_kernwin.execute_sync`.
+## Prompts
 
-`WorkerManager` runs tasks on a shared background event loop and creates separate
-consumer threads to read their output. It does not create a new agent event loop for each turn.
+- **System prompt**: the agent's instructions. It includes the active RPC ID and is not stored in the session history.
+- **User prompt**: the user's text combined with the IDA context. It is stored in the session history.
 
-The orchestrator tracks whether an assistant bubble has been created during the turn
-and whether the previous output was text or a tool event. It passes this state to the
-renderer to choose where each piece belongs.
+## Output
 
-## Agent
+| Output | What it is |
+| --- | --- |
+| `TextDelta` | A chunk of the model's answer, streamed by the provider. |
+| `ReasoningDelta` | A chunk of the model's reasoning summary. Only sent by providers and models that support it. |
+| `ToolCall` | The model's request to run an MCP tool: tool name, arguments, and call ID. |
+| `ToolOutput` | The MCP tool's result, returned to the model. Has the same call ID as its `ToolCall`. |
+| `SubtoolTrace` | A log line the MCP server sends while a tool is still running. Not sent to the model. |
 
-The agent talks to the LLM provider on the worker thread. It is given four things:
+All output for a turn goes into one `AETHER` message. Errors are shown in a separate `AETHER` message prefixed with `Error:`.
 
-1. The user's prompt
-2. Current IDA context
-3. Available MCP tools 
-4. Session history
+## Common changes
 
-`ChatBotTask` builds an Agents SDK `Agent` from these inputs and uses
-`Runner.run_streamed` to stream the response. The task and prompt templates live in
-`backend/chatbot/task/` and `backend/chatbot/task/content/`, respectively.
+- **Change agent behaviour**: edit the system prompt.
+- **Change the context sent each turn**: edit the user prompt. It can only use fields returned by `get_function_context`.
+- **Add a tool**: add it to the MCP server. The agent loads all MCP tools each turn, so the GUI does not need changes.
+- **Change the model**: set `provider.default_model` in the AETHER config.
 
-### Prompts
-
-Two prompts shape every turn, and they land in different places:
-
-- **System prompt**: the agent's standing instructions, applied every turn: its role inside IDA, when to call a tool versus answer, and rules against inventing addresses or names. It is not part of the conversation history.
-- **User prompt**: this turn's input: the user's text plus the IDA context. This is what gets added to the session history.
-
-### Tools
-
-Each turn, the agent is handed the tools the MCP server currently exposes. When the model calls one, the call is forwarded to MCP, which may reach through RPC into the open disassembler (e.g. IDA), and the result returns to the model.
-
-For tools that access the IDA database, the chain is **model → MCP → RPC → IDA**, and back.
-Other tools can complete in the MCP backend without an RPC call.
-
-## What a turn looks like
-
-The agent streams typed events defined in `backend/chatbot/task/types.py`.
-For example, a tool call followed by an answer produces these kinds of output
-(simplified here; arguments and results depend on the tool):
-
-```text
-_[Tool Call `call_1`]_: `tool_name({...})`
-_[Tool Output `call_1`]_: ...
-This function validates the license key: it hashes the input and compares...
-```
-
-The event type determines how the output is placed:
-
-| Piece | Meaning | Renders as |
-| --- | --- | --- |
-| `ToolCall` | The model invoking a tool; includes its name, arguments, and call ID. | A new paragraph, starting an `AETHER` bubble if needed. |
-| `ToolOutput` | The tool result, labelled with the same call ID. | A new paragraph in the `AETHER` bubble. |
-| `TextDelta` | A chunk of the model's answer. | Assistant text, appended while consecutive text arrives. |
-| `ReasoningDelta` | A chunk of a reasoning summary, when supplied by the provider. | Assistant text prefixed with `_[Reasoning]_:`. |
-
-The tool wrapper joins text blocks from MCP results, falls back to structured JSON,
-then to a string representation. Tool failures become text such as
-`Tool 'name' is unavailable: ...`, which is returned to the model.
-
-<Callout>
-Tool calls and results use the `AETHER` UI role; there is no separate tool role.
-Their labels distinguish them from the assistant's answer.
+<Callout type="warning">
+    The model must pass the RPC ID to tools itself. If the ID is missing or wrong, the call fails or runs against a different IDA instance.
 </Callout>
 
 <Callout type="warning">
-The system prompt supplies the active RPC ID. For tools that require `rpc_id`, the
-model must include that value in its arguments; the wrapper does not inject it.
-A missing or incorrect ID can cause the call to fail or target the wrong instance.
+    Tool errors are returned to the model and do not show an error message. Check the tool output in the chat or the MCP server logs.
 </Callout>
-
-## Renderer
-
-`ChatbotAreaRenderer` writes agent output through
-`ChatAreaProtocol`.
-For each streamed piece it chooses a new bubble, a new paragraph, or text appended
-to the current paragraph. The panel separately displays user messages and replays history.
-
-Consecutive text chunks append to the last paragraph. A tool event always starts
-a paragraph, and text following a tool event starts another. The first output in
-a turn creates the assistant bubble.
-
-Errors create a separate `AETHER` bubble prefixed with `Error:`. The orchestrator
-owns per-turn state; the renderer does not fetch context or call the model.

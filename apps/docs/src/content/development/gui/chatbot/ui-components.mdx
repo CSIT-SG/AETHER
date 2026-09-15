@@ -1,105 +1,79 @@
-import { Callout } from 'nextra/components'
+import { Callout, FileTree } from 'nextra/components'
 
 # UI Components
 
 ![Anatomy of the ChatbotPanel](/chatbot-panel-anatomy.png)
 
-The main chat widgets inherit from `StyledComponent`; `ButtonComponent` inherits
-from `QPushButton`, and `Message` is a data model. Widget sources live under
-`apps/gui/src/aether_gui/features/chatbot/components/`, with each component's class
-in `component.py`, for example `chatbot_panel/component.py`.
-
-The widgets nest: `ChatbotPanel` holds the `MessageArea`, which holds
-`MessageColumn` bubbles, each holding one or more `MessageParagraph`s.
+<FileTree>
+  <FileTree.Folder name="ChatbotPanel" defaultOpen>
+    <FileTree.Folder name="MessageArea" defaultOpen>
+      <FileTree.File name="SearchBar" />
+      <FileTree.Folder name="MessageColumn (one per message)" defaultOpen>
+        <FileTree.File name="MessageParagraph (one or more)" />
+        <FileTree.File name="ButtonComponent (copy)" />
+      </FileTree.Folder>
+    </FileTree.Folder>
+    <FileTree.File name="ResponseStatus" />
+    <FileTree.File name="ChatInput" />
+  </FileTree.Folder>
+</FileTree>
 
 ## ChatbotPanel
 
-- The window spawned by the `ChatbotHandler`
-- Should hold no backend bridge logic beyond wiring `ChatInput` to the
-  `MessageArea` and constructing the `ChatOrchestrator`
-- Keep shared state on the session or orchestrator instead of passing it through
-  multiple layers of widgets.
-
-It draws the user's message, starts the turn, disables submission while the turn
-runs, replays history when the window reopens, and cancels tasks on close.
-See Orchestration for the task lifecycle.
+The chatbot window. Connects `ChatInput` to `MessageArea` and starts the
+`ChatOrchestrator`. Do not add backend logic here; it is a pure GUI component.
 
 ## MessageArea
 
-Where all messages are placed: user, LLM, and tool output.
+Shows all messages: user input, LLM output, and tool output. Conversation history
+is restored when the window is reopened.
 
-### The backend surface: `ChatAreaProtocol`
+The backend writes to it only through `ChatAreaProtocol`:
 
-The backend never touches `MessageArea` directly. It writes through
-`ChatAreaProtocol`, a `Protocol` (structural interface) defined in
-`backend/chatbot/renderer/types.py`. `MessageArea` implements its three methods,
-so it satisfies the protocol without either side importing the other.
-
-The renderer lives in the backend and needs to draw into the
-`MessageArea`, but `MessageArea` lives in the frontend. Importing the widget into
-the backend would create a circular import, so the backend types against this
-protocol instead of the concrete class.
-
-**The three methods**, each mapping to one of the renderer's placement choices:
-
-- `add_new_message_column(message, id, timestamp, role)`: start a new bubble
-  (`MessageColumn`) with its first paragraph.
-- `add_paragraph_to_last_column(message, role)`: add a new paragraph to the
-  current bubble.
-- `append_to_last_paragraph_of_last_column(message)`: append text into the
-  current paragraph, used while a message streams in.
+- `add_new_message_column`: start a new message
+- `add_paragraph_to_last_column`: add a paragraph to the last message
+- `append_to_last_paragraph_of_last_column`: append streamed text to the last paragraph
 
 <Callout type="warning">
-Call these on IDA's main thread. The widget belongs to IDA's GUI thread.
+Backend code must not use `MessageArea` directly. Call `ChatAreaProtocol` methods
+on IDA's main thread only.
 </Callout>
 
 ## MessageColumn
 
-The actual message bubble. Separates user from LLM messages, holds multiple
-`MessageParagraph`s, and is built as header, body, footer.
-
-Layout differs by role: `USER` is right-aligned and `AETHER` is centred. The footer's
-copy button copies the Markdown content of every paragraph in the bubble.
+One message: a header (name and timestamp), one or more `MessageParagraph`s, and
+a copy button.
 
 ## MessageParagraph
 
-One block of rendered Markdown, a `StyledComponent` wrapping a `QTextBrowser`,
-with `FontPlugin` so it tracks IDA font changes.
+One block of rendered Markdown.
 
 <Callout type="warning">
-Each streamed text chunk re-renders the current paragraph's Markdown and schedules
-a height update on IDA's main thread. Geometry changes can trigger layout work in
-the surrounding conversation. Profile long conversations when changing this path.
+Streamed text re-renders the paragraph on every chunk. Test long conversations
+when changing this component or adding widgets to a message.
 </Callout>
-
-<Callout type="warning">
-Keep the per-message widget tree small. Additional badges, buttons, and controls
-add layout and styling work. `MessageColumn` and `MessageParagraph` explicitly
-install `FontPlugin` to respond to IDA font changes.
-</Callout>
-
-## Message
-
-`Message` is a data model in `utils/chat_session/models.py`, with `id`, `role`,
-`content`, and `timestamp` fields. It is not a widget.
-
-`MessageRole` is only `USER` or `AETHER`. There is no tool role: tool call input
-and output both render as `AETHER`.
 
 ## ChatInput
 
-- Wraps a `QTextEdit` that grows with the text, up to 120 pixels high
-- Enter adds a newline; Ctrl+Enter or the send button submits
-- Emits `submitted(str)`, which the panel connects to
-- Clears and refocuses after submit
-- Ignores empty input and blocks submission while a turn is active
+- Ctrl+Enter or the send button submits. Enter adds a newline.
+- While a response is running, the send button becomes a stop button.
 
-## Search
+## ResponseStatus
 
-With focus in the message area, Ctrl+F opens search. It is split across three components: `SearchBar` (the input and controls),
-`MessageArea` (finds matches and tracks the current one), and `MessageParagraph`
-(highlighting).
+Shows "AETHER is responding…" while a response is running.
+
+## SearchBar
+
+Ctrl+F in the message area. Enter for next match, Shift+Enter for previous, Esc
+to close.
 
 ## ButtonComponent
 
-Currently used as the copy button in each message footer. A plain `QPushButton`.
+Button used for the copy action.
+
+## Message
+
+The message data model. Its role is `USER` or `AETHER`. Tool calls and tool
+output use `AETHER`.
+
+See [Orchestration](/development/gui/chatbot/orchestration) for how responses run.
