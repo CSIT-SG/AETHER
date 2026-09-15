@@ -11,6 +11,7 @@ from aether_gui.utils.chat_session import ChatSession
 from aether_gui.utils.mcp import MCPClient, SubtoolProgressBuffer, merge_aiterators
 from aether_gui.utils.rpc_id import get_rpc_id
 from aether_utils.api_client import OpenAIGateway
+from aether_utils.config import get_config
 from agents import (
     Agent,
     FunctionTool,
@@ -101,10 +102,14 @@ class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
         tools = await self.list_mcp_tools_as_agent_tools(self._mcp)
         buffer = SubtoolProgressBuffer(mcp_client)
 
+        config = get_config()
         try:
             agent = Agent(
                 name="Chatbot",
-                model=OpenAIGateway().get_model(feature="chatbot"),
+                model=OpenAIGateway().get_model(
+                    model_name=config.subagents.chatbot_model if config.subagents else None,
+                    feature="chatbot",
+                ),
                 instructions=system_prompt,
                 tools=tools,
             )

@@ -13,18 +13,20 @@ from aether_rpc.capabilities.types import XrefsResult
 from aether_utils.api_client import (
     OpenAIGateway,
 )
-from aether_utils.config import get_config
 from agents import Agent, ModelSettings, Runner
 
 
 def create_agent(
-    tool_list: Iterable[Callable[..., Awaitable[Any]]], system_prompt: str, name: str
+    *,
+    tool_list: Iterable[Callable[..., Awaitable[Any]]],
+    system_prompt: str,
+    name: str,
+    model_name: str | None = None,
 ) -> Agent:
-    config = get_config()
     agent = Agent(
         name=name,
         model=OpenAIGateway().get_model(
-            model_name=config.subagents.annotator_model if config.subagents else None,
+            model_name=model_name,
             feature=name,
         ),
         instructions=system_prompt,

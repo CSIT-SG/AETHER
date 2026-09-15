@@ -19,14 +19,13 @@ from aether_utils.config import get_config
 from aether_utils.get_content import get_content
 from agents import Agent, Runner
 
-config = get_config()
 SYSTEM_PROMPT = get_content(Path(__file__).parent, "prompt.md")
 
 
 async def unflatten(
     service: Any, function_address: str | int, custom_prompt: str | None
 ) -> Program:
-
+    config = get_config()
     agent = Agent(
         name="Unflattener",
         model=OpenAIGateway().get_model(

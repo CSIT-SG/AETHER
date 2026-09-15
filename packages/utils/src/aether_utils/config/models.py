@@ -59,15 +59,15 @@ class SubagentsModel(BaseModel):
         title="Struct Creator Model",
         description="Model override for the structure creator subagent.",
     )
-    index_agent_model: str | None = Field(
-        default=None,
-        title="Index Agent Model",
-        description="Model override for the index agent subagent.",
-    )
     struct_reevaluator_model: str | None = Field(
         default=None,
         title="Struct Reevaluator",
         description="Feature flags and parameters for the structure reevaluator component.",
+    )
+    chatbot_model: str | None = Field(
+        default=None,
+        title="Chatbot Model",
+        description="Model override for the chatbot.",
     )
 
 
@@ -86,6 +86,11 @@ class FeaturesModel(BaseModel):
         default=None,
         title="Chatbot",
         description="Feature flags and parameters for the chatbot component.",
+    )
+    struct_creator: dict[str, object] | None = Field(
+        default=None,
+        title="Struct Creator",
+        description="Feature flags and parameters for the structure creator component.",
     )
 
 

@@ -34,6 +34,7 @@ VALID_FULL = {
         "struct_creator_model": None,
         "index_agent_model": None,
         "struct_reevaluator_model": None,
+        "chatbot_model": None,
     },
     "features": {
         "annotator": {"enabled": True},
@@ -60,6 +61,7 @@ VALID_SUBAGENTS_ALL_NULL = {
         "struct_creator_model": None,
         "index_agent_model": None,
         "struct_reevaluator_model": None,
+        "chatbot_model": None,
     },
 }
 
