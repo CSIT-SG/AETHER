@@ -1,6 +1,6 @@
 [project]
 name = "aether_cli"
-version = "0.0.3.dev8"
+version = "0.0.3.dev9"
 description = "AETHER CLI application"
 readme = "README.md"
 requires-python = ">=3.12"
