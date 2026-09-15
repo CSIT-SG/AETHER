@@ -13,9 +13,9 @@ These fields are located at the top level of the configuration file.
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `debug` | `boolean \| null` | No | Whether to enable debug mode, which may include more verbose logging and additional output for debugging purposes. |
-| `experimental` | `boolean \| null` | No | Whether to enable experimental features, which may be unstable or in development. |
-| `backup` | `boolean \| null` | No | Whether to enable backups before performing destructive actions. |
-| `mcp_url` | `string` | No | URL where the MCP client will connect to. Defaults to `http://127.0.0.1:8000/mcp/`. |
+| `experimental` | `boolean \| null` | No | Whether to enable experimental features, which may be unstable or in development. Defaults to `true`. |
+| `backup` | `boolean \| null` | No | Whether to enable backups before performing destructive actions. Defaults to `true`. |
+| `mcp_url` | `string` | No | URL where the MCP client will connect to. Ignore if you are not using the GUI. Defaults to `http://127.0.0.1:8000/mcp/`. |
 
 ## `provider` (required)
 
@@ -44,7 +44,6 @@ If a field is omitted, the subagent falls back to [`provider.default_model`](#pr
 | `annotator_model` | `string \| null` | No | Model override for the annotator subagent. |
 | `unflattener_model` | `string \| null` | No | Model override for the unflattener subagent. |
 | `struct_creator_model` | `string \| null` | No | Model override for the structure creator subagent. |
-| `index_agent_model` | `string \| null` | No | Model override for the index agent subagent. |
 | `struct_reevaluator_model` | `string \| null` | No | Model override for the structure reevaluator subagent. |
 | `chatbot_model` | `string \| null` | No | Model override for the chatbot. |
 
@@ -65,6 +64,7 @@ Controls feature flags and component-level parameters. Each sub-key accepts a fr
 | `annotator` | `object \| null` | No | Feature flags and parameters for the annotator component. |
 | `deobfuscator` | `object \| null` | No | Feature flags and parameters for the deobfuscator component. |
 | `chatbot` | `object \| null` | No | Feature flags and parameters for the chatbot component. |
+| `struct_creator` | `object \| null` | No | Feature flags and parameters for the structure creator component. |
 
 ## `tls` (optional)
 

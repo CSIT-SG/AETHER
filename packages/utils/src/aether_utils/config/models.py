@@ -124,7 +124,7 @@ class ConfigModel(BaseModel):
     mcp_url: str = Field(
         default="http://127.0.0.1:8000/mcp/",
         title="MCP URL",
-        description="URL where the MCP client will connect to",
+        description="URL where the MCP client will connect to. Ignore if you are not using the gui.",
     )
     debug: bool | None = Field(
         default=None,
@@ -135,7 +135,7 @@ class ConfigModel(BaseModel):
         default=True, description="Whether to enable backups before performing destructive actions."
     )
     experimental: bool | None = Field(
-        default=None,
+        default=True,
         title="Experimental",
         description="Whether to enable experimental features, which may be unstable or in development.",
     )
