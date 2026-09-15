@@ -14,21 +14,21 @@ class ServerProgressMessage:
     total: float | None = None
 
 
-type ServerLogListener = Callable[[ServerProgressMessage], Awaitable[None]]
+type ServerProgressListener = Callable[[ServerProgressMessage], Awaitable[None]]
 
 
-class LogListenerRegistry(Protocol):
-    """Log-dispatching client abstract"""
+class ProgressListenerRegistry(Protocol):
+    """Progress-dispatching client abstract"""
 
-    _log_listeners: set[ServerLogListener]
+    _progress_listeners: set[ServerProgressListener]
 
 
 @dataclass
-class LogSubscription:
-    """Handle for a log listener. Call `.close()` to stop receiving logs."""
+class ProgressSubscription:
+    """Handle for a progress listener. Call `.close()` to stop receiving logs."""
 
-    client: LogListenerRegistry
-    listener: ServerLogListener
+    client: ProgressListenerRegistry
+    listener: ServerProgressListener
 
     def close(self) -> None:
-        self.client._log_listeners.discard(self.listener)
+        self.client._progress_listeners.discard(self.listener)

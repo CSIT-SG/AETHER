@@ -14,7 +14,7 @@ class SubtoolProgressBuffer:
 
     def __init__(self, mcp_client: MCPClient) -> None:
         self._queue: asyncio.Queue[str] = asyncio.Queue()
-        self._subscription = mcp_client.subscribe_logs(self._on_progress)
+        self._subscription = mcp_client.subscribe_progress(self._on_progress)
         self._closed = False
 
     async def _on_progress(self, event: ServerProgressMessage) -> None:
@@ -36,4 +36,5 @@ class SubtoolProgressBuffer:
 
     def close(self) -> None:
         """Unsubscribe from the progress channel"""
+        self._closed = True
         self._subscription.close()

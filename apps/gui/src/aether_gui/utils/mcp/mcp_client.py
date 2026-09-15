@@ -3,7 +3,11 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from aether_gui.utils.mcp.types import LogSubscription, ServerLogListener, ServerProgressMessage
+from aether_gui.utils.mcp.types import (
+    ProgressSubscription,
+    ServerProgressListener,
+    ServerProgressMessage,
+)
 from aether_utils.config import get_config
 from aether_utils.logger import get_logger
 from fastmcp import Client
@@ -23,16 +27,16 @@ class MCPClient:
         self.mcp_url = config.mcp_url
         self._client: Client[StreamableHttpTransport] | None = None
         self.logger = get_logger("MCPClient")
-        self._log_listeners: set[ServerLogListener] = set()
+        self._progress_listeners: set[ServerProgressListener] = set()
 
-    def subscribe_logs(self, listener: ServerLogListener) -> LogSubscription:
-        """Register async listener for server logs"""
-        self._log_listeners.add(listener)
-        return LogSubscription(self, listener)
+    def subscribe_progress(self, listener: ServerProgressListener) -> ProgressSubscription:
+        """Register async listener for server progress"""
+        self._progress_listeners.add(listener)
+        return ProgressSubscription(self, listener)
 
-    def unsubscribe_logs(self, listener: ServerLogListener) -> None:
+    def unsubscribe_progress(self, listener: ServerProgressListener) -> None:
         """Deregister a previously-subscribed listener"""
-        self._log_listeners.discard(listener)
+        self._progress_listeners.discard(listener)
 
     def is_connected(self) -> bool:
         """Check if the client is connected to the MCP server."""
@@ -94,10 +98,10 @@ class MCPClient:
         self, message: str | None, progress: float = 0, total: float | None = None
     ) -> None:
         """Fan a subtool trace out to every subscribed listener."""
-        if not self._log_listeners:
+        if not self._progress_listeners:
             return
         event = ServerProgressMessage(message=message, progress=progress, total=total)
-        for listener in list(self._log_listeners):
+        for listener in list(self._progress_listeners):
             try:
                 coro = listener(event)
             except Exception:
