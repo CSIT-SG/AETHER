@@ -33,8 +33,8 @@ from openai.types.responses import (
 from .constants import get_template
 from .types import LLMResponse, ReasoningDelta, TextDelta, ToolCall, ToolOutput
 
-SYSTEM_PROMPT_TEMPLATE = Path(__file__).parent / "prompts" / "system_prompt.md.jinja"
-USER_PROMPT_TEMPLATE = Path(__file__).parent / "prompts" / "user_prompt.md.jinja"
+SYSTEM_PROMPT_TEMPLATE = Path(__file__).parent / "content" / "system_prompt.md.jinja"
+USER_PROMPT_TEMPLATE = Path(__file__).parent / "content" / "user_prompt.md.jinja"
 
 
 class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
