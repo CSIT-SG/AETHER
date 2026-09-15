@@ -10,6 +10,7 @@ from aether_gui.runner import BaseTask
 from aether_gui.utils.chat_session import ChatSession
 from aether_gui.utils.mcp import MCPClient, SubtoolProgressBuffer, merge_aiterators
 from aether_gui.utils.rpc_id import get_rpc_id
+from aether_gui.utils.ui import deserialise_call_tool_result
 from aether_utils.api_client import OpenAIGateway
 from aether_utils.config import get_config
 from agents import (
@@ -22,9 +23,7 @@ from agents import (
 from agents import (
     Tool as AgentTool,
 )
-from fastmcp.client.client import CallToolResult
 from fastmcp_tasks import ToolTask
-from mcp_types import TextContent
 from mcp_types import Tool as MCPTool
 from openai.types.responses import (
     ResponseReasoningSummaryTextDeltaEvent,
@@ -149,19 +148,6 @@ class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
         tools = await client.list_tools()
         return [self._wrap_mcp_tool(client, tool) for tool in tools]
 
-    @staticmethod
-    def _deserialize_flat(result: CallToolResult) -> str:
-        """Flatten a tool result into the text handed to both the LLM and the UI."""
-        texts = [block.text for block in result.content if isinstance(block, TextContent)]
-        if texts:
-            return "\n".join(texts)
-        if result.structured_content is not None:
-            try:
-                return json.dumps(result.structured_content)
-            except (TypeError, ValueError):
-                pass
-        return str(result)
-
     def _wrap_mcp_tool(self, client: MCPClient, tool: MCPTool) -> AgentTool:
         """Wrap a single MCP tool as an Agents SDK FunctionTool."""
 
@@ -172,7 +158,7 @@ class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
             poller = asyncio.create_task(client.poll_subtool_traces(task))
             try:
                 result = await task.result()
-                return self._deserialize_flat(result)
+                return deserialise_call_tool_result(result)
             except Exception as e:
                 return f"Tool {tool.name!r} is unavailable: {e}"
             finally:

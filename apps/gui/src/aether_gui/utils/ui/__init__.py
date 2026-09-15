@@ -1,3 +1,4 @@
+from .deserialise_call_tool_result import deserialise_call_tool_result
 from .plugins import (
     AbstractComponentPlugin,
     AbstractComponentPluginManager,
@@ -26,4 +27,5 @@ __all__ = [
     "ThemeColors",
     "ThemePlugin",
     "ThemePluginProtocol",
+    "deserialise_call_tool_result",
 ]
