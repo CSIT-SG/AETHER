@@ -139,7 +139,7 @@ dev = [
 
 [[package]]
 name = "aether-next"
-version = "0.0.3"
+version = "0.0.4.dev1"
 source = { virtual = "." }
 
 [package.dev-dependencies]
