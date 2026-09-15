@@ -2,41 +2,43 @@ from typing import cast
 
 import ida_kernwin
 from aether_gui.utils.constants import WINDOW_PREFIX
+from aether_gui.utils.ui import FontPlugin, StyledComponent
 from PySide6 import QtGui, QtWidgets
 
 
-class UnflattenOutputWindow(ida_kernwin.PluginForm):
-    """Dockable view with a single block of replaceable text."""
+class UnflattenOutputWidget(StyledComponent):
+    """StyledComponent that renders a single read-only, monospaced text block."""
 
     def __init__(
-        self, title: str = f"{WINDOW_PREFIX} Unflatten Function", initial: str = "Loading..."
+        self,
+        parent: QtWidgets.QWidget | None = None,
+        initial: str = "Loading...",
     ) -> None:
-        super().__init__()
-        self._title: str = title
+        # Set before super().__init__() since StyledComponent calls init_ui()
+        # during its own construction, before the first style pass.
         self._pending: str = initial
         self._text: QtWidgets.QPlainTextEdit | None = None
+        super().__init__(parent, plugins=[FontPlugin()])
 
-    def OnCreate(self, form: int) -> None:
-        parent: QtWidgets.QWidget = cast(QtWidgets.QWidget, self.FormToPyQtWidget(form))
-
-        self._text = QtWidgets.QPlainTextEdit()
+    def init_ui(self) -> None:
+        self._text = QtWidgets.QPlainTextEdit(self)
         self._text.setReadOnly(True)
         self._text.setFont(QtGui.QFontDatabase.systemFont(QtGui.QFontDatabase.SystemFont.FixedFont))
         self._text.setPlainText(self._pending)
 
-        layout: QtWidgets.QVBoxLayout = QtWidgets.QVBoxLayout()
+        layout: QtWidgets.QVBoxLayout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(4, 4, 4, 4)
         layout.addWidget(self._text)
-        parent.setLayout(layout)
 
-    def OnClose(self, form: int) -> None:
-        self._text = None
-
-    def show(self) -> None:
-        self.Show(
-            self._title,
-            options=ida_kernwin.PluginForm.WOPN_PERSIST | ida_kernwin.PluginForm.WOPN_DP_RIGHT,
-        )
+    def styles(self) -> str | None:
+        """Themed QSS for the text block, driven by the current palette."""
+        return """
+        QPlainTextEdit {
+            background-color: {{ colors.base }};
+            color: {{ colors.text }};
+            border: none;
+        }
+        """
 
     def set_text(self, text: str) -> None:
         """Thread-safe. Call from anywhere, including a worker thread."""
@@ -50,3 +52,39 @@ class UnflattenOutputWindow(ida_kernwin.PluginForm):
             return 1
 
         ida_kernwin.execute_sync(_apply, ida_kernwin.MFF_FAST)
+
+
+class UnflattenOutputWindow(ida_kernwin.PluginForm):
+    """Dockable IDA form hosting an ``UnflattenOutputWidget``."""
+
+    def __init__(
+        self, title: str = f"{WINDOW_PREFIX} Unflatten Function", initial: str = "Loading..."
+    ) -> None:
+        super().__init__()
+        self._title: str = title
+        self._initial: str = initial
+        self._widget: UnflattenOutputWidget | None = None
+
+    def OnCreate(self, form: int) -> None:
+        parent: QtWidgets.QWidget = cast(QtWidgets.QWidget, self.FormToPyQtWidget(form))
+
+        self._widget = UnflattenOutputWidget(parent, initial=self._initial)
+
+        layout: QtWidgets.QVBoxLayout = QtWidgets.QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._widget)
+        parent.setLayout(layout)
+
+    def OnClose(self, form: int) -> None:
+        self._widget = None
+
+    def show(self) -> None:
+        self.Show(
+            self._title,
+            options=ida_kernwin.PluginForm.WOPN_PERSIST,
+        )
+
+    def set_text(self, text: str) -> None:
+        """Thread-safe. Call from anywhere, including a worker thread."""
+        if self._widget is not None:
+            self._widget.set_text(text)
