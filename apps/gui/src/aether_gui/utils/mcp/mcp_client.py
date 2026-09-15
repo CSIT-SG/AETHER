@@ -4,7 +4,6 @@ import asyncio
 from typing import Any
 
 from aether_gui.utils.mcp.types import (
-    ProgressSubscription,
     ServerProgressListener,
     ServerProgressMessage,
 )
@@ -28,15 +27,6 @@ class MCPClient:
         self._client: Client[StreamableHttpTransport] | None = None
         self.logger = get_logger("MCPClient")
         self._progress_listeners: set[ServerProgressListener] = set()
-
-    def subscribe_progress(self, listener: ServerProgressListener) -> ProgressSubscription:
-        """Register async listener for server progress"""
-        self._progress_listeners.add(listener)
-        return ProgressSubscription(self, listener)
-
-    def unsubscribe_progress(self, listener: ServerProgressListener) -> None:
-        """Deregister a previously-subscribed listener"""
-        self._progress_listeners.discard(listener)
 
     def is_connected(self) -> bool:
         """Check if the client is connected to the MCP server."""
