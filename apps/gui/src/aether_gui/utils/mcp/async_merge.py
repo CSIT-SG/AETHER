@@ -4,10 +4,9 @@ import asyncio
 from collections.abc import AsyncGenerator, AsyncIterator
 from typing import TypeVar
 
-T = TypeVar("T")
+from .types import _SENTINEL
 
-# Marks end of specific stream.
-_SENTINEL = object()
+T = TypeVar("T")
 
 
 async def merge_aiterators[T](*aiters: AsyncIterator[T]) -> AsyncGenerator[T, None]:

@@ -169,7 +169,6 @@ class ChatOrchestrator:
         if active:
             self.on_turn_started()
         else:
-            self._subtool_column_started = False
             self.on_turn_finished()
 
     def _handle_worker_result(self) -> Callable[[LLMResponse], None]:

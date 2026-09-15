@@ -37,30 +37,36 @@ SYSTEM_PROMPT_TEMPLATE = Path(__file__).parent / "content" / "system_prompt.md.j
 USER_PROMPT_TEMPLATE = Path(__file__).parent / "content" / "user_prompt.md.jinja"
 
 
-async def _stream_llm_responses(result: RunResultStreaming) -> AsyncIterator[LLMResponse]:
-    """Map a streamed agent run into renderable LLMResponse values"""
-    async for event in result.stream_events():
-        if event.type == "raw_response_event":
-            raw = event.data
-            if isinstance(raw, ResponseTextDeltaEvent):
-                yield TextDelta(delta=raw.delta)
-            elif isinstance(raw, ResponseReasoningSummaryTextDeltaEvent):
-                yield ReasoningDelta(delta=raw.delta)
-
-        elif event.type == "run_item_stream_event":
-            item = event.item
-            match item.type:
-                case "tool_call_item":
-                    yield ToolCall(
-                        name=item.tool_name or "",
-                        arguments=getattr(item.raw_item, "arguments", None),
-                        call_id=item.call_id or "",
-                    )
-                case "tool_call_output_item":
-                    yield ToolOutput(
-                        output=str(item.output),
-                        call_id=item.call_id or "",
-                    )
+async def _stream_llm_responses(
+    result: RunResultStreaming,
+    buffer: SubtoolProgressBuffer | None = None,
+) -> AsyncIterator[LLMResponse]:
+    """Map a streamed agent run into renderable LLMResponse values."""
+    try:
+        async for event in result.stream_events():
+            if event.type == "raw_response_event":
+                raw = event.data
+                if isinstance(raw, ResponseTextDeltaEvent):
+                    yield TextDelta(delta=raw.delta)
+                elif isinstance(raw, ResponseReasoningSummaryTextDeltaEvent):
+                    yield ReasoningDelta(delta=raw.delta)
+            elif event.type == "run_item_stream_event":
+                item = event.item
+                match item.type:
+                    case "tool_call_item":
+                        yield ToolCall(
+                            name=item.tool_name or "",
+                            arguments=getattr(item.raw_item, "arguments", None),
+                            call_id=item.call_id or "",
+                        )
+                    case "tool_call_output_item":
+                        yield ToolOutput(
+                            output=str(item.output),
+                            call_id=item.call_id or "",
+                        )
+    finally:
+        if buffer is not None:
+            buffer.close()
 
 
 async def _stream_subtool_responses(
@@ -107,7 +113,7 @@ class ChatBotTask(BaseTask[LLMResponse]):  # type: ignore[misc]
             )
 
             merged = merge_aiterators(
-                _stream_llm_responses(self._result),
+                _stream_llm_responses(self._result, buffer),
                 _stream_subtool_responses(buffer),
             )
             async for item in merged:
