@@ -2,9 +2,11 @@ import { Callout } from "nextra/components";
 
 # Troubleshooting
 
-## Chatbot fails with a dependency-version error
+## Outdated version causing features to fail
 
-AETHER's GUI plugin and CLI run inside the **same** Python that IDA uses (the interpreter you selected with `idapyswitch`), and the chatbot runs its full LLM/agent stack there. If a **per-user** site-packages directory holds older copies of AETHER's dependencies (`mcp`, `openai`, `fastmcp`, `openai-agents`), they shadow the correct install and the chatbot fails as it streams — e.g.:
+AETHER's GUI plugin and CLI run inside the same Python that IDA uses (using `idapyswitch`). 
+If a per-user site-packages directory (packages installed with `--user`) holds incompatible versions of AETHER's dependencies, 
+they can shadow system-wide packages (packages installed with `--system`) and cause the GUI to fail with errors like:
 
 ```
 Error: Stream failed: 'Tool' object has no attribute 'input_schema' for message
@@ -14,50 +16,24 @@ Error: Stream failed: 'Tool' object has no attribute 'input_schema' for message
 Error: Stream failed: Invalid `http_client` argument; Expected an instance of `httpx.AsyncClient` but got <class 'httpx2.AsyncClient'>
 ```
 
-The first is a shadowed `mcp` v1 (`Tool.inputSchema` became `input_schema` in v2); the second a shadowed `openai` v2 (v3 accepts AETHER's `httpx2` client).
+This is because when python resolves imports, it searches the per-user site-packages directory first, 
+and finds an incompatible version of `mcp`, `openai`, or `fastmcp` that is required by AETHER.
 
-<Callout type="info">
-  Other features (Annotate, Struct Manager) run their agent server-side and are
-  unaffected, as is the backend server — only the chatbot loads this stack inside
-  IDA's Python.
-</Callout>
-
-### 1. Confirm the shadow
-
-Run with the **same interpreter IDA uses**:
+Check your per-user `pip list` against the `requirements.txt` in your release bundle (next to `install_prod.py` / `install.py`) to confirm the versions match:
 
 ```bash
-python -c "import mcp, openai, fastmcp, importlib.metadata as m; print('mcp', m.version('mcp'), '| openai', m.version('openai'), '| fastmcp', fastmcp.__version__, '|', mcp.__file__)"
+python -m pip list --user
 ```
 
-You have a shadow if `mcp` < 2, `openai` < 3, or `fastmcp` < 4 **and** the reported path is a per-user location (`...\AppData\Roaming\Python\...` on Windows, `~/.local/lib/...` on Linux).
-
-### 2. Fix — pick one
-
-**Remove the shadowing per-user copies** (recommended if you use only AETHER). `pip` removes the copy first on the import path — the per-user one — leaving IDA's own install intact:
+If they don't, reinstall from the bundle:
 
 ```bash
-python -m pip uninstall -y mcp fastmcp fastmcp-slim openai openai-agents
+python -m pip install --user --force-reinstall -r requirements.txt
 ```
 
-Re-run step 1 to confirm `mcp 2.x`, `openai 3.x`, and `fastmcp 4.x` now resolve from IDA's site-packages. Uninstall any other dependency still on a per-user path the same way.
-
-**Or keep them and exclude the per-user site for AETHER sessions.** Use this if you also run a legacy IDA plugin that needs the old stack (e.g. an old AETHER / AI-RE build). Both are IDA plugins sharing IDA's one interpreter, so v1 and v2 can't be loaded at once — leave the per-user copies in place and launch IDA with the per-user site disabled when you want AETHER:
+Older AETHER versions are incompatible with this stack and must be installed separately.
+Uninstall the current version first, then install the older one:
 
 ```bash
-# Windows (PowerShell)
-$env:PYTHONNOUSERSITE=1; & "C:\Program Files\IDA Professional 9.2\ida.exe"
+python ./uninstall_prod.py
 ```
-
-```bash
-# Linux
-PYTHONNOUSERSITE=1 ./ida
-```
-
-Launch IDA normally (without that variable) for the legacy tool. `PYTHONNOUSERSITE=1` deletes nothing — it just tells that one IDA session to ignore the per-user packages.
-
-<Callout type="info">
-  A single IDA session loads only one version of `mcp`, so AETHER (v2) and a legacy
-  v1 plugin can't run in the same session — switch between them by launching with or
-  without `PYTHONNOUSERSITE=1`.
-</Callout>
