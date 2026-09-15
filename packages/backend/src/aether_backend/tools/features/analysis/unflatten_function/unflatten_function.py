@@ -22,10 +22,8 @@ from agents import Agent, Runner
 SYSTEM_PROMPT = get_content(Path(__file__).parent, "prompt.md")
 
 
-async def unflatten(
-    service: Any, function_address: str | int, custom_prompt: str | None
-) -> Program:
-    config = get_config()
+async def unflatten(service: Any, function_name: str, custom_prompt: str | None) -> Program:
+
     agent = Agent(
         name="Unflattener",
         model=OpenAIGateway().get_model(
