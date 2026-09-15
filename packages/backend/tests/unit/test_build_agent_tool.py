@@ -18,12 +18,12 @@ def make_ctx(service: AnyService | None = None) -> RunContextWrapper[SubagentToo
     return RunContextWrapper(context=deps)
 
 
-async def sample_tool(service: AnyService, *, arg1: int, arg2: str) -> dict[str, Any]:
+async def sample_tool(service: AnyService, *, arg1: int, arg2: str) -> dict[str, Any]:  # noqa: ARG001
     """A stand-in tool function shaped like get_data_at_address."""
     return {"arg1": arg1, "arg2": arg2}
 
 
-async def failing_tool(service: AnyService, *, arg1: int, arg2: str) -> dict[str, Any]:
+async def failing_tool(service: AnyService, *, arg1: int, arg2: str) -> dict[str, Any]:  # noqa: ARG001
     """A stand-in tool function whose body raises, to test what happens downstream."""
     raise ValueError("boom")
 
