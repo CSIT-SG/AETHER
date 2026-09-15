@@ -55,7 +55,7 @@ class GetBinaryMetadata(Capability):
             self.logger.exception("Failed to get binary metadata: %s", e)
             return Err(result=f"Failed to get binary metadata: {e}")
 
-        self.logger.info(f"Retrieved metadata for {metadata['file_name']}")
+        self.logger.debug(f"Retrieved metadata for {metadata['file_name']}")
         return Ok(result=metadata)
 
     # -- helpers --

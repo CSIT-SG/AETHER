@@ -66,7 +66,7 @@ class GetFunctionsCalledRecursively(Capability):
                     if name in seen:
                         continue
                     seen.add(name)
-                    self.logger.info(f"Auto-selected function: {name}")
+                    self.logger.debug(f"Auto-selected function: {name}")
                     children.append(self._build_tree(ea, name, depth + 1, seen, max_depth))
             except Exception as e:
                 self.logger.error(f"Error getting callees for {hex(func_addr)}: {e}")

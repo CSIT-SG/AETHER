@@ -28,7 +28,7 @@ class TakeSnapshot(Capability):
         success, err_msg = ida_kernwin.take_database_snapshot(snapshot)
 
         if success:
-            self.logger.info(f"Snapshot saved to {snapshot.filename}")
+            self.logger.debug(f"Snapshot saved to {snapshot.filename}")
             return Ok(result=TakeSnapshotResult(snapshot_path=snapshot.filename))
 
         else:

@@ -34,7 +34,7 @@ class RenameFunction(Capability):
             return Err(result=f"No function found at {hex(ea)}")
 
         elif ida_name.set_name(func.start_ea, new_name, ida_name.SN_NOWARN):
-            self.logger.info(f"Renamed function at {hex(func.start_ea)} to '{new_name}'")
+            self.logger.debug(f"Renamed function at {hex(func.start_ea)} to '{new_name}'")
             return Ok(result=RenameFuncResult(address=hex(func.start_ea), new_name=new_name))
 
         self.logger.error(f"Failed to rename function at {hex(func.start_ea)} to '{new_name}'")

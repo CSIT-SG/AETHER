@@ -41,5 +41,5 @@ class ListFunctions(Capability):
             self.logger.exception("Failed to list functions: %s", e)
             return Err(result=f"Failed to list functions: {e}")
 
-        self.logger.info(f"{len(functions)} functions found")
+        self.logger.debug(f"{len(functions)} functions found")
         return Ok(result=ListFunctionResult(count=len(functions), functions=functions))
