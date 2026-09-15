@@ -13,7 +13,6 @@ from aether_backend.utils.stream_tool_logs import stream_tool_logs
 from aether_backend.utils.subagent import SubagentToolDependencies, build_subagent_tool
 from aether_backend.utils.validation import HexAddress
 from aether_utils.api_client import OpenAIGateway
-from aether_utils.config import get_config
 from aether_utils.get_content import get_content
 from agents import Agent, ModelSettings, Runner
 
@@ -21,7 +20,6 @@ from .constants import MAX_VALIDATION_ATTEMPTS
 from .types import GeneratedReport
 
 SYSTEM_PROMPT = get_content(Path(__file__).parent, "generate_report_prompt.md")
-config = get_config()
 
 
 async def generate_report(service: Any, function_address: HexAddress) -> Program:

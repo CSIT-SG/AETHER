@@ -17,9 +17,6 @@ from .utils import resolve_xrefs
 INSTRUCTIONS = get_content(Path(__file__).parent, "instructions.md")
 
 
-config = get_config()
-
-
 @tool(
     task=True,
     description=INSTRUCTIONS,
@@ -44,7 +41,7 @@ async def manage_struct(
 
     svc = await get_rpc_service(rpc_id)
 
-    if config.backup:
+    if get_config().backup:
         svc.take_snapshot()
 
     if custom_prompt is None:

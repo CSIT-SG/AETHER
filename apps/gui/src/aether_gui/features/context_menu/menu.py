@@ -9,13 +9,11 @@ from aether_gui.features.settings_menu import CtxSettingsMenuHandler
 from aether_gui.features.unflatten_function import UnflattenHandler
 from aether_gui.features.whats_new import WhatsNewHandler
 from aether_gui.utils.mcp import MCPClient
-from aether_utils.config import get_config
 from aether_utils.logger import get_logger
 
 from .menu_item import ContextMenuItem
 
 logger = get_logger("context_menu")
-config = get_config()
 
 
 class DummyHandler(ida_kernwin.action_handler_t):

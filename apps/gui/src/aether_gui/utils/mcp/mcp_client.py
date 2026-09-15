@@ -14,8 +14,6 @@ from fastmcp.client.transports import StreamableHttpTransport
 from fastmcp_tasks import ToolTask, call_tool_task
 from mcp_types import Tool
 
-config = get_config()
-
 
 class MCPClient:
     """A fully asynchronous MCP client that connects, executes tools,
@@ -23,7 +21,7 @@ class MCPClient:
     """
 
     def __init__(self) -> None:
-        self.mcp_url = config.mcp_url
+        self.mcp_url = get_config().mcp_url
         self._client: Client[StreamableHttpTransport] | None = None
         self.logger = get_logger("MCPClient")
         self._progress_listeners: set[ServerProgressListener] = set()

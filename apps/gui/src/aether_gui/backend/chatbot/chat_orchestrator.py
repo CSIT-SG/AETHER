@@ -12,7 +12,6 @@ from aether_gui.runner.types import TaskHandle
 from aether_gui.utils.chat_session import ChatSession
 from aether_gui.utils.mcp import CallToolTask, MCPClient
 from aether_gui.utils.rpc_id import get_rpc_id
-from aether_utils.config import get_config
 from fastmcp.client.client import CallToolResult
 
 from .renderer import ChatAreaProtocol, ChatbotAreaRenderer, MessageType
@@ -25,8 +24,6 @@ from .task import (
     ToolCall,
     ToolOutput,
 )
-
-config = get_config()
 
 
 class ChatOrchestrator:

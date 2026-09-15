@@ -18,11 +18,8 @@ from aether_backend.utils.subagent import (
 from aether_utils.api_client import (
     OpenAIGateway,
 )
-from aether_utils.config import get_config
 from aether_utils.get_content import get_content
 from agents import Agent, Runner
-
-config = get_config()
 
 INSTRUCTIONS = get_content(Path(__file__).parent, "prompt.md")
 

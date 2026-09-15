@@ -28,10 +28,9 @@ from .utils import iter_addresses
 
 SYSTEM_PROMPT = get_content(Path(__file__).parent, "annotate_function_prompt.md")
 
-config = get_config()
-
 
 async def annotate(service: Any, funcs: FunctionTreeResult, custom_prompt: str | None) -> Program:
+    config = get_config()
     base_addr = funcs["root"]["address"]
     addresses = iter_addresses(funcs["root"])
     agent = Agent(
