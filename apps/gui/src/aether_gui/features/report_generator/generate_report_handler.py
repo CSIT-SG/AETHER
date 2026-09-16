@@ -20,13 +20,14 @@ class GenerateReportHandler(ida_kernwin.action_handler_t):
         rpc_id = get_rpc_id()
         screen_ea = ida_kernwin.get_screen_ea()
         ea = ida_funcs.get_func(screen_ea).start_ea
+        func_name = ida_funcs.get_func_name(ea)
 
         task = CallToolTask()
         handle = worker_manager.submit(
             task,
             mcp_client=self.mcp_client,
             tool_name="generate_report_tool",
-            tool_args={"rpc_id": rpc_id, "address": hex(ea)},
+            tool_args={"rpc_id": rpc_id, "function_name": func_name},
         )
 
         while not handle.done:

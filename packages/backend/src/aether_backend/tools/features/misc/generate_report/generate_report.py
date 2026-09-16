@@ -11,7 +11,6 @@ from aether_backend.utils.effect import Program, Progress, Return
 from aether_backend.utils.force_structured_output import force_structured_output
 from aether_backend.utils.stream_tool_logs import stream_tool_logs
 from aether_backend.utils.subagent import SubagentToolDependencies, build_subagent_tool
-from aether_backend.utils.validation import HexAddress
 from aether_utils.api_client import OpenAIGateway
 from aether_utils.get_content import get_content
 from agents import Agent, ModelSettings, Runner
@@ -22,7 +21,7 @@ from .types import GeneratedReport
 SYSTEM_PROMPT = get_content(Path(__file__).parent, "generate_report_prompt.md")
 
 
-async def generate_report(service: Any, function_address: HexAddress) -> Program:
+async def generate_report(service: Any, function_name: str) -> Program:
     agent = Agent(
         name="report_generator",
         model=OpenAIGateway().get_model(
@@ -47,8 +46,7 @@ async def generate_report(service: Any, function_address: HexAddress) -> Program
     result = Runner.run_streamed(
         agent,
         context=deps,
-        input=f"Generate a full analysis report with YARA rules for the function at "
-        f"{function_address}.",
+        input=f"Generate a full analysis report with YARA rules for the function {function_name}. ",
         max_turns=1000,
     )
     async for log in stream_tool_logs(result):
