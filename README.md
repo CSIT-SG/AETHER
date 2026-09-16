@@ -27,6 +27,7 @@
     - [Minimum System Requirements](#minimum-system-requirements)
     - [API Requirements](#api-requirements)
   - [Installation](#installation)
+  - [Release](#Release)
   - [Documentation](#documentation)
   - [Troubleshooting](#troubleshooting)
   - [Limitations](#limitations)
@@ -48,7 +49,15 @@ The plugin leverages the IDA Pro Model Context Protocol (MCP) to communicate wit
 
 ## Key Features
 
-_Coming soon._
+- **Annotation**: Adds comments, renames functions and variables to make decompiled code more human readable.
+- **Struct Creator**: Creates and re-evaluates IDA structures from the selected variable and its surrounding context.
+- **Chatbot**: Lets you converse with the decompiled code and drive other AETHER features through prompts.
+- **CLI client**: Provides a headless interface for running AETHER without the IDA GUI.
+
+
+**Experimental**
+- **Unflattener**: Recovers readable control flow from flattened/obfuscated functions.
+- **Report Generation**: Produces a malware-analysis report and YARA rules for a function.
 
 ---
 
@@ -84,6 +93,22 @@ There's no hosted docs site yet, so the install guide lives in the docs. To inst
 
 1. Run the docs site locally — see [apps/docs/README.md](apps/docs/README.md) for the `bun` setup.
 2. Open `http://localhost:3000/getting-started` and follow the steps for the GUI or CLI.
+
+---
+
+## Release
+
+Release bundles are published as zips on the [Releases](https://github.com/csitgovsg-acube/AETHER-next/releases) page, named as follows:
+
+- **Online**: `aether_<cli|gui>-online-v<version>.zip` - dependencies are resolved from the network at install time.
+- **Offline**: `aether_<cli|gui>-<ubuntu|windows>-offline-py<3.12|3.13>-v<version>.zip` - bundles pre-downloaded wheels for the target OS and Python version.
+
+| Client | Online | Offline |
+| ------ | ------ | ------- |
+| GUI | `aether_gui-online-v<version>.zip` | `aether_gui-<os>-offline-py<ver>-v<version>.zip` |
+| CLI | `aether_cli-online-v<version>.zip` | `aether_cli-<os>-offline-py<ver>-v<version>.zip` |
+
+Use **online** by default, and **offline** for air-gapped systems. Match the offline zip to your OS (`ubuntu`/`windows`) and Python (`3.12`/`3.13`).
 
 ---
 
@@ -127,6 +152,7 @@ This project is authored by:
 - Leland Tan Jin Jie ([@loland](https://github.com/loland))
 - Tristan Tan Jun Xian ([@loghogjog](https://github.com/loghogjog))
 - Mervyn Chua ([@MervC-3151](https://github.com/MervC-3151))
+- Nathan Yiang Guan Xi ([@Nathanyyggxx](https://github.com/Nathanyyggxx))
 - Ng Jun Han ([@GoldenStone02](https://github.com/GoldenStone02))
 - Sebastian Ong ([@SebassNoob](https://github.com/SebassNoob))
 - Tan Yehan ([@XxHanpowerxX](https://github.com/XxHanpowerxX))
@@ -166,5 +192,4 @@ AETHER is made possible through the dedication of Cyber Specialists under the Di
 ## Sources
 
 - IDA Pro MCP - https://github.com/mrexodia/ida-pro-mcp/tree/main
-- Plugin optimised for [`Qwen: Qwen3 Next 80B A3B Instruct`](https://openrouter.ai/qwen/qwen3-next-80b-a3b-instruct)
 - Thanks to all who provided feedback and annotated IDA files
