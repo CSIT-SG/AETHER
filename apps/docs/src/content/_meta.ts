@@ -8,6 +8,7 @@ export default {
 	"getting-started": "Getting Started",
 	configuration: "Configuration",
 	"user-guide-gui": "User Guide (GUI)",
+	"user-guide-cli": "User Guide (CLI)",
 	troubleshooting: "Troubleshooting",
 	development: {
 		title: "Development",

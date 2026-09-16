@@ -1,0 +1,18 @@
+import { Callout } from "nextra/components";
+
+## How to use AETHER (CLI)
+
+Once you have successfully installed `install.py`, follow the steps below to start using AETHER.
+
+1. Run the CLI MCP server with `python entrypoint.py --idb <path-to-your-idb-or-exe> --ida-dir <path-to-your-ida-directory>`
+2. Start your CLI AI Coding Agent
+3. Connect MCP Server to CLI AI Coding Agent
+4. Restart CLI AI Coding Agent
+
+## Adding MCP Servers
+
+### Claude
+`claude mcp add --transport streamable-http AETHER [AETHER-MCP-URL]`
+
+### Codex
+`codex mcp add AETHER --url [AETHER-MCP-URL]`
