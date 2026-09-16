@@ -50,8 +50,8 @@ def uninstall_requirements(bundle_dir: Path) -> None:
 def remove_data_dirs() -> None:
     shutil.rmtree(
         user_data_dir(appname=APP_AUTHOR, appauthor=False),
-        ignore_errors=True,
     )
+    print(f"Removed user data directory: {user_data_dir(appname=APP_AUTHOR, appauthor=False)}")
 
 
 def main() -> None:

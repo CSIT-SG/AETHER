@@ -118,6 +118,7 @@ def main() -> None:
     remove_entrypoint(args.plugin_path)
     remove_data_dirs()
     uninstall_requirements(bundle_dir)
+    print("Uninstalled AETHER GUI")
 
 
 if __name__ == "__main__":
