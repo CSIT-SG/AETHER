@@ -98,7 +98,6 @@ class ManageStructHandler(ida_kernwin.action_handler_t):
                 "operation": self.operation,
                 "function_address": hex(func_ea),
                 "var_name": highlighted_string,
-                "local_var": self.is_valid_local_var(ea, highlighted_string),
             },
         )
 

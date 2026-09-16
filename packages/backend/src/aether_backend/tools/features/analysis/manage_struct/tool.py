@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Annotated
 
+from aether_backend.forwarded_rpc import get_stack_variable_xrefs
 from aether_backend.utils.effect import Program, effectful
 from aether_backend.utils.get_rpc_service import get_rpc_service
 from aether_backend.utils.validation import HexAddress
@@ -12,7 +13,6 @@ from mcp_types import ToolAnnotations
 from .constants import TIMEOUT_SECONDS
 from .operations import perform_create_struct, perform_update_struct
 from .types import StructOperation
-from .utils import resolve_xrefs
 
 INSTRUCTIONS = get_content(Path(__file__).parent, "instructions.md")
 
@@ -33,7 +33,6 @@ async def manage_struct(
         HexAddress, "The hexadecimal effective address of the function to annotate."
     ],
     var_name: Annotated[str, "name of target variable for which to create the struct"],
-    local_var: Annotated[bool, "Whether variable is stack or global"],
     custom_prompt: Annotated[
         str | None,
         "A hint regarding behavior for the subagent to guide analysis. Keep it less than 3 sentences.",
@@ -48,10 +47,13 @@ async def manage_struct(
     if custom_prompt is None:
         custom_prompt = ""
 
-    if local_var:
-        refs = await resolve_xrefs(svc, function_address, var_name)
-    else:
-        refs = await resolve_xrefs(svc, var_name, None)
+    xrefs = await get_stack_variable_xrefs(
+        svc, function_location=function_address, local_variable_name=var_name
+    )
+    if xrefs.success is False:
+        raise RuntimeError(f"Unable to collect xrefs for {var_name}: {xrefs.result}")
+
+    refs = xrefs.result
 
     match operation:
         case StructOperation.CREATE:

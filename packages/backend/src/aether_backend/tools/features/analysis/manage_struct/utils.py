@@ -1,12 +1,7 @@
 from collections.abc import Awaitable, Callable, Iterable
 from typing import Any, cast
 
-from aether_backend.forwarded_rpc import (
-    get_function_by_address,
-    get_local_variables,
-    get_stack_variable_xrefs,
-    get_xrefs_to,
-)
+from aether_backend.forwarded_rpc import get_function_by_address, get_local_variables
 from aether_backend.utils.effect import Program
 from aether_backend.utils.stream_tool_logs import stream_tool_logs
 from aether_backend.utils.subagent import (
@@ -14,7 +9,6 @@ from aether_backend.utils.subagent import (
     build_subagent_tool,
 )
 from aether_backend.utils.validation import HexAddress
-from aether_rpc.capabilities.types import XrefsResult
 from aether_utils.api_client import (
     OpenAIGateway,
 )
@@ -77,16 +71,3 @@ async def get_var_type(svc: Any, function_address: HexAddress, variable: str) ->
         if var["name"] == variable:
             return cast(str, var["type"])
     raise RuntimeError(f"variable {variable} not found")
-
-
-async def resolve_xrefs(
-    svc: Any, function_address: HexAddress, var_name: str | None
-) -> XrefsResult:
-    if var_name is None:
-        xrefs = await get_xrefs_to(svc, location=function_address)
-    else:
-        xrefs = await get_stack_variable_xrefs(
-            svc, function_location=function_address, local_variable_name=var_name
-        )
-
-    return xrefs.result
