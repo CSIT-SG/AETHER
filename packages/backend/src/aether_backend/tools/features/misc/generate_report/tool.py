@@ -6,7 +6,7 @@ from fastmcp.tools import tool
 from mcp_types import ToolAnnotations
 
 from .constants import TIMEOUT_SECONDS
-from .generate_report import generate_report
+from .generate_report import generate_report_cb
 
 
 @tool(
@@ -15,7 +15,7 @@ from .generate_report import generate_report
     timeout=TIMEOUT_SECONDS,
 )  # tool is untyped in fastmcp
 @effectful  # type: ignore
-async def generate_report_tool(
+async def generate_report(
     rpc_id: Annotated[
         str, "The ID of the RPC service/IDB to use. Formatted as `<file_name>_<date>-<time>`."
     ],
@@ -24,5 +24,5 @@ async def generate_report_tool(
 
     svc = await get_rpc_service(rpc_id)
 
-    async for effect in generate_report(svc, function_name):
+    async for effect in generate_report_cb(svc, function_name):
         yield effect

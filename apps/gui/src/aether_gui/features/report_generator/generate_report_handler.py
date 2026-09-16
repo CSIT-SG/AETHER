@@ -29,7 +29,7 @@ class GenerateReportHandler(ida_kernwin.action_handler_t):
         handle = worker_manager.submit(
             task,
             mcp_client=self.mcp_client,
-            tool_name="generate_report_tool",
+            tool_name="generate_report",
             tool_args={"rpc_id": rpc_id, "function_name": func_name},
         )
 
@@ -59,10 +59,14 @@ class GenerateReportHandler(ida_kernwin.action_handler_t):
             if path.suffix.lower() != ".md":
                 path = path.with_suffix(".md")
 
-            json_content = json.loads(content)
+            try:
+                json_content = json.loads(content)
 
-            path.write_text(json_content["report"], encoding="utf-8")
-            logger.info(f"Saved report to {path}")
-            return True
+                path.write_text(json_content["report"], encoding="utf-8")
+                logger.info(f"Saved report to {path}")
+                return True
+            except Exception as e:
+                logger.warning(e)
+                return False
 
         ida_kernwin.execute_sync(save_markdown_report, ida_kernwin.MFF_WRITE)

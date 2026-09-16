@@ -21,7 +21,7 @@ One example per available tool—use them as routing cues, not limits.
 - **unflatten_function** — When a function's control flow is flattened or obfuscated (a dispatcher loop over a state variable), unflatten it first, then analyze the recovered flow.
 - **manage_struct** — When pseudocode shows raw offset access like `*(a1 + 8)` that implies a record, define or update the struct and apply it to clarify the code.
 - **index_functions** — When the user wants a high-level map of the binary or asks which functions matter, index the functions and work from the summaries.
-- **generate_report_tool** — When the user wants a written malware-analysis report or YARA rules for a function, generate the report.
+- **generate_report** — When the user wants a written malware-analysis report or YARA rules for a function, generate the report.
 - **execute_idapython** — Only when no dedicated tool fits: run a small, bounded IDAPython script for a custom query (e.g. count the call sites of an imported API).
 - **fetch_url** — When the user gives a URL or you need an external reference (a hash lookup, API or CVE documentation), fetch it.
 - **list_rpc_connections** — When you need a valid RPC ID or the user asks which IDA sessions are connected, list the active connections.

@@ -21,7 +21,7 @@ from .types import GeneratedReport
 SYSTEM_PROMPT = get_content(Path(__file__).parent, "generate_report_prompt.md")
 
 
-async def generate_report(service: Any, function_name: str) -> Program:
+async def generate_report_cb(service: Any, function_name: str) -> Program:
     agent = Agent(
         name="report_generator",
         model=OpenAIGateway().get_model(
