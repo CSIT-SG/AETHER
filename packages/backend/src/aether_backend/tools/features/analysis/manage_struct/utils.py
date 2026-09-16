@@ -1,7 +1,12 @@
 from collections.abc import Awaitable, Callable, Iterable
 from typing import Any, cast
 
-from aether_backend.forwarded_rpc import get_function_by_address, get_local_variables, get_xrefs_to
+from aether_backend.forwarded_rpc import (
+    get_function_by_address,
+    get_local_variables,
+    get_stack_variable_xrefs,
+    get_xrefs_to,
+)
 from aether_backend.utils.effect import Program
 from aether_backend.utils.stream_tool_logs import stream_tool_logs
 from aether_backend.utils.subagent import (
@@ -77,6 +82,11 @@ async def get_var_type(svc: Any, function_address: HexAddress, variable: str) ->
 async def resolve_xrefs(
     svc: Any, function_address: HexAddress, var_name: str | None
 ) -> XrefsResult:
-    xrefs = await get_xrefs_to(svc, location=function_address, variable=var_name)
+    if var_name is None:
+        xrefs = await get_xrefs_to(svc, location=function_address)
+    else:
+        xrefs = await get_stack_variable_xrefs(
+            svc, function_location=function_address, local_variable_name=var_name
+        )
 
     return xrefs.result

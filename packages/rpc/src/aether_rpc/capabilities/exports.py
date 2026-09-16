@@ -11,6 +11,7 @@ EXPORTS: dict[str, str] = {
     "GetFunctionPseudocode": ".function.get_function_pseudocode.get_function_pseudocode",
     "GetLocalVariables": ".variables.get_local_variables.get_local_variables",
     "GetXrefsTo": ".variables.get_xrefs_to.get_xrefs_to",
+    "GetStackVariableXrefs": ".variables.get_stack_variable_xrefs.get_stack_variable_xrefs",
     "RenameFunction": ".function.rename_function.rename_function",
     "RenameLocalVariable": ".variables.rename_local_variable.rename_local_variable",
     "ExecuteIDAPython": ".misc.execute_idapython.execute_idapython",

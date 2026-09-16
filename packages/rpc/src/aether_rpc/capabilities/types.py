@@ -35,6 +35,7 @@ from aether_rpc.capabilities.variables.types import (
     RenameLocalVarResult,
     StackVariableInfo,
     StackVariableXrefs,
+    StackVariableXrefsResult,
     XrefEntry,
     XrefsResult,
 )
@@ -72,4 +73,5 @@ __all__ = [
     "XrefEntry",
     "XrefsResult",
     "StackVariableXrefs",
+    "StackVariableXrefsResult",
 ]

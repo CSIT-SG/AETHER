@@ -47,4 +47,9 @@ class XrefsResult(TypedDict):
     target_name: str | None
     count: int
     xrefs: list[XrefEntry]
+
+
+class StackVariableXrefsResult(XrefsResult):
+    """An XrefsResult plus the xrefs to a local variable's stack backing."""
+
     stack_info: StackVariableXrefs | None

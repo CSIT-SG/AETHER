@@ -30,42 +30,7 @@ class TestGetXrefsTo:
         assert result.success is True
         assert result.result["xrefs"] is not None and result.result["count"] == 2
 
-
-@pytest.mark.dependency(scope="package")
-class TestGetXrefsToStackVariable:
-    def test_get_xrefs_to_stack_variable(self, ida_client: rpyc.Connection) -> None:
-        result = ida_client.root.get_xrefs_to(location="foo_comment", variable="v4")
-        print(result.result)
+    def test_result_has_no_stack_info(self, ida_client: rpyc.Connection) -> None:
+        result = ida_client.root.get_xrefs_to(location="main")
         assert result.success is True
-        assert result.result["stack_info"] is not None
-        assert result.result["stack_info"]["xrefs"] is not None
-        assert len(result.result["stack_info"]["xrefs"]) != 0
-
-    def test_stack_variable_name_does_not_corrupt(self, ida_client: rpyc.Connection) -> None:
-        result = ida_client.root.get_xrefs_to(location="main", variable="v4")
-        assert result.success is True
-
-    def test_stack_variable_xrefs_reference_owning_function(
-        self, ida_client: rpyc.Connection
-    ) -> None:
-        result = ida_client.root.get_xrefs_to(location="main", variable="v4")
-        assert result.success is True
-        stack_info = result.result["stack_info"]
-        assert stack_info is not None
-        for xref in stack_info["xrefs"]:
-            assert xref["is_code"] is True
-            assert xref["from_function"] is not None
-            assert xref["from_function"]["name"] == "main"
-
-    def test_return_none_for_invalid_stack_variable_name(self, ida_client: rpyc.Connection) -> None:
-        result = ida_client.root.get_xrefs_to(
-            location="stack_var_target", variable="s;kjfhsdjksndkgn"
-        )
-        assert result.success is True
-        assert result.result["stack_info"] is None
-
-    def test_return_none_for_invalid_function_with_valid_variable_name(
-        self, ida_client: rpyc.Connection
-    ) -> None:
-        result = ida_client.root.get_xrefs_to(location="s;kjfhsdjksndkgn", variable="v4")
-        assert result.success is False
+        assert "stack_info" not in result.result
