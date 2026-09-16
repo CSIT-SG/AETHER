@@ -5,6 +5,8 @@ from aether_backend.forwarded_rpc import (
     get_data_at_address,
     get_function_pseudocode,
     get_local_variables,
+    get_stack_variable_xrefs,
+    get_xrefs_to,
     rename_function,
     rename_local_variable,
     set_inline_comment,
@@ -51,6 +53,8 @@ async def annotate(service: Any, funcs: FunctionTreeResult, custom_prompt: str |
                     set_inline_comment,
                     set_summary_comment,
                     rename_local_variable,
+                    get_xrefs_to,
+                    get_stack_variable_xrefs,
                 ],
             )
         ),

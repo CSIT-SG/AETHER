@@ -7,6 +7,7 @@ from aether_backend.forwarded_rpc import (
     create_struct,
     get_function_by_address,
     get_function_pseudocode,
+    get_stack_variable_xrefs,
     list_structs,
 )
 from aether_backend.utils.effect import Program, Progress
@@ -31,8 +32,6 @@ async def perform_create_struct(
     if func.success is False:
         raise RuntimeError(f"Unable to get function {function_address}")
 
-    function_name = func.result["name"]
-    user_prompt = f"Create the struct for {var_name} in function {function_name}. For added context you are to take a look at {xrefs}. GIVE THE STRUCT AND IT'S FIELDS MEANINGFUL NAMES."
     config = get_config()
     agent = create_agent(
         tool_list=[
@@ -41,15 +40,16 @@ async def perform_create_struct(
             add_struct_field,
             create_struct,
             list_structs,
+            get_stack_variable_xrefs,
         ],
         system_prompt=get_content(Path(__file__).parent, "struct_creator_prompt.md"),
         name="struct creator",
         model_name=config.subagents.struct_creator_model if config.subagents else None,
-        )
+    )
     async for effect in run_agent(
         service,
         agent=agent,
-        user_prompt=user_prompt,
+        user_prompt=f"Create the struct for {var_name} in function {func.result['name']} at {function_address}. For added context you are to take a look at {xrefs}. GIVE THE STRUCT AND IT'S FIELDS MEANINGFUL NAMES.",
         custom_prompt=custom_prompt,
     ):
         yield effect

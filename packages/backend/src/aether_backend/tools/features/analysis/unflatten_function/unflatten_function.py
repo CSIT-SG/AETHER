@@ -5,6 +5,7 @@ from aether_backend.forwarded_rpc import (
     get_data_at_address,
     get_function_pseudocode,
     get_local_variables,
+    get_xrefs_to,
 )
 from aether_backend.utils.effect import Program, Return
 from aether_backend.utils.stream_tool_logs import stream_tool_logs
@@ -38,6 +39,7 @@ async def unflatten(service: Any, function_name: str, custom_prompt: str | None)
                     get_data_at_address,
                     get_function_pseudocode,
                     get_local_variables,
+                    get_xrefs_to,
                 ],
             )
         ),
