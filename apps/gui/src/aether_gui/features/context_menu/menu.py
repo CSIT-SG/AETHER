@@ -44,6 +44,11 @@ class AetherUIHooks(ida_kernwin.UI_Hooks):
             ),
         ]
 
+        help_operations = [
+            ContextMenuItem("aether:settings", "AETHER Settings", CtxSettingsMenuHandler()),
+            ContextMenuItem("aether:whats_new", "What's New", WhatsNewHandler()),
+        ]
+
         self.items = [
             ContextMenuItem("aether:chatbot", "Open AI Chatbot", ChatbotHandler(self.mcp_client)),
             ContextMenuItem(
@@ -58,8 +63,7 @@ class AetherUIHooks(ida_kernwin.UI_Hooks):
             ContextMenuItem(
                 "aether:generate_report", "Generate Report", GenerateReportHandler(self.mcp_client)
             ),
-            ContextMenuItem("aether:settings", "AETHER Settings", CtxSettingsMenuHandler()),
-            ContextMenuItem("aether:whats_new", "What's New", WhatsNewHandler()),
+            ContextMenuItem("aether:help", "Help", children=help_operations),
         ]
 
     def finish_populating_widget_popup(
