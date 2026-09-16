@@ -43,7 +43,7 @@ class NamespacedLogger(logging.Logger):
         name:      Internal logger name (used by Python's logging registry).
         namespace: Optional sub-namespace appended to 'aether', e.g. 'auth'
                    produces [aether.auth].
-        level:     Logging level (default: logging.NOTSET).
+        level:     Logging level (default: logging.INFO).
         use_color: Whether to colorize output (default: True). Set False when
                    writing to a file or a non-TTY stream.
     """
@@ -52,7 +52,7 @@ class NamespacedLogger(logging.Logger):
         self,
         name: str,
         namespace: str | None = None,
-        level: int = logging.NOTSET,
+        level: int = logging.INFO,
         use_color: bool = False,
     ):
         super().__init__(name, level)
