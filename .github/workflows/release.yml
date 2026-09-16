@@ -201,12 +201,25 @@ jobs:
 
       - name: Zip each combo's bundles
         run: |
+          VERSION="${{ needs.bump.outputs.version }}"
+
           mkdir -p release-zips
           for combo_dir in artifacts/*/; do
             combo="$(basename "$combo_dir")"          # e.g. dist-offline-ubuntu-latest-py3.12
+            # transformed into <app>[-<os>-py<pyver>]-<flavor>-v<version>
+            rest="${combo#dist-}"                     # offline-ubuntu-latest-py3.12
+            flavor="${rest%%-*}"                      # offline | online
+            rest="${rest#*-}"                         # ubuntu-latest-py3.12
+            os="${rest%%-*}"                          # ubuntu
+            pyver="${rest##*-py}"                     # 3.12
             for app_dir in "$combo_dir"*/; do
               app="$(basename "$app_dir")"
-              zip_name="${app}-${combo#dist-}-${{ needs.bump.outputs.version }}.zip"
+              if [ "$flavor" = "online" ]; then
+                # online bundles are platform- and Python-agnostic
+                zip_name="${app}-online-v${VERSION}.zip"
+              else
+                zip_name="${app}-${os}-offline-py${pyver}-v${VERSION}.zip"
+              fi
               (cd "$combo_dir" && zip -qr "../../release-zips/${zip_name}" "${app}")
               echo "Packaged ${zip_name}"
             done
