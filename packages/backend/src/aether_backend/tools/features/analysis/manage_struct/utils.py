@@ -2,7 +2,7 @@ from collections.abc import Awaitable, Callable, Iterable
 from typing import Any, cast
 
 from aether_backend.forwarded_rpc import get_function_by_address, get_local_variables
-from aether_backend.utils.effect import Program
+from aether_backend.utils.effect import Program, Return
 from aether_backend.utils.stream_tool_logs import stream_tool_logs
 from aether_backend.utils.subagent import (
     SubagentToolDependencies,
@@ -57,6 +57,8 @@ async def run_agent(
     )
     async for log in stream_tool_logs(result):
         yield log
+
+    yield Return(result.final_output)
 
 
 async def get_var_type(svc: Any, function_address: HexAddress, variable: str) -> str:

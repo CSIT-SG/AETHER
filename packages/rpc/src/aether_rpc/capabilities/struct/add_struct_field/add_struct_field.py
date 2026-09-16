@@ -153,7 +153,7 @@ class AddStructField(Capability):
             struct: The name or id of the struct to add the field to.
             field_name: Name of the new field.
             field_type: Type of the new field.
-            offset: Byte offset at which to add the field.
+            offset: Byte offset in decimal at which to add the field.
             array_length: Number of elements if the field is an array.
 
         Returns:

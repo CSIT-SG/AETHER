@@ -10,6 +10,7 @@ TYPE_MAP = {
     "int8_t": ida_typeinf.BTF_INT8,
     "int16_t": ida_typeinf.BTF_INT16,
     "short": ida_typeinf.BTF_INT16,
+    "int": ida_typeinf.BTF_INT32,
     "int32_t": ida_typeinf.BTF_INT32,
     "long": ida_typeinf.BTF_INT32,
     "int64_t": ida_typeinf.BTF_INT64,

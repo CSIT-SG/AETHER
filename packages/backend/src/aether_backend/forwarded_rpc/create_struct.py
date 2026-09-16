@@ -10,7 +10,7 @@ async def create_struct(
 
     Args:
         struct_name: Name of the struct to create.
-        fields: Optional list of field definitions. If omitted, an
+        fields: Optional list of field definitions. If set as None, an
             empty struct is created.
 
             Each field must be specified as either:
@@ -21,7 +21,7 @@ async def create_struct(
             - ``field_name`` is the member name.
             - ``field_type`` is the member type (for example, ``uint32_t`` or ``char``).
             - ``array_size`` is an optional positive integer specifying the number
-            of elements if the member is an array.
+            of elements if the member is an array. Note that array size is not the offset of the field.
 
         in NO situation should you put the length of the array in the field_type property. The length of the array should be in the array_size property. E.g.
 
