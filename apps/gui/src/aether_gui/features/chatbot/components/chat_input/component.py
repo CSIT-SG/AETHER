@@ -9,7 +9,6 @@ from shiboken6 import isValid
 
 UPARROW_ICON = "\u2191"  # ↑
 STOP_ICON = "\u25a0"  # ■
-SUBMIT_TOOLTIP = "Submit (Ctrl + Enter)"
 
 
 class ChatInput(StyledComponent):  # type: ignore[misc]
@@ -65,7 +64,7 @@ class ChatInput(StyledComponent):  # type: ignore[misc]
         # Submit Button
         submit_btn = QtWidgets.QPushButton(UPARROW_ICON, self)
         submit_btn.clicked.connect(self._submit)
-        submit_btn.setToolTip(SUBMIT_TOOLTIP)
+        submit_btn.setToolTip("Submit (Ctrl + Enter)")
         submit_btn.setObjectName("SendButton")
         submit_btn.setSizePolicy(
             QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred
@@ -117,7 +116,7 @@ class ChatInput(StyledComponent):  # type: ignore[misc]
         submit_btn = cast(QtWidgets.QPushButton, self._send_button)
         submit_btn.setText(STOP_ICON if stop_mode else UPARROW_ICON)
         submit_btn.setObjectName("StopButton" if stop_mode else "SendButton")
-        submit_btn.setToolTip("" if stop_mode else SUBMIT_TOOLTIP)
+        submit_btn.setToolTip("Stop generation" if stop_mode else "Submit (Ctrl + Enter)")
         style = submit_btn.style()
         style.unpolish(submit_btn)
         style.polish(submit_btn)
