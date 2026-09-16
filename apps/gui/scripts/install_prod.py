@@ -88,6 +88,7 @@ def install_requirements(*, bundle_dir: Path, force_reinstall: bool = False) -> 
         "-m",
         "pip",
         "install",
+        "--user",
         "-r",
         str(bundle_dir / "requirements.txt"),
     ]

@@ -96,13 +96,14 @@ def remove_entrypoint(plugin_path: Path) -> None:
         print(f"Plugin entry point not found, skipping: {destination}")
         return
     remove_path(destination)
+    print(f"Uninstalled AETHER GUI production plugin from: {plugin_path}")
 
 
 def remove_data_dirs() -> None:
     shutil.rmtree(
         user_data_dir(appname=APP_AUTHOR, appauthor=False),
-        ignore_errors=True,
     )
+    print(f"Removed user data directory: {user_data_dir(appname=APP_AUTHOR, appauthor=False)}")
 
 
 def main() -> None:
@@ -117,7 +118,6 @@ def main() -> None:
     remove_entrypoint(args.plugin_path)
     remove_data_dirs()
     uninstall_requirements(bundle_dir)
-    print(f"Uninstalled AETHER GUI production plugin from: {args.plugin_path}")
 
 
 if __name__ == "__main__":
