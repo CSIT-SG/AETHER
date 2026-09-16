@@ -51,16 +51,15 @@ class GenerateReportHandler(ida_kernwin.action_handler_t):
                 True, f"{func_name}.md", "Markdown files|*.md|All files|*.*"
             )
             if path_str is None:
-                print("User cancelled the save dialog")
+                logger.info("User cancelled the save dialog")
                 return False
 
             path: Path = Path(path_str)
-            # IDA's dialog won't auto-append the extension, so enforce it if you want
             if path.suffix.lower() != ".md":
                 path = path.with_suffix(".md")
 
             path.write_text(content, encoding="utf-8")
-            print(f"Saved report to {path}")
+            logger.info(f"Saved report to {path}")
             return True
 
         ida_kernwin.execute_sync(save_markdown_report, ida_kernwin.MFF_WRITE)
