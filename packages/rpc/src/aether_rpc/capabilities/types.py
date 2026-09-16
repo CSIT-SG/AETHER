@@ -34,6 +34,7 @@ from aether_rpc.capabilities.variables.types import (
     LocalVar,
     RenameLocalVarResult,
     StackVariableInfo,
+    StackVariableXrefs,
     XrefEntry,
     XrefsResult,
 )
@@ -70,4 +71,5 @@ __all__ = [
     "TakeSnapshotResult",
     "XrefEntry",
     "XrefsResult",
+    "StackVariableXrefs",
 ]

@@ -37,8 +37,9 @@ class TestGetXrefsToStackVariable:
         result = ida_client.root.get_xrefs_to(location="foo_comment", variable="v4")
         print(result.result)
         assert result.success is True
-        assert result.result["xrefs"] is not None
-        assert result.result["count"] != 0
+        assert result.result["stack_info"] is not None
+        assert result.result["stack_info"]["xrefs"] is not None
+        assert len(result.result["stack_info"]["xrefs"]) != 0
 
     def test_stack_variable_name_does_not_corrupt(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.get_xrefs_to(location="main", variable="v4")
@@ -49,7 +50,9 @@ class TestGetXrefsToStackVariable:
     ) -> None:
         result = ida_client.root.get_xrefs_to(location="main", variable="v4")
         assert result.success is True
-        for xref in result.result["xrefs"]:
+        stack_info = result.result["stack_info"]
+        assert stack_info is not None
+        for xref in stack_info["xrefs"]:
             assert xref["is_code"] is True
             assert xref["from_function"] is not None
             assert xref["from_function"]["name"] == "main"
@@ -58,7 +61,8 @@ class TestGetXrefsToStackVariable:
         result = ida_client.root.get_xrefs_to(
             location="stack_var_target", variable="s;kjfhsdjksndkgn"
         )
-        assert result.success is False
+        assert result.success is True
+        assert result.result["stack_info"] is None
 
     def test_return_none_for_invalid_function_with_valid_variable_name(
         self, ida_client: rpyc.Connection

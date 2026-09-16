@@ -13,15 +13,6 @@ class XrefEntry(TypedDict):
     from_function: FunctionInfo | None
 
 
-class XrefsResult(TypedDict):
-    """Result of an xref query against a target address or symbol."""
-
-    target_address: str
-    target_name: str | None
-    count: int
-    xrefs: list[XrefEntry]
-
-
 class LocalVar(TypedDict):
     name: str
     type: str
@@ -38,5 +29,22 @@ class RenameLocalVarResult(TypedDict):
 
 class StackVariableInfo(TypedDict):
     caller_func_ea: int
+    name: str
     start_off: int
     end_off: int
+
+
+class StackVariableXrefs(StackVariableInfo):
+    """A StackVariableInfo together with its collected cross-references."""
+
+    xrefs: list[XrefEntry]
+
+
+class XrefsResult(TypedDict):
+    """Result of an xref query against a target address or symbol."""
+
+    target_address: str
+    target_name: str | None
+    count: int
+    xrefs: list[XrefEntry]
+    stack_info: StackVariableXrefs | None
