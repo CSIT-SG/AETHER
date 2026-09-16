@@ -39,7 +39,7 @@ def ida_dir() -> str:
 
 @pytest.fixture(scope="package")
 def headless_ida(
-    get_binary: Callable[..., Path], ida_dir: str, BIN_NAME
+    get_binary: Callable[..., Path], ida_dir: str, BIN_NAME: str
 ) -> Generator[tuple[str, int], None, None]:
     if not _port_is_free(HEADLESS_PORT):
         pytest.skip(f"Port {HEADLESS_PORT} is already in use")

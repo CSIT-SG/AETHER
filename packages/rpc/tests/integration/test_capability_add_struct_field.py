@@ -112,6 +112,70 @@ class TestAddStructField:
 
         assert result.success is True
 
+    def test_add_field_beyond_struct_size(self, ida_client: rpyc.Connection) -> None:
+        created = ida_client.root.create_struct(
+            struct_name="test_add_field_beyond_size",
+            fields=[
+                ("field1", "uint32_t"),
+            ],
+        )
+        assert created.success is True
+
+        # struct is 4 bytes wide, so offset 16 is past its end
+        result = ida_client.root.add_struct_field(
+            struct="test_add_field_beyond_size",
+            field_name="far_field",
+            field_type="uint16_t",
+            offset=16,
+            array_length=None,
+        )
+
+        assert result.success is True
+        assert result.result["field_name"] == "far_field"
+
+        info = ida_client.root.get_struct_info(struct="test_add_field_beyond_size")
+        assert info.success is True
+
+        fields = {field[0]: field for field in info.result["struct_fields"]}
+        assert "far_field" in fields
+
+        # the struct must have grown to place the new field at the requested offset
+        assert fields["field1"][3] == 0
+        assert fields["far_field"][3] == 16
+        assert fields["far_field"][2] == 2
+
+    def test_add_array_field_beyond_struct_size(self, ida_client: rpyc.Connection) -> None:
+        created = ida_client.root.create_struct(
+            struct_name="test_add_array_beyond_size",
+            fields=[
+                ("field1", "uint32_t"),
+                ("field2", "uint16_t"),
+            ],
+        )
+        assert created.success is True
+
+        # struct is 6 bytes wide, so offset 32 is past its end
+        result = ida_client.root.add_struct_field(
+            struct="test_add_array_beyond_size",
+            field_name="far_array",
+            field_type="uint8_t",
+            offset=32,
+            array_length=8,
+        )
+
+        assert result.success is True
+
+        info = ida_client.root.get_struct_info(struct="test_add_array_beyond_size")
+        assert info.success is True
+
+        fields = {field[0]: field for field in info.result["struct_fields"]}
+        assert "far_array" in fields
+
+        assert fields["field1"][3] == 0
+        assert fields["field2"][3] == 4
+        assert fields["far_array"][3] == 32
+        assert fields["far_array"][2] == 8
+
     def test_add_non_existent_struct_name(self, ida_client: rpyc.Connection) -> None:
         result = ida_client.root.add_struct_field(
             struct="idontexist_struct",
