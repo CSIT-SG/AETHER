@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import Any, Literal
 
@@ -58,7 +59,9 @@ class GenerateReportHandler(ida_kernwin.action_handler_t):
             if path.suffix.lower() != ".md":
                 path = path.with_suffix(".md")
 
-            path.write_text(content, encoding="utf-8")
+            json_content = json.loads(content)
+
+            path.write_text(json_content["report"], encoding="utf-8")
             logger.info(f"Saved report to {path}")
             return True
 
