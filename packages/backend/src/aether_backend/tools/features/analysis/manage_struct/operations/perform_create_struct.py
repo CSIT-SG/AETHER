@@ -33,16 +33,19 @@ async def perform_create_struct(
 
     function_name = func.result["name"]
     user_prompt = f"Create the struct for {var_name} in function {function_name}. For added context you are to take a look at {xrefs}. GIVE THE STRUCT AND IT'S FIELDS MEANINGFUL NAMES."
-    name = "struct creator"
-    system_prompt = get_content(Path(__file__).parent, "struct_creator_prompt.md")
-    tool_list = [
-        apply_struct,
-        get_function_pseudocode,
-        add_struct_field,
-        create_struct,
-        list_structs,
-    ]
-    agent = create_agent(tool_list, system_prompt, name)
+    config = get_config()
+    agent = create_agent(
+        tool_list=[
+            apply_struct,
+            get_function_pseudocode,
+            add_struct_field,
+            create_struct,
+            list_structs,
+        ],
+        system_prompt=get_content(Path(__file__).parent, "struct_creator_prompt.md"),
+        name="struct creator",
+        model_name=config.subagents.struct_creator_model if config.subagents else None,
+        )
     async for effect in run_agent(
         service,
         agent=agent,

@@ -79,7 +79,4 @@ async def resolve_xrefs(
 ) -> XrefsResult:
     xrefs = await get_xrefs_to(svc, location=function_address, variable=var_name)
 
-    if xrefs.success is False:
-        raise RuntimeError(f"Failed to get xrefs {xrefs.result}")
-
     return xrefs.result
