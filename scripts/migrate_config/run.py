@@ -37,7 +37,6 @@ MAPPING = {
     "MODEL_LIST": "provider.models",
     "GATHERER_MODEL": "subagents.gatherer_model",
     "ANNOTATOR_MODEL": "subagents.annotator_model",
-    "SINGLE_ANALYSIS_MODEL": "subagents.single_analysis_model",
     "STRUCT_CREATOR_MODEL": "subagents.struct_creator_model",
     "INDEX_AGENT_MODEL": "subagents.index_agent_model",
     "DEBUG": "debug",
