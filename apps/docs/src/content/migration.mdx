@@ -25,6 +25,21 @@ python -m scripts.migrate_config.run
   download.
 </Callout>
 
+## Migration Script
+
+#### What it does
+
+1. Locates the legacy config file.
+2. Maps and translates parameters from legacy config to AETHER-next equivalents via `MAPPING` dictionary.
+   - uses `id_to_name` method to perform translation.
+   - Changes empty strings to `null`.
+3. Creates new `config.json` file at appdata folder.
+
+| OS      | Legacy AETHER-IDA                       | AETHER Next destination                          |
+| ------- | --------------------------------------- | ------------------------------------------------ |
+| Windows | `%LOCALAPPDATA%\AETHER-IDA\config.json` | `%LOCALAPPDATA%\AETHER-next\_global\config.json` |
+| Linux   | `~/.local/share/AETHER-IDA/config.json` | `~/.local/share/_global/config.json`             |
+
 ## Change in config format
 
 While AETHER-IDA used a flat JSON format to store config information, AETHER-next uses a nested JSON.
@@ -73,18 +88,3 @@ While AETHER-IDA used a flat JSON format to store config information, AETHER-nex
   ```
   </Tabs.Tab>
 </Tabs>
-
-## Migration Script
-
-#### What it does
-
-1. Locates the legacy config file.
-2. Maps and translates parameters from legacy config to AETHER-next equivalents via `MAPPING` dictionary.
-   - uses `id_to_name` method to perform translation.
-   - Changes empty strings to `null`.
-3. Creates new `config.json` file at appdata folder.
-
-| OS      | Legacy AETHER-IDA                       | AETHER Next destination                          |
-| ------- | --------------------------------------- | ------------------------------------------------ |
-| Windows | `%LOCALAPPDATA%\AETHER-IDA\config.json` | `%LOCALAPPDATA%\AETHER-next\_global\config.json` |
-| Linux   | `~/.local/share/AETHER-IDA/config.json` | `~/.local/share/_global/config.json`             |
