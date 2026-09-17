@@ -1,6 +1,6 @@
 [project]
 name = "aether_docs"
-version = "0.0.5.dev7"
+version = "0.0.5.dev8"
 description = "AETHER documentation"
 readme = "README.md"
 dependencies = ["griffe==2.0.2"]
