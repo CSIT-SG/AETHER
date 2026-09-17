@@ -22,7 +22,7 @@ members = [
 
 [[package]]
 name = "aether-backend"
-version = "0.0.5.dev4"
+version = "0.0.5.dev5"
 source = { editable = "packages/backend" }
 dependencies = [
     { name = "aether-rpc" },
@@ -74,7 +74,7 @@ requires-dist = [
 
 [[package]]
 name = "aether-cli"
-version = "0.0.5.dev4"
+version = "0.0.5.dev5"
 source = { editable = "apps/cli" }
 dependencies = [
     { name = "aether-backend" },
@@ -91,7 +91,7 @@ requires-dist = [
 
 [[package]]
 name = "aether-docs"
-version = "0.0.5.dev4"
+version = "0.0.5.dev5"
 source = { virtual = "apps/docs" }
 dependencies = [
     { name = "griffe" },
@@ -102,7 +102,7 @@ requires-dist = [{ name = "griffe", specifier = "==2.0.2" }]
 
 [[package]]
 name = "aether-gui"
-version = "0.0.5.dev4"
+version = "0.0.5.dev5"
 source = { editable = "apps/gui" }
 dependencies = [
     { name = "aether-backend" },
@@ -139,7 +139,7 @@ dev = [
 
 [[package]]
 name = "aether-next"
-version = "0.0.5.dev4"
+version = "0.0.5.dev5"
 source = { virtual = "." }
 
 [package.dev-dependencies]
@@ -172,7 +172,7 @@ dev = [
 
 [[package]]
 name = "aether-rpc"
-version = "0.0.5.dev4"
+version = "0.0.5.dev5"
 source = { editable = "packages/rpc" }
 dependencies = [
     { name = "aether-utils" },
@@ -198,7 +198,7 @@ source = { editable = "packages/test-fixtures" }
 
 [[package]]
 name = "aether-utils"
-version = "0.0.5.dev4"
+version = "0.0.5.dev5"
 source = { editable = "packages/utils" }
 dependencies = [
     { name = "commitizen" },
