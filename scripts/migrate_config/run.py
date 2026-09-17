@@ -29,16 +29,21 @@ DEST = user_data_dir("_global", "AETHER-next") / "config.json"
 # Legacy flat key -> dotted path in the new nested config. The only thing that
 # has to be declared by hand; the conversion rules and the skipped set below are
 # derived, not listed.
-MAPPING = {
+MAPPING: dict[str, str | list[str]] = {
     "OPENAI_BASE_URL": "provider.gateway_url",
     "OPENAI_API_KEY": "provider.api_key",
     "OPENAI_MODEL": "provider.default_model",
     "OPENAI_EXTRA_BODY": "provider.extra_body",
     "MODEL_LIST": "provider.models",
-    "GATHERER_MODEL": "subagents.gatherer_model",
-    "ANNOTATOR_MODEL": "subagents.annotator_model",
-    "STRUCT_CREATOR_MODEL": "subagents.struct_creator_model",
-    "INDEX_AGENT_MODEL": "subagents.index_agent_model",
+    "ANNOTATOR_MODEL": [
+        "subagents.annotator_model",
+        "subagents.unflattener_model",
+        "subagents.chatbot_model",
+    ],
+    "STRUCT_CREATOR_MODEL": [
+        "subagents.struct_creator_model",
+        "subagents.struct_reevaluator_model",
+    ],
     "DEBUG": "debug",
     "CLIENT_CERT_PATH": "tls.client_cert_path",
     "CLIENT_KEY_PATH": "tls.client_key_path",
@@ -63,11 +68,14 @@ for key, dotted in MAPPING.items():
     if key not in legacy:
         continue
     value = legacy[key]
-    if key.endswith("_MODEL"):  # legacy stores model ids; new config uses friendly names
+    if value == "":  # legacy sometimes stores a lone space instead of leaving the key empty
+        value = None
+    elif key.endswith("_MODEL"):  # legacy stores model ids; new config uses friendly names
         value = id_to_name.get(value, value)
     elif key.endswith("_PATH") and value == "":
         value = None
-    assign(new, dotted, value)
+    for path in dotted if isinstance(dotted, list) else [dotted]:
+        assign(new, path, value)
 
 # Enough validation that AETHER Next can load the result (it does the full
 # pydantic validation itself on startup).
@@ -79,6 +87,7 @@ if provider.get("default_model") not in models:
     sys.exit(f"Default model {provider.get('default_model')!r} is not in MODEL_LIST.")
 for name, model in (new.get("subagents") or {}).items():
     if model is not None and model not in models:
+        models[model] = None
         sys.exit(f"Subagent {name!r} uses model {model!r} which is not in MODEL_LIST.")
 
 if DEST.is_file():
