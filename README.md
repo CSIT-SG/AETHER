@@ -27,7 +27,7 @@
     - [Minimum System Requirements](#minimum-system-requirements)
     - [API Requirements](#api-requirements)
   - [Installation](#installation)
-  - [Release](#Release)
+  - [Release](#release)
   - [Documentation](#documentation)
   - [Troubleshooting](#troubleshooting)
   - [Limitations](#limitations)
@@ -109,6 +109,8 @@ Release bundles are published as zips on the [Releases](https://github.com/csitg
 | CLI | `aether_cli-online-v<version>.zip` | `aether_cli-<os>-offline-py<ver>-v<version>.zip` |
 
 Use **online** by default, and **offline** for air-gapped systems. Match the offline zip to your OS (`ubuntu`/`windows`) and Python (`3.12`/`3.13`).
+
+> Check your python version `python --version` to ensure you downloaded the correct bundle.
 
 ---
 
