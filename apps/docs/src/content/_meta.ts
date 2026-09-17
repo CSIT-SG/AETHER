@@ -6,6 +6,7 @@ import type { MetaRecord } from "nextra";
 export default {
 	index: "Introduction",
 	"getting-started": "Getting Started",
+	migration: "Migration",
 	configuration: "Configuration",
 	"user-guide-gui": "User Guide (GUI)",
 	"user-guide-cli": "User Guide (CLI)",

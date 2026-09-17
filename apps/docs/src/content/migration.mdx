@@ -1,0 +1,90 @@
+import { Callout, Tabs } from "nextra/components";
+
+# Migration to AETHER-NEXT
+
+### Migration instructions for upgrading frin AETHER-IDA to AETHER-NEXT.
+
+<Callout type="info">
+  You can ignore this if you have not installed previous versions of AETHER.
+</Callout>
+
+Performed using `migrate_config.run` script
+
+#### Steps to use script
+
+1. Download appropriate release version for your environment.
+2. Install AETHER-next using `install_prod.py`.
+3. run migration script
+
+```sh
+python -m scripts.migrate_config.run
+```
+
+<Callout type="info">
+  Take note of GUI/CLI, OS and Python version when deciding which release to
+  download.
+</Callout>
+
+## Change in config format
+
+While AETHER-IDA used a flat JSON format to store config information, AETHER-NEXT uses a nested JSON.
+
+<Tabs items={["AETHER-IDA", "AETHER-NEXT"]}>
+  <Tabs.Tab> 
+  **AETHER-IDA** 
+  ```json
+  {
+  "OPENAI_API_KEY": "",
+  "OPENAI_MODEL": "qwen/qwen3-coder",
+  "OPENAI_BASE_URL": "https://openrouter.ai/api/v1",
+  "MCP_SERVER_URL": "http://127.0.0.1:8744/sse",
+  "MAX_ITERATIONS": 5,
+  "GATHERER_MODEL": "",
+  "ANNOTATOR_MODEL": "",
+  "AI_DECOMP_MODEL": "",
+  "SINGLE_ANALYSIS_MODEL": "",
+  "STRUCT_CREATOR_MODEL": "",
+  "INDEX_AGENT_MODEL": "",
+  "INDEXING_MODEL": "",
+...
+  ```  
+  </Tabs.Tab>
+  <Tabs.Tab> 
+  **AETHER-NEXT**
+  ```json
+{
+    "provider": {
+        "gateway_url": "https://openrouter.ai/api/v1",
+        "api_key": "",
+        "models": {
+        "Qwen: Qwen3 Coder 480B A35B": "qwen/qwen3-coder",
+        "OpenAI: gpt-oss-120b": "openai/gpt-oss-120b",
+        "Qwen: Qwen3 Next 80B A3B Instruct": "qwen/qwen3-next-80b-a3b-instruct",
+        "GLM 5.3 Flash": "z-ai/glm-5.3-flash",
+        "minimax": "minimax/minimax-m2.7",
+        "kimi": "moonshotai/kimi-k2.7-code",
+        "gemini": "google/gemini-3.7-flash",
+        "qwen3-coder-next": "qwen3-coder-next"
+        },
+        "default_model": "gemini",
+        "extra_body": {}
+    },
+  ...
+  ```
+  </Tabs.Tab>
+</Tabs>
+
+## Migration Script
+
+#### What it does
+
+1. Locates the legacy config file.
+2. Maps and translates parameters from legacy config to AETHER-NEXT equivalents via `MAPPING` dictionary.
+   - uses `id_to_name` method to perform translation.
+   - Changes empty strings to `null`.
+3. Creates new `config.json` file at appdata folder.
+
+| OS      | Legacy AETHER-IDA                       | AETHER Next destination                          |
+| ------- | --------------------------------------- | ------------------------------------------------ |
+| Windows | `%LOCALAPPDATA%\AETHER-IDA\config.json` | `%LOCALAPPDATA%\AETHER-next\_global\config.json` |
+| Linux   | `~/.local/share/AETHER-IDA/config.json` | `~/.local/share/_global/config.json`             |
