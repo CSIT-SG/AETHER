@@ -7,6 +7,7 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 from aether_gui.runner.base_task import BaseTask
+from aether_gui.utils.ui import deserialise_call_tool_result
 from aether_utils.logger import get_logger
 from fastmcp_tasks import ToolTask
 
@@ -39,7 +40,10 @@ class CallToolTask(BaseTask[Any]):  # type: ignore[misc]
                     break
                 elapsed += PROGRESS_LOG_INTERVAL_SECONDS
                 logger.info("%s task %s...: %ds elapsed", tool_name, task_id, elapsed)
-            yield await result
+            final = await result
+            if final.is_error:
+                raise RuntimeError(deserialise_call_tool_result(final))
+            yield final
         finally:
             ok = result.done() and not result.cancelled() and result.exception() is None
             verb = "finished in" if ok else "stopped after"
