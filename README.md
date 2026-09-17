@@ -161,6 +161,8 @@ Run the oneshot [migration script](/scripts/migrate_config/README.md)
 python -m scripts.migrate_config.run
 ```
 
+For more details go to the [migration page](apps/docs/src/content/migration.mdx)
+
 ## Troubleshooting
 
 **The chatbot fails with a dependency-version error** (e.g. `'Tool' object has no attribute 'input_schema'`, or an `httpx.AsyncClient` / `http_client` error) while other features keep working. An older copy of AETHER's dependencies in your **per-user** site-packages is shadowing the correct install in the Python that IDA uses. Remove the shadowing per-user packages so IDA falls through to its own install — see the [Troubleshooting guide](apps/docs/src/content/troubleshooting.mdx) for the exact steps.
