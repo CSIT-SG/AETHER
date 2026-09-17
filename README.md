@@ -43,7 +43,7 @@
 
 **AETHER** is an advanced IDA Pro plugin that integrates Large Language Models (LLMs) into your reverse engineering workflow. It automates time-consuming tasks like function annotation, variable renaming, structure creation and contextual analysis, allowing security analysts to focus on deeper malware analysis and threat assessment.
 
-The plugin leverages the IDA Pro Model Context Protocol (MCP) to communicate with LLMs while efficiently managing context and tokens. It is specifically designed for malware analysis, vulnerability research, and binary reverse engineering.
+The plugin leverages FastMCP to communicate with LLMs while efficiently managing context and tokens. It is specifically designed for malware analysis, vulnerability research, and binary reverse engineering.
 
 ---
 
@@ -89,10 +89,43 @@ The plugin leverages the IDA Pro Model Context Protocol (MCP) to communicate wit
 
 ## Installation
 
-There's no hosted docs site yet, so the install guide lives in the docs. To install AETHER:
+> The GUI plugin runs inside IDA's embedded Python, so its dependencies must be installed into the **same Python that IDA uses**. Point IDA at a Python `3.12` or `3.13` install with `idapyswitch` (ships with IDA), then run the install script below with that same interpreter.
 
-1. Run the docs site locally — see [apps/docs/README.md](apps/docs/README.md) for the `bun` setup.
-2. Open `http://localhost:3000/getting-started` and follow the steps for the GUI or CLI.
+Depending on how your Python is set up, there are two ways to install the plugin. Choose the one that applies for your situation.
+
+#### Option A: Direct install (recommended)
+
+Run the prod script directly with the Python that IDA uses:
+
+```bash
+python install_prod.py
+```
+
+#### Option B: Install inside a virtual environment
+
+On some Linux distributions, you need to create a virtual environment and install from there instead:
+
+```bash
+python -m venv .venv
+# Windows
+.venv\Scripts\activate.ps1
+# Linux
+source .venv/bin/activate
+
+python install_prod.py
+```
+
+In both cases, `install_prod.py` installs the wheel bundles and copies the plugin entrypoint into the IDA plugins folder.
+
+You can install into a custom plugins folder with the `--plugin-path` argument. It defaults to `%APPDATA%\Hex-Rays\IDA Pro\plugins` (Windows) or `~/Hex-Rays/IDA Pro/plugins` (Linux), e.g. `python install_prod.py --plugin-path "D:\ida-plugins"`.
+
+Start the backend server:
+
+```bash
+python run_prod_backend.py
+```
+
+You will need to keep the backend server running in the background as this bridges the RPC layer with the GUI instance.
 
 ---
 
