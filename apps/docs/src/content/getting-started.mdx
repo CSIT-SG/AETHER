@@ -32,11 +32,30 @@ Download the release binaries.
   script below with that same interpreter.
 </Callout>
 
-4. Run the prod script.
+4. Depending on how your Python is set up, there are two ways to install the plugin. Choose the one that applies for your situation.
+
+#### Option A: Direct install (recommended)
+
+Run the prod script directly with the Python that IDA uses:
 
 ```bash
 python install_prod.py
 ```
+
+#### Option B: Install inside a virtual environment
+
+On some Linux distributions, you need to create a virtual environment and install from there instead:
+
+```bash
+python -m venv .venv
+# Windows
+.venv\Scripts\activate.ps1
+# Linux
+source .venv/bin/activate
+
+python install_prod.py
+```
+
 
 This will install the wheel bundles and copy the plugin entrypoint into the IDA plugins folder.
 
@@ -186,30 +205,3 @@ uv run python ./scripts/run_headless.py
 </Callout>
 
 Follow the workspace README files for more information.
-
-
-## Installation Note
-
-Depending on how your Python is set up, there are two ways to install the plugin. Choose the one that applies for your situation.
-
-#### Option A: Direct install (recommended)
-
-Run the prod script directly with the Python that IDA uses:
-
-```bash
-python install_prod.py
-```
-
-#### Option B: Install inside a virtual environment
-
-On some Linux distributions, you need to create a virtual environment and install from there instead:
-
-```bash
-python -m venv .venv
-# Windows
-.venv\Scripts\activate.ps1
-# Linux
-source .venv/bin/activate
-
-python install_prod.py
-```
