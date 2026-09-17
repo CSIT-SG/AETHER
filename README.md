@@ -155,7 +155,7 @@ All documentation lives in [`apps/docs`](apps/docs). Run docs locally (see [apps
 ---
 ## Migration from old AETHER
 
-Run the oneshot [migration script](\scripts\migrate_config\README.md)
+Run the oneshot [migration script](/scripts/migrate_config/README.md)
 
 ```sh
 python -m scripts.migrate_config.run
