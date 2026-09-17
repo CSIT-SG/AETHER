@@ -38,6 +38,7 @@ class GenerateReportHandler(ida_kernwin.action_handler_t):
             on_event=lambda result: self.save_wrapper(
                 deserialise_call_tool_result(result), func_name
             ),
+            on_error=lambda error: logger.error(error),
         )
 
         return 0

@@ -41,6 +41,7 @@ class UnflattenHandler(ida_kernwin.action_handler_t):
         worker_manager.consume(
             handle=handle,
             on_event=lambda result: view.set_text(deserialise_call_tool_result(result)),
+            on_error=lambda error: logger.error(error),
         )
 
         return 0
