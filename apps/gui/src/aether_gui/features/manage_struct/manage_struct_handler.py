@@ -101,10 +101,11 @@ class ManageStructHandler(ida_kernwin.action_handler_t):
             },
         )
 
-        while not handle.done:
-            if handle.error:
-                logger.error(handle.error)
-            logger.info(handle.results.get())
+        worker_manager.consume(
+            handle=handle,
+            on_event=lambda result: logger.info(result),
+            on_error=lambda error: logger.error(error),
+        )
 
         return 0
 
