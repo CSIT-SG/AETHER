@@ -153,6 +153,13 @@ Use **online** by default, and **offline** for air-gapped systems. Match the off
 All documentation lives in [`apps/docs`](apps/docs). Run docs locally (see [apps/docs/README.md](apps/docs/README.md)) and browse at `http://localhost:3000`.
 
 ---
+## Migration from old AETHER
+
+Run the oneshot [migration script](\scripts\migrate_config\README.md)
+
+```sh
+python -m scripts.migrate_config.run
+```
 
 ## Troubleshooting
 
