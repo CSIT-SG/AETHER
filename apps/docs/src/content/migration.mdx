@@ -1,8 +1,8 @@
 import { Callout, Tabs } from "nextra/components";
 
-# Migration to AETHER-NEXT
+# Migration to AETHER-next
 
-### Migration instructions for upgrading frin AETHER-IDA to AETHER-NEXT.
+### Migration instructions for upgrading frin AETHER-IDA to AETHER-next.
 
 <Callout type="info">
   You can ignore this if you have not installed previous versions of AETHER.
@@ -27,9 +27,9 @@ python -m scripts.migrate_config.run
 
 ## Change in config format
 
-While AETHER-IDA used a flat JSON format to store config information, AETHER-NEXT uses a nested JSON.
+While AETHER-IDA used a flat JSON format to store config information, AETHER-next uses a nested JSON.
 
-<Tabs items={["AETHER-IDA", "AETHER-NEXT"]}>
+<Tabs items={["AETHER-IDA", "AETHER-next"]}>
   <Tabs.Tab> 
   **AETHER-IDA** 
   ```json
@@ -50,7 +50,7 @@ While AETHER-IDA used a flat JSON format to store config information, AETHER-NEX
   ```  
   </Tabs.Tab>
   <Tabs.Tab> 
-  **AETHER-NEXT**
+  **AETHER-next**
   ```json
 {
     "provider": {
@@ -79,7 +79,7 @@ While AETHER-IDA used a flat JSON format to store config information, AETHER-NEX
 #### What it does
 
 1. Locates the legacy config file.
-2. Maps and translates parameters from legacy config to AETHER-NEXT equivalents via `MAPPING` dictionary.
+2. Maps and translates parameters from legacy config to AETHER-next equivalents via `MAPPING` dictionary.
    - uses `id_to_name` method to perform translation.
    - Changes empty strings to `null`.
 3. Creates new `config.json` file at appdata folder.
