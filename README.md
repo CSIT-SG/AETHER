@@ -199,6 +199,7 @@ This project is authored by:
 - Asher Cheng ([@Ash2234](https://github.com/Ash2234))
 - Bryan Goh Jing Yuan ([@BryanFrFr](https://github.com/BryanFrFr))
 - Chan Weng Tim ([@TimTimTimTimTimTimTimTimTimTimTimTimTi](https://github.com/TimTimTimTimTimTimTimTimTimTimTimTimTi))
+- Hei Yee Kai ([@endurrus](https://github.com/endurrus))
 - Kan Onn Kit ([@PhotonicGluon](https://github.com/PhotonicGluon))
 - Leland Tan Jin Jie ([@loland](https://github.com/loland))
 - Tristan Tan Jun Xian ([@loghogjog](https://github.com/loghogjog))
