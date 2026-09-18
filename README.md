@@ -30,6 +30,7 @@
   - [Release](#release)
   - [Documentation](#documentation)
   - [Troubleshooting](#troubleshooting)
+  - [Issues and Support](#issues-and-support)
   - [Limitations](#limitations)
   - [Contributing](#contributing)
   - [Authors/Maintainers](#authorsmaintainers)
@@ -156,6 +157,12 @@ All documentation lives in [`apps/docs`](apps/docs). Run docs locally (see [apps
 ## Troubleshooting
 
 **The chatbot fails with a dependency-version error** (e.g. `'Tool' object has no attribute 'input_schema'`, or an `httpx.AsyncClient` / `http_client` error) while other features keep working. An older copy of AETHER's dependencies in your **per-user** site-packages is shadowing the correct install in the Python that IDA uses. Remove the shadowing per-user packages so IDA falls through to its own install — see the [Troubleshooting guide](apps/docs/src/content/troubleshooting.mdx) for the exact steps.
+
+---
+
+## Issues and Support
+
+If you encounter a bug or need help with AETHER, please [open an issue on GitHub](https://github.com/csitgovsg-acube/AI-RE/issues).
 
 ---
 
