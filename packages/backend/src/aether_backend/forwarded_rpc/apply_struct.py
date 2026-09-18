@@ -10,7 +10,7 @@ async def apply_struct(
     function_name: str,
     variable: str,
 ) -> Result[AppliedStruct]:
-    """Apply structure to a variable in a function.
+    """Apply structure to a variable in a function. Works for both local and global variables.
 
     Args:
         struct: The name or id of the struct to apply.
