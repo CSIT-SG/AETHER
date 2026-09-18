@@ -162,7 +162,7 @@ All documentation lives in [`apps/docs`](apps/docs). Run docs locally (see [apps
 
 ## Issues and Support
 
-If you encounter a bug or need help with AETHER, please [open an issue on GitHub](https://github.com/csitgovsg-acube/AI-RE/issues).
+If you encounter a bug or need help with AETHER, please [open an issue on GitHub](https://github.com/CSIT-SG/AETHER/issues).
 
 ---
 
