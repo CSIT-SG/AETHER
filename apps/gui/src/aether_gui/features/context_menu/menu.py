@@ -4,6 +4,7 @@ from typing import cast
 import ida_kernwin
 from aether_gui.features.annotator import AnnotatorHandler
 from aether_gui.features.chatbot import ChatbotHandler
+from aether_gui.features.documentation import DocumentationHandler
 from aether_gui.features.manage_struct import ManageStructHandler
 from aether_gui.features.report_generator import GenerateReportHandler
 from aether_gui.features.settings_menu import CtxSettingsMenuHandler
@@ -64,6 +65,7 @@ class AetherUIHooks(ida_kernwin.UI_Hooks):
                 "aether:generate_report", "Generate Report", GenerateReportHandler(self.mcp_client)
             ),
             ContextMenuItem("aether:help", "Help", children=help_operations),
+            ContextMenuItem("aether:documentation", "Documentation", DocumentationHandler()),
         ]
 
     def finish_populating_widget_popup(
