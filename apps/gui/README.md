@@ -3,19 +3,28 @@
 GUI application for the AETHER project.
 
 > Run these with Python 3.12 or 3.13, other versions are not supported.
+> Please ensure the Python version downloaded matches your Python version.
+> You can check your Python version with `python --version`.
 
 ```bash
 # Install the wheel bundle and copy the entrypoint into the IDA plugins folder
-python ./install_prod.py
+# On Windows, default IDA plugins directpory is %appdata%\Hex-Rays\IDA Pro\plugins
+python ./install_prod.py [--plugin-path] <path-to-you-ida-plugins-directory>
 
-# You can also specify the IDA plugin directory with --plugin-path /path/to/ida/plugins
-# On windows, by default it is %appdata%\Hex-Rays\IDA Pro\plugins
+# Run the MCP Server
+python ./run_prod_backend.py
 ```
 
-Read more in `apps/docs` (follow the setup guide).
+## Offline Docs Setup Guide
+Download docs from [releases](https://github.com/CSIT-SG/AETHER/releases).
 
-To uninstall,
+Install [bun](https://bun.com/docs/installation).
+```bash
+# Run bun in the docs-standalone dir
+bun run server.js
+```
 
+## Uninstall
 ```bash
 python ./uninstall_prod.py
 ```
