@@ -1,0 +1,49 @@
+import { FileTree } from "nextra/components";
+
+# Release Workflow
+
+`.github/workflows/release.yml`
+
+Automates building, packaging, tagging, and publishing a GitHub Release. Triggered manually from the Actions tab.
+
+## Trigger
+
+| Trigger             | Details                                                                                                  |
+| ------------------- | -------------------------------------------------------------------------------------------------------- |
+| `workflow_dispatch` | Manual run from the GitHub Actions UI                                                                    |
+| Input: `version`    | Optional. Release version, e.g. `1.2.3`. If omitted, the version is read from the repo's `VERSION` file. |
+
+## Summary Flow
+
+![Summary Flow](/flowchart.svg)
+
+## Building release bundles
+
+Executes `scripts/release/build.py`, which populates `dist/` with one self-contained, pip-installable directory per app defined in `scripts/release/config.py`.
+
+1. Deletes `dist/` to ensure a clean build
+2. Separates workspace and external dependencies
+3. Builds a wheel for workspace dependencies
+4. Appends requirements to a `requirements.txt`
+5. Copies `extra_inodes` like entrypoint into `OUTPUT_DIR/app`
+
+The files are laid out in the following structure:
+
+<FileTree>
+  <FileTree.Folder name="aether_cli" defaultOpen>
+    <FileTree.Folder name="wheels" />
+    <FileTree.File name="requirements.txt" />
+    <FileTree.File name="install.py" />
+    <FileTree.File name="entrypoint.py" />
+    <FileTree.File name="README.md" />
+  </FileTree.Folder>
+</FileTree>
+
+`wheels` and `requirements.txt` are present in both gui and cli installations (steps 1 to 4)
+
+`install.py`, `entrypoint.py` and `README.md` are the `extra_inodes`. This varies between the gui and cli installations. (step 5)
+
+`extra_inodes` is a list of files to include in each release zip. They differ based on whether the gui or cli release is being zipped.
+
+`config.py` houses release configureation variables like `OUTPUT_DIR`, `ROOT_DIR`, and `APPS`.
+modifications to the workflow settings should be made here.

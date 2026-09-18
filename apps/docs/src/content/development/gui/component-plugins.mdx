@@ -1,0 +1,131 @@
+# Component Plugins
+
+Say you want to add some custom behaviour to many components, such as a debug overlay or a common data-fetching mechanism. 
+
+You can add this functionality as a plugin, which is a class that implements the `AbstractComponentPlugin` interface.
+
+Then, add it to the constructor of any component (inheriting from `StyledComponent`) to have it automatically installed and uninstalled with the component's lifecycle.
+
+## Create your own plugin
+
+1. Create a class that implements `AbstractComponentPlugin`.
+2. Implement `name`, `install()`, and `uninstall()`.
+3. (Optional) `Protocol` for component to follow.
+4. (Optional) Override `priority` to control install order.
+5. Pass the plugin instance when constructing your widget.
+
+### Example: Label Plugin
+
+```python
+from typing import Protocol, runtime_checkable
+
+from PySide6.QtWidgets import QLabel
+
+# Optional Protocol that ensures the component has implemented all the methods and attributes the plugin needs
+@runtime_checkable
+class HelloLabelProtocol(Protocol):
+    """Structural type for widgets that host a HelloLabelPlugin.
+
+    The plugin attaches a ``_hello_label`` attribute to the widget during
+    install. Code that interacts with hello-label-equipped widgets can
+    type-hint against this protocol to access the label without depending
+    on a specific class.
+    """
+
+    _hello_label: QLabel
+
+from PySide6.QtWidgets import QLabel, QWidget
+
+from aether_gui.utils.ui.plugins import AbstractComponentPlugin
+
+
+class HelloLabelPlugin(AbstractComponentPlugin):
+    @property
+    def name(self) -> str:
+        return "hello-label"
+
+    # Optional priority to order the plugins
+    @property
+    def priority(self):
+        return super().priority + 1 
+
+    def install(self, widget: QWidget) -> None:
+
+        if not isinstance(widget, HelloLabelProtocol):
+            raise TypeError("Widget must implement HelloLabelProtocol")
+        
+        widget._hello_label = QLabel("Hello", widget)
+        widget._hello_label.move(8, 8)
+
+    def uninstall(self, widget: QWidget) -> None:
+        label = getattr(widget, "_hello_label", None)
+        if label is not None:
+            label.deleteLater()
+            delattr(widget, "_hello_label")
+```
+
+Behavior: a small "Hello" label appears at the top-left of the widget and is removed when the widget closes.
+
+### Example: Timer Plugin
+
+```python
+from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QLabel, QWidget
+
+from aether_gui.utils.ui.plugins import AbstractComponentPlugin
+
+
+class TickingLabelPlugin(AbstractComponentPlugin):
+    @property
+    def name(self) -> str:
+        return "ticking-label"
+
+    def install(self, widget: QWidget) -> None:
+        widget._tick_count = 0
+        widget._tick_label = QLabel("0", widget)
+        widget._tick_label.move(8, 8)
+
+        def _tick() -> None:
+            widget._tick_count += 1
+            widget._tick_label.setText(str(widget._tick_count))
+
+        widget._tick_timer = QTimer(widget)
+        widget._tick_timer.timeout.connect(_tick)
+        widget._tick_timer.start(1000)
+
+    def uninstall(self, widget: QWidget) -> None:
+        timer = getattr(widget, "_tick_timer", None)
+        if timer is not None:
+            timer.stop()
+            timer.deleteLater()
+            delattr(widget, "_tick_timer")
+
+        label = getattr(widget, "_tick_label", None)
+        if label is not None:
+            label.deleteLater()
+            delattr(widget, "_tick_label")
+
+        if hasattr(widget, "_tick_count"):
+            delattr(widget, "_tick_count")
+```
+
+Behavior: a counter label increments once per second and stops updating when the widget closes.
+
+## Using the Plugin
+
+To use a plugin, pass an instance of it to the `plugins` argument of any `StyledComponent` subclass.
+
+```python
+from aether_gui.utils.ui import StyledComponent
+
+
+class MyWidget(StyledComponent):
+    def __init__(self, parent=None):
+        super().__init__(
+            parent,
+            plugins=[TickingLabelPlugin(), HelloLabelPlugin()],
+        )
+
+    def init_ui(self) -> None:
+        pass
+```

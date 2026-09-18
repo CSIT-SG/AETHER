@@ -1,0 +1,51 @@
+QWidget#SearchBar {
+    background-color: {{ colors.base }};
+    border: 1px solid {{ colors.mid }};
+    border-radius: 4px;
+}
+
+QLineEdit#SearchInput {
+    background-color: {{ colors.base }};
+    color: {{ colors.text }};
+    border: none;
+    min-height: 22px;
+    padding: 3px 4px;
+}
+
+QLabel#SearchCount {
+    background-color: transparent;
+    color: {{ colors.text }};
+    border: none;
+    padding: 0 2px;
+}
+
+QPushButton#SearchPrevButton,
+QPushButton#SearchNextButton,
+QPushButton#SearchCloseButton {
+    background-color: transparent;
+    color: {{ colors.text }};
+    border: 1px solid transparent;
+    border-radius: 4px;
+    min-width: 20px;
+    min-height: 20px;
+    padding: 3px;
+}
+
+QPushButton#SearchPrevButton:hover,
+QPushButton#SearchNextButton:hover,
+QPushButton#SearchCloseButton:hover {
+    background-color: {{ colors.alternatebase }};
+}
+
+QPushButton#SearchPrevButton:focus,
+QPushButton#SearchNextButton:focus,
+QPushButton#SearchCloseButton:focus {
+    border-color: {{ colors.highlight }};
+}
+
+QPushButton#SearchPrevButton:pressed,
+QPushButton#SearchNextButton:pressed,
+QPushButton#SearchCloseButton:pressed {
+    background-color: {{ colors.highlight }};
+    color: {{ colors.highlightedtext }};
+}

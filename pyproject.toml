@@ -1,0 +1,97 @@
+[tool.uv.workspace]
+members = ["apps/*", "packages/*"]
+
+[tool.uv.sources]
+aether_cli = { workspace = true }
+aether_gui = { workspace = true }
+aether_utils = { workspace = true }
+aether_rpc = { workspace = true }
+aether_backend = { workspace = true }
+aether_test_fixtures = { workspace = true }
+aether_benchmark = { workspace = true }
+
+[project]
+name = "aether-next"
+version = "0.0.6.dev12"
+description = "AETHER - AI-powered Next Generation Framework"
+readme = "README.md"
+requires-python = ">=3.12"
+
+[dependency-groups]
+dev = [
+    "pytest==9.0.3",
+    "pytest-cov==7.1.0",
+    "ruff==0.15.16",
+    "mypy==2.3.1",
+    "pytest-dependency==0.6.1",
+    "pytest-order==1.4.0",
+    "pre-commit==4.6.0",
+    "pytest-asyncio==1.4.0",
+    "commitizen>=4.18.0",
+]
+
+# Dev dependencies are managed at workspace level
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [".venv", "venv", "dist", "build"]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+    "C4",     # flake8-comprehensions
+    "B",      # flake8-bugbear
+    "UP",     # pyupgrade
+    "ARG",    # flake8-unused-arguments
+    "SIM",    # flake8-simplify
+    "FIX",
+    "C90",    # flake8-cognitive-complexity
+]
+ignore = [
+    "E501",   # line too long (handled by line-length)
+    "B008",   # do not perform function calls in argument defaults
+    "ARG002", # unused arg
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["aether"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.pytest.ini_options]
+testpaths = ["apps", "packages"]
+python_files = ["test_*.py"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+ignore_missing_imports = true
+
+[tool.commitizen]
+version_provider = "uv"
+version_scheme = "pep440"
+update_changelog_on_bump = false
+# https://github.com/commitizen-tools/commitizen/pull/2026
+# remove the following line when the PR is merged and released
+tag_format = "$version"
+legacy_tag_formats = ["$major.$minor.$patch$devrelease"]
+version_files = [
+    "apps/cli/pyproject.toml:version",
+    "apps/docs/pyproject.toml:version",
+    "apps/docs/package.json:version",
+    "apps/gui/pyproject.toml:version",
+    "packages/backend/pyproject.toml:version",
+    "packages/rpc/pyproject.toml:version",
+    "packages/utils/pyproject.toml:version",
+]

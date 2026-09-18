@@ -1,0 +1,73 @@
+import { Callout } from 'nextra/components'
+
+# System Architecture
+
+![System Architecture](/architecture.svg)
+
+This is the high-level architecture of Aether. The main components are:
+
+- **IDA Pro**
+- **AETHER rpc**: Provides a low level interface to IDA Pro's API, exposing it as a JSON-RPC server.
+- **AETHER backend**: Manages connections between the many IDA Pro instances and implements agentic tool call logic, exposing a higher level API to the LLM. 
+    Also manages chatbot memory and holds system prompts.
+- **AETHER gui**: A gui client.
+- **AETHER cli**: A command line client.
+
+We will go into detail about each component, from the bottom up.
+
+## Components
+
+### IDA Pro
+
+Your standard IDA Pro instance. There is an rpc plugin to expose its API, and a GUI plugin to display stuff.
+
+<Callout type="info">
+In the future, we may support other reverse engineering tools (e.g. Ghidra).
+</Callout>
+
+### Aether RPC
+
+We expose low level access to IDA Pro's API via an RPC server. We use [rpyc](https://rpyc.readthedocs.io/en/latest/) for this.
+
+There is one RPC server per IDA Pro instance. On IDA startup, it will register itself with the MCP controller server by writing its port and id to a shared file.
+
+The only responsibility of this server is to forward low level IDA calls to the Aether backend.
+
+<Callout type="warning">
+Do not directly expose ida api calls. Use a wrapper to expose specific functionalities.
+</Callout>
+
+### Aether Backend
+
+Aether backend manages all the IDA Pro instances and implements the logic for calling tools and agents.
+
+We implement agent specific logic here, eg. memory management, system prompts, tool call logic, etc. For example,
+a tool call may spawn a subagent that in turn calls rpc functions. 
+
+Under the hood, tool calls are routed to the appropriate RPC server.
+
+
+### Clients
+
+We have two clients: a GUI and a CLI.
+
+#### Aether GUI
+
+We act as a graphical entrypoint and a mcp client to connect to our backend. 
+
+#### Aether CLI
+
+<Callout type="warning">
+Not implemented.
+</Callout>
+
+Same as the GUI, but in a command line interface.
+
+## Dependency policy
+
+We may drop support for older versions of IDA if there are breaking changes. 
+Users are recommended to upgrade IDA or pin to an older AETHER version.
+
+We may also not support the latest python version if any dependencies are reliant on an old version.
+
+Read the current [system requirements](/getting-started#system-requirements).

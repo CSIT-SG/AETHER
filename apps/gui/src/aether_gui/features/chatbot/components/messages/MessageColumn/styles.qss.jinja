@@ -1,0 +1,35 @@
+
+QLabel#Timestamp {
+    color: {{ colors.placeholdertext }};
+    background-color: transparent;
+    font-weight: normal;
+    font-size: 11px;
+}
+
+QLabel#Username {
+    color: {{ colors.text }};
+    font-weight: bold;
+    font-size: {{ fontstyles.size }}pt;
+}
+
+QPushButton#CopyButton {
+    background-color: {{ colors.base }};
+    background: transparent;
+    border: none;
+    
+    font-size: 14px;
+}
+
+QPushButton#CopyButton:disabled {
+    color: {{ colors.text }}; 
+}
+
+
+QPushButton#CopyButton:hover {
+    border: 1px solid {{ colors.accent }};
+}
+
+
+QPushButton#CopyButton:pressed {
+    border: 1.5px solid {{ colors.accent }};
+}

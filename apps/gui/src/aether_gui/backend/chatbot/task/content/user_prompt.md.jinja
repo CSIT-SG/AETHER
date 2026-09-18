@@ -1,0 +1,36 @@
+User request:
+{{ prompt }}
+
+Current IDA context:
+- name:            {{ ctx.name }}
+- is_code:         {{ ctx.is_code }}
+- is_data:         {{ ctx.is_data }}
+
+{% if ctx.function %}
+Function:
+- name:            {{ ctx.function.name | default('<none>', true) }}
+{% endif %}
+{% if ctx.disassembly %}
+Disassembly:
+```asm
+{{ ctx.disassembly }}
+```
+{% endif %}
+{% if ctx.pseudocode %}
+Pseudocode:
+```c
+{{ ctx.pseudocode }}
+```
+{% endif %}
+{% if ctx.xrefs_to %}
+Xrefs to:
+{% for xref in ctx.xrefs_to %}
+- {{ xref }}
+{% endfor %}
+{% endif %}
+{% if ctx.xrefs_from %}
+Xrefs from:
+{% for xref in ctx.xrefs_from %}
+- {{ xref }}
+{% endfor %}
+{% endif %}

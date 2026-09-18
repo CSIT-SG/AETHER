@@ -1,0 +1,207 @@
+import { Callout, FileTree } from "nextra/components";
+
+# Getting Started
+
+You should install one of of our clients (CLI or GUI) to use AETHER. You also need to set up and configure an LLM gateway to use AETHER.
+
+## System Requirements
+
+- Operating System: Windows or Linux
+- Python: `3.12` or `3.13`
+
+<Callout type="warning">
+  Python 3.14 is not supported by IDA Pro due to compatibility issues with
+  `PySide6`.
+</Callout>
+
+- IDA Pro: Version `9.2` or later
+- LLM Gateway: You need a openai-compatible LLM gateway and api key to use Aether. The default is OpenRouter, but you can configure your own provider in the [configuration file](./configuration).
+
+## Graphical User Interface (GUI)
+
+Download the release binaries.
+
+1. In the [repository](https://github.com/csitgovsg-acube/AETHER-next) click on `Releases`
+2. Click on latest release
+3. Download `aether_gui-online-v<version>.zip`, or for air-gapped machines download `aether_gui-<ubuntu|windows>-offline-py<3.12|3.13>-v<version>.zip`
+
+<Callout type="warning">
+  The GUI plugin runs inside IDA's embedded Python, so its dependencies must be
+  installed into the **same** Python that IDA uses. Point IDA at a Python `3.12`
+  or `3.13` install with `idapyswitch` (ships with IDA), then run the install
+  script below with that same interpreter.
+</Callout>
+
+4. Depending on how your Python is set up, there are two ways to install the plugin. Choose the one that applies for your situation.
+
+#### Option A: Direct install (recommended)
+
+Run the prod script directly with the Python that IDA uses:
+
+```bash
+python install_prod.py
+```
+
+#### Option B: Install inside a virtual environment
+
+On some Linux distributions, you need to create a virtual environment and install from there instead:
+
+```bash
+python -m venv .venv
+# Windows
+.venv\Scripts\activate.ps1
+# Linux
+source .venv/bin/activate
+
+python install_prod.py
+```
+
+
+This will install the wheel bundles and copy the plugin entrypoint into the IDA plugins folder.
+
+You can install into a custom plugins folder with the `--plugin-path` argument. It defaults to `%APPDATA%\Hex-Rays\IDA Pro\plugins` (Windows) or `~/Hex-Rays/IDA Pro/plugins` (Linux), eg. `python install_prod.py --plugin-path "D:\ida-plugins"`.
+
+<Callout type="info">
+  If the chatbot later fails with a dependency-version error (e.g. `'Tool' object has
+  no attribute 'input_schema'`, or an `http_client` / `httpx.AsyncClient` type error)
+  while other features still work, an older copy of AETHER's packages in your per-user
+  site may be shadowing this install — see [Troubleshooting](./troubleshooting).
+</Callout>
+
+5. Start the backend server.
+
+```bash
+python run_prod_backend.py
+```
+
+You will need to keep the backend server running in the background as this bridges the RPC layer with the GUI instance.
+
+## Headless Command-Line Interface (CLI)
+
+Download the release binaries.
+
+1. In the [repository](https://github.com/csitgovsg-acube/AETHER-next) click on `Releases`
+2. Click on latest release
+3. Download `aether_cli-online-v<version>.zip`, or for air-gapped machines download `aether_cli-<ubuntu|windows>-offline-py<3.12|3.13>-v<version>.zip`
+4. Run the install script.
+
+```bash
+python install.py
+```
+
+This will install the wheel bundles. Afterwards, you can run `entrypoint.py` with your IDA database path and the install directory of **IDA**.
+You can also pass in the host address to run the **CLI** on.
+
+For example:
+
+```bash
+python entrypoint.py --idb C:/path/to/your/idb/example.exe.i64 --ida-dir "C:/Program Files/IDA Professional 9.2"
+```
+
+You can then use the output port to [connect your agent](https://modelcontextprotocol.io/) to the MCP server.
+
+## Setting up an LLM Gateway
+
+Choose from any OpenAI-compatible LLM gateway. You should target at least a 7B parameter model for average performance.
+
+### OpenRouter
+
+Choose a model on [OpenRouter](https://openrouter.ai/) and generate an API key. Then your config will look like:
+
+```json
+{
+    "provider": {
+        "gateway_url": "https://openrouter.ai/api/v1",
+        "api_key": "YOUR_API_KEY",
+        "models": {
+            "claude-sonnet-5": "anthropic/claude-sonnet-5",
+            "qwen3.5-9b": "qwen/qwen3.5-9b"
+        },
+        "default_model": "claude-sonnet-5"
+    },
+    ...rest of your config
+}
+```
+
+### llama.cpp (llama-server)
+
+Follow their [install guide](https://github.com/ggml-org/llama.cpp#quick-start) to set up a `llama-server` instance.
+
+For example, running the following command will start a `llama-server` instance with [huggingface's `Qwen2.5-7B-Instruct-GGUF`](https://huggingface.co/Qwen/Qwen2.5-7B-Instruct-GGUF) model on port `8080`:
+
+```bash
+llama-server -hf bartowski/Qwen2.5-7B-Instruct-GGUF:Q4_K_M
+```
+
+Then your config will look like:
+
+```json
+{
+  "provider": {
+      "gateway_url": "http://localhost:8080/v1",
+      "api_key": null,
+      "models": {
+          "qwen-7b": "bartowski/Qwen2.5-7B-Instruct-GGUF:Q4_K_M"
+      },
+      "default_model": "qwen-7b",
+      "extra_body": null
+  },
+  ...rest of your config
+}
+```
+
+If you need to support authentication, generate an API key on the `llama-server` instance and set it in your config in `provider.api_key`.
+
+### LiteLLM
+
+Install LiteLLM by following their [installation guide](https://docs.litellm.ai/docs/#litellm-proxy-server-llm-gateway).
+
+Then run a server.
+
+```bash
+litellm --model huggingface/bartowski/Qwen2.5-7B-Instruct-GGUF:Q4_K_M
+```
+
+You should set the API key in the config to match the one you created. Then your config will look like:
+
+```json
+{
+  "provider": {
+      "gateway_url": "http://localhost:4000/v1",
+      "api_key": "YOUR_API_KEY",
+      "models": {
+          "hf-qwen-7b": "huggingface/bartowski/Qwen2.5-7B-Instruct-GGUF:Q4_K_M"
+      },
+      "default_model": "hf-qwen-7b",
+      "extra_body": null
+  },
+  ...rest of your config
+}
+```
+
+## Development
+
+Clone the repo and run the gui dev script.
+
+```bash
+git clone https://github.com/csitgovsg-acube/AETHER-next
+cd AETHER-next
+uv sync --all-packages
+cd apps/gui && uv run python ./scripts/install_dev.py
+```
+
+This will install the required dependencies for idapython and link the plugin entrypoint into the IDA plugins folder.
+
+Start the backend server.
+
+```bash
+cd packages/backend
+uv run python ./scripts/run_headless.py
+```
+
+<Callout type="info">
+  Ensure that AETHER backend is running in the background as this bridges the
+  RPC layer with the GUI instance.
+</Callout>
+
+Follow the workspace README files for more information.

@@ -1,0 +1,52 @@
+# Contributing
+
+Requires:
+- `python 3.12 or 3.13`
+- `ida >= 9.2`
+- `mypy` IDE extension
+- [`bun`](https://bun.com) for documentation
+
+## IDE setup
+
+1. Set your language server's option `Extra Paths` to `C:\Program Files\IDA Professional 9.x\python` (replace as needed).
+2. Run `uv sync --all-packages` (`--allow-insecure-host <host>` if any ssl error).
+3. Install the docs packages — see the [docs README](https://github.com/csitgovsg-acube/AETHER-next/blob/master/apps/docs/README.md) for the `bun` setup (including the Windows SSL workaround).
+4. Add the pre-commit hooks `uv run pre-commit install`.
+
+## Developer tooling
+
+- Lint: `uv run ruff check`
+- Format: `uv run ruff format`
+- Unit tests: `uv run pytest apps/*/tests/unit packages/*/tests/unit`
+- Integration tests: see [Integration Tests](/development/integration-tests)
+
+## Package READMEs
+
+Each package or app keeps its own `README.md` for the quick-start commands specific to it. Check the relevant one first for anything package-specific:
+
+- [`apps/cli`](https://github.com/csitgovsg-acube/AETHER-next/blob/master/apps/cli/README.md)
+- [`apps/gui`](https://github.com/csitgovsg-acube/AETHER-next/blob/master/apps/gui/README.md)
+- [`apps/docs`](https://github.com/csitgovsg-acube/AETHER-next/blob/master/apps/docs/README.md)
+- [`packages/backend`](https://github.com/csitgovsg-acube/AETHER-next/blob/master/packages/backend/README.md)
+- [`packages/rpc`](https://github.com/csitgovsg-acube/AETHER-next/blob/master/packages/rpc/README.md)
+- [`packages/test-fixtures`](https://github.com/csitgovsg-acube/AETHER-next/blob/master/packages/test-fixtures/README.md)
+- [`packages/utils`](https://github.com/csitgovsg-acube/AETHER-next/blob/master/packages/utils/README.md)
+- [`scripts/migrate_config`](https://github.com/csitgovsg-acube/AETHER-next/blob/master/scripts/migrate_config/README.md)
+- [`scripts/release`](https://github.com/csitgovsg-acube/AETHER-next/blob/master/scripts/release/README.md)
+
+## Config migration tool
+
+To carry a legacy `AppData\Local\AETHER-IDA` config into the current AETHER Next
+global config, run the one-shot tool:
+
+```sh
+python -m scripts.migrate_config.run
+```
+
+It converts the settings AETHER Next supports, backs up any existing config, and
+writes the result, printing the `legacy_key -> destination` mapping and skipped
+keys. See the [migration tool README](https://github.com/csitgovsg-acube/AETHER-next/blob/master/scripts/migrate_config/README.md) for the full OS path table and how to add a new mapping.
+
+## Release
+
+See [Release](/development/release).

@@ -1,0 +1,46 @@
+import { Callout } from 'nextra/components'
+
+# Orchestration
+
+This page covers what happens during a chat turn.
+Read the [overview](/development/gui/chatbot/overview) first.
+
+## Turn flow
+
+1. The user submits a prompt. Only one turn can run at a time.
+2. The IDA context for the cursor address is fetched with the `get_function_context` MCP tool.
+3. The agent runs with the system prompt, the user prompt, all MCP tools, and the session history. If the context takes more than 30 seconds to arrive, the turn fails.
+4. Agent output is streamed into the chat panel.
+5. The turn ends, or the user clicks stop to cancel it.
+
+## Prompts
+
+- **System prompt**: the agent's instructions. It includes the active RPC ID and is not stored in the session history.
+- **User prompt**: the user's text combined with the IDA context. It is stored in the session history.
+
+## Output
+
+| Output | What it is |
+| --- | --- |
+| `TextDelta` | A chunk of the model's answer, streamed by the provider. |
+| `ReasoningDelta` | A chunk of the model's reasoning summary. Only sent by providers and models that support it. |
+| `ToolCall` | The model's request to run an MCP tool: tool name, arguments, and call ID. |
+| `ToolOutput` | The MCP tool's result, returned to the model. Has the same call ID as its `ToolCall`. |
+| `SubtoolTrace` | A log line the MCP server sends while a tool is still running. Not sent to the model. |
+
+All output for a turn goes into one `AETHER` message. Errors are shown in a separate `AETHER` message prefixed with `Error:`.
+
+## Common changes
+
+- **Change agent behaviour**: edit the system prompt.
+- **Change the context sent each turn**: edit the user prompt. It can only use fields returned by `get_function_context`.
+- **Add a tool**: add it to the MCP server. The agent loads all MCP tools each turn, so the GUI does not need changes.
+- **Change the model**: set `provider.default_model` in the AETHER config.
+
+<Callout type="warning">
+    The model must pass the RPC ID to tools itself. If the ID is missing or wrong, the call fails or runs against a different IDA instance.
+</Callout>
+
+<Callout type="warning">
+    Tool errors are returned to the model and do not show an error message. Check the tool output in the chat or the MCP server logs.
+</Callout>

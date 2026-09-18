@@ -1,0 +1,79 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.5.3/schema.json",
+	"assist": { "actions": { "source": { "organizeImports": "on" } } },
+
+	"files": {
+		"includes": [
+			"src/**/*.ts",
+			"src/**/*.tsx",
+			"src/**/*.js",
+			"src/**/*.jsx",
+			"src/**/*.json",
+			"src/**/*.css"
+		]
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true,
+			"style": {
+				"useImportType": "error",
+				"noParameterAssign": "error",
+				"useAsConstAssertion": "error",
+				"useDefaultParameterLast": "error",
+				"useEnumInitializers": "error",
+				"useSelfClosingElements": "error",
+				"useSingleVarDeclarator": "error",
+				"noUnusedTemplateLiteral": "error",
+				"useNumberNamespace": "error",
+				"noInferrableTypes": "error",
+				"noUselessElse": "error",
+				"noCommonJs": "error"
+			},
+			"nursery": {},
+			"suspicious": {
+				"noConsole": {
+					"level": "warn",
+					"options": {
+						"allow": ["assert", "error", "info", "warn", "dir"]
+					}
+				}
+			},
+			"correctness": {
+				"noUnusedImports": "error",
+				"noUndeclaredVariables": "error",
+				"noUnusedVariables": "error"
+			}
+		}
+	},
+	"formatter": {
+		"enabled": true,
+		"formatWithErrors": false,
+		"attributePosition": "auto",
+		"indentStyle": "tab",
+		"indentWidth": 2,
+		"lineWidth": 100,
+		"lineEnding": "lf",
+		"includes": ["**", "!**/node_modules/**", "!**/.next/**"]
+	},
+	"javascript": {
+		"formatter": {
+			"arrowParentheses": "always",
+			"bracketSpacing": true,
+			"semicolons": "always",
+			"trailingCommas": "all"
+		}
+	},
+	"json": {
+		"formatter": {
+			"trailingCommas": "none",
+			"lineEnding": "lf",
+			"lineWidth": 100
+		}
+	},
+	"css": {
+		"parser": {
+			"tailwindDirectives": true
+		}
+	}
+}

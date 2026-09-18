@@ -1,0 +1,75 @@
+import { Callout } from "nextra/components"
+
+# MCP Inspector
+
+[MCP Inspector](https://github.com/modelcontextprotocol/inspector) is a browser-based tool
+for inspecting and calling an MCP server's tools directly, without wiring up a full agent
+client. It is the fastest way to check that AETHER's tools are registered, view their
+schemas, and call them by hand while debugging.
+
+## Prerequisites
+
+- `bun` (used to run the inspector via `bunx`).
+- A running AETHER MCP server to connect to (the backend or the CLI). Both expose the
+  [streamable HTTP transport](https://modelcontextprotocol.io/specification/draft/basic/transports/streamable-http).
+
+## 1. Start an AETHER MCP server
+
+Run the backend headless server:
+
+```bash
+cd packages/backend && uv run scripts/run_headless.py
+```
+
+By default it listens on `http://localhost:8000/mcp`. Pass `--port` to change the port.
+
+The CLI exposes an MCP server the same way — see [Starting Up](/development/cli/starting-up)
+for its entrypoint. Point the inspector at whichever server you started.
+
+## 2. Launch the inspector
+
+```bash
+bunx @modelcontextprotocol/inspector
+```
+
+This starts the inspector and opens it in your browser.
+
+<Callout type="warning">
+  If you hit SSL errors, disable TLS verification before launching:
+
+  - Linux / macOS:
+    ```sh
+    export NODE_TLS_REJECT_UNAUTHORIZED=0
+    ```
+  - Windows (PowerShell):
+    ```powershell
+    $env:NODE_TLS_REJECT_UNAUTHORIZED = "0"
+    ```
+</Callout>
+
+## 3. Connect
+
+In the inspector UI:
+
+1. Set the transport to **Streamable HTTP**.
+2. Enter the server URL, e.g. `http://localhost:8000/mcp`.
+3. Click **Connect**.
+
+## 4. Inspect and call tools
+
+Once connected, use **List Tools** to see every registered tool and its schema, then select
+a tool to fill in arguments and call it. Responses (and streamed events) are shown in the
+inspector.
+
+<Callout type="info">
+  Debug and experimental tools are hidden unless enabled in your
+  [configuration](/development/configuration) (`debug` and `experimental`). If a tool you
+  expect is missing, check those flags.
+</Callout>
+
+<Callout type="warning">
+  Tools that operate on IDA (renaming, comments, pseudocode, etc.) require a live IDA
+  instance registered with the backend. The inspector will connect and list tools without
+  one, but those calls will error until an IDA RPC instance is discovered. See
+  [RPC discovery](/development/backend/rpc-discovery).
+</Callout>

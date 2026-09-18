@@ -1,0 +1,19 @@
+QLabel[messageState="error"],
+QLabel[messageState="success"],
+QLabel[messageState="none"] {
+    font-family: "{{ fontstyles.family }}";
+    font-size: {{ fontstyles.size }}pt;
+    font-weight: {{ fontstyles.weight }};
+}
+
+QLabel[messageState="error"] {
+    color: {{ colors.error }};
+}
+
+QLabel[messageState="success"] {
+    color: {{ colors.success }};
+}
+
+QLabel[messageState="none"] {
+    color: {{ colors.text }};
+}

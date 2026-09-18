@@ -1,0 +1,13 @@
+#ResponseStatus QLabel {
+    color: {{ colors.text }};
+}
+
+#ResponseProgress {
+    border: none;
+    background-color: {{ colors.mid }};
+}
+
+#ResponseProgress::chunk {
+    background-color: {{ colors.text }};
+    width: 8px;
+}

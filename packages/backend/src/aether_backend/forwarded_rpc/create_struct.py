@@ -1,0 +1,37 @@
+from aether_backend.utils.get_rpc_service import AnyService
+from aether_rpc.capabilities.result import Result
+from aether_rpc.capabilities.types import StructField, StructResult
+
+
+async def create_struct(
+    service: AnyService, *, struct_name: str, fields: list[StructField] | None = None
+) -> Result[StructResult]:
+    """Creates a new struct.
+
+    Args:
+        struct_name: Name of the struct to create.
+        fields: Optional list of field definitions. If set as None, an
+            empty struct is created.
+
+            Each field must be specified as either:
+            - ["field_name", "field_type"]; or
+            - ["field_name", "field_type", array_size]
+
+            Where:
+            - ``field_name`` is the member name.
+            - ``field_type`` is the member type (for example, ``uint32_t`` or ``char``).
+            - ``array_size`` is an optional positive integer specifying the number
+            of elements if the member is an array. Note that array size is not the offset of the field.
+
+        in NO situation should you put the length of the array in the field_type property. The length of the array should be in the array_size property. E.g.
+
+        If you want to create a char array of length 8 for a field called `name` it should be defined as ["name", "char", 8] and NOT ["name", "char[8]"].
+
+    Returns:
+        A Result whose ``success`` indicates whether the struct was created
+        successfully and whose ``result`` contains the created struct's ID and
+        name.
+    """
+    if not struct_name.startswith("AETHER_"):
+        struct_name = "AETHER_" + struct_name
+    return service.create_struct(struct_name=struct_name, fields=fields)

@@ -1,0 +1,99 @@
+name: Bump dev version
+
+on:
+  pull_request:
+    branches: [master]
+    types: [closed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: ci-master
+  cancel-in-progress: false # never abort mid-tag-push; let the second run wait
+
+jobs:
+  dev-release:
+    name: Bump dev version
+    # skip merges of our own bump PRs, otherwise this loops forever
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.merged == true && !startsWith(github.head_ref, 'bump/'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # full history for commitizen + release notes
+          ref: master
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Bump on a new branch
+        id: bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          BRANCH="bump/dev-${{ github.run_number }}-${{ github.run_attempt }}"
+          git switch -c "$BRANCH"
+
+          # extend the current dev series; after a release, start one on the next patch
+          CURRENT="$(uv run cz version --project)"
+          case "$CURRENT" in
+            *.dev*) COUNTER=$(( ${CURRENT##*.dev} + 1 )) ;;
+            *)      COUNTER=1 ;;
+          esac
+
+          # --allow-no-commit: every merge gets a dev build, even a docs- or chore-only one.
+          uv run cz bump --yes --no-verify --allow-no-commit \
+            --increment PATCH --devrelease "$COUNTER"
+          VERSION="$(uv run cz version --project)" # tag_format is "$version"
+
+          # cz bump never touches the lockfile; re-tag so the tag names the tree that builds
+          uv lock
+          if ! git diff --quiet -- uv.lock; then
+            git commit --no-verify -m "chore: sync uv.lock for $VERSION" -- uv.lock
+            git tag -f "$VERSION"
+          fi
+
+          git push origin "$BRANCH"
+          git push origin "$VERSION"
+
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      # https://github.com/commitizen-tools/commitizen/issues/1367
+      # - name: Extract changelog section
+      #   id: notes
+      #   run: uv run cz changelog "${{ steps.bump.outputs.version }}" --dry-run > RELEASE_NOTES.md
+
+      - name: Write release notes
+        id: notes
+        run: echo "Automated dev build ${{ steps.bump.outputs.version }}." > RELEASE_NOTES.md
+
+      - name: Open PR and auto-merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base master \
+            --head "${{ steps.bump.outputs.branch }}" \
+            --title "bump: ${{ steps.bump.outputs.version }}" \
+            --body "Automated dev version bump from #${{ github.event.pull_request.number }}."
+          gh pr merge "${{ steps.bump.outputs.branch }}" --squash --delete-branch
+
+      - name: Create prerelease
+        uses: softprops/action-gh-release@v3.0.1
+        with:
+          tag_name: ${{ steps.bump.outputs.version }}
+          name: ${{ steps.bump.outputs.version }}
+          prerelease: true
+          body_path: RELEASE_NOTES.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

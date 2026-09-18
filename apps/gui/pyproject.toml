@@ -1,0 +1,31 @@
+[project]
+name = "aether_gui"
+version = "0.0.6.dev12"
+description = "AETHER GUI application"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "aether_utils",
+    "aether_rpc",
+    "aether_backend",
+    "jinja2==3.1.6",
+    "markdown==3.10.2",
+]
+
+[dependency-groups]
+dev = [
+    "pyside6==6.8.0",
+    "pyside6-addons==6.8.0",
+    "pyside6-essentials==6.8.0",
+    "shiboken6==6.8.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/aether_gui"]
+include = [
+  "src/aether_gui/**/*.jinja",
+]

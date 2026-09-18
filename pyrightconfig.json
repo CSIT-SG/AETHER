@@ -1,0 +1,17 @@
+{
+  "extraPaths": [
+    "apps/cli/src",
+    "apps/cli/scripts",
+    "apps/gui/src",
+    "apps/gui/scripts",
+    "packages/utils/src",
+    "packages/rpc/src",
+    "packages/backend/src",
+    "packages/test-fixtures/src",
+    "packages/benchmark/src",
+    "C:\\Program Files\\IDA Professional 9.2\\python",
+    "C:\\Program Files\\IDA Professional 9.3\\python"
+  ],
+  "ignore": ["**/build", "**/dist", "**/node_modules", "**/.next"],
+  "pythonVersion": "3.12"
+}

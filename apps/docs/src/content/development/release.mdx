@@ -1,0 +1,37 @@
+# Release
+
+Releases are published via the [`release.yml`](https://github.com/csitgovsg-acube/AETHER-next/blob/master/.github/workflows/release.yml) GitHub Actions workflow.
+It builds Python wheels for all distributable packages, verifies the docs build, tags the commit, and publishes a GitHub Release with the wheels as assets.
+
+## Triggering a release
+
+Go to **Actions -> Release -> Run workflow** and optionally enter a version number.
+
+- If version is omitted, the workflow reads from the [`VERSION`](https://github.com/csitgovsg-acube/AETHER-next/blob/master/VERSION) file at repo root.
+- If the tag already exists, the workflow fails with an error telling you to bump the version.
+
+To trigger from the CLI:
+
+```sh
+# Uses VERSION file
+gh workflow run release.yml
+
+# Explicit version
+gh workflow run release.yml -f version=1.2.3
+```
+
+## Local testing with act
+
+[act](https://github.com/nektos/act) runs GitHub Actions locally against a Docker container. Ensure the Docker daemon is running before using act.
+
+Enter a github secret and use act to test:
+
+```sh
+# Requires Docker and act installed
+echo "GITHUB_TOKEN=<your_token>" > .secrets
+
+act workflow_dispatch -j release \
+  -W .github/workflows/release.yml \
+  --secret-file .secrets \
+  --input version=0.1.0
+```

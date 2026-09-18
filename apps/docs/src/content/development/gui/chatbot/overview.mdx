@@ -1,0 +1,79 @@
+import { Callout, FileTree } from "nextra/components";
+
+# Chatbot Overview
+
+The AETHER chatbot comprises the following parts:
+
+1. **ChatbotPanel**: Container that owns the chat layout and background styling of the chatbot window. 
+2. **GUI widgets**: Part of the components package `features/chatbot/components`.
+3. **GUI renderer**: Renders content into the widget using  the  `ChatbotAreaRenderer` class.
+4. **Orchestrator `ChatOrchestrator`**: it runs on IDA's main thread. 
+At the start of each turn it submits context retrieval and agent tasks to the shared `WorkerManager`, then routes streamed output back to the renderer on the main thread.
+5. **Agent**: built in `backend/chatbot/task`. Streams the provider's output, renders the prompts from `task/content`, and wraps each MCP tool so the model can call it.
+6. **Session**: Stores current chat session using `ChatSession` in `utils/chat_session` and handles compacting via `CompactingSession` class.
+
+<Callout type="info">
+    The Agents SDK provides an in-memory SQLite database for model history; compaction summarises older items.
+</Callout>
+
+<Callout type="info">
+    Source paths on these pages are relative to `apps/gui/src/aether_gui/`, unless stated otherwise.
+</Callout>
+
+## Panel anatomy
+
+![Anatomy of the ChatbotPanel](/chatbot-panel-anatomy.png)
+
+| Label | What it is |
+| --- | --- |
+| `ChatbotPanel` | The window itself, spawned by the `ChatbotHandler`. |
+| `MessageArea` | Holds every message, plus search and scrolling. |
+| `MessageColumn` | One message bubble. Holds multiple `MessageParagraph`s. |
+| `MessageParagraph` | One block of rendered Markdown. |
+| Message header | Role and timestamp. |
+| Footer | Copy button. |
+| Input box, submit button | Both are `ChatInput`. |
+
+
+<Callout type="info">
+    See [`UI Components`](/development/gui/chatbot/ui-components) for each widget's responsibilities.
+</Callout>
+
+## Session and lifecycle
+
+`ChatbotHandler` is the GUI entry point which exposes a context-menu action in the pseudocode view. 
+It owns the `ChatSession` and opens the chatbot panel.
+
+Because the session lives on the handler, it stores chat history after closing and reopening the window as handler remains alive. History is not restored after restarting IDA.
+
+`ChatSession` holds two things:
+
+- **UI messages**: The chat history.
+- **A `CompactingSession`**: the turn-by-turn history the LLM sees.
+
+`CompactingSession` subclasses the Agents SDK's `SQLiteSession`. By default, once the chat history exceeds
+10 items, it retains the latest 5 and summarises the rest, extending that tail
+when needed to keep tool calls with their results.
+
+These are history items, not whole
+user turns. If summarisation fails, the original history is kept.
+
+<Callout type="info">
+    The specific numbers 10 and 5 can be configured manually.
+</Callout>
+
+Compaction affects model history only; the visible conversation remains intact.
+`ChatSession` also appends a text log to `chat_sessions/<rpc_id>.log` under the GUI's
+application data directory. This log is not loaded to restore a session.
+
+## Chatbot turn lifecycle
+
+1. **Submit**: The user's input is forwarded to the provider. Further submissions until the turn finishes.
+2. **Offload**: `ChatOrchestrator` reads the current address and RPC ID, then requests the function context (look at this later) through the Model Context Protocol (MCP) server. It passes the resulting future and the prompt to `ChatBotTask`. Tasks run on `WorkerManager`'s shared background event loop.
+3. **Run**: The task waits up to 30 seconds for context, builds the agent, and streams the response. The agent can call MCP tools, which may use remote procedure calls (RPC) to read or modify the open IDA database.
+4. **Render**: Consumer threads forward output to IDA's main thread. The renderer creates a bubble (`MessageColumn`), adds a paragraph (`MessageParagraph`), or appends streamed text to the current paragraph.
+
+<Callout type="info">
+    See [`Orchestration`](/development/gui/chatbot/orchestration) for prompts, tool calls, and rendering rules.
+</Callout>
+

@@ -1,0 +1,77 @@
+import { Callout } from 'nextra/components'
+
+# Configuration
+
+For AETHER GUI, go to **Edit -> Plugins -> AETHER Settings** to configure the plugin.
+For AETHER CLI, go to **%LOCALAPPDATA%\AETHER-next\_global\config.json** to configure the plugin.
+
+The configuration is structured as a set of nested sections. Each section and its fields are described below.
+
+## General Fields
+
+These fields are located at the top level of the configuration file.
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `debug` | `boolean \| null` | No | Whether to enable debug mode, which may include more verbose logging and additional output for debugging purposes. |
+| `experimental` | `boolean \| null` | No | Whether to enable experimental features, which may be unstable or in development. Defaults to `true`. |
+| `backup` | `boolean \| null` | No | Whether to enable backups before performing destructive actions. Defaults to `true`. |
+| `mcp_url` | `string` | No | URL where the MCP client will connect to. Ignore if you are not using the GUI. Defaults to `http://127.0.0.1:8000/mcp/`. |
+
+## `provider` (required)
+
+Configures the language model provider that AETHER communicates with.
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `gateway_url` | `string` | Yes | The base URL for the provider's API gateway. |
+| `api_key` | `string \| null` | No | The API key for the provider. |
+| `models` | `object` | No | A mapping of friendly names to model ids for this provider. |
+| `default_model` | `string` | Yes | Friendly name of default model to fall back to. |
+| `extra_body` | `object \| null` | No | Any extra body parameters to include in requests to this provider, e.g. `{"reasoning": {"effort": "high"}}` or `{"transforms": ["middle-out"]}`. |
+
+<Callout>
+  The `default_model` must be one of the keys defined in `models`. AETHER will raise an error on startup if this constraint is violated.
+</Callout>
+
+## `subagents` (optional)
+
+Overrides the model used for specific internal subagents. Each field accepts a friendly model name that must exist as a key in [`provider.models`](#provider-required).
+
+If a field is omitted, the subagent falls back to [`provider.default_model`](#provider-required).
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `annotator_model` | `string \| null` | No | Model override for the annotator subagent. |
+| `unflattener_model` | `string \| null` | No | Model override for the unflattener subagent. |
+| `struct_creator_model` | `string \| null` | No | Model override for the structure creator subagent. |
+| `struct_reevaluator_model` | `string \| null` | No | Model override for the structure reevaluator subagent. |
+| `chatbot_model` | `string \| null` | No | Model override for the chatbot. |
+
+<Callout>
+  Any non-null model name must be a key defined in `provider.models`.
+</Callout>
+
+## `features` (optional)
+
+Controls feature flags and component-level parameters. Each sub-key accepts a free-form object whose supported fields depend on the component.
+
+<Callout type="warning">
+    Not yet fully implemented/documented.
+</Callout>
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `annotator` | `object \| null` | No | Feature flags and parameters for the annotator component. |
+| `deobfuscator` | `object \| null` | No | Feature flags and parameters for the deobfuscator component. |
+| `chatbot` | `object \| null` | No | Feature flags and parameters for the chatbot component. |
+| `struct_creator` | `object \| null` | No | Feature flags and parameters for the structure creator component. |
+
+## `tls` (optional)
+
+Configures mutual TLS (mTLS) for providers that require client certificate authentication.
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `client_cert_path` | `string \| null` | No | Path to the client certificate for mutual TLS authentication, if required by the provider. |
+| `client_key_path` | `string \| null` | No | Path to the client private key for mutual TLS authentication, if required by the provider. |

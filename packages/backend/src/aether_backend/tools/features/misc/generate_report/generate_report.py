@@ -1,0 +1,96 @@
+from pathlib import Path
+from typing import Any
+
+from aether_backend.forwarded_rpc import (
+    get_data_at_address,
+    get_function_pseudocode,
+    get_functions_called_recursively,
+    validate_yara_rule,
+)
+from aether_backend.utils.effect import Program, Progress, Return
+from aether_backend.utils.force_structured_output import force_structured_output
+from aether_backend.utils.stream_tool_logs import stream_tool_logs
+from aether_backend.utils.subagent import SubagentToolDependencies, build_subagent_tool
+from aether_utils.api_client import OpenAIGateway
+from aether_utils.get_content import get_content
+from agents import Agent, ModelSettings, Runner
+
+from .constants import MAX_VALIDATION_ATTEMPTS
+from .types import GeneratedReport
+
+SYSTEM_PROMPT = get_content(Path(__file__).parent, "generate_report_prompt.md")
+
+
+async def generate_report_cb(service: Any, function_name: str) -> Program:
+    agent = Agent(
+        name="report_generator",
+        model=OpenAIGateway().get_model(
+            feature="generate_report",
+        ),
+        instructions=SYSTEM_PROMPT,
+        tools=list(
+            map(
+                build_subagent_tool,
+                [
+                    get_functions_called_recursively,
+                    get_function_pseudocode,
+                    get_data_at_address,
+                    validate_yara_rule,
+                ],
+            )
+        ),
+        model_settings=ModelSettings(parallel_tool_calls=False),
+    )
+    deps = SubagentToolDependencies(service)
+
+    result = Runner.run_streamed(
+        agent,
+        context=deps,
+        input=f"Generate a full analysis report with YARA rules for the function {function_name}. ",
+        max_turns=1000,
+    )
+    async for log in stream_tool_logs(result):
+        yield log
+
+    report: GeneratedReport = await force_structured_output(agent, GeneratedReport, result)
+
+    rules, report_text = report["yara_rules"], report["report"]
+
+    for attempt in range(MAX_VALIDATION_ATTEMPTS):
+        failed = []
+        for rule in rules:
+            validation_result = await validate_yara_rule(service, rule_text=rule)
+            if not validation_result.success:
+                failed.append({"rule": rule, "error": validation_result})
+        if not failed:
+            break
+
+        yield Progress(
+            f"{len(failed)} rule(s) failed validation (attempt {attempt + 1}); regenerating..."
+        )
+
+        result = Runner.run_streamed(
+            agent,
+            context=deps,
+            input=result.to_input_list()
+            + [
+                {
+                    "role": "user",
+                    "content": f"These YARA rules failed validation: {failed}. Fix them and "
+                    f"resubmit only the rules with the complete corrected list of all YARA rules.",
+                }
+            ],
+            max_turns=1000,
+        )
+        async for log in stream_tool_logs(result):
+            yield log
+        rules = await force_structured_output(agent, list[str], result)
+    else:
+        yield Progress("Max validation attempts reached; returning last draft despite failures.")
+
+    yield Return(
+        {
+            "report": report_text,
+            "yara_rules": rules,
+        }
+    )

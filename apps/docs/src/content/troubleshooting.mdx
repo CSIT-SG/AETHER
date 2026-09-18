@@ -1,0 +1,39 @@
+import { Callout } from "nextra/components";
+
+# Troubleshooting
+
+## Outdated version causing features to fail
+
+AETHER's GUI plugin and CLI run inside the same Python that IDA uses (using `idapyswitch`). 
+If a per-user site-packages directory (packages installed with `--user`) holds incompatible versions of AETHER's dependencies, 
+they can shadow system-wide packages (packages installed with `--system`) and cause the GUI to fail with errors like:
+
+```
+Error: Stream failed: 'Tool' object has no attribute 'input_schema' for message
+```
+
+```
+Error: Stream failed: Invalid `http_client` argument; Expected an instance of `httpx.AsyncClient` but got <class 'httpx2.AsyncClient'>
+```
+
+This is because when python resolves imports, it searches the per-user site-packages directory first, 
+and finds an incompatible version of `mcp`, `openai`, or `fastmcp` that is required by AETHER.
+
+Check your per-user `pip list` against the `requirements.txt` in your release bundle (next to `install_prod.py` / `install.py`) to confirm the versions match:
+
+```bash
+python -m pip list --user
+```
+
+If they don't, reinstall from the bundle:
+
+```bash
+python -m pip install --user --force-reinstall -r requirements.txt
+```
+
+Older AETHER versions are incompatible with this stack and must be installed separately.
+Uninstall the current version first, then install the older one:
+
+```bash
+python ./uninstall_prod.py
+```

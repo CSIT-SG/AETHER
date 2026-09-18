@@ -1,0 +1,238 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      increment:
+        description: "Version increment"
+        type: choice
+        required: true
+        default: PATCH
+        options: [PATCH, MINOR, MAJOR]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false # never abort a release mid-tag-push; let the second run wait
+
+jobs:
+  bump:
+    name: Bump ${{ inputs.increment }}
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # full history + tags for commitizen's incremental changelog
+          ref: master
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Bump and tag
+        id: bump
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INCREMENT: ${{ inputs.increment }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          BRANCH="bump/release-${{ github.run_number }}-${{ github.run_attempt }}"
+          git switch -c "$BRANCH"
+
+          # fail before anything is committed if the target is already tagged
+          TARGET="$(uv run cz bump --increment "$INCREMENT" --yes --get-next)"
+          if git rev-parse -q --verify "refs/tags/$TARGET" >/dev/null; then
+            echo "::error::$TARGET is already tagged. master is at $(uv run cz version --project), a prerelease of an already-released version; move master onto the next patch before releasing."
+            exit 1
+          fi
+
+          uv run cz bump --yes --no-verify --increment "$INCREMENT"
+          VERSION="$(uv run cz version --project)" # tag_format is "$version"
+
+          # cz bump never touches the lockfile; re-tag so the tag names the tree that builds
+          uv lock
+          if ! git diff --quiet -- uv.lock; then
+            git commit --no-verify -m "chore: sync uv.lock for $VERSION" -- uv.lock
+            git tag -f "$VERSION"
+          fi
+
+          PREV_STABLE="$(git tag --list --sort=-v:refname | grep -vE '\.dev[0-9]+$' | grep -vxF "$VERSION" | head -1)"
+          uv run cz changelog --dry-run --merge-prerelease --unreleased-version "$VERSION" ${PREV_STABLE:+--start-rev "$PREV_STABLE"} > RELEASE_NOTES.md
+          if ! grep -q '^- ' RELEASE_NOTES.md; then
+            echo "::warning::No changelog entries found for $VERSION."
+          fi
+
+          git push origin "$BRANCH"
+          git push origin "$VERSION"
+
+          gh pr create \
+            --base master \
+            --head "$BRANCH" \
+            --title "bump: $VERSION" \
+            --body "Automated $INCREMENT release bump."
+          gh pr merge "$BRANCH" --squash --delete-branch
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Upload release notes
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: RELEASE_NOTES.md
+
+  build:
+    name: Build
+    needs: bump
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.bump.outputs.version }}
+
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Build release bundles
+        run: uv run python -m scripts.release.build
+
+      - name: Verify build output
+        run: |
+          if [ ! -d dist ] || [ -z "$(ls -A dist 2>/dev/null)" ]; then
+            echo "::error::dist/ is missing or empty after the build step."
+            exit 1
+          fi
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-online-ubuntu-latest-py3.12
+          path: dist/
+
+  build-offline:
+    name: Build offline (${{ matrix.os }}, py${{ matrix.python-version }})
+    needs: bump
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.12", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.bump.outputs.version }}
+
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python-version }}
+
+      - name: Build offline release bundles
+        run: uv run python -m scripts.release.build_offline
+
+      - name: Verify build output
+        shell: bash
+        run: |
+          if [ ! -d dist ] || [ -z "$(ls -A dist 2>/dev/null)" ]; then
+            echo "::error::dist/ is missing or empty after the build step."
+            exit 1
+          fi
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-offline-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: dist/
+
+  docs:
+    name: Build docs
+    needs: bump
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.bump.outputs.version }}
+
+      - name: Build Docker image
+        run: docker build -f apps/docs/Dockerfile -t aether-docs .
+
+      - name: Extract standalone artifact
+        run: |
+          docker create --name docs-extract aether-docs
+          docker cp docs-extract:/app ./docs-standalone
+          docker rm docs-extract
+          zip -qr "docs-${{ needs.bump.outputs.version }}.zip" docs-standalone
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: docs-zip
+          path: docs-${{ needs.bump.outputs.version }}.zip
+
+  publish:
+    name: Publish release
+    needs: [bump, build, build-offline, docs]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: dist-*
+          path: artifacts
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: docs-zip
+          path: release-zips
+
+      - name: Download release notes
+        uses: actions/download-artifact@v4
+        with:
+          name: release-notes # lands RELEASE_NOTES.md at the workspace root for body_path
+
+      - name: Zip each combo's bundles
+        run: |
+          VERSION="${{ needs.bump.outputs.version }}"
+
+          mkdir -p release-zips
+          for combo_dir in artifacts/*/; do
+            combo="$(basename "$combo_dir")"          # e.g. dist-offline-ubuntu-latest-py3.12
+            # transformed into <app>[-<os>-py<pyver>]-<flavor>-v<version>
+            rest="${combo#dist-}"                     # offline-ubuntu-latest-py3.12
+            flavor="${rest%%-*}"                      # offline | online
+            rest="${rest#*-}"                         # ubuntu-latest-py3.12
+            os="${rest%%-*}"                          # ubuntu
+            pyver="${rest##*-py}"                     # 3.12
+            for app_dir in "$combo_dir"*/; do
+              app="$(basename "$app_dir")"
+              if [ "$flavor" = "online" ]; then
+                # online bundles are platform- and Python-agnostic
+                zip_name="${app}-online-v${VERSION}.zip"
+              else
+                zip_name="${app}-${os}-offline-py${pyver}-v${VERSION}.zip"
+              fi
+              (cd "$combo_dir" && zip -qr "../../release-zips/${zip_name}" "${app}")
+              echo "Packaged ${zip_name}"
+            done
+          done
+          ls -la release-zips
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3.0.1
+        with:
+          tag_name: ${{ needs.bump.outputs.version }}
+          name: Release ${{ needs.bump.outputs.version }}
+          draft: ${{ env.ACT == 'true' }} # act sets ACT=true. https://nektosact.com/usage/index.html#skipping-steps
+          files: release-zips/*.zip
+          body_path: RELEASE_NOTES.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

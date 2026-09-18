@@ -1,0 +1,156 @@
+import { Callout } from 'nextra/components'
+import { Tabs } from 'nextra/components'
+import { LinkButton } from '@/components/Button'
+
+# Rubric Schema
+
+<Callout type="important">
+  This benchmark is meant to assess the **qualitative** component of AETHER's features (e.g. annotator, struct creator, etc). 
+</Callout>
+
+AETHER Benchmark is an internal tool built for **evaluating the quality of annotations** on AETHER releases.    
+
+This functions by parsing a YAML file which contains the specification on how each function, variable and comments should look once properly annotated.
+
+
+## Schema Specification
+
+The `rubrics.yaml` file must contain the frontmatter followed by rubric structure.
+
+### Frontmatter
+| Field | Required | Description |
+| :--- | :--- | :--- |
+| `name` | Yes | Report title / Malware nickname |
+| `description` | No | Brief summary of the malware report and background information. |
+| `version` | Yes | Schema version this rubric targets. Its **major** component must match the installed `aether_benchmark` package's major version, or parsing fails. |
+
+#### Example
+<Tabs items={['Minimal example', 'All optional fields']}>
+  <Tabs.Tab>
+  ```yaml copy
+  name: "Report Name"
+  version: "1.0.0"
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```yaml copy
+  name: "Reference Handler Analysis"
+  version: "1.0.0"
+  description: "Evaluates the quality of reverse-engineered packet processing functions."
+  ```
+  </Tabs.Tab>
+</Tabs>
+
+### Rubric Structure
+
+Each rubric group can be grouped into their **functional modules** (i.e, encryption, obfuscation, packet encapsulation).
+
+| Field | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| `name` | String | Yes | A unique identifier for the rubric group. Can be used for questions. |
+| `description` | String | No | Context for the evaluator. **Supports address mapping** and notes. |
+| `weight` | Float | No | Importance of this group. Defaults to `1.0`. |
+| `criteria` | List | Yes | A list of specific requirements to fulfill. |
+
+#### Example
+<Tabs items={['Minimal example', 'All optional fields']}>
+  <Tabs.Tab>
+  ```yaml copy
+  rubrics:
+    - name: "functional-group-1"
+      criteria:
+        - "criteria uno"
+        - "criteria dos"
+        - "criteria des"
+  ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+  ```yaml copy
+  rubrics:
+    - name: "packet_parsing_logic"
+      description: "Evaluates packet headers at 0x4010A0 (Main Parser) and 0x4010B0 (Sub-Parser)."
+      weight: 2.0
+      criteria:
+        - "Constants (magic numbers) are replaced with meaningful Enums or Defines"
+        - "Struct pointer usage is correctly applied for packet headers"
+        - "Error handling paths (e.g., length checks) are explicitly named"
+  ```
+  </Tabs.Tab>
+</Tabs>
+---
+
+## Criteria Guidelines
+
+When creating a rubric for a new sample, follow these guideline to ensure descriptiveness and sufficient contextual information:
+
+### Weighting
+Weights are optional. Use them to signal which functional domain are critical to the understanding the program's mechanism.
+*   By default: if **the weight is omitted**, the system assumes a weight of `1.0`.
+*   **Critical components**: Use weights `> 1.0` for core logic (e.g., packet parsing, encryption).
+
+### Contextual Mapping
+The `description` field is used to provide additional context for any given rubric criteria. You should ideally include:
+*   Addresses: List specific function offsets for the evaluator (e.g., `Targets: 0x4010A0, 0x4010B0`).
+*   Scope: Describe the functional scope (e.g., `Covers all AES-related transformation functions`).
+*   Context: Explain what functionality this rubric criteria is referencing in the binary.
+
+Ensure your `description` provides sufficient context as it'll be used to dictate the scope and quality.
+
+<Callout type="info">
+  Overly comprehensive description of criteria can do more harm than good. Keep your rubrics concise and informative -- aim for **moderate level** of detail of functional components.
+</Callout>
+
+### Chatbot Q&A Rubrics
+The `name` field serves two primary purposes, **Semantic Identifier** (for annotator & struct creator) & **QnA Prompting** (for chatbot).    
+For Q&A, provide objective based question rather than task-based (i.e. writing yara rules for the sample). Questions are meant to **assess varies technical details** and thinking logic within the interpreted chatbot output. 
+
+---
+
+## Example Configuration
+
+> Note how the `description` field is used to map specific function addresses to the criteria.
+
+```yaml filename="packet-handler.yaml"
+name: "Reference Handler Analysis"
+version: "1.0.0"
+description: "Evaluates the quality of reverse-engineered packet processing functions."
+
+rubrics:
+  - name: "packet_parsing_logic"
+    # Note: Description includes context and addresses
+    description: "Evaluates packet headers at 0x4010A0 (Main Parser) and 0x4010B0 (Sub-Parser)."
+    weight: 2.0
+    criteria:
+      - "Constants (magic numbers) are replaced with meaningful Enums or Defines"
+      - "Struct pointer usage is correctly applied for packet headers"
+      - "Error handling paths (e.g., length checks) are explicitly named"
+
+  - name: "cryptographic_constants"
+    description: "Applies to all transformation primitives in the 0x4025C0 range."
+    weight: 1.5
+    criteria:
+      - "The S-Box or initialization vector arrays are clearly named"
+      - "The function is tagged with the appropriate cryptographic algorithm name (e.g., AES, XOR)"
+
+  - name: "documentation_standards"
+    # Weight is omitted; defaults to 1.0
+    description: "General code maintainability requirements."
+    criteria:
+      - "Function documentation follows project docstring convention"
+      - "Key bitwise operations have comments explaining the bitmask intent"
+```
+
+## Markdown Report Convertor
+
+For convenience, a `SKILL.md` file is provided to allow for the ingress of publicly available malware reports that can be converted into digestable rubrics.  
+It is <u>recommended to use frontier models</u>, wherever possible, to produce the optimal result.   
+
+However, be sure to validate and cross-reference the rubrics with the original report to ensure adherence to best practices.
+
+
+<LinkButton variant="download" href="/md-report-converter/SKILL.md" download="SKILL.md">
+  <svg className="fill-current w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+    <path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z"/>
+  </svg>
+  <span>Download SKILL.md</span>
+</LinkButton>

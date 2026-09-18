@@ -1,0 +1,390 @@
+import { FileTree, Callout } from 'nextra/components'
+
+# Writing GUI components
+
+We have a custom renderer framework built on top of `PySide6`. This is to abstract away common 
+ui logic that is repeated across components.
+
+
+To begin, all components inherit from `StyledComponent`, which is an abstract class that provides the 
+following functionality:
+- [Lifecycle events](#component-lifecycle)
+- [Automatic stylesheet injection](#styling-with-qss)
+- [Reacting to IDA theme changes](#theme-changes)
+- [Rendering html](#html-rendering)
+
+<Callout type="warning">
+	**DO NOT TOUCH:** the `StyledComponent` class is sacred (kinda).
+
+	Every AETHER GUI component is a child of it. Changes may not break everything, but do not touch it 
+	unless absolutely necessary and with express permission. This is to prevent breaking someone else's 
+	code, since it is a very important shared class.
+
+	Adding a plugin is almost always the right move instead.
+</Callout>
+
+We will describe how to use these features later on. For now, here is a general structure of a component.
+
+
+<FileTree>
+  <FileTree.Folder name="my_component" defaultOpen>
+    <FileTree.File name="__init__.py" />
+    <FileTree.File name="component.py" />
+	<FileTree.File name="constants.py" />
+	<FileTree.File name="types.py" />
+    <FileTree.File name="styles.qss.jinja" />
+	<FileTree.File name="template.html.jinja" />
+  </FileTree.Folder>
+</FileTree>
+
+Roughly, the files have these responsibilities:
+
+- `__init__.py`: Export the component class and any relevant types or constants.
+- `component.py`: Contains the main component class that inherits from `StyledComponent`.
+- `constants.py` (_optional_): Any constant values or enums used by the component.
+- `types.py` (_optional_): Any custom types used by the component.
+- `styles.qss.jinja` (_optional_): A Jinja template for the component's styles. This is recommended for complex components.
+- `template.html.jinja` (_optional_): A Jinja template for the component's HTML structure. This is only needed if you want to render HTML.
+
+<Callout type="info">
+	Under the hood, the framework will load built in plugins `ThemePlugin` and `JinjaPlugin` to provide theme and template rendering capabilities.
+	We will describe what role these plugins play later.
+
+	You can also create your own plugins for additional re-usable functionality, such as state management or external integrations.
+	[Read more about plugins here](/development/gui/component-plugins).
+</Callout>
+
+## Component Lifecycle
+
+The `StyledComponent` lifecycle has several hooks that you can override to run code at specific times.
+
+### Construction
+Construction runs these steps, in order:
+
+1. `setup()`: Initialize non-UI state. For example, set up instance variables or load data.
+2. `init_ui()`: Build widgets and layouts. Plugins are not installed yet at this point.
+3. `_install_plugins()`: _Do not_ override this method. Install plugins by priority (highest first). 
+	`ThemePlugin` will inject in this step. It calls `setStyleSheet()` to apply styles. 
+	[Learn about styling here](#styling-with-qss).
+4. `plugins_ready()`: Run any code that depends on plugins being installed. 
+	For example, if your component relies on a plugin to provide data, you can safely access that data here.
+
+<Callout>
+If you need to override `__init__`, set your component properties before you call `super().__init__`.
+
+For example,
+```python
+class MessageBubble(StyledComponent):
+    """Message Bubbles"""
+    def __init__(
+            self,
+            message: Message,
+            parent=None
+            ) -> None:
+        self._message = message
+        super().__init__(parent)
+        ...
+```
+</Callout>
+
+### Theme Changes
+On theme changes, `ThemePlugin` runs:
+
+1. `_apply_styles()`: _Do not_ override this method. Re-render QSS styles for all components. 
+2. `on_theme_change()`: Run any imperative updates that cannot be handled by QSS. 
+	For example, if you need to update a widget's text based on the current theme, you can do that here.
+
+### Teardown
+On close:
+
+1. `closeEvent()`: _Do not_ override this method. It is a Qt event handler that runs when the component is closed. It calls `teardown()`.
+2. `teardown()`: Run any cleanup code here, such as disconnecting signals or stopping threads.
+
+### Example: Lifecycle Hooks
+
+```python
+from PySide6.QtWidgets import QLabel
+
+from aether_gui.utils.ui import StyledComponent
+
+
+class StatusPanel(StyledComponent):
+	def setup(self) -> None:
+		self._status_text = "Loading"
+
+	def init_ui(self) -> None:
+		self._label = QLabel(self._status_text, self)
+
+	def plugins_ready(self) -> None:
+		# All plugins are installed at this point.
+		self._label.setText("Ready")
+
+	def on_theme_change(self, *, theme, colors) -> None:
+		# Imperative updates that QSS cannot express.
+		self._label.setText(f"Theme: {theme}")
+```
+
+Behavior: the label starts as "Loading", becomes "Ready" after plugins install, and updates its text on every theme change.
+
+
+## Component State
+
+Plugins share state with their host component through `self.state`.
+
+<Callout type="warning">
+	`self.state` is a `defaultdict(lambda: None)`, not a plain dict.
+
+	A missing or misspelled key returns `None` instead of raising `KeyError`, so a typo in a template 
+	fails silently rather than loudly.
+</Callout>
+
+`StyledComponent` populates two keys before your code runs:
+
+- `state["theme"]`: `"light"` or `"dark"`.
+- `state["colors"]`: the color namespace described in [Styling with QSS](#styling-with-qss).
+
+Plugins add their own on install. For example, `FontPlugin` writes `state["fontstyles"]`, so a component 
+that reads or changes font state goes through `widget.state["fontstyles"]`.
+
+<Callout type="info">
+	`ThemePlugin` and `JinjaPlugin` are installed on every `StyledComponent`. Every other plugin, 
+	including `FontPlugin`, is opt-in and must be passed explicitly:
+
+	```python
+	super().__init__(parent, plugins=[FontPlugin()])
+	```
+</Callout>
+
+
+## Template Loading
+
+`JinjaPlugin` allows you to define QSS and HTML templates for your component. 
+
+<Callout>
+	Templates are optional. You can choose to define any of: a QSS template, HTML template, both, or neither.
+</Callout>
+
+### Styling with QSS
+To define styles for your component, create a Jinja template with the `.qss.jinja` extension, as shown earlier.
+
+Then, you need to implement one of `style_file()` or `style()` in your component class to return the template path or inlined styles, respectively.
+
+`ThemePlugin` will inject theme variables (namespaced under `colors`) into the template context, allowing you to use dynamic values in your styles.
+
+The following colors are supported (Light/Dark):
+- `windowtext` - `#000000`/`#dddddd`
+- `button` - `#f0f0f0`/`#363636`
+- `light` - `#ffffff`/`#ffffff`
+- `midlight` - `#e3e3e3`/`#e3e3e3`
+- `dark` - `#a0a0a0`/`#a0a0a0`
+- `mid` - `#a0a0a0`/`#a0a0a0`
+- `text` - `#000000`/`#dddddd`
+- `brighttext` - `#ffffff`/`#ffffff`
+- `buttontext` - `#dddddd`/`#dddddd`
+- `base` - `#ffffff`/`#363636`
+- `window` - `#f0f0f0`/`#363636`
+- `shadow` - `#696969`/`#696969`
+- `highlight` - `#0078d7`/`#0078d7`
+- `highlightedtext` - `#ffffff`/`#ffffff`
+- `link` - `#004275`/`#004275`
+- `linkvisited` - `#002642`/`#002642`
+- `alternatebase` - `#f5f5f5`/`#f5f5f5`
+- `norole` - `#000000`/`#000000`
+- `tooltipbase` - `#ffffdc`/`#ffffdc`
+- `tooltiptext` - `#000000`/`#000000`
+- `placeholdertext` - `#000000`/`#dddddd`
+- `accent` - `#005a9e`/`#005a9e`
+- `ncolorroles` - `#787878`/`#dddddd`
+
+Access them like this: `{{ colors.window }}` in your jinja template. They map to hex color values like `#000000`.
+
+Example of color scheme mapping:
+- `{{ colors.highlight }}` -> Blue
+- `{{ colors.button }}` -> Grey
+- `{{ colors.text }}` -> Black/White
+
+#### Example: QSS Template
+
+```css
+/* styles.qss.jinja */
+#ChatHistoryView {
+    background-color: {{ colors.base }};
+}
+
+#ChatHistoryView QTextEdit {
+    background-color: {{ colors.base }};
+    color: {{ colors.text }};
+    border: 1px solid {{ colors.mid }};
+    border-radius: 6px;
+    padding: 6px;
+}
+
+#ChatHistoryView QTextEdit:focus {
+    border: 1px solid {{ colors.highlight }};
+}
+```
+
+```python
+# component.py
+from pathlib import Path
+from aether_gui.utils.ui import StyledComponent
+
+class ChatHistoryView(StyledComponent):
+	...
+
+	# Return the path to the QSS template.
+	def style_file(self) -> Path:
+		return Path(__file__).with_name("styles.qss.jinja")
+```
+
+### HTML Rendering 
+
+To define an HTML template for your component, create a Jinja template with the `.html.jinja` extension.
+
+Then, implement `template_file()` or `template()` in your component class to return the template path or inlined HTML, respectively.
+
+`StyledComponent` will not render the html for you, but it will provide a `render_html(**kwargs)` method that you can call to get the rendered HTML string. 
+Pass in any relevant variables that will be substituted into the template via `**kwargs`.
+You can then set this string on a widget that supports HTML, such as `QLabel` or `QTextEdit`.
+
+#### Example: HTML Template
+
+```html
+<!-- template.html.jinja -->
+<div>
+    <h2>{{ title }}</h2>
+    <p>{{ content }}</p>
+</div>
+```
+
+```python
+# component.py
+from pathlib import Path
+from aether_gui.utils.ui import StyledComponent
+class InfoCard(StyledComponent):
+	def init_ui(self) -> None:
+		self._view = QLabel(self)
+
+	def template_file(self) -> Path:
+		return Path(__file__).with_name("template.html.jinja")
+
+	def plugins_ready(self) -> None:
+		# Render the HTML template with variables and set it on the label.
+		html = self.render_html(title="Info Card", content="This is an info card.")
+		self._view.setText(html)
+```
+
+## Full Example
+Here is a more complete example that combines lifecycle hooks, QSS styling, and HTML rendering.
+
+### Minimal Chat History Component
+
+```python
+# component.py
+from pathlib import Path
+
+from aether_gui.utils.ui import StyledComponent
+from aether_gui.utils.ui.plugins import Theme, ThemeColors
+from PySide6 import QtWidgets
+
+
+class MinimalChatHistory(StyledComponent):
+	def setup(self) -> None:
+		self._text: QtWidgets.QTextEdit | None = None
+		self._messages: list[tuple[str, str]] = []
+
+	def init_ui(self) -> None:
+		layout = QtWidgets.QVBoxLayout(self)
+		layout.setContentsMargins(0, 0, 0, 0)
+		layout.setSpacing(0)
+
+		text = QtWidgets.QTextEdit(self)
+		text.setObjectName("ChatHistoryText")
+		text.setReadOnly(True)
+		text.setAcceptRichText(True)
+		text.setVerticalScrollBarPolicy(QtWidgets.QScrollBarPolicy.ScrollBarAlwaysOff)
+		layout.addWidget(text)
+		self._text = text
+
+	def style_file(self) -> Path:
+		return Path(__file__).with_name("styles.qss.jinja")
+
+	def template_file(self) -> Path:
+		return Path(__file__).with_name("template.html.jinja")
+
+	def append_message(self, sender: str, message: str) -> None:
+		if self._text is None:
+			return
+		self._messages.append((sender, message))
+		rendered = self.render_html(sender=sender, message=message)
+		if rendered.strip():
+			self._text.append(rendered)
+		scrollbar = self._text.verticalScrollBar()
+		scrollbar.setValue(scrollbar.maximum())
+
+	def on_theme_change(self, *, theme: Theme, colors: ThemeColors) -> None:
+		if self._text is None:
+			return
+		self._text.clear()
+		for sender, message in self._messages:
+			rendered = self.render_html(sender=sender, message=message)
+			if rendered.strip():
+				self._text.append(rendered)
+		scrollbar = self._text.verticalScrollBar()
+		scrollbar.setValue(scrollbar.maximum())
+
+
+def create_minimal_chat_history(parent: QtWidgets.QWidget | None = None) -> MinimalChatHistory:
+	return MinimalChatHistory(parent)
+```
+
+```css
+/* styles.qss.jinja */
+#MinimalChatHistory {
+	background-color: {{ colors.base }};
+}
+
+#MinimalChatHistory QTextEdit {
+	background-color: {{ colors.base }};
+	color: {{ colors.text }};
+	border: 1px solid {{ colors.mid }};
+	border-radius: 6px;
+	padding: 6px;
+}
+```
+
+```html
+<!-- template.html.jinja -->
+<div style="color: {{ colors.text }};">
+	<b>{{ sender }}</b>: {{ message }}
+</div>
+```
+
+### Loading It In A Parent
+
+```python
+# parent.py
+from PySide6 import QtWidgets
+
+from .component import create_minimal_chat_history
+
+
+class ChatPanel(QtWidgets.QWidget):
+	def __init__(self, parent: QtWidgets.QWidget | None = None) -> None:
+		super().__init__(parent)
+		layout = QtWidgets.QVBoxLayout(self)
+		layout.setContentsMargins(0, 0, 0, 0)
+		layout.setSpacing(0)
+
+		self._history = create_minimal_chat_history(self)
+		layout.addWidget(self._history)
+
+		# Example usage
+		self._history.append_message("User", "Hello")
+		self._history.append_message("AETHER", "Hi there.")
+```
+
+
+## Logging
+
+You also have access to a logger via `self.logger`. It is recommended to use this logger for any logging in your component, as it will be properly namespaced and integrated with the rest of the system.

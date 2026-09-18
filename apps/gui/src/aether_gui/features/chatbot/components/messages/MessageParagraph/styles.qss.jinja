@@ -1,0 +1,25 @@
+QTextBrowser {
+    color: {{ colors.text }};
+    background: transparent;
+    border: none;
+    font-size: {{ fontstyles.size }}pt;
+    font-family: "{{ fontstyles.family }}";
+}
+
+QTextBrowser#ChatBox QScrollBar:horizontal {
+    height: 10px;
+    background: transparent;
+    border: none;
+}
+
+
+#UserParagraph {
+    background-color: {{ colors.base }};
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    border-bottom-left-radius: 4px;
+}
+
+#UserParagraph[theme="dark"] {
+    border: 1px solid {{ colors.accent }};
+}
