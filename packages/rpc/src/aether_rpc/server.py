@@ -52,7 +52,7 @@ class RPCServer:
             port=self._port,
             protocol_config={
                 "allow_public_attrs": True,
-                "allow_pickle": False,
+                "allow_pickle": True,
             },
         )
 
