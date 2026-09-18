@@ -1,6 +1,6 @@
 [project]
 name = "aether_gui"
-version = "0.0.6.dev7"
+version = "0.0.6.dev8"
 description = "AETHER GUI application"
 readme = "README.md"
 requires-python = ">=3.12"
